@@ -12,17 +12,17 @@ const ProductCard = ({ product }) => {
   const handleAddToCart = (e) => {
     e.preventDefault()
     addItem(product, 1)
-    toast.success('??? ??????? ??? ?????')
+    toast.success('تمت إضافة المنتج للسلة')
   }
   
   const handleToggleWishlist = (e) => {
     e.preventDefault()
     if (inWishlist) {
       removeFromWishlist(product._id)
-      toast.success('??? ??????? ?? ????? ????????')
+      toast.success('تمت إزالة المنتج من قائمة الأمنيات')
     } else {
       addToWishlist(product)
-      toast.success('??? ??????? ??? ????? ????????')
+      toast.success('تمت إضافة المنتج لقائمة الأمنيات')
     }
   }
 
@@ -49,10 +49,10 @@ const ProductCard = ({ product }) => {
             <span className="badge badge-sale">-{discount}%</span>
           )}
           {product.isNew && (
-            <span className="badge badge-new">????</span>
+            <span className="badge badge-new">جديد</span>
           )}
           {product.isBestseller && (
-            <span className="badge badge-bestseller">?????? ??????</span>
+            <span className="badge badge-bestseller">الأكثر مبيعًا</span>
           )}
         </div>
         
@@ -61,21 +61,21 @@ const ProductCard = ({ product }) => {
           <button 
             onClick={handleToggleWishlist}
             className={`quick-action-btn ${inWishlist ? 'bg-red-500 text-white' : ''}`}
-            title={inWishlist ? '????? ?? ????????' : '??? ????????'}
+            title={inWishlist ? 'إزالة من الأمنيات' : 'أضف للأمنيات'}
           >
             <FiHeart className={inWishlist ? 'fill-current' : ''} />
           </button>
           <Link 
             to={`/product/${product.slug}`}
             className="quick-action-btn"
-            title="??? ????"
+            title="عرض المنتج"
           >
             <FiEye />
           </Link>
           <button 
             onClick={handleAddToCart}
             className="quick-action-btn"
-            title="??? ?????"
+            title="أضف للسلة"
           >
             <FiShoppingBag />
           </button>
@@ -110,7 +110,7 @@ const ProductCard = ({ product }) => {
             <div className="flex text-yellow-400">
               {[...Array(5)].map((_, i) => (
                 <span key={i}>
-                  {i < Math.round(product.rating.average) ? '?' : '?'}
+                  {i < Math.round(product.rating.average) ? '★' : '☆'}
                 </span>
               ))}
             </div>
@@ -123,11 +123,11 @@ const ProductCard = ({ product }) => {
         {/* Price */}
         <div className="flex items-center gap-2 mt-3">
           <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-            {product.price} ?.?
+            {product.price} ج.م
           </span>
           {product.oldPrice && (
             <span className="text-sm text-gray-400 line-through">
-              {product.oldPrice} ?.?
+              {product.oldPrice} ج.م
             </span>
           )}
         </div>
@@ -137,7 +137,7 @@ const ProductCard = ({ product }) => {
           onClick={handleAddToCart}
           className="w-full mt-4 bg-gray-100 text-gray-800 py-2 rounded-lg font-medium hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 hover:text-white transition-colors md:hidden"
         >
-          ??? ?????
+          أضف للسلة
         </button>
       </div>
     </div>

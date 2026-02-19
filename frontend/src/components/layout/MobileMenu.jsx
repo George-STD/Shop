@@ -8,26 +8,26 @@ const MobileMenu = () => {
   const isAdmin = user?.role === 'admin'
 
   const categories = [
-    { name: '???? ????????', slug: '' },
-    { name: '????? ??? ???????', slug: 'birthday-gifts' },
-    { name: '????? ??????', slug: 'wedding-gifts' },
-    { name: '????? ?????', slug: 'flower-bouquets' },
-    { name: '?????????? ?????????', slug: 'chocolates-sweets' },
-    { name: '??????', slug: 'perfumes' },
-    { name: '??????? ????????????', slug: 'watches-accessories' },
-    { name: '????? ?????', slug: 'personalized-gifts' },
-    { name: '????? ???????', slug: 'kids-gifts' },
-    { name: '?????? ????????', slug: 'home-decor' },
-    { name: '???? ?????', slug: 'gift-cards' },
+    { name: 'كل الهدايا', slug: '' },
+    { name: 'هدايا عيد ميلاد', slug: 'birthday-gifts' },
+    { name: 'هدايا زفاف', slug: 'wedding-gifts' },
+    { name: 'بوكيهات ورد', slug: 'flower-bouquets' },
+    { name: 'شوكولاتة وحلويات', slug: 'chocolates-sweets' },
+    { name: 'عطور', slug: 'perfumes' },
+    { name: 'ساعات وإكسسوارات', slug: 'watches-accessories' },
+    { name: 'هدايا شخصية', slug: 'personalized-gifts' },
+    { name: 'هدايا أطفال', slug: 'kids-gifts' },
+    { name: 'ديكور منزلي', slug: 'home-decor' },
+    { name: 'بطاقات هدايا', slug: 'gift-cards' },
   ]
 
   const occasions = [
-    { name: '??? ?????', value: '??? ?????' },
-    { name: '????', value: '????' },
-    { name: '??? ????', value: '??? ????' },
-    { name: '??? ????', value: '??? ????' },
-    { name: '????', value: '????' },
-    { name: '????? ????', value: '?????' },
+    { name: 'عيد ميلاد', value: 'عيد ميلاد' },
+    { name: 'زفاف', value: 'زفاف' },
+    { name: 'تخرج', value: 'تخرج' },
+    { name: 'مولود', value: 'مولود' },
+    { name: 'عيد أم', value: 'عيد أم' },
+    { name: 'مناسبات أخرى', value: 'مناسبات أخرى' },
   ]
 
   return (
@@ -67,11 +67,11 @@ const MobileMenu = () => {
             </div>
             <div>
               {isAuthenticated ? (
-                <span className="font-medium">?????</span>
+                <span className="font-medium">حسابي</span>
               ) : (
                 <>
-                  <span className="font-medium">????? ??????</span>
-                  <p className="text-sm text-gray-500">?? ????? ???? ????</p>
+                  <span className="font-medium">تسجيل الدخول</span>
+                  <p className="text-sm text-gray-500">أو إنشاء حساب جديد</p>
                 </>
               )}
             </div>
@@ -90,8 +90,8 @@ const MobileMenu = () => {
                 <FiSettings className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600" size={20} />
               </div>
               <div>
-                <span className="font-bold">???? ??????</span>
-                <p className="text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">????? ??????</p>
+                <span className="font-bold">لوحة التحكم</span>
+                <p className="text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">إدارة الموقع</p>
               </div>
             </Link>
           </div>
