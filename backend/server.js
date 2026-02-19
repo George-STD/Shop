@@ -5,7 +5,10 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 require('dotenv').config();
 
+
 const app = express();
+// Allow Express to trust proxy (for correct IP detection behind Render)
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(helmet());
