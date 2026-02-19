@@ -1,4 +1,4 @@
-﻿import { Helmet } from 'react-helmet-async'
+import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi'
 import { useCartStore } from '../store'
@@ -14,15 +14,15 @@ const CartPage = () => {
     return (
       <>
         <Helmet>
-          <title>سلة التسوق | For You</title>
+          <title>??? ?????? | For You</title>
         </Helmet>
         <div className="container-custom py-16 text-center">
-          <div className="text-8xl mb-6">🛒</div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">السلة فارغة</h1>
-          <p className="text-gray-600 mb-8">لم تضف أي منتجات بعد</p>
+          <div className="text-8xl mb-6">??</div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">????? ?????</h1>
+          <p className="text-gray-600 mb-8">?? ??? ?? ?????? ???</p>
           <Link to="/products" className="btn-primary">
             <FiShoppingBag className="inline ml-2" />
-            تسوق الآن
+            ???? ????
           </Link>
         </div>
       </>
@@ -32,12 +32,12 @@ const CartPage = () => {
   return (
     <>
       <Helmet>
-        <title>سلة التسوق ({items.length}) | For You</title>
+        <title>??? ?????? ({items.length}) | For You</title>
       </Helmet>
 
       <div className="bg-gray-50 min-h-screen py-8">
         <div className="container-custom">
-          <h1 className="text-3xl font-bold text-gray-800 mb-8">سلة التسوق</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-8">??? ??????</h1>
 
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Cart Items */}
@@ -63,13 +63,13 @@ const CartPage = () => {
                         </Link>
                         {(item.selectedSize || item.selectedColor) && (
                           <p className="text-sm text-gray-500 mt-1">
-                            {item.selectedSize && `المقاس: ${item.selectedSize}`}
+                            {item.selectedSize && `??????: ${item.selectedSize}`}
                             {item.selectedSize && item.selectedColor && ' | '}
-                            {item.selectedColor && `اللون: ${item.selectedColor}`}
+                            {item.selectedColor && `?????: ${item.selectedColor}`}
                           </p>
                         )}
                         {item.giftWrap?.enabled && (
-                          <p className="text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mt-1">🎁 تغليف هدايا</p>
+                          <p className="text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mt-1">?? ????? ?????</p>
                         )}
                       </div>
                       <button 
@@ -100,11 +100,11 @@ const CartPage = () => {
                       
                       <div className="text-left">
                         <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                          {item.price * item.quantity} ج.م
+                          {item.price * item.quantity} ?.?
                         </span>
                         {item.oldPrice && (
                           <span className="text-sm text-gray-400 line-through mr-2">
-                            {item.oldPrice * item.quantity} ج.م
+                            {item.oldPrice * item.quantity} ?.?
                           </span>
                         )}
                       </div>
@@ -117,34 +117,34 @@ const CartPage = () => {
                 onClick={clearCart}
                 className="text-red-500 hover:underline"
               >
-                إفراغ السلة
+                ????? ?????
               </button>
             </div>
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-2xl p-6 sticky top-24">
-                <h2 className="text-xl font-bold text-gray-800 mb-6">ملخص الطلب</h2>
+                <h2 className="text-xl font-bold text-gray-800 mb-6">???? ?????</h2>
                 
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">المجموع الفرعي</span>
-                    <span>{subtotal} ج.م</span>
+                    <span className="text-gray-600">??????? ??????</span>
+                    <span>{subtotal} ?.?</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">الشحن</span>
+                    <span className="text-gray-600">?????</span>
                     <span className={shippingCost === 0 ? 'text-green-600' : ''}>
-                      {shippingCost === 0 ? 'مجاني' : `${shippingCost} ج.م`}
+                      {shippingCost === 0 ? '?????' : `${shippingCost} ?.?`}
                     </span>
                   </div>
                   {subtotal < 500 && (
                     <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
-                      💡 أضف {500 - subtotal} ج.م للحصول على شحن مجاني
+                      ?? ??? {500 - subtotal} ?.? ?????? ??? ??? ?????
                     </p>
                   )}
                   <div className="border-t pt-4 flex justify-between text-lg font-bold">
-                    <span>الإجمالي</span>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">{total} ج.م</span>
+                    <span>????????</span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">{total} ?.?</span>
                   </div>
                 </div>
 
@@ -152,14 +152,14 @@ const CartPage = () => {
                   to="/checkout" 
                   className="btn-primary w-full text-center block mb-4"
                 >
-                  إتمام الشراء
+                  ????? ??????
                 </Link>
                 
                 <Link 
                   to="/products" 
                   className="btn-outline w-full text-center block"
                 >
-                  متابعة التسوق
+                  ?????? ??????
                 </Link>
               </div>
             </div>
@@ -171,3 +171,4 @@ const CartPage = () => {
 }
 
 export default CartPage
+

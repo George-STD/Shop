@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -53,28 +53,28 @@ const ProductsPage = () => {
   const pagination = productsData?.pagination || {}
 
   const sortOptions = [
-    { value: 'newest', label: 'الأحدث' },
-    { value: 'price_asc', label: 'السعر: من الأقل للأعلى' },
-    { value: 'price_desc', label: 'السعر: من الأعلى للأقل' },
-    { value: 'rating', label: 'الأعلى تقييماً' },
-    { value: 'bestselling', label: 'الأكثر مبيعاً' },
+    { value: 'newest', label: '??????' },
+    { value: 'price_asc', label: '?????: ?? ????? ??????' },
+    { value: 'price_desc', label: '?????: ?? ?????? ?????' },
+    { value: 'rating', label: '?????? ???????' },
+    { value: 'bestselling', label: '?????? ??????' },
   ]
 
   const occasions = [
-    'عيد ميلاد', 'زفاف', 'خطوبة', 'عيد الحب', 'عيد الأم', 
-    'عيد الأب', 'تخرج', 'ولادة', 'ذكرى زواج', 'شكر'
+    '??? ?????', '????', '?????', '??? ????', '??? ????', 
+    '??? ????', '????', '?????', '???? ????', '???'
   ]
 
   const recipients = [
-    'زوجة', 'زوج', 'أم', 'أب', 'أخت', 'أخ', 
-    'صديقة', 'صديق', 'أطفال', 'عروسين'
+    '????', '???', '??', '??', '???', '??', 
+    '?????', '????', '?????', '??????'
   ]
 
   const priceRanges = [
-    { label: 'أقل من 200', min: 0, max: 200 },
+    { label: '??? ?? 200', min: 0, max: 200 },
     { label: '200 - 500', min: 200, max: 500 },
     { label: '500 - 1000', min: 500, max: 1000 },
-    { label: 'أكثر من 1000', min: 1000, max: '' },
+    { label: '???? ?? 1000', min: 1000, max: '' },
   ]
 
   const updateFilter = (key, value) => {
@@ -106,18 +106,18 @@ const ProductsPage = () => {
   const pageTitle = categoryInfo?.name 
     ? `${categoryInfo.name} | For You`
     : search 
-      ? `نتائج البحث: ${search} | For You`
-      : 'جميع المنتجات | For You'
+      ? `????? ?????: ${search} | For You`
+      : '???? ???????? | For You'
 
   const pageDescription = categoryInfo?.seo?.metaDescription 
-    || `تسوق ${categoryInfo?.name || 'جميع الهدايا'} من متجر هدايا. توصيل سريع لجميع أنحاء مصر.`
+    || `???? ${categoryInfo?.name || '???? ???????'} ?? ???? ?????. ????? ???? ????? ????? ???.`
 
   return (
     <>
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <meta name="keywords" content={categoryInfo?.seo?.keywords?.join(', ') || 'هدايا، متجر هدايا، هدايا مصر'} />
+        <meta name="keywords" content={categoryInfo?.seo?.keywords?.join(', ') || '?????? ???? ?????? ????? ???'} />
         <link rel="canonical" href={`https://hadaya.com/products${categorySlug ? `/${categorySlug}` : ''}`} />
       </Helmet>
 
@@ -126,9 +126,9 @@ const ProductsPage = () => {
         <div className="bg-white border-b">
           <div className="container-custom py-4">
             <nav className="flex items-center gap-2 text-sm">
-              <Link to="/" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">الرئيسية</Link>
+              <Link to="/" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">????????</Link>
               <span className="text-gray-400">/</span>
-              <Link to="/products" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">المنتجات</Link>
+              <Link to="/products" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">????????</Link>
               {categoryInfo && (
                 <>
                   <span className="text-gray-400">/</span>
@@ -143,14 +143,14 @@ const ProductsPage = () => {
         <div className="bg-white border-b">
           <div className="container-custom py-8">
             <h1 className="text-3xl font-bold text-gray-800">
-              {categoryInfo?.name || (search ? `نتائج البحث: "${search}"` : 'جميع المنتجات')}
+              {categoryInfo?.name || (search ? `????? ?????: "${search}"` : '???? ????????')}
             </h1>
             {categoryInfo?.description && (
               <p className="text-gray-600 mt-2">{categoryInfo.description}</p>
             )}
             {pagination.total > 0 && (
               <p className="text-gray-500 mt-2">
-                عرض {products.length} من {pagination.total} منتج
+                ??? {products.length} ?? {pagination.total} ????
               </p>
             )}
           </div>
@@ -162,27 +162,27 @@ const ProductsPage = () => {
             <aside className="hidden lg:block w-64 flex-shrink-0">
               <div className="bg-white rounded-2xl p-6 sticky top-24">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-bold text-gray-800">الفلاتر</h2>
+                  <h2 className="font-bold text-gray-800">???????</h2>
                   {hasActiveFilters && (
                     <button 
                       onClick={clearFilters}
                       className="text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline"
                     >
-                      مسح الكل
+                      ??? ????
                     </button>
                   )}
                 </div>
 
                 {/* Categories */}
                 <div className="mb-6">
-                  <h3 className="font-medium text-gray-700 mb-3">الفئات</h3>
+                  <h3 className="font-medium text-gray-700 mb-3">??????</h3>
                   <ul className="space-y-2">
                     <li>
                       <Link 
                         to="/products"
                         className={`block py-1 ${!categorySlug ? 'text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium' : 'text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600'}`}
                       >
-                        جميع الفئات
+                        ???? ??????
                       </Link>
                     </li>
                     {categories?.map(cat => (
@@ -200,7 +200,7 @@ const ProductsPage = () => {
 
                 {/* Price Range */}
                 <div className="mb-6">
-                  <h3 className="font-medium text-gray-700 mb-3">السعر</h3>
+                  <h3 className="font-medium text-gray-700 mb-3">?????</h3>
                   <div className="space-y-2">
                     {priceRanges.map((range, index) => (
                       <label key={index} className="flex items-center gap-2 cursor-pointer">
@@ -214,7 +214,7 @@ const ProductsPage = () => {
                           }}
                           className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
                         />
-                        <span className="text-gray-600">{range.label} ج.م</span>
+                        <span className="text-gray-600">{range.label} ?.?</span>
                       </label>
                     ))}
                   </div>
@@ -222,7 +222,7 @@ const ProductsPage = () => {
 
                 {/* Occasions */}
                 <div className="mb-6">
-                  <h3 className="font-medium text-gray-700 mb-3">المناسبة</h3>
+                  <h3 className="font-medium text-gray-700 mb-3">????????</h3>
                   <div className="space-y-2">
                     {occasions.map((occ) => (
                       <label key={occ} className="flex items-center gap-2 cursor-pointer">
@@ -241,7 +241,7 @@ const ProductsPage = () => {
 
                 {/* Recipients */}
                 <div>
-                  <h3 className="font-medium text-gray-700 mb-3">هدية لـ</h3>
+                  <h3 className="font-medium text-gray-700 mb-3">???? ??</h3>
                   <div className="flex flex-wrap gap-2">
                     {recipients.map((rec) => (
                       <button
@@ -271,7 +271,7 @@ const ProductsPage = () => {
                   className="lg:hidden flex items-center gap-2 text-gray-700"
                 >
                   <FiFilter />
-                  الفلاتر
+                  ???????
                   {hasActiveFilters && (
                     <span className="w-5 h-5 bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white text-xs rounded-full flex items-center justify-center">
                       !
@@ -281,7 +281,7 @@ const ProductsPage = () => {
 
                 {/* Sort */}
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-600 hidden sm:inline">ترتيب حسب:</span>
+                  <span className="text-gray-600 hidden sm:inline">????? ???:</span>
                   <select
                     value={sort}
                     onChange={(e) => updateFilter('sort', e.target.value)}
@@ -325,7 +325,7 @@ const ProductsPage = () => {
                   )}
                   {recipient && (
                     <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-700 px-3 py-1 rounded-full text-sm">
-                      هدية لـ {recipient}
+                      ???? ?? {recipient}
                       <button onClick={() => updateFilter('recipient', '')}>
                         <FiX size={14} />
                       </button>
@@ -333,7 +333,7 @@ const ProductsPage = () => {
                   )}
                   {(minPrice || maxPrice) && (
                     <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-700 px-3 py-1 rounded-full text-sm">
-                      {minPrice && maxPrice ? `${minPrice} - ${maxPrice} ج.م` : minPrice ? `أكثر من ${minPrice} ج.م` : `أقل من ${maxPrice} ج.م`}
+                      {minPrice && maxPrice ? `${minPrice} - ${maxPrice} ?.?` : minPrice ? `???? ?? ${minPrice} ?.?` : `??? ?? ${maxPrice} ?.?`}
                       <button onClick={clearPriceFilter}>
                         <FiX size={14} />
                       </button>
@@ -361,16 +361,16 @@ const ProductsPage = () => {
                 </div>
               ) : (
                 <div className="text-center py-16">
-                  <div className="text-6xl mb-4">📦</div>
-                  <h2 className="text-xl font-bold text-gray-800 mb-2">لا توجد منتجات</h2>
+                  <div className="text-6xl mb-4">??</div>
+                  <h2 className="text-xl font-bold text-gray-800 mb-2">?? ???? ??????</h2>
                   <p className="text-gray-600 mb-6">
-                    جرب تغيير الفلاتر أو البحث بكلمات أخرى
+                    ??? ????? ??????? ?? ????? ?????? ????
                   </p>
                   <button 
                     onClick={clearFilters}
                     className="btn-primary"
                   >
-                    مسح الفلاتر
+                    ??? ???????
                   </button>
                 </div>
               )}
@@ -403,7 +403,7 @@ const ProductsPage = () => {
             <div className="absolute inset-0 bg-black/50" onClick={() => setShowFilters(false)} />
             <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[80vh] overflow-y-auto">
               <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white">
-                <h2 className="font-bold text-lg">الفلاتر</h2>
+                <h2 className="font-bold text-lg">???????</h2>
                 <button onClick={() => setShowFilters(false)}>
                   <FiX size={24} />
                 </button>
@@ -413,7 +413,7 @@ const ProductsPage = () => {
                 <div className="space-y-6">
                   {/* Price */}
                   <div>
-                    <h3 className="font-medium text-gray-700 mb-3">السعر</h3>
+                    <h3 className="font-medium text-gray-700 mb-3">?????</h3>
                     <div className="flex flex-wrap gap-2">
                       {priceRanges.map((range, index) => (
                         <button
@@ -428,7 +428,7 @@ const ProductsPage = () => {
                               : 'border-gray-300'
                           }`}
                         >
-                          {range.label} ج.م
+                          {range.label} ?.?
                         </button>
                       ))}
                     </div>
@@ -436,7 +436,7 @@ const ProductsPage = () => {
 
                   {/* Occasions */}
                   <div>
-                    <h3 className="font-medium text-gray-700 mb-3">المناسبة</h3>
+                    <h3 className="font-medium text-gray-700 mb-3">????????</h3>
                     <div className="flex flex-wrap gap-2">
                       {occasions.map((occ) => (
                         <button
@@ -456,7 +456,7 @@ const ProductsPage = () => {
 
                   {/* Recipients */}
                   <div>
-                    <h3 className="font-medium text-gray-700 mb-3">هدية لـ</h3>
+                    <h3 className="font-medium text-gray-700 mb-3">???? ??</h3>
                     <div className="flex flex-wrap gap-2">
                       {recipients.map((rec) => (
                         <button
@@ -480,13 +480,13 @@ const ProductsPage = () => {
                   onClick={clearFilters}
                   className="flex-1 btn-outline"
                 >
-                  مسح الكل
+                  ??? ????
                 </button>
                 <button 
                   onClick={() => setShowFilters(false)}
                   className="flex-1 btn-primary"
                 >
-                  عرض النتائج
+                  ??? ???????
                 </button>
               </div>
             </div>
@@ -498,3 +498,4 @@ const ProductsPage = () => {
 }
 
 export default ProductsPage
+

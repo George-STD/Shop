@@ -175,3 +175,4 @@ export const useUIStore = create((set) => ({
   toggleCart: () => set((state) => ({ isCartOpen: !state.isCartOpen })),
   closeCart: () => set({ isCartOpen: false })
 }))
+

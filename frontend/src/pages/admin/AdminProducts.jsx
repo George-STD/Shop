@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { FiSearch, FiEdit2, FiTrash2, FiPlus, FiEye, FiEyeOff } from 'react-icons/fi'
 import { adminAPI, productsAPI, categoriesAPI } from '../../services/api'
@@ -114,7 +114,7 @@ const AdminProducts = () => {
   }
 
   const handleDelete = (product) => {
-    if (window.confirm(`هل تريد حذف المنتج "${product.name}"؟`)) {
+    if (window.confirm(`?? ???? ??? ?????? "${product.name}"?`)) {
       deleteMutation.mutate(product._id)
     }
   }
@@ -137,7 +137,7 @@ const AdminProducts = () => {
             <FiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="بحث..."
+              placeholder="???..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pr-10 pl-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
@@ -150,7 +150,7 @@ const AdminProducts = () => {
             onChange={(e) => setCategoryFilter(e.target.value)}
             className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
           >
-            <option value="">جميع الفئات</option>
+            <option value="">???? ??????</option>
             {categories?.map(cat => (
               <option key={cat._id} value={cat._id}>{cat.name}</option>
             ))}
@@ -162,7 +162,7 @@ const AdminProducts = () => {
           className="bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:from-purple-600 hover:via-fuchsia-600 hover:to-pink-600"
         >
           <FiPlus />
-          إضافة منتج
+          ????? ????
         </button>
       </div>
 
@@ -178,12 +178,12 @@ const AdminProducts = () => {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">المنتج</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">الفئة</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">السعر</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">المخزون</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">الحالة</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">الإجراءات</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">??????</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">?????</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">?????</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">???????</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">??????</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">?????????</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -226,7 +226,7 @@ const AdminProducts = () => {
                             ? 'bg-green-100 text-green-700' 
                             : 'bg-red-100 text-red-700'
                         }`}>
-                          {product.isActive ? 'نشط' : 'مخفي'}
+                          {product.isActive ? '???' : '????'}
                         </span>
                       </td>
                       <td className="py-4 px-6">
@@ -234,14 +234,14 @@ const AdminProducts = () => {
                           <button
                             onClick={() => handleEdit(product)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                            title="تعديل"
+                            title="?????"
                           >
                             <FiEdit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(product)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                            title="حذف"
+                            title="???"
                           >
                             <FiTrash2 className="w-4 h-4" />
                           </button>
@@ -257,7 +257,7 @@ const AdminProducts = () => {
             {products?.pagination && (
               <div className="p-4 border-t flex items-center justify-between">
                 <p className="text-gray-600">
-                  عرض {products.data.length} من {products.pagination.total} منتج
+                  ??? {products.data.length} ?? {products.pagination.total} ????
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -265,17 +265,17 @@ const AdminProducts = () => {
                     disabled={page === 1}
                     className="px-4 py-2 border rounded-lg disabled:opacity-50"
                   >
-                    السابق
+                    ??????
                   </button>
                   <span className="px-4 py-2">
-                    صفحة {page} من {products.pagination.pages}
+                    ???? {page} ?? {products.pagination.pages}
                   </span>
                   <button
                     onClick={() => setPage(p => Math.min(products.pagination.pages, p + 1))}
                     disabled={page >= products.pagination.pages}
                     className="px-4 py-2 border rounded-lg disabled:opacity-50"
                   >
-                    التالي
+                    ??????
                   </button>
                 </div>
               </div>
@@ -290,12 +290,12 @@ const AdminProducts = () => {
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b sticky top-0 bg-white">
               <h2 className="text-xl font-bold">
-                {editingProduct ? 'تعديل المنتج' : 'إضافة منتج جديد'}
+                {editingProduct ? '????? ??????' : '????? ???? ????'}
               </h2>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">اسم المنتج</label>
+                <label className="block text-sm font-medium mb-1">??? ??????</label>
                 <input
                   type="text"
                   value={formData.name}
@@ -306,7 +306,7 @@ const AdminProducts = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">الوصف</label>
+                <label className="block text-sm font-medium mb-1">?????</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -317,7 +317,7 @@ const AdminProducts = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">السعر</label>
+                  <label className="block text-sm font-medium mb-1">?????</label>
                   <input
                     type="number"
                     value={formData.price}
@@ -327,7 +327,7 @@ const AdminProducts = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">السعر قبل الخصم</label>
+                  <label className="block text-sm font-medium mb-1">????? ??? ?????</label>
                   <input
                     type="number"
                     value={formData.comparePrice}
@@ -339,21 +339,21 @@ const AdminProducts = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">الفئة</label>
+                  <label className="block text-sm font-medium mb-1">?????</label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
                     required
                   >
-                    <option value="">اختر الفئة</option>
+                    <option value="">???? ?????</option>
                     {categories?.map(cat => (
                       <option key={cat._id} value={cat._id}>{cat.name}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">الكمية في المخزون</label>
+                  <label className="block text-sm font-medium mb-1">?????? ?? ???????</label>
                   <input
                     type="number"
                     value={formData.stock}
@@ -365,7 +365,7 @@ const AdminProducts = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">رابط الصورة</label>
+                <label className="block text-sm font-medium mb-1">???? ??????</label>
                 <input
                   type="url"
                   value={formData.images[0]?.url || ''}
@@ -386,7 +386,7 @@ const AdminProducts = () => {
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                     className="rounded"
                   />
-                  <span>نشط</span>
+                  <span>???</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -395,7 +395,7 @@ const AdminProducts = () => {
                     onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
                     className="rounded"
                   />
-                  <span>مميز</span>
+                  <span>????</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -404,7 +404,7 @@ const AdminProducts = () => {
                     onChange={(e) => setFormData({ ...formData, isBestseller: e.target.checked })}
                     className="rounded"
                   />
-                  <span>الأكثر مبيعاً</span>
+                  <span>?????? ??????</span>
                 </label>
               </div>
 
@@ -414,14 +414,14 @@ const AdminProducts = () => {
                   onClick={() => { setShowModal(false); resetForm() }}
                   className="flex-1 border rounded-lg py-2 hover:bg-gray-50"
                 >
-                  إلغاء
+                  ?????
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending || updateMutation.isPending}
                   className="flex-1 bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white rounded-lg py-2 hover:from-purple-600 hover:via-fuchsia-600 hover:to-pink-600 disabled:opacity-50"
                 >
-                  {createMutation.isPending || updateMutation.isPending ? 'جاري الحفظ...' : 'حفظ'}
+                  {createMutation.isPending || updateMutation.isPending ? '???? ?????...' : '???'}
                 </button>
               </div>
             </form>
@@ -433,3 +433,4 @@ const AdminProducts = () => {
 }
 
 export default AdminProducts
+

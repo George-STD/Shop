@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { FiCheck, FiX, FiTrash2, FiStar } from 'react-icons/fi'
 import { adminAPI } from '../../services/api'
@@ -36,7 +36,7 @@ const AdminReviews = () => {
   }
 
   const handleDelete = (review) => {
-    if (window.confirm('هل تريد حذف هذا التقييم؟')) {
+    if (window.confirm('?? ???? ??? ??? ????????')) {
       deleteMutation.mutate(review._id)
     }
   }
@@ -60,13 +60,13 @@ const AdminReviews = () => {
             onChange={(e) => setApprovedFilter(e.target.value)}
             className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
           >
-            <option value="">جميع التقييمات</option>
-            <option value="true">معتمدة</option>
-            <option value="false">قيد المراجعة</option>
+            <option value="">???? ?????????</option>
+            <option value="true">??????</option>
+            <option value="false">??? ????????</option>
           </select>
 
           <div className="text-sm text-gray-500">
-            {data?.pagination?.total || 0} تقييم
+            {data?.pagination?.total || 0} ?????
           </div>
         </div>
       </div>
@@ -87,7 +87,7 @@ const AdminReviews = () => {
           ))
         ) : data?.data?.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center text-gray-500">
-            لا توجد تقييمات
+            ?? ???? ???????
           </div>
         ) : (
           data?.data?.map((review) => (
@@ -115,7 +115,7 @@ const AdminReviews = () => {
                           ? 'bg-green-100 text-green-700' 
                           : 'bg-yellow-100 text-yellow-700'
                       }`}>
-                        {review.isApproved ? 'معتمد' : 'قيد المراجعة'}
+                        {review.isApproved ? '?????' : '??? ????????'}
                       </span>
                     </div>
                   </div>
@@ -149,7 +149,7 @@ const AdminReviews = () => {
                       onClick={() => handleApprove(review, true)}
                       disabled={approveMutation.isPending}
                       className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
-                      title="اعتماد"
+                      title="??????"
                     >
                       <FiCheck className="w-5 h-5" />
                     </button>
@@ -159,7 +159,7 @@ const AdminReviews = () => {
                       onClick={() => handleApprove(review, false)}
                       disabled={approveMutation.isPending}
                       className="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200"
-                      title="إلغاء الاعتماد"
+                      title="????? ????????"
                     >
                       <FiX className="w-5 h-5" />
                     </button>
@@ -168,7 +168,7 @@ const AdminReviews = () => {
                     onClick={() => handleDelete(review)}
                     disabled={deleteMutation.isPending}
                     className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
-                    title="حذف"
+                    title="???"
                   >
                     <FiTrash2 className="w-5 h-5" />
                   </button>
@@ -183,7 +183,7 @@ const AdminReviews = () => {
       {data?.pagination && data.pagination.pages > 1 && (
         <div className="bg-white rounded-2xl p-4 flex items-center justify-between">
           <p className="text-gray-600">
-            عرض {data.data.length} من {data.pagination.total} تقييم
+            ??? {data.data.length} ?? {data.pagination.total} ?????
           </p>
           <div className="flex gap-2">
             <button
@@ -191,17 +191,17 @@ const AdminReviews = () => {
               disabled={page === 1}
               className="px-4 py-2 border rounded-lg disabled:opacity-50"
             >
-              السابق
+              ??????
             </button>
             <span className="px-4 py-2">
-              صفحة {page} من {data.pagination.pages}
+              ???? {page} ?? {data.pagination.pages}
             </span>
             <button
               onClick={() => setPage(p => Math.min(data.pagination.pages, p + 1))}
               disabled={page >= data.pagination.pages}
               className="px-4 py-2 border rounded-lg disabled:opacity-50"
             >
-              التالي
+              ??????
             </button>
           </div>
         </div>
@@ -211,3 +211,4 @@ const AdminReviews = () => {
 }
 
 export default AdminReviews
+

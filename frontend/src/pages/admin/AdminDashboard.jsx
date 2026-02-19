@@ -1,4 +1,4 @@
-﻿import { useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { 
   FiUsers, FiPackage, FiShoppingCart, FiDollarSign,
@@ -22,12 +22,12 @@ const AdminDashboard = () => {
   }
 
   const statusLabels = {
-    pending: 'قيد الانتظار',
-    confirmed: 'مؤكد',
-    processing: 'قيد التجهيز',
-    shipped: 'تم الشحن',
-    delivered: 'تم التوصيل',
-    cancelled: 'ملغي'
+    pending: '??? ????????',
+    confirmed: '????',
+    processing: '??? ???????',
+    shipped: '?? ?????',
+    delivered: '?? ???????',
+    cancelled: '????'
   }
 
   const statusColors = {
@@ -56,28 +56,28 @@ const AdminDashboard = () => {
 
   const overviewCards = [
     {
-      title: 'إجمالي المستخدمين',
+      title: '?????? ??????????',
       value: stats?.overview?.totalUsers || 0,
       icon: FiUsers,
       color: 'bg-blue-500',
       link: '/admin/users'
     },
     {
-      title: 'المنتجات',
+      title: '????????',
       value: stats?.overview?.totalProducts || 0,
       icon: FiPackage,
       color: 'bg-green-500',
       link: '/admin/products'
     },
     {
-      title: 'الطلبات',
+      title: '???????',
       value: stats?.overview?.totalOrders || 0,
       icon: FiShoppingCart,
       color: 'bg-purple-500',
       link: '/admin/orders'
     },
     {
-      title: 'إجمالي الإيرادات',
+      title: '?????? ?????????',
       value: formatCurrency(stats?.overview?.totalRevenue || 0),
       icon: FiDollarSign,
       color: 'bg-gradient-to-r from-purple-50 to-pink-500',
@@ -108,7 +108,7 @@ const AdminDashboard = () => {
                 to={card.link}
                 className="inline-flex items-center gap-1 text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mt-4 hover:underline"
               >
-                عرض الكل
+                ??? ????
                 <FiArrowUpRight className="w-4 h-4" />
               </Link>
             )}
@@ -119,7 +119,7 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Orders by Status */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <h2 className="text-lg font-bold mb-4">الطلبات حسب الحالة</h2>
+          <h2 className="text-lg font-bold mb-4">??????? ??? ??????</h2>
           <div className="space-y-3">
             {Object.entries(stats?.ordersByStatus || {}).map(([status, count]) => (
               <div key={status} className="flex items-center justify-between">
@@ -130,14 +130,14 @@ const AdminDashboard = () => {
               </div>
             ))}
             {Object.keys(stats?.ordersByStatus || {}).length === 0 && (
-              <p className="text-gray-500 text-center py-4">لا توجد طلبات</p>
+              <p className="text-gray-500 text-center py-4">?? ???? ?????</p>
             )}
           </div>
         </div>
 
         {/* Top Products */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <h2 className="text-lg font-bold mb-4">المنتجات الأكثر مبيعاً</h2>
+          <h2 className="text-lg font-bold mb-4">???????? ?????? ??????</h2>
           <div className="space-y-4">
             {stats?.topProducts?.map((product, index) => (
               <div key={product._id} className="flex items-center gap-3">
@@ -155,11 +155,11 @@ const AdminDashboard = () => {
                   <p className="font-medium truncate">{product.name}</p>
                   <p className="text-sm text-gray-500">{formatCurrency(product.price)}</p>
                 </div>
-                <span className="text-sm text-gray-500">{product.salesCount} مبيعات</span>
+                <span className="text-sm text-gray-500">{product.salesCount} ??????</span>
               </div>
             ))}
             {stats?.topProducts?.length === 0 && (
-              <p className="text-gray-500 text-center py-4">لا توجد مبيعات</p>
+              <p className="text-gray-500 text-center py-4">?? ???? ??????</p>
             )}
           </div>
         </div>
@@ -168,20 +168,20 @@ const AdminDashboard = () => {
       {/* Recent Orders */}
       <div className="bg-white rounded-2xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold">أحدث الطلبات</h2>
+          <h2 className="text-lg font-bold">???? ???????</h2>
           <Link to="/admin/orders" className="text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline">
-            عرض الكل
+            ??? ????
           </Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b">
-                <th className="text-right py-3 px-2 text-gray-500 font-medium">رقم الطلب</th>
-                <th className="text-right py-3 px-2 text-gray-500 font-medium">العميل</th>
-                <th className="text-right py-3 px-2 text-gray-500 font-medium">المبلغ</th>
-                <th className="text-right py-3 px-2 text-gray-500 font-medium">الحالة</th>
-                <th className="text-right py-3 px-2 text-gray-500 font-medium">التاريخ</th>
+                <th className="text-right py-3 px-2 text-gray-500 font-medium">??? ?????</th>
+                <th className="text-right py-3 px-2 text-gray-500 font-medium">??????</th>
+                <th className="text-right py-3 px-2 text-gray-500 font-medium">??????</th>
+                <th className="text-right py-3 px-2 text-gray-500 font-medium">??????</th>
+                <th className="text-right py-3 px-2 text-gray-500 font-medium">???????</th>
               </tr>
             </thead>
             <tbody>
@@ -212,7 +212,7 @@ const AdminDashboard = () => {
               {stats?.recentOrders?.length === 0 && (
                 <tr>
                   <td colSpan="5" className="py-8 text-center text-gray-500">
-                    لا توجد طلبات حتى الآن
+                    ?? ???? ????? ??? ????
                   </td>
                 </tr>
               )}
@@ -225,3 +225,4 @@ const AdminDashboard = () => {
 }
 
 export default AdminDashboard
+

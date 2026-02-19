@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom'
 import { 
   FiHome, FiUsers, FiPackage, FiShoppingCart, FiGrid, 
@@ -22,12 +22,12 @@ const AdminLayout = () => {
   }
 
   const menuItems = [
-    { path: '/admin', icon: FiHome, label: 'لوحة التحكم', exact: true },
-    { path: '/admin/users', icon: FiUsers, label: 'المستخدمين' },
-    { path: '/admin/products', icon: FiPackage, label: 'المنتجات' },
-    { path: '/admin/orders', icon: FiShoppingCart, label: 'الطلبات' },
-    { path: '/admin/categories', icon: FiGrid, label: 'الفئات' },
-    { path: '/admin/reviews', icon: FiStar, label: 'التقييمات' },
+    { path: '/admin', icon: FiHome, label: '???? ??????', exact: true },
+    { path: '/admin/users', icon: FiUsers, label: '??????????' },
+    { path: '/admin/products', icon: FiPackage, label: '????????' },
+    { path: '/admin/orders', icon: FiShoppingCart, label: '???????' },
+    { path: '/admin/categories', icon: FiGrid, label: '??????' },
+    { path: '/admin/reviews', icon: FiStar, label: '?????????' },
   ]
 
   const isActive = (path, exact = false) => {
@@ -47,7 +47,7 @@ const AdminLayout = () => {
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-700">
           {sidebarOpen && (
             <Link to="/admin" className="text-xl font-bold text-pink-400">
-              لوحة التحكم
+              ???? ??????
             </Link>
           )}
           <button 
@@ -85,7 +85,7 @@ const AdminLayout = () => {
               </div>
               <div className="flex-1">
                 <p className="font-medium">{user?.firstName} {user?.lastName}</p>
-                <p className="text-sm text-gray-400">مدير</p>
+                <p className="text-sm text-gray-400">????</p>
               </div>
             </div>
           ) : null}
@@ -96,7 +96,7 @@ const AdminLayout = () => {
             }`}
           >
             <FiLogOut className="w-5 h-5" />
-            {sidebarOpen && <span>تسجيل الخروج</span>}
+            {sidebarOpen && <span>????? ??????</span>}
           </button>
         </div>
       </aside>
@@ -116,7 +116,7 @@ const AdminLayout = () => {
         }`}
       >
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-700">
-          <span className="text-xl font-bold text-pink-400">لوحة التحكم</span>
+          <span className="text-xl font-bold text-pink-400">???? ??????</span>
           <button 
             onClick={() => setMobileMenuOpen(false)}
             className="p-2 hover:bg-gray-700 rounded-lg"
@@ -150,7 +150,7 @@ const AdminLayout = () => {
             </div>
             <div>
               <p className="font-medium">{user?.firstName}</p>
-              <p className="text-sm text-gray-400">مدير</p>
+              <p className="text-sm text-gray-400">????</p>
             </div>
           </div>
           <button
@@ -158,7 +158,7 @@ const AdminLayout = () => {
             className="flex items-center gap-3 w-full px-3 py-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
           >
             <FiLogOut className="w-5 h-5" />
-            <span>تسجيل الخروج</span>
+            <span>????? ??????</span>
           </button>
         </div>
       </aside>
@@ -175,7 +175,7 @@ const AdminLayout = () => {
               <FiMenu className="w-6 h-6" />
             </button>
             <h1 className="text-xl font-bold text-gray-800">
-              {menuItems.find(item => isActive(item.path, item.exact))?.label || 'لوحة التحكم'}
+              {menuItems.find(item => isActive(item.path, item.exact))?.label || '???? ??????'}
             </h1>
           </div>
           
@@ -183,7 +183,7 @@ const AdminLayout = () => {
             to="/" 
             className="text-sm text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex items-center gap-1"
           >
-            العودة للموقع
+            ?????? ??????
             <FiChevronLeft className="transform rotate-180" />
           </Link>
         </header>
@@ -198,3 +198,4 @@ const AdminLayout = () => {
 }
 
 export default AdminLayout
+

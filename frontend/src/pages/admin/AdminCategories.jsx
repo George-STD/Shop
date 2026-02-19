@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { FiEdit2, FiTrash2, FiPlus, FiImage } from 'react-icons/fi'
 import { adminAPI, categoriesAPI } from '../../services/api'
@@ -46,7 +46,7 @@ const AdminCategories = () => {
       queryClient.invalidateQueries(['categories'])
     },
     onError: (error) => {
-      alert(error.response?.data?.message || 'حدث خطأ أثناء حذف الفئة')
+      alert(error.response?.data?.message || '??? ??? ????? ??? ?????')
     }
   })
 
@@ -89,7 +89,7 @@ const AdminCategories = () => {
   }
 
   const handleDelete = (category) => {
-    if (window.confirm(`هل تريد حذف الفئة "${category.name}"؟`)) {
+    if (window.confirm(`?? ???? ??? ????? "${category.name}"?`)) {
       deleteMutation.mutate(category._id)
     }
   }
@@ -106,13 +106,13 @@ const AdminCategories = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">الفئات ({categories?.length || 0})</h2>
+        <h2 className="text-lg font-bold">?????? ({categories?.length || 0})</h2>
         <button
           onClick={() => { resetForm(); setShowModal(true) }}
           className="bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:from-purple-600 hover:via-fuchsia-600 hover:to-pink-600"
         >
           <FiPlus />
-          إضافة فئة
+          ????? ???
         </button>
       </div>
 
@@ -169,14 +169,14 @@ const AdminCategories = () => {
                       ? 'bg-green-100 text-green-700' 
                       : 'bg-red-100 text-red-700'
                   }`}>
-                    {category.isActive !== false ? 'نشط' : 'مخفي'}
+                    {category.isActive !== false ? '???' : '????'}
                   </span>
                 </div>
                 <p className="text-sm text-gray-500 mb-2">{category.slug}</p>
                 {category.description && (
                   <p className="text-sm text-gray-600 line-clamp-2">{category.description}</p>
                 )}
-                <p className="text-xs text-gray-400 mt-2">الترتيب: {category.order || 0}</p>
+                <p className="text-xs text-gray-400 mt-2">???????: {category.order || 0}</p>
               </div>
             </div>
           ))
@@ -189,12 +189,12 @@ const AdminCategories = () => {
           <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b sticky top-0 bg-white">
               <h2 className="text-xl font-bold">
-                {editingCategory ? 'تعديل الفئة' : 'إضافة فئة جديدة'}
+                {editingCategory ? '????? ?????' : '????? ??? ?????'}
               </h2>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">اسم الفئة</label>
+                <label className="block text-sm font-medium mb-1">??? ?????</label>
                 <input
                   type="text"
                   value={formData.name}
@@ -209,7 +209,7 @@ const AdminCategories = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Slug (الرابط)</label>
+                <label className="block text-sm font-medium mb-1">Slug (??????)</label>
                 <input
                   type="text"
                   value={formData.slug}
@@ -221,7 +221,7 @@ const AdminCategories = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">الوصف</label>
+                <label className="block text-sm font-medium mb-1">?????</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -231,7 +231,7 @@ const AdminCategories = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">رابط الصورة</label>
+                <label className="block text-sm font-medium mb-1">???? ??????</label>
                 <input
                   type="url"
                   value={formData.image}
@@ -251,7 +251,7 @@ const AdminCategories = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">الأيقونة</label>
+                  <label className="block text-sm font-medium mb-1">????????</label>
                   <input
                     type="text"
                     value={formData.icon}
@@ -262,7 +262,7 @@ const AdminCategories = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">الترتيب</label>
+                  <label className="block text-sm font-medium mb-1">???????</label>
                   <input
                     type="number"
                     value={formData.order}
@@ -279,7 +279,7 @@ const AdminCategories = () => {
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                   className="rounded"
                 />
-                <span>نشط</span>
+                <span>???</span>
               </label>
 
               <div className="flex gap-4 pt-4 border-t">
@@ -288,14 +288,14 @@ const AdminCategories = () => {
                   onClick={() => { setShowModal(false); resetForm() }}
                   className="flex-1 border rounded-lg py-2 hover:bg-gray-50"
                 >
-                  إلغاء
+                  ?????
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending || updateMutation.isPending}
                   className="flex-1 bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white rounded-lg py-2 hover:from-purple-600 hover:via-fuchsia-600 hover:to-pink-600 disabled:opacity-50"
                 >
-                  {createMutation.isPending || updateMutation.isPending ? 'جاري الحفظ...' : 'حفظ'}
+                  {createMutation.isPending || updateMutation.isPending ? '???? ?????...' : '???'}
                 </button>
               </div>
             </form>
@@ -307,3 +307,4 @@ const AdminCategories = () => {
 }
 
 export default AdminCategories
+

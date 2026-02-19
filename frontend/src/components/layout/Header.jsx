@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FiSearch, FiUser, FiHeart, FiShoppingBag, FiMenu, FiX, FiSettings } from 'react-icons/fi'
 import { useCartStore, useWishlistStore, useAuthStore, useUIStore } from '../../store'
@@ -27,14 +27,14 @@ const Header = () => {
   }
 
   const categories = [
-    { name: 'هدايا عيد الميلاد', slug: 'birthday-gifts' },
-    { name: 'هدايا الزفاف', slug: 'wedding-gifts' },
-    { name: 'باقات الورد', slug: 'flower-bouquets' },
-    { name: 'الشوكولاتة', slug: 'chocolates-sweets' },
-    { name: 'العطور', slug: 'perfumes' },
-    { name: 'الساعات', slug: 'watches-accessories' },
-    { name: 'هدايا شخصية', slug: 'personalized-gifts' },
-    { name: 'هدايا الأطفال', slug: 'kids-gifts' },
+    { name: '????? ??? ???????', slug: 'birthday-gifts' },
+    { name: '????? ??????', slug: 'wedding-gifts' },
+    { name: '????? ?????', slug: 'flower-bouquets' },
+    { name: '??????????', slug: 'chocolates-sweets' },
+    { name: '??????', slug: 'perfumes' },
+    { name: '???????', slug: 'watches-accessories' },
+    { name: '????? ?????', slug: 'personalized-gifts' },
+    { name: '????? ???????', slug: 'kids-gifts' },
   ]
 
   return (
@@ -42,11 +42,11 @@ const Header = () => {
       {/* Top Bar */}
       <div className="bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white text-sm py-2">
         <div className="container-custom flex justify-between items-center">
-          <p>توصيل مجاني للطلبات أكثر من 500 جنيه 🎁</p>
+          <p>????? ????? ??????? ???? ?? 500 ???? ??</p>
           <div className="hidden md:flex gap-4">
-            <Link to="/track-order" className="hover:underline">تتبع طلبك</Link>
-            <Link to="/stores" className="hover:underline">فروعنا</Link>
-            <Link to="/contact" className="hover:underline">اتصل بنا</Link>
+            <Link to="/track-order" className="hover:underline">???? ????</Link>
+            <Link to="/stores" className="hover:underline">??????</Link>
+            <Link to="/contact" className="hover:underline">???? ???</Link>
           </div>
         </div>
       </div>
@@ -78,7 +78,7 @@ const Header = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="ابحث عن هدية..."
+                placeholder="???? ?? ????..."
                 className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
               <button 
@@ -105,11 +105,11 @@ const Header = () => {
               <Link 
                 to="/admin" 
                 className="p-2 hover:bg-gray-100 rounded-lg hidden sm:flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
-                title="لوحة التحكم"
+                title="???? ??????"
               >
                 <FiSettings size={22} />
                 <span className="hidden lg:inline text-sm font-medium">
-                  لوحة التحكم
+                  ???? ??????
                 </span>
               </Link>
             )}
@@ -121,7 +121,7 @@ const Header = () => {
             >
               <FiUser size={22} />
               <span className="hidden lg:inline text-sm">
-                {isAuthenticated ? 'حسابي' : 'تسجيل الدخول'}
+                {isAuthenticated ? '?????' : '????? ??????'}
               </span>
             </Link>
 
@@ -158,7 +158,7 @@ const Header = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="ابحث عن هدية..."
+                placeholder="???? ?? ????..."
                 className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
                 autoFocus
               />
@@ -182,7 +182,7 @@ const Header = () => {
                 to="/products" 
                 className="text-gray-700 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium transition-colors"
               >
-                جميع المنتجات
+                ???? ????????
               </Link>
             </li>
             {categories.map((category) => (
@@ -200,8 +200,8 @@ const Header = () => {
                 to="/gift-finder" 
                 className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-700 font-medium flex items-center gap-1"
               >
-                <span>🎯</span>
-                اعثر على الهدية المثالية
+                <span>??</span>
+                ???? ??? ?????? ????????
               </Link>
             </li>
           </ul>
@@ -212,3 +212,4 @@ const Header = () => {
 }
 
 export default Header
+

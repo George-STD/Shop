@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -51,11 +51,11 @@ const ProductPage = () => {
 
   const handleAddToCart = () => {
     if (product.sizes?.length > 0 && !selectedSize) {
-      toast.error('الرجاء اختيار المقاس')
+      toast.error('?????? ?????? ??????')
       return
     }
     if (product.colors?.length > 0 && !selectedColor) {
-      toast.error('الرجاء اختيار اللون')
+      toast.error('?????? ?????? ?????')
       return
     }
 
@@ -65,16 +65,16 @@ const ProductPage = () => {
       addons: selectedAddons,
       giftWrap: { enabled: giftWrap }
     })
-    toast.success('تمت الإضافة إلى السلة')
+    toast.success('??? ??????? ??? ?????')
   }
 
   const handleToggleWishlist = () => {
     if (inWishlist) {
       removeFromWishlist(product._id)
-      toast.success('تمت الإزالة من قائمة الأمنيات')
+      toast.success('??? ??????? ?? ????? ????????')
     } else {
       addToWishlist(product)
-      toast.success('تمت الإضافة إلى قائمة الأمنيات')
+      toast.success('??? ??????? ??? ????? ????????')
     }
   }
 
@@ -87,7 +87,7 @@ const ProductPage = () => {
       })
     } else {
       navigator.clipboard.writeText(window.location.href)
-      toast.success('تم نسخ الرابط')
+      toast.success('?? ??? ??????')
     }
   }
 
@@ -128,10 +128,10 @@ const ProductPage = () => {
   if (!product) {
     return (
       <div className="container-custom py-16 text-center">
-        <div className="text-6xl mb-4">😔</div>
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">المنتج غير موجود</h1>
+        <div className="text-6xl mb-4">??</div>
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">?????? ??? ?????</h1>
         <Link to="/products" className="btn-primary">
-          تصفح المنتجات
+          ???? ????????
         </Link>
       </div>
     )
@@ -166,7 +166,7 @@ const ProductPage = () => {
             "description": product.description,
             "image": product.images?.map(img => img.url),
             "sku": product.sku,
-            "brand": { "@type": "Brand", "name": "هدايا" },
+            "brand": { "@type": "Brand", "name": "?????" },
             "offers": {
               "@type": "Offer",
               "price": product.price,
@@ -187,9 +187,9 @@ const ProductPage = () => {
         <div className="bg-white border-b">
           <div className="container-custom py-4">
             <nav className="flex items-center gap-2 text-sm">
-              <Link to="/" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">الرئيسية</Link>
+              <Link to="/" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">????????</Link>
               <span className="text-gray-400">/</span>
-              <Link to="/products" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">المنتجات</Link>
+              <Link to="/products" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">????????</Link>
               {product.category && (
                 <>
                   <span className="text-gray-400">/</span>
@@ -268,8 +268,8 @@ const ProductPage = () => {
                     {product.category.name}
                   </Link>
                 )}
-                {product.isNew && <span className="badge badge-new">جديد</span>}
-                {product.isBestseller && <span className="badge badge-bestseller">الأكثر مبيعاً</span>}
+                {product.isNew && <span className="badge badge-new">????</span>}
+                {product.isBestseller && <span className="badge badge-bestseller">?????? ??????</span>}
               </div>
 
               {/* Name */}
@@ -281,12 +281,12 @@ const ProductPage = () => {
                   <div className="flex text-yellow-400 text-lg rating-stars">
                     {[...Array(5)].map((_, i) => (
                       <span key={i}>
-                        {i < Math.round(product.rating.average) ? '★' : '☆'}
+                        {i < Math.round(product.rating.average) ? '?' : '?'}
                       </span>
                     ))}
                   </div>
                   <span className="text-gray-600">
-                    {product.rating.average} ({product.rating.count} تقييم)
+                    {product.rating.average} ({product.rating.count} ?????)
                   </span>
                 </div>
               )}
@@ -294,14 +294,14 @@ const ProductPage = () => {
               {/* Price */}
               <div className="flex items-center gap-4">
                 <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                  {product.price} ج.م
+                  {product.price} ?.?
                 </span>
                 {product.oldPrice && (
                   <>
                     <span className="text-xl text-gray-400 line-through">
-                      {product.oldPrice} ج.م
+                      {product.oldPrice} ?.?
                     </span>
-                    <span className="badge badge-sale">وفر {discount}%</span>
+                    <span className="badge badge-sale">??? {discount}%</span>
                   </>
                 )}
               </div>
@@ -312,7 +312,7 @@ const ProductPage = () => {
               {/* Sizes */}
               {product.sizes?.length > 0 && (
                 <div>
-                  <h3 className="font-medium text-gray-800 mb-3">المقاس:</h3>
+                  <h3 className="font-medium text-gray-800 mb-3">??????:</h3>
                   <div className="flex flex-wrap gap-2">
                     {product.sizes.map((size) => (
                       <button
@@ -335,7 +335,7 @@ const ProductPage = () => {
               {product.colors?.length > 0 && (
                 <div>
                   <h3 className="font-medium text-gray-800 mb-3">
-                    اللون: {selectedColor && <span className="text-gray-500">{selectedColor}</span>}
+                    ?????: {selectedColor && <span className="text-gray-500">{selectedColor}</span>}
                   </h3>
                   <div className="flex flex-wrap gap-3">
                     {product.colors.map((color) => (
@@ -362,7 +362,7 @@ const ProductPage = () => {
               {/* Addons */}
               {product.addons?.length > 0 && (
                 <div>
-                  <h3 className="font-medium text-gray-800 mb-3">إضافات:</h3>
+                  <h3 className="font-medium text-gray-800 mb-3">??????:</h3>
                   <div className="space-y-2">
                     {product.addons.map((addon) => (
                       <label
@@ -382,7 +382,7 @@ const ProductPage = () => {
                           />
                           <span>{addon.name}</span>
                         </div>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium">+{addon.price} ج.م</span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium">+{addon.price} ?.?</span>
                       </label>
                     ))}
                   </div>
@@ -401,11 +401,11 @@ const ProductPage = () => {
                     className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
                   />
                   <div>
-                    <span className="font-medium">🎁 تغليف هدايا</span>
-                    <p className="text-sm text-gray-500">تغليف أنيق مع بطاقة معايدة</p>
+                    <span className="font-medium">?? ????? ?????</span>
+                    <p className="text-sm text-gray-500">????? ???? ?? ????? ??????</p>
                   </div>
                 </div>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium">+25 ج.م</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium">+25 ?.?</span>
               </label>
 
               {/* Quantity & Add to Cart */}
@@ -433,7 +433,7 @@ const ProductPage = () => {
                   disabled={product.stock === 0}
                   className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {product.stock === 0 ? 'نفذت الكمية' : `أضف للسلة - ${calculateTotal()} ج.م`}
+                  {product.stock === 0 ? '???? ??????' : `??? ????? - ${calculateTotal()} ?.?`}
                 </button>
               </div>
 
@@ -444,14 +444,14 @@ const ProductPage = () => {
                   className={`flex items-center gap-2 ${inWishlist ? 'text-red-500' : 'text-gray-600'} hover:text-red-500`}
                 >
                   <FiHeart className={inWishlist ? 'fill-current' : ''} />
-                  {inWishlist ? 'في قائمة الأمنيات' : 'أضف للأمنيات'}
+                  {inWishlist ? '?? ????? ????????' : '??? ????????'}
                 </button>
                 <button
                   onClick={handleShare}
                   className="flex items-center gap-2 text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
                 >
                   <FiShare2 />
-                  مشاركة
+                  ??????
                 </button>
               </div>
 
@@ -459,15 +459,15 @@ const ProductPage = () => {
               <div className="grid grid-cols-3 gap-4 pt-6 border-t">
                 <div className="text-center">
                   <FiTruck className="mx-auto text-2xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2" />
-                  <span className="text-sm text-gray-600">توصيل سريع</span>
+                  <span className="text-sm text-gray-600">????? ????</span>
                 </div>
                 <div className="text-center">
                   <FiRotateCcw className="mx-auto text-2xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2" />
-                  <span className="text-sm text-gray-600">إرجاع خلال 14 يوم</span>
+                  <span className="text-sm text-gray-600">????? ???? 14 ???</span>
                 </div>
                 <div className="text-center">
                   <FiShield className="mx-auto text-2xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2" />
-                  <span className="text-sm text-gray-600">دفع آمن</span>
+                  <span className="text-sm text-gray-600">??? ???</span>
                 </div>
               </div>
             </div>
@@ -486,7 +486,7 @@ const ProductPage = () => {
                       : 'text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600'
                   }`}
                 >
-                  {tab === 'description' ? 'الوصف' : `التقييمات (${reviewsData?.pagination?.total || 0})`}
+                  {tab === 'description' ? '?????' : `????????? (${reviewsData?.pagination?.total || 0})`}
                 </button>
               ))}
             </div>
@@ -498,7 +498,7 @@ const ProductPage = () => {
                   
                   {product.tags?.length > 0 && (
                     <div className="mt-6">
-                      <h3 className="font-bold text-gray-800 mb-3">الكلمات المفتاحية:</h3>
+                      <h3 className="font-bold text-gray-800 mb-3">??????? ?????????:</h3>
                       <div className="flex flex-wrap gap-2">
                         {product.tags.map((tag) => (
                           <Link
@@ -526,13 +526,13 @@ const ProductPage = () => {
                                 {review.isVerifiedPurchase && (
                                   <span className="text-green-600 text-sm flex items-center gap-1">
                                     <FiCheck size={14} />
-                                    مشتري معتمد
+                                    ????? ?????
                                   </span>
                                 )}
                               </div>
                               <div className="flex text-yellow-400 text-sm mt-1 rating-stars">
                                 {[...Array(5)].map((_, i) => (
-                                  <span key={i}>{i < review.rating ? '★' : '☆'}</span>
+                                  <span key={i}>{i < review.rating ? '?' : '?'}</span>
                                 ))}
                               </div>
                             </div>
@@ -549,12 +549,12 @@ const ProductPage = () => {
                     </div>
                   ) : (
                     <div className="text-center py-12">
-                      <div className="text-5xl mb-4">⭐</div>
+                      <div className="text-5xl mb-4">?</div>
                       <h3 className="text-lg font-medium text-gray-800 mb-2">
-                        لا توجد تقييمات بعد
+                        ?? ???? ??????? ???
                       </h3>
                       <p className="text-gray-600">
-                        كن أول من يقيم هذا المنتج
+                        ?? ??? ?? ???? ??? ??????
                       </p>
                     </div>
                   )}
@@ -566,7 +566,7 @@ const ProductPage = () => {
           {/* Related Products */}
           {relatedProducts?.length > 0 && (
             <div className="mt-12">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">منتجات ذات صلة</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">?????? ??? ???</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {relatedProducts.map((product) => (
                   <ProductCard key={product._id} product={product} />
@@ -581,3 +581,4 @@ const ProductPage = () => {
 }
 
 export default ProductPage
+

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { FiSearch, FiEdit2, FiTrash2, FiUserCheck, FiUserX, FiShield, FiUser } from 'react-icons/fi'
 import { adminAPI } from '../../services/api'
@@ -38,20 +38,20 @@ const AdminUsers = () => {
   })
 
   const handleToggleStatus = (user) => {
-    if (window.confirm(`هل تريد ${user.isActive ? 'تعطيل' : 'تفعيل'} حساب ${user.firstName}؟`)) {
+    if (window.confirm(`?? ???? ${user.isActive ? '?????' : '?????'} ???? ${user.firstName}?`)) {
       updateMutation.mutate({ id: user._id, data: { isActive: !user.isActive } })
     }
   }
 
   const handleToggleRole = (user) => {
     const newRole = user.role === 'admin' ? 'user' : 'admin'
-    if (window.confirm(`هل تريد ${newRole === 'admin' ? 'ترقية' : 'خفض صلاحيات'} ${user.firstName} ${newRole === 'admin' ? 'لمدير' : 'لمستخدم عادي'}؟`)) {
+    if (window.confirm(`?? ???? ${newRole === 'admin' ? '?????' : '??? ???????'} ${user.firstName} ${newRole === 'admin' ? '?????' : '??????? ????'}?`)) {
       updateMutation.mutate({ id: user._id, data: { role: newRole } })
     }
   }
 
   const handleDelete = (user) => {
-    if (window.confirm(`هل تريد حذف حساب ${user.firstName}؟ سيتم تعطيل الحساب فقط.`)) {
+    if (window.confirm(`?? ???? ??? ???? ${user.firstName}? ???? ????? ?????? ???.`)) {
       deleteMutation.mutate(user._id)
     }
   }
@@ -67,7 +67,7 @@ const AdminUsers = () => {
               <FiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="بحث بالاسم، البريد، أو الهاتف..."
+                placeholder="??? ??????? ??????? ?? ??????..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pr-10 pl-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -81,9 +81,9 @@ const AdminUsers = () => {
             onChange={(e) => setRoleFilter(e.target.value)}
             className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
           >
-            <option value="">جميع الأدوار</option>
-            <option value="user">مستخدم</option>
-            <option value="admin">مدير</option>
+            <option value="">???? ???????</option>
+            <option value="user">??????</option>
+            <option value="admin">????</option>
           </select>
 
           {/* Status Filter */}
@@ -92,9 +92,9 @@ const AdminUsers = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
           >
-            <option value="">جميع الحالات</option>
-            <option value="true">نشط</option>
-            <option value="false">معطل</option>
+            <option value="">???? ???????</option>
+            <option value="true">???</option>
+            <option value="false">????</option>
           </select>
         </div>
       </div>
@@ -111,13 +111,13 @@ const AdminUsers = () => {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">المستخدم</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">البريد الإلكتروني</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">الهاتف</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">الدور</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">الحالة</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">تاريخ التسجيل</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">الإجراءات</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">????????</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">?????? ??????????</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">??????</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">?????</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">??????</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">????? ???????</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">?????????</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -140,7 +140,7 @@ const AdminUsers = () => {
                             : 'bg-gray-100 text-gray-700'
                         }`}>
                           {user.role === 'admin' ? <FiShield className="w-3 h-3" /> : <FiUser className="w-3 h-3" />}
-                          {user.role === 'admin' ? 'مدير' : 'مستخدم'}
+                          {user.role === 'admin' ? '????' : '??????'}
                         </span>
                       </td>
                       <td className="py-4 px-6">
@@ -149,7 +149,7 @@ const AdminUsers = () => {
                             ? 'bg-green-100 text-green-700' 
                             : 'bg-red-100 text-red-700'
                         }`}>
-                          {user.isActive ? 'نشط' : 'معطل'}
+                          {user.isActive ? '???' : '????'}
                         </span>
                       </td>
                       <td className="py-4 px-6 text-gray-600">
@@ -160,7 +160,7 @@ const AdminUsers = () => {
                           <button
                             onClick={() => handleToggleRole(user)}
                             className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
-                            title={user.role === 'admin' ? 'إزالة صلاحيات المدير' : 'ترقية لمدير'}
+                            title={user.role === 'admin' ? '????? ??????? ??????' : '????? ?????'}
                           >
                             <FiShield className="w-4 h-4" />
                           </button>
@@ -171,14 +171,14 @@ const AdminUsers = () => {
                                 ? 'text-orange-600 hover:bg-orange-50' 
                                 : 'text-green-600 hover:bg-green-50'
                             }`}
-                            title={user.isActive ? 'تعطيل الحساب' : 'تفعيل الحساب'}
+                            title={user.isActive ? '????? ??????' : '????? ??????'}
                           >
                             {user.isActive ? <FiUserX className="w-4 h-4" /> : <FiUserCheck className="w-4 h-4" />}
                           </button>
                           <button
                             onClick={() => handleDelete(user)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                            title="حذف"
+                            title="???"
                           >
                             <FiTrash2 className="w-4 h-4" />
                           </button>
@@ -194,7 +194,7 @@ const AdminUsers = () => {
             {data?.pagination && (
               <div className="p-4 border-t flex items-center justify-between">
                 <p className="text-gray-600">
-                  عرض {data.data.length} من {data.pagination.total} مستخدم
+                  ??? {data.data.length} ?? {data.pagination.total} ??????
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -202,17 +202,17 @@ const AdminUsers = () => {
                     disabled={page === 1}
                     className="px-4 py-2 border rounded-lg disabled:opacity-50"
                   >
-                    السابق
+                    ??????
                   </button>
                   <span className="px-4 py-2">
-                    صفحة {page} من {data.pagination.pages}
+                    ???? {page} ?? {data.pagination.pages}
                   </span>
                   <button
                     onClick={() => setPage(p => Math.min(data.pagination.pages, p + 1))}
                     disabled={page >= data.pagination.pages}
                     className="px-4 py-2 border rounded-lg disabled:opacity-50"
                   >
-                    التالي
+                    ??????
                   </button>
                 </div>
               </div>
@@ -225,3 +225,4 @@ const AdminUsers = () => {
 }
 
 export default AdminUsers
+

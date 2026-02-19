@@ -1,4 +1,4 @@
-﻿import { Helmet } from 'react-helmet-async'
+import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { FiHeart, FiTrash2, FiShoppingCart } from 'react-icons/fi'
 import { useWishlistStore, useCartStore } from '../store'
@@ -15,8 +15,8 @@ const WishlistPage = () => {
   return (
     <>
       <Helmet>
-        <title>قائمة الأمنيات | For You</title>
-        <meta name="description" content="قائمة أمنياتك - احفظ منتجاتك المفضلة واشتريها لاحقاً" />
+        <title>????? ???????? | For You</title>
+        <meta name="description" content="????? ??????? - ???? ??????? ??????? ???????? ??????" />
       </Helmet>
 
       <div className="min-h-screen bg-gray-50 py-8">
@@ -24,8 +24,8 @@ const WishlistPage = () => {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">قائمة الأمنيات</h1>
-              <p className="text-gray-500 mt-1">{items.length} منتج</p>
+              <h1 className="text-3xl font-bold text-gray-800">????? ????????</h1>
+              <p className="text-gray-500 mt-1">{items.length} ????</p>
             </div>
             {items.length > 0 && (
               <button
@@ -33,7 +33,7 @@ const WishlistPage = () => {
                 className="text-red-500 hover:text-red-600 flex items-center gap-2"
               >
                 <FiTrash2 />
-                مسح الكل
+                ??? ????
               </button>
             )}
           </div>
@@ -41,10 +41,10 @@ const WishlistPage = () => {
           {items.length === 0 ? (
             <div className="text-center py-16">
               <FiHeart className="text-6xl text-gray-300 mx-auto mb-4" />
-              <h2 className="text-xl font-bold text-gray-800 mb-2">قائمة الأمنيات فارغة</h2>
-              <p className="text-gray-500 mb-6">أضف منتجاتك المفضلة واحتفظ بها لوقت لاحق</p>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">????? ???????? ?????</h2>
+              <p className="text-gray-500 mb-6">??? ??????? ??????? ?????? ??? ???? ????</p>
               <Link to="/products" className="btn-primary">
-                تصفح المنتجات
+                ???? ????????
               </Link>
             </div>
           ) : (
@@ -76,11 +76,11 @@ const WishlistPage = () => {
                       <div className="flex items-center gap-2">
                         {product.comparePrice && (
                           <span className="text-gray-400 line-through text-sm">
-                            {product.comparePrice} ج.م
+                            {product.comparePrice} ?.?
                           </span>
                         )}
                         <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                          {product.price} ج.م
+                          {product.price} ?.?
                         </span>
                       </div>
                     </div>
@@ -90,7 +90,7 @@ const WishlistPage = () => {
                       className="mt-4 w-full btn-primary flex items-center justify-center gap-2"
                     >
                       <FiShoppingCart />
-                      أضف للسلة
+                      ??? ?????
                     </button>
                   </div>
                 </div>
@@ -104,3 +104,4 @@ const WishlistPage = () => {
 }
 
 export default WishlistPage
+

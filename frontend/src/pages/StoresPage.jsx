@@ -1,57 +1,57 @@
-﻿import { Helmet } from 'react-helmet-async'
+import { Helmet } from 'react-helmet-async'
 import { FiMapPin, FiPhone, FiClock, FiNavigation } from 'react-icons/fi'
 
 const stores = [
   {
     id: 1,
-    name: 'فرع القاهرة - التجمع الخامس',
-    address: 'شارع التسعين، التجمع الخامس، كايرو فيستيفال سيتي',
-    city: 'القاهرة',
+    name: '??? ??????? - ?????? ??????',
+    address: '???? ???????? ?????? ??????? ????? ???????? ????',
+    city: '???????',
     phone: '+20 2 2345 6789',
-    hours: 'السبت - الخميس: 10ص - 10م | الجمعة: 2م - 10م',
+    hours: '????? - ??????: 10? - 10? | ??????: 2? - 10?',
     mapUrl: 'https://goo.gl/maps/xyz',
     image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600'
   },
   {
     id: 2,
-    name: 'فرع القاهرة - مدينة نصر',
-    address: 'شارع عباس العقاد، سيتي ستارز مول',
-    city: 'القاهرة',
+    name: '??? ??????? - ????? ???',
+    address: '???? ???? ??????? ???? ????? ???',
+    city: '???????',
     phone: '+20 2 2456 7890',
-    hours: 'السبت - الخميس: 10ص - 10م | الجمعة: 2م - 10م',
+    hours: '????? - ??????: 10? - 10? | ??????: 2? - 10?',
     mapUrl: 'https://goo.gl/maps/xyz',
     image: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=600'
   },
   {
     id: 3,
-    name: 'فرع الإسكندرية - سيتي سنتر',
-    address: 'طريق الكورنيش، سيتي سنتر الإسكندرية',
-    city: 'الإسكندرية',
+    name: '??? ?????????? - ???? ????',
+    address: '???? ????????? ???? ???? ??????????',
+    city: '??????????',
     phone: '+20 3 345 6789',
-    hours: 'السبت - الخميس: 10ص - 11م | الجمعة: 2م - 11م',
+    hours: '????? - ??????: 10? - 11? | ??????: 2? - 11?',
     mapUrl: 'https://goo.gl/maps/xyz',
     image: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600'
   },
   {
     id: 4,
-    name: 'فرع الجيزة - مول مصر',
-    address: 'مول مصر، 6 أكتوبر',
-    city: 'الجيزة',
+    name: '??? ?????? - ??? ???',
+    address: '??? ???? 6 ??????',
+    city: '??????',
     phone: '+20 2 3456 7890',
-    hours: 'السبت - الخميس: 10ص - 10م | الجمعة: 4م - 10م',
+    hours: '????? - ??????: 10? - 10? | ??????: 4? - 10?',
     mapUrl: 'https://goo.gl/maps/xyz',
     image: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=600'
   },
 ]
 
-const cities = ['الكل', 'القاهرة', 'الإسكندرية', 'الجيزة']
+const cities = ['????', '???????', '??????????', '??????']
 
 const StoresPage = () => {
   return (
     <>
       <Helmet>
-        <title>فروعنا | For You - اعثر على أقرب فرع إليك</title>
-        <meta name="description" content="اعثر على أقرب فرع هدايا إليك. فروعنا في القاهرة، الإسكندرية، الجيزة. زورنا واستمتع بتجربة تسوق فريدة." />
+        <title>?????? | For You - ???? ??? ???? ??? ????</title>
+        <meta name="description" content="???? ??? ???? ??? ????? ????. ?????? ?? ???????? ??????????? ??????. ????? ??????? ?????? ???? ?????." />
       </Helmet>
 
       <div className="min-h-screen bg-gray-50">
@@ -59,8 +59,8 @@ const StoresPage = () => {
         <div className="bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white py-16">
           <div className="container-custom text-center">
             <FiMapPin className="text-5xl mx-auto mb-4" />
-            <h1 className="text-4xl font-bold mb-4">فروعنا</h1>
-            <p className="text-xl opacity-90">زورنا في أحد فروعنا المنتشرة في مصر</p>
+            <h1 className="text-4xl font-bold mb-4">??????</h1>
+            <p className="text-xl opacity-90">????? ?? ??? ?????? ???????? ?? ???</p>
           </div>
         </div>
 
@@ -119,14 +119,14 @@ const StoresPage = () => {
                       className="btn-primary flex-1 flex items-center justify-center gap-2"
                     >
                       <FiNavigation />
-                      الاتجاهات
+                      ?????????
                     </a>
                     <a 
                       href={`tel:${store.phone}`}
                       className="btn-secondary flex-1 flex items-center justify-center gap-2"
                     >
                       <FiPhone />
-                      اتصل بنا
+                      ???? ???
                     </a>
                   </div>
                 </div>
@@ -136,7 +136,7 @@ const StoresPage = () => {
 
           {/* Map Section */}
           <div className="mt-12 bg-white rounded-2xl p-6">
-            <h2 className="text-2xl font-bold mb-6">خريطة الفروع</h2>
+            <h2 className="text-2xl font-bold mb-6">????? ??????</h2>
             <div className="aspect-[16/9] bg-gray-200 rounded-xl overflow-hidden">
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d463878.0368879582!2d46.5!3d24.7!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e2f03890d489399%3A0xba974d1c98e79fd5!2sRiyadh%20Saudi%20Arabia!5e0!3m2!1sen!2ssa!4v1234567890"
@@ -152,9 +152,9 @@ const StoresPage = () => {
 
           {/* CTA */}
           <div className="mt-12 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-8 text-center">
-            <h2 className="text-2xl font-bold mb-2">لا يوجد فرع قريب منك؟</h2>
-            <p className="text-gray-600 mb-6">تسوق أونلاين واستلم طلبك حتى باب بيتك</p>
-            <a href="/products" className="btn-primary inline-block">تسوق الآن</a>
+            <h2 className="text-2xl font-bold mb-2">?? ???? ??? ???? ????</h2>
+            <p className="text-gray-600 mb-6">???? ??????? ?????? ???? ??? ??? ????</p>
+            <a href="/products" className="btn-primary inline-block">???? ????</a>
           </div>
         </div>
       </div>
@@ -163,3 +163,4 @@ const StoresPage = () => {
 }
 
 export default StoresPage
+

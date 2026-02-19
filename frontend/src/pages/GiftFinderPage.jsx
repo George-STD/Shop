@@ -1,44 +1,44 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link, useNavigate } from 'react-router-dom'
 import { FiArrowRight, FiArrowLeft, FiGift, FiHeart, FiDollarSign, FiUser } from 'react-icons/fi'
 
 const occasions = [
-  { id: 'birthday', name: 'عيد ميلاد', icon: '🎂' },
-  { id: 'wedding', name: 'زفاف', icon: '💒' },
-  { id: 'graduation', name: 'تخرج', icon: '🎓' },
-  { id: 'baby', name: 'مولود جديد', icon: '👶' },
-  { id: 'eid', name: 'عيد', icon: '🌙' },
-  { id: 'anniversary', name: 'ذكرى زواج', icon: '💍' },
-  { id: 'thank-you', name: 'شكر وتقدير', icon: '🙏' },
-  { id: 'get-well', name: 'سلامات', icon: '💐' },
+  { id: 'birthday', name: '??? ?????', icon: '??' },
+  { id: 'wedding', name: '????', icon: '??' },
+  { id: 'graduation', name: '????', icon: '??' },
+  { id: 'baby', name: '????? ????', icon: '??' },
+  { id: 'eid', name: '???', icon: '??' },
+  { id: 'anniversary', name: '???? ????', icon: '??' },
+  { id: 'thank-you', name: '??? ??????', icon: '??' },
+  { id: 'get-well', name: '??????', icon: '??' },
 ]
 
 const recipients = [
-  { id: 'her', name: 'لها', icon: '👩' },
-  { id: 'him', name: 'له', icon: '👨' },
-  { id: 'kids', name: 'للأطفال', icon: '👧' },
-  { id: 'family', name: 'للعائلة', icon: '👨‍👩‍👧‍👦' },
-  { id: 'friends', name: 'للأصدقاء', icon: '👥' },
-  { id: 'colleagues', name: 'للزملاء', icon: '💼' },
+  { id: 'her', name: '???', icon: '??' },
+  { id: 'him', name: '??', icon: '??' },
+  { id: 'kids', name: '???????', icon: '??' },
+  { id: 'family', name: '???????', icon: '???????????' },
+  { id: 'friends', name: '????????', icon: '??' },
+  { id: 'colleagues', name: '???????', icon: '??' },
 ]
 
 const priceRanges = [
-  { id: 'under200', name: 'أقل من 200 ج.م', min: 0, max: 200 },
-  { id: '200-500', name: '200 - 500 ج.م', min: 200, max: 500 },
-  { id: '500-1000', name: '500 - 1000 ج.م', min: 500, max: 1000 },
-  { id: 'over1000', name: 'أكثر من 1000 ج.م', min: 1000, max: '' },
+  { id: 'under200', name: '??? ?? 200 ?.?', min: 0, max: 200 },
+  { id: '200-500', name: '200 - 500 ?.?', min: 200, max: 500 },
+  { id: '500-1000', name: '500 - 1000 ?.?', min: 500, max: 1000 },
+  { id: 'over1000', name: '???? ?? 1000 ?.?', min: 1000, max: '' },
 ]
 
 const interests = [
-  { id: 'chocolate', name: 'شوكولاتة', icon: '🍫' },
-  { id: 'flowers', name: 'ورود', icon: '🌹' },
-  { id: 'perfume', name: 'عطور', icon: '🧴' },
-  { id: 'jewelry', name: 'مجوهرات', icon: '💎' },
-  { id: 'home', name: 'ديكور منزلي', icon: '🏠' },
-  { id: 'tech', name: 'تقنية', icon: '📱' },
-  { id: 'books', name: 'كتب', icon: '📚' },
-  { id: 'wellness', name: 'عناية وجمال', icon: '💆' },
+  { id: 'chocolate', name: '????????', icon: '??' },
+  { id: 'flowers', name: '????', icon: '??' },
+  { id: 'perfume', name: '????', icon: '??' },
+  { id: 'jewelry', name: '???????', icon: '??' },
+  { id: 'home', name: '????? ?????', icon: '??' },
+  { id: 'tech', name: '?????', icon: '??' },
+  { id: 'books', name: '???', icon: '??' },
+  { id: 'wellness', name: '????? ?????', icon: '??' },
 ]
 
 const GiftFinderPage = () => {
@@ -95,8 +95,8 @@ const GiftFinderPage = () => {
           <div>
             <div className="text-center mb-8">
               <FiGift className="text-5xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">ما هي المناسبة؟</h2>
-              <p className="text-gray-500">اختر المناسبة لنساعدك في اختيار الهدية المثالية</p>
+              <h2 className="text-2xl font-bold mb-2">?? ?? ?????????</h2>
+              <p className="text-gray-500">???? ???????? ??????? ?? ?????? ?????? ????????</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {occasions.map((item) => (
@@ -122,8 +122,8 @@ const GiftFinderPage = () => {
           <div>
             <div className="text-center mb-8">
               <FiUser className="text-5xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">لمن الهدية؟</h2>
-              <p className="text-gray-500">حدد الشخص المراد إهداؤه</p>
+              <h2 className="text-2xl font-bold mb-2">??? ???????</h2>
+              <p className="text-gray-500">??? ????? ?????? ??????</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
               {recipients.map((item) => (
@@ -149,8 +149,8 @@ const GiftFinderPage = () => {
           <div>
             <div className="text-center mb-8">
               <FiDollarSign className="text-5xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">ما ميزانيتك؟</h2>
-              <p className="text-gray-500">حدد نطاق السعر المناسب</p>
+              <h2 className="text-2xl font-bold mb-2">?? ?????????</h2>
+              <p className="text-gray-500">??? ???? ????? ???????</p>
             </div>
             <div className="grid grid-cols-2 gap-4 max-w-xl mx-auto">
               {priceRanges.map((item) => (
@@ -175,8 +175,8 @@ const GiftFinderPage = () => {
           <div>
             <div className="text-center mb-8">
               <FiHeart className="text-5xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">ما اهتماماته؟</h2>
-              <p className="text-gray-500">اختر اهتمام واحد أو أكثر</p>
+              <h2 className="text-2xl font-bold mb-2">?? ??????????</h2>
+              <p className="text-gray-500">???? ?????? ???? ?? ????</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {interests.map((item) => (
@@ -205,8 +205,8 @@ const GiftFinderPage = () => {
   return (
     <>
       <Helmet>
-        <title>باحث الهدايا | For You - اعثر على الهدية المثالية</title>
-        <meta name="description" content="استخدم باحث الهدايا الذكي للعثور على الهدية المثالية لأي مناسبة. أجب على بعض الأسئلة واحصل على توصيات مخصصة." />
+        <title>???? ??????? | For You - ???? ??? ?????? ????????</title>
+        <meta name="description" content="?????? ???? ??????? ????? ?????? ??? ?????? ???????? ??? ??????. ??? ??? ??? ??????? ????? ??? ?????? ?????." />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-b from-purple-50 via-pink-50 to-white py-12">
@@ -247,11 +247,11 @@ const GiftFinderPage = () => {
                   className="flex items-center gap-2 text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
                 >
                   <FiArrowRight />
-                  السابق
+                  ??????
                 </button>
               ) : (
                 <Link to="/" className="text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                  إلغاء
+                  ?????
                 </Link>
               )}
 
@@ -260,7 +260,7 @@ const GiftFinderPage = () => {
                 disabled={!canProceed()}
                 className={`btn-primary flex items-center gap-2 ${!canProceed() && 'opacity-50 cursor-not-allowed'}`}
               >
-                {step === 4 ? 'عرض النتائج' : 'التالي'}
+                {step === 4 ? '??? ???????' : '??????'}
                 <FiArrowLeft />
               </button>
             </div>
@@ -272,3 +272,4 @@ const GiftFinderPage = () => {
 }
 
 export default GiftFinderPage
+

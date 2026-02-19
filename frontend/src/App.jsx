@@ -1,4 +1,4 @@
-﻿import { Routes, Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import Layout from './components/layout/Layout'
 
 // Pages
@@ -70,3 +70,4 @@ function App() {
 }
 
 export default App
+

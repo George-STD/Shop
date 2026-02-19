@@ -1,4 +1,4 @@
-﻿import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 const OccasionCard = ({ name, icon, color }) => {
   return (
@@ -15,3 +15,4 @@ const OccasionCard = ({ name, icon, color }) => {
 }
 
 export default OccasionCard
+

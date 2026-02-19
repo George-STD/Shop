@@ -17,3 +17,4 @@ export { default as StoresPage } from './StoresPage'
 export { default as PrivacyPage } from './PrivacyPage'
 export { default as TermsPage } from './TermsPage'
 export { default as NotFoundPage } from './NotFoundPage'
+

@@ -1,4 +1,4 @@
-﻿import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { FiHeart, FiShoppingBag, FiEye } from 'react-icons/fi'
 import { useCartStore, useWishlistStore } from '../../store'
 import toast from 'react-hot-toast'
@@ -12,17 +12,17 @@ const ProductCard = ({ product }) => {
   const handleAddToCart = (e) => {
     e.preventDefault()
     addItem(product, 1)
-    toast.success('تمت الإضافة إلى السلة')
+    toast.success('??? ??????? ??? ?????')
   }
   
   const handleToggleWishlist = (e) => {
     e.preventDefault()
     if (inWishlist) {
       removeFromWishlist(product._id)
-      toast.success('تمت الإزالة من قائمة الأمنيات')
+      toast.success('??? ??????? ?? ????? ????????')
     } else {
       addToWishlist(product)
-      toast.success('تمت الإضافة إلى قائمة الأمنيات')
+      toast.success('??? ??????? ??? ????? ????????')
     }
   }
 
@@ -49,10 +49,10 @@ const ProductCard = ({ product }) => {
             <span className="badge badge-sale">-{discount}%</span>
           )}
           {product.isNew && (
-            <span className="badge badge-new">جديد</span>
+            <span className="badge badge-new">????</span>
           )}
           {product.isBestseller && (
-            <span className="badge badge-bestseller">الأكثر مبيعاً</span>
+            <span className="badge badge-bestseller">?????? ??????</span>
           )}
         </div>
         
@@ -61,21 +61,21 @@ const ProductCard = ({ product }) => {
           <button 
             onClick={handleToggleWishlist}
             className={`quick-action-btn ${inWishlist ? 'bg-red-500 text-white' : ''}`}
-            title={inWishlist ? 'إزالة من الأمنيات' : 'أضف للأمنيات'}
+            title={inWishlist ? '????? ?? ????????' : '??? ????????'}
           >
             <FiHeart className={inWishlist ? 'fill-current' : ''} />
           </button>
           <Link 
             to={`/product/${product.slug}`}
             className="quick-action-btn"
-            title="عرض سريع"
+            title="??? ????"
           >
             <FiEye />
           </Link>
           <button 
             onClick={handleAddToCart}
             className="quick-action-btn"
-            title="أضف للسلة"
+            title="??? ?????"
           >
             <FiShoppingBag />
           </button>
@@ -110,7 +110,7 @@ const ProductCard = ({ product }) => {
             <div className="flex text-yellow-400">
               {[...Array(5)].map((_, i) => (
                 <span key={i}>
-                  {i < Math.round(product.rating.average) ? '★' : '☆'}
+                  {i < Math.round(product.rating.average) ? '?' : '?'}
                 </span>
               ))}
             </div>
@@ -123,11 +123,11 @@ const ProductCard = ({ product }) => {
         {/* Price */}
         <div className="flex items-center gap-2 mt-3">
           <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-            {product.price} ج.م
+            {product.price} ?.?
           </span>
           {product.oldPrice && (
             <span className="text-sm text-gray-400 line-through">
-              {product.oldPrice} ج.م
+              {product.oldPrice} ?.?
             </span>
           )}
         </div>
@@ -137,7 +137,7 @@ const ProductCard = ({ product }) => {
           onClick={handleAddToCart}
           className="w-full mt-4 bg-gray-100 text-gray-800 py-2 rounded-lg font-medium hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 hover:text-white transition-colors md:hidden"
         >
-          أضف للسلة
+          ??? ?????
         </button>
       </div>
     </div>
@@ -145,3 +145,4 @@ const ProductCard = ({ product }) => {
 }
 
 export default ProductCard
+
