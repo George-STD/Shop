@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { FiSearch, FiEye, FiCheck, FiX, FiTruck, FiPackage } from 'react-icons/fi'
@@ -30,12 +30,12 @@ const AdminOrders = () => {
   })
 
   const statusLabels = {
-    pending: '??? ????????',
-    confirmed: '????',
-    processing: '??? ???????',
-    shipped: '?? ?????',
-    delivered: '?? ???????',
-    cancelled: '????'
+    pending: 'قيد الانتظار',
+    confirmed: 'مؤكد',
+    processing: 'قيد التجهيز',
+    shipped: 'تم الشحن',
+    delivered: 'تم التوصيل',
+    cancelled: 'ملغي'
   }
 
   const statusColors = {
@@ -58,7 +58,7 @@ const AdminOrders = () => {
   }
 
   const handleStatusChange = (orderId, newStatus) => {
-    if (window.confirm(`?? ???? ????? ???? ????? ??? "${statusLabels[newStatus]}"?`)) {
+    if (window.confirm(`هل تريد تغيير حالة الطلب إلى "${statusLabels[newStatus]}"؟`)) {
       statusMutation.mutate({ id: orderId, status: newStatus })
     }
   }
@@ -73,7 +73,7 @@ const AdminOrders = () => {
             <FiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="??? ???? ?????..."
+              placeholder="بحث برقم الطلب..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pr-10 pl-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
@@ -86,7 +86,7 @@ const AdminOrders = () => {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
           >
-            <option value="">???? ???????</option>
+            <option value="">جميع الحالات</option>
             {statusOptions.map(status => (
               <option key={status} value={status}>{statusLabels[status]}</option>
             ))}
@@ -106,12 +106,12 @@ const AdminOrders = () => {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">??? ?????</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">??????</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">??????</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">??????</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">???????</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">?????????</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">رقم الطلب</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">العميل</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">المبلغ</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">الحالة</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">التاريخ</th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -153,7 +153,7 @@ const AdminOrders = () => {
                         <button
                           onClick={() => setSelectedOrder(order)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                          title="??? ????????"
+                          title="عرض التفاصيل"
                         >
                           <FiEye className="w-4 h-4" />
                         </button>
@@ -168,7 +168,7 @@ const AdminOrders = () => {
             {data?.pagination && (
               <div className="p-4 border-t flex items-center justify-between">
                 <p className="text-gray-600">
-                  ??? {data.data.length} ?? {data.pagination.total} ???
+                  عرض {data.data.length} من {data.pagination.total} طلب
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -176,17 +176,17 @@ const AdminOrders = () => {
                     disabled={page === 1}
                     className="px-4 py-2 border rounded-lg disabled:opacity-50"
                   >
-                    ??????
+                    السابق
                   </button>
                   <span className="px-4 py-2">
-                    ???? {page} ?? {data.pagination.pages}
+                    صفحة {page} من {data.pagination.pages}
                   </span>
                   <button
                     onClick={() => setPage(p => Math.min(data.pagination.pages, p + 1))}
                     disabled={page >= data.pagination.pages}
                     className="px-4 py-2 border rounded-lg disabled:opacity-50"
                   >
-                    ??????
+                    التالي
                   </button>
                 </div>
               </div>
@@ -200,7 +200,7 @@ const AdminOrders = () => {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b sticky top-0 bg-white flex items-center justify-between">
-              <h2 className="text-xl font-bold">?????? ????? #{selectedOrder.orderNumber}</h2>
+              <h2 className="text-xl font-bold">تفاصيل الطلب #{selectedOrder.orderNumber}</h2>
               <button
                 onClick={() => setSelectedOrder(null)}
                 className="p-2 hover:bg-gray-100 rounded-lg"
@@ -213,13 +213,13 @@ const AdminOrders = () => {
               {/* Order Summary */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500">??????</p>
+                  <p className="text-sm text-gray-500">الحالة</p>
                   <span className={`inline-block mt-1 px-3 py-1 rounded-full text-sm ${statusColors[selectedOrder.status]}`}>
                     {statusLabels[selectedOrder.status]}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">????? ?????</p>
+                  <p className="text-sm text-gray-500">تاريخ الطلب</p>
                   <p className="font-medium mt-1">
                     {new Date(selectedOrder.createdAt).toLocaleDateString('ar-EG')}
                   </p>
@@ -228,16 +228,16 @@ const AdminOrders = () => {
 
               {/* Customer Info */}
               <div className="border rounded-xl p-4">
-                <h3 className="font-bold mb-3">??????? ??????</h3>
-                <p><strong>?????:</strong> {selectedOrder.user?.firstName} {selectedOrder.user?.lastName}</p>
-                <p><strong>??????:</strong> {selectedOrder.user?.email}</p>
-                <p><strong>??????:</strong> {selectedOrder.user?.phone}</p>
+                <h3 className="font-bold mb-3">معلومات العميل</h3>
+                <p><strong>الاسم:</strong> {selectedOrder.user?.firstName} {selectedOrder.user?.lastName}</p>
+                <p><strong>البريد:</strong> {selectedOrder.user?.email}</p>
+                <p><strong>الهاتف:</strong> {selectedOrder.user?.phone}</p>
               </div>
 
               {/* Shipping Address */}
               {selectedOrder.shippingAddress && (
                 <div className="border rounded-xl p-4">
-                  <h3 className="font-bold mb-3">????? ???????</h3>
+                  <h3 className="font-bold mb-3">عنوان التوصيل</h3>
                   <p>{selectedOrder.shippingAddress.firstName} {selectedOrder.shippingAddress.lastName}</p>
                   <p>{selectedOrder.shippingAddress.street}</p>
                   <p>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.governorate}</p>
@@ -247,7 +247,7 @@ const AdminOrders = () => {
 
               {/* Order Items */}
               <div className="border rounded-xl p-4">
-                <h3 className="font-bold mb-3">????????</h3>
+                <h3 className="font-bold mb-3">المنتجات</h3>
                 <div className="space-y-3">
                   {selectedOrder.items?.map((item, index) => (
                     <div key={index} className="flex items-center gap-3">
@@ -260,7 +260,7 @@ const AdminOrders = () => {
                       )}
                       <div className="flex-1">
                         <p className="font-medium">{item.product?.name || item.name}</p>
-                        <p className="text-sm text-gray-500">??????: {item.quantity}</p>
+                        <p className="text-sm text-gray-500">الكمية: {item.quantity}</p>
                       </div>
                       <p className="font-medium">{formatCurrency(item.price * item.quantity)}</p>
                     </div>
@@ -271,21 +271,21 @@ const AdminOrders = () => {
               {/* Order Total */}
               <div className="border rounded-xl p-4 bg-gray-50">
                 <div className="flex justify-between mb-2">
-                  <span>??????? ??????</span>
+                  <span>المجموع الفرعي</span>
                   <span>{formatCurrency(selectedOrder.subtotal)}</span>
                 </div>
                 <div className="flex justify-between mb-2">
-                  <span>?????</span>
+                  <span>الشحن</span>
                   <span>{formatCurrency(selectedOrder.shippingCost || 0)}</span>
                 </div>
                 {selectedOrder.discount > 0 && (
                   <div className="flex justify-between mb-2 text-green-600">
-                    <span>?????</span>
+                    <span>الخصم</span>
                     <span>-{formatCurrency(selectedOrder.discount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                  <span>????????</span>
+                  <span>الإجمالي</span>
                   <span>{formatCurrency(selectedOrder.total)}</span>
                 </div>
               </div>
@@ -297,7 +297,7 @@ const AdminOrders = () => {
                     onClick={() => handleStatusChange(selectedOrder._id, 'confirmed')}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                   >
-                    <FiCheck /> ????? ?????
+                    <FiCheck /> تأكيد الطلب
                   </button>
                 )}
                 {selectedOrder.status === 'confirmed' && (
@@ -305,7 +305,7 @@ const AdminOrders = () => {
                     onClick={() => handleStatusChange(selectedOrder._id, 'processing')}
                     className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                   >
-                    <FiPackage /> ??? ???????
+                    <FiPackage /> بدء التجهيز
                   </button>
                 )}
                 {selectedOrder.status === 'processing' && (
@@ -313,7 +313,7 @@ const AdminOrders = () => {
                     onClick={() => handleStatusChange(selectedOrder._id, 'shipped')}
                     className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
                   >
-                    <FiTruck /> ?? ?????
+                    <FiTruck /> تم الشحن
                   </button>
                 )}
                 {selectedOrder.status === 'shipped' && (
@@ -321,7 +321,7 @@ const AdminOrders = () => {
                     onClick={() => handleStatusChange(selectedOrder._id, 'delivered')}
                     className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                   >
-                    <FiCheck /> ?? ???????
+                    <FiCheck /> تم التوصيل
                   </button>
                 )}
                 {!['cancelled', 'delivered'].includes(selectedOrder.status) && (
@@ -329,7 +329,7 @@ const AdminOrders = () => {
                     onClick={() => handleStatusChange(selectedOrder._id, 'cancelled')}
                     className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                   >
-                    <FiX /> ????? ?????
+                    <FiX /> إلغاء الطلب
                   </button>
                 )}
               </div>
@@ -342,4 +342,3 @@ const AdminOrders = () => {
 }
 
 export default AdminOrders
-

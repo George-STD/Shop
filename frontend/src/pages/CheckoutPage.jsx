@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useNavigate, Link } from 'react-router-dom'
 import { FiCheck, FiCreditCard, FiTruck } from 'react-icons/fi'
@@ -37,11 +37,11 @@ const CheckoutPage = () => {
   const total = subtotal + shippingCost
 
   const governorates = [
-    '???????', '??????', '??????????', '???????', '????????', 
-    '???????', '????????', '???????', '??? ?????', '?????????',
-    '??????', '??? ????', '??????', '?????', '?????', 
-    '???', '??????', '?????', '????? ??????', '?????? ??????',
-    '?????', '???? ?????', '???? ?????', '???????', '??????', '???????????'
+    'القاهرة', 'الجيزة', 'الإسكندرية', 'البحيرة', 'الدقهلية', 
+    'الشرقية', 'المنوفية', 'الغربية', 'كفر الشيخ', 'القليوبية',
+    'الفيوم', 'بني سويف', 'المنيا', 'أسيوط', 'سوهاج', 
+    'قنا', 'الأقصر', 'أسوان', 'البحر الأحمر', 'الوادي الجديد',
+    'مطروح', 'شمال سيناء', 'جنوب سيناء', 'بورسعيد', 'السويس', 'الإسماعيلية'
   ]
 
   const handleChange = (e) => {
@@ -91,11 +91,11 @@ const CheckoutPage = () => {
       
       if (response.data.success) {
         clearCart()
-        toast.success('?? ????? ????? ?????!')
+        toast.success('تم إنشاء الطلب بنجاح!')
         navigate(`/account/orders?success=true&order=${response.data.data.orderNumber}`)
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || '??? ??? ????? ????? ?????')
+      toast.error(error.response?.data?.message || 'حدث خطأ أثناء إنشاء الطلب')
     } finally {
       setLoading(false)
     }
@@ -104,8 +104,8 @@ const CheckoutPage = () => {
   if (items.length === 0) {
     return (
       <div className="container-custom py-16 text-center">
-        <h1 className="text-2xl font-bold mb-4">????? ?????</h1>
-        <Link to="/products" className="btn-primary">???? ????</Link>
+        <h1 className="text-2xl font-bold mb-4">السلة فارغة</h1>
+        <Link to="/products" className="btn-primary">تسوق الآن</Link>
       </div>
     )
   }
@@ -113,14 +113,14 @@ const CheckoutPage = () => {
   return (
     <>
       <Helmet>
-        <title>????? ?????? | For You</title>
+        <title>إتمام الشراء | For You</title>
       </Helmet>
 
       <div className="bg-gray-50 min-h-screen py-8">
         <div className="container-custom">
           {/* Progress Steps */}
           <div className="flex items-center justify-center mb-8">
-            {['??????? ?????', '????? ?????', '????? ?????'].map((label, index) => (
+            {['معلومات الشحن', 'طريقة الدفع', 'تأكيد الطلب'].map((label, index) => (
               <div key={index} className="flex items-center">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   step > index + 1 ? 'bg-green-500 text-white' :
@@ -146,11 +146,11 @@ const CheckoutPage = () => {
                 {/* Step 1: Shipping Info */}
                 {step === 1 && (
                   <div className="bg-white rounded-2xl p-6">
-                    <h2 className="text-xl font-bold mb-6">??????? ?????</h2>
+                    <h2 className="text-xl font-bold mb-6">معلومات الشحن</h2>
                     
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-gray-700 mb-2">????? ????? *</label>
+                        <label className="block text-gray-700 mb-2">الاسم الأول *</label>
                         <input
                           type="text"
                           name="firstName"
@@ -161,7 +161,7 @@ const CheckoutPage = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 mb-2">????? ?????? *</label>
+                        <label className="block text-gray-700 mb-2">الاسم الأخير *</label>
                         <input
                           type="text"
                           name="lastName"
@@ -172,7 +172,7 @@ const CheckoutPage = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 mb-2">?????? ?????????? *</label>
+                        <label className="block text-gray-700 mb-2">البريد الإلكتروني *</label>
                         <input
                           type="email"
                           name="email"
@@ -183,7 +183,7 @@ const CheckoutPage = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 mb-2">??? ?????? *</label>
+                        <label className="block text-gray-700 mb-2">رقم الهاتف *</label>
                         <input
                           type="tel"
                           name="phone"
@@ -194,7 +194,7 @@ const CheckoutPage = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 mb-2">???????? *</label>
+                        <label className="block text-gray-700 mb-2">المحافظة *</label>
                         <select
                           name="governorate"
                           value={formData.governorate}
@@ -202,14 +202,14 @@ const CheckoutPage = () => {
                           required
                           className="input-field"
                         >
-                          <option value="">???? ????????</option>
+                          <option value="">اختر المحافظة</option>
                           {governorates.map(gov => (
                             <option key={gov} value={gov}>{gov}</option>
                           ))}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-gray-700 mb-2">??????? *</label>
+                        <label className="block text-gray-700 mb-2">المدينة *</label>
                         <input
                           type="text"
                           name="city"
@@ -220,7 +220,7 @@ const CheckoutPage = () => {
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-gray-700 mb-2">??????? / ???? *</label>
+                        <label className="block text-gray-700 mb-2">المنطقة / الحي *</label>
                         <input
                           type="text"
                           name="area"
@@ -231,7 +231,7 @@ const CheckoutPage = () => {
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-gray-700 mb-2">??????? ???????? *</label>
+                        <label className="block text-gray-700 mb-2">العنوان التفصيلي *</label>
                         <input
                           type="text"
                           name="street"
@@ -239,11 +239,11 @@ const CheckoutPage = () => {
                           onChange={handleChange}
                           required
                           className="input-field"
-                          placeholder="??? ?????? ???? ???????"
+                          placeholder="اسم الشارع ورقم العمارة"
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 mb-2">?????</label>
+                        <label className="block text-gray-700 mb-2">الدور</label>
                         <input
                           type="text"
                           name="floor"
@@ -253,7 +253,7 @@ const CheckoutPage = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-gray-700 mb-2">??? ?????</label>
+                        <label className="block text-gray-700 mb-2">رقم الشقة</label>
                         <input
                           type="text"
                           name="apartment"
@@ -266,7 +266,7 @@ const CheckoutPage = () => {
 
                     {/* Delivery Type */}
                     <div className="mt-6">
-                      <h3 className="font-medium mb-4">????? ???????</h3>
+                      <h3 className="font-medium mb-4">طريقة التوصيل</h3>
                       <div className="space-y-3">
                         <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer ${
                           formData.deliveryType === 'standard' ? 'border-purple-500 bg-gradient-to-r from-purple-50 to-pink-50' : 'border-gray-300'
@@ -280,11 +280,11 @@ const CheckoutPage = () => {
                               onChange={handleChange}
                             />
                             <div>
-                              <span className="font-medium">????? ????</span>
-                              <p className="text-sm text-gray-500">2-4 ???? ???</p>
+                              <span className="font-medium">توصيل عادي</span>
+                              <p className="text-sm text-gray-500">2-4 أيام عمل</p>
                             </div>
                           </div>
-                          <span>{subtotal >= 500 ? '?????' : '30 ?.?'}</span>
+                          <span>{subtotal >= 500 ? 'مجاني' : '30 ج.م'}</span>
                         </label>
                         <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer ${
                           formData.deliveryType === 'express' ? 'border-purple-500 bg-gradient-to-r from-purple-50 to-pink-50' : 'border-gray-300'
@@ -298,11 +298,11 @@ const CheckoutPage = () => {
                               onChange={handleChange}
                             />
                             <div>
-                              <span className="font-medium">????? ????</span>
-                              <p className="text-sm text-gray-500">1-2 ??? ???</p>
+                              <span className="font-medium">توصيل سريع</span>
+                              <p className="text-sm text-gray-500">1-2 يوم عمل</p>
                             </div>
                           </div>
-                          <span>50 ?.?</span>
+                          <span>50 ج.م</span>
                         </label>
                       </div>
                     </div>
@@ -312,7 +312,7 @@ const CheckoutPage = () => {
                       onClick={() => setStep(2)}
                       className="btn-primary w-full mt-6"
                     >
-                      ??????
+                      التالي
                     </button>
                   </div>
                 )}
@@ -320,14 +320,14 @@ const CheckoutPage = () => {
                 {/* Step 2: Payment */}
                 {step === 2 && (
                   <div className="bg-white rounded-2xl p-6">
-                    <h2 className="text-xl font-bold mb-6">????? ?????</h2>
+                    <h2 className="text-xl font-bold mb-6">طريقة الدفع</h2>
                     
                     <div className="space-y-3">
                       {[
-                        { value: 'cod', label: '????? ??? ????????', icon: '??' },
-                        { value: 'card', label: '????? ?????? / ????', icon: '??' },
-                        { value: 'instapay', label: '????????', icon: '??' },
-                        { value: 'vodafone_cash', label: '??????? ???', icon: '??' },
+                        { value: 'cod', label: 'الدفع عند الاستلام', icon: '💵' },
+                        { value: 'card', label: 'بطاقة ائتمان / فيزا', icon: '💳' },
+                        { value: 'instapay', label: 'انستاباي', icon: '📱' },
+                        { value: 'vodafone_cash', label: 'فودافون كاش', icon: '📲' },
                       ].map(method => (
                         <label 
                           key={method.value}
@@ -357,14 +357,14 @@ const CheckoutPage = () => {
                           checked={formData.isGift}
                           onChange={handleChange}
                         />
-                        <span className="font-medium">?? ??? ????? ????</span>
+                        <span className="font-medium">🎁 هذا الطلب هدية</span>
                       </label>
                       {formData.isGift && (
                         <textarea
                           name="giftMessage"
                           value={formData.giftMessage}
                           onChange={handleChange}
-                          placeholder="????? ?????? (???????)"
+                          placeholder="رسالة الهدية (اختياري)"
                           className="input-field mt-4"
                           rows="3"
                         />
@@ -373,7 +373,7 @@ const CheckoutPage = () => {
 
                     {/* Notes */}
                     <div className="mt-6">
-                      <label className="block text-gray-700 mb-2">??????? ??? ????? (???????)</label>
+                      <label className="block text-gray-700 mb-2">ملاحظات على الطلب (اختياري)</label>
                       <textarea
                         name="customerNote"
                         value={formData.customerNote}
@@ -389,14 +389,14 @@ const CheckoutPage = () => {
                         onClick={() => setStep(1)}
                         className="btn-outline flex-1"
                       >
-                        ??????
+                        السابق
                       </button>
                       <button 
                         type="button"
                         onClick={() => setStep(3)}
                         className="btn-primary flex-1"
                       >
-                        ??????
+                        التالي
                       </button>
                     </div>
                   </div>
@@ -405,13 +405,13 @@ const CheckoutPage = () => {
                 {/* Step 3: Confirmation */}
                 {step === 3 && (
                   <div className="bg-white rounded-2xl p-6">
-                    <h2 className="text-xl font-bold mb-6">????? ?????</h2>
+                    <h2 className="text-xl font-bold mb-6">تأكيد الطلب</h2>
                     
                     {/* Shipping Summary */}
                     <div className="mb-6 pb-6 border-b">
                       <h3 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
                         <FiTruck />
-                        ????? ?????
+                        عنوان الشحن
                       </h3>
                       <p className="text-gray-600">
                         {formData.firstName} {formData.lastName}<br />
@@ -425,19 +425,19 @@ const CheckoutPage = () => {
                     <div className="mb-6 pb-6 border-b">
                       <h3 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
                         <FiCreditCard />
-                        ????? ?????
+                        طريقة الدفع
                       </h3>
                       <p className="text-gray-600">
-                        {formData.paymentMethod === 'cod' && '????? ??? ????????'}
-                        {formData.paymentMethod === 'card' && '????? ??????'}
-                        {formData.paymentMethod === 'instapay' && '????????'}
-                        {formData.paymentMethod === 'vodafone_cash' && '??????? ???'}
+                        {formData.paymentMethod === 'cod' && 'الدفع عند الاستلام'}
+                        {formData.paymentMethod === 'card' && 'بطاقة ائتمان'}
+                        {formData.paymentMethod === 'instapay' && 'انستاباي'}
+                        {formData.paymentMethod === 'vodafone_cash' && 'فودافون كاش'}
                       </p>
                     </div>
 
                     {/* Items Summary */}
                     <div className="space-y-4">
-                      <h3 className="font-medium text-gray-800">????????</h3>
+                      <h3 className="font-medium text-gray-800">المنتجات</h3>
                       {items.map((item, index) => (
                         <div key={index} className="flex gap-4">
                           <img 
@@ -447,9 +447,9 @@ const CheckoutPage = () => {
                           />
                           <div className="flex-1">
                             <p className="font-medium">{item.name}</p>
-                            <p className="text-sm text-gray-500">??????: {item.quantity}</p>
+                            <p className="text-sm text-gray-500">الكمية: {item.quantity}</p>
                           </div>
-                          <span className="font-medium">{item.price * item.quantity} ?.?</span>
+                          <span className="font-medium">{item.price * item.quantity} ج.م</span>
                         </div>
                       ))}
                     </div>
@@ -460,14 +460,14 @@ const CheckoutPage = () => {
                         onClick={() => setStep(2)}
                         className="btn-outline flex-1"
                       >
-                        ??????
+                        السابق
                       </button>
                       <button 
                         type="submit"
                         disabled={loading}
                         className="btn-primary flex-1 disabled:opacity-50"
                       >
-                        {loading ? '???? ????? ?????...' : '????? ?????'}
+                        {loading ? 'جاري إنشاء الطلب...' : 'تأكيد الطلب'}
                       </button>
                     </div>
                   </div>
@@ -477,7 +477,7 @@ const CheckoutPage = () => {
               {/* Order Summary Sidebar */}
               <div className="lg:col-span-1">
                 <div className="bg-white rounded-2xl p-6 sticky top-24">
-                  <h2 className="text-xl font-bold mb-6">???? ?????</h2>
+                  <h2 className="text-xl font-bold mb-6">ملخص الطلب</h2>
                   
                   <div className="space-y-4 mb-6">
                     {items.map((item, index) => (
@@ -494,7 +494,7 @@ const CheckoutPage = () => {
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium line-clamp-2">{item.name}</p>
-                          <p className="text-sm text-gray-500">{item.price} ?.?</p>
+                          <p className="text-sm text-gray-500">{item.price} ج.م</p>
                         </div>
                       </div>
                     ))}
@@ -502,20 +502,20 @@ const CheckoutPage = () => {
 
                   <div className="space-y-3 py-4 border-t border-b">
                     <div className="flex justify-between text-gray-600">
-                      <span>??????? ??????</span>
-                      <span>{subtotal} ?.?</span>
+                      <span>المجموع الفرعي</span>
+                      <span>{subtotal} ج.م</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
-                      <span>?????</span>
+                      <span>الشحن</span>
                       <span className={shippingCost === 0 ? 'text-green-600' : ''}>
-                        {shippingCost === 0 ? '?????' : `${shippingCost} ?.?`}
+                        {shippingCost === 0 ? 'مجاني' : `${shippingCost} ج.م`}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex justify-between text-lg font-bold mt-4">
-                    <span>????????</span>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">{total} ?.?</span>
+                    <span>الإجمالي</span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">{total} ج.م</span>
                   </div>
                 </div>
               </div>
@@ -528,4 +528,3 @@ const CheckoutPage = () => {
 }
 
 export default CheckoutPage
-

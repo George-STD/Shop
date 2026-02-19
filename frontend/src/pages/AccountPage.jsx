@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
 import { FiUser, FiPackage, FiHeart, FiMapPin, FiSettings, FiLogOut } from 'react-icons/fi'
@@ -22,18 +22,18 @@ const AuthForm = () => {
       if (isLogin) {
         const res = await authAPI.login({ email: formData.email, password: formData.password })
         setAuth(res.data.data.user, res.data.data.token)
-        toast.success('?? ????? ?????? ?????')
+        toast.success('تم تسجيل الدخول بنجاح')
       } else {
         if (formData.password !== formData.confirmPassword) {
-          toast.error('????? ?????? ??? ?????????')
+          toast.error('كلمتا المرور غير متطابقتين')
           return
         }
         const res = await authAPI.register(formData)
         setAuth(res.data.data.user, res.data.data.token)
-        toast.success('?? ????? ?????? ?????')
+        toast.success('تم إنشاء الحساب بنجاح')
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || '??? ???')
+      toast.error(error.response?.data?.message || 'حدث خطأ')
     } finally {
       setLoading(false)
     }
@@ -44,7 +44,7 @@ const AuthForm = () => {
       <div className="container-custom">
         <div className="max-w-md mx-auto bg-white rounded-2xl p-8 shadow-lg">
           <h1 className="text-2xl font-bold text-center mb-8">
-            {isLogin ? '????? ??????' : '????? ???? ????'}
+            {isLogin ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}
           </h1>
           
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -53,7 +53,7 @@ const AuthForm = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <input
                     type="text"
-                    placeholder="????? ?????"
+                    placeholder="الاسم الأول"
                     value={formData.firstName}
                     onChange={(e) => setFormData({...formData, firstName: e.target.value})}
                     required
@@ -61,7 +61,7 @@ const AuthForm = () => {
                   />
                   <input
                     type="text"
-                    placeholder="????? ??????"
+                    placeholder="الاسم الأخير"
                     value={formData.lastName}
                     onChange={(e) => setFormData({...formData, lastName: e.target.value})}
                     required
@@ -70,7 +70,7 @@ const AuthForm = () => {
                 </div>
                 <input
                   type="tel"
-                  placeholder="??? ??????"
+                  placeholder="رقم الهاتف"
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   required
@@ -80,7 +80,7 @@ const AuthForm = () => {
             )}
             <input
               type="email"
-              placeholder="?????? ??????????"
+              placeholder="البريد الإلكتروني"
               value={formData.email}
               onChange={(e) => setFormData({...formData, email: e.target.value})}
               required
@@ -88,7 +88,7 @@ const AuthForm = () => {
             />
             <input
               type="password"
-              placeholder="???? ??????"
+              placeholder="كلمة المرور"
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
               required
@@ -97,7 +97,7 @@ const AuthForm = () => {
             {!isLogin && (
               <input
                 type="password"
-                placeholder="????? ???? ??????"
+                placeholder="تأكيد كلمة المرور"
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
                 required
@@ -105,17 +105,17 @@ const AuthForm = () => {
               />
             )}
             <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? '????...' : isLogin ? '????? ??????' : '????? ????'}
+              {loading ? 'جاري...' : isLogin ? 'تسجيل الدخول' : 'إنشاء حساب'}
             </button>
           </form>
           
           <p className="text-center mt-6 text-gray-600">
-            {isLogin ? '??? ???? ?????' : '???? ???? ???????'}
+            {isLogin ? 'ليس لديك حساب؟' : 'لديك حساب بالفعل؟'}
             <button 
               onClick={() => setIsLogin(!isLogin)}
               className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline mr-2"
             >
-              {isLogin ? '??? ????' : '??? ?????'}
+              {isLogin ? 'سجل الآن' : 'سجل دخولك'}
             </button>
           </p>
         </div>
@@ -130,11 +130,11 @@ const Dashboard = () => {
   const location = useLocation()
 
   const menuItems = [
-    { path: '/account', icon: FiUser, label: '?????', exact: true },
-    { path: '/account/orders', icon: FiPackage, label: '??????' },
-    { path: '/account/wishlist', icon: FiHeart, label: '????? ????????' },
-    { path: '/account/addresses', icon: FiMapPin, label: '???????' },
-    { path: '/account/settings', icon: FiSettings, label: '?????????' },
+    { path: '/account', icon: FiUser, label: 'حسابي', exact: true },
+    { path: '/account/orders', icon: FiPackage, label: 'طلباتي' },
+    { path: '/account/wishlist', icon: FiHeart, label: 'قائمة الأمنيات' },
+    { path: '/account/addresses', icon: FiMapPin, label: 'عناويني' },
+    { path: '/account/settings', icon: FiSettings, label: 'الإعدادات' },
   ]
 
   return (
@@ -172,7 +172,7 @@ const Dashboard = () => {
                   className="flex items-center gap-3 p-3 rounded-lg text-red-500 hover:bg-red-50 w-full"
                 >
                   <FiLogOut />
-                  ????? ??????
+                  تسجيل الخروج
                 </button>
               </nav>
             </div>
@@ -200,22 +200,22 @@ const ProfileOverview = () => {
   const { user } = useAuthStore()
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">?????? {user?.firstName}!</h1>
+      <h1 className="text-2xl font-bold mb-6">مرحباً {user?.firstName}!</h1>
       <div className="grid md:grid-cols-3 gap-4">
         <Link to="/account/orders" className="p-6 bg-gray-50 rounded-xl hover:bg-gray-100">
           <FiPackage className="text-3xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2" />
-          <h3 className="font-medium">??????</h3>
-          <p className="text-sm text-gray-500">???? ?????? ??????</p>
+          <h3 className="font-medium">طلباتي</h3>
+          <p className="text-sm text-gray-500">تتبع وإدارة طلباتك</p>
         </Link>
         <Link to="/wishlist" className="p-6 bg-gray-50 rounded-xl hover:bg-gray-100">
           <FiHeart className="text-3xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2" />
-          <h3 className="font-medium">????? ????????</h3>
-          <p className="text-sm text-gray-500">??????? ???????</p>
+          <h3 className="font-medium">قائمة الأمنيات</h3>
+          <p className="text-sm text-gray-500">منتجاتك المفضلة</p>
         </Link>
         <Link to="/account/settings" className="p-6 bg-gray-50 rounded-xl hover:bg-gray-100">
           <FiSettings className="text-3xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2" />
-          <h3 className="font-medium">?????????</h3>
-          <p className="text-sm text-gray-500">????? ???????</p>
+          <h3 className="font-medium">الإعدادات</h3>
+          <p className="text-sm text-gray-500">تعديل بياناتك</p>
         </Link>
       </div>
     </div>
@@ -224,22 +224,22 @@ const ProfileOverview = () => {
 
 const OrdersPage = () => (
   <div>
-    <h1 className="text-2xl font-bold mb-6">??????</h1>
-    <p className="text-gray-500">?? ???? ????? ???</p>
+    <h1 className="text-2xl font-bold mb-6">طلباتي</h1>
+    <p className="text-gray-500">لا توجد طلبات بعد</p>
   </div>
 )
 
 const AddressesPage = () => (
   <div>
-    <h1 className="text-2xl font-bold mb-6">???????</h1>
-    <p className="text-gray-500">?? ???? ?????? ??????</p>
+    <h1 className="text-2xl font-bold mb-6">عناويني</h1>
+    <p className="text-gray-500">لا توجد عناوين محفوظة</p>
   </div>
 )
 
 const SettingsPage = () => (
   <div>
-    <h1 className="text-2xl font-bold mb-6">?????????</h1>
-    <p className="text-gray-500">??????? ??????</p>
+    <h1 className="text-2xl font-bold mb-6">الإعدادات</h1>
+    <p className="text-gray-500">إعدادات الحساب</p>
   </div>
 )
 
@@ -250,7 +250,7 @@ const AccountPage = () => {
   return (
     <>
       <Helmet>
-        <title>????? | For You</title>
+        <title>حسابي | For You</title>
       </Helmet>
       {isAuthenticated ? <Dashboard /> : <AuthForm />}
     </>
@@ -258,4 +258,3 @@ const AccountPage = () => {
 }
 
 export default AccountPage
-

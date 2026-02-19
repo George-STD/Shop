@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
 import { FiHeart, FiShoppingBag, FiEye } from 'react-icons/fi'
 import { useCartStore, useWishlistStore } from '../../store'
 import toast from 'react-hot-toast'
@@ -12,17 +12,17 @@ const ProductCard = ({ product }) => {
   const handleAddToCart = (e) => {
     e.preventDefault()
     addItem(product, 1)
-    toast.success('تمت إضافة المنتج للسلة')
+    toast.success('تمت الإضافة إلى السلة')
   }
   
   const handleToggleWishlist = (e) => {
     e.preventDefault()
     if (inWishlist) {
       removeFromWishlist(product._id)
-      toast.success('تمت إزالة المنتج من قائمة الأمنيات')
+      toast.success('تمت الإزالة من قائمة الأمنيات')
     } else {
       addToWishlist(product)
-      toast.success('تمت إضافة المنتج لقائمة الأمنيات')
+      toast.success('تمت الإضافة إلى قائمة الأمنيات')
     }
   }
 
@@ -52,7 +52,7 @@ const ProductCard = ({ product }) => {
             <span className="badge badge-new">جديد</span>
           )}
           {product.isBestseller && (
-            <span className="badge badge-bestseller">الأكثر مبيعًا</span>
+            <span className="badge badge-bestseller">الأكثر مبيعاً</span>
           )}
         </div>
         
@@ -68,7 +68,7 @@ const ProductCard = ({ product }) => {
           <Link 
             to={`/product/${product.slug}`}
             className="quick-action-btn"
-            title="عرض المنتج"
+            title="عرض سريع"
           >
             <FiEye />
           </Link>
@@ -145,4 +145,3 @@ const ProductCard = ({ product }) => {
 }
 
 export default ProductCard
-

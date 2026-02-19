@@ -1,4 +1,4 @@
-const FeatureCard = ({ icon, title, description }) => {
+﻿const FeatureCard = ({ icon, title, description }) => {
   return (
     <div className="flex items-center gap-3 p-4">
       <span className="text-3xl">{icon}</span>
@@ -11,4 +11,3 @@ const FeatureCard = ({ icon, title, description }) => {
 }
 
 export default FeatureCard
-

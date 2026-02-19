@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
 
 const CategoryCard = ({ category }) => {
   return (
@@ -24,7 +24,7 @@ const CategoryCard = ({ category }) => {
           <div>
             <h3 className="text-white font-bold text-lg">{category.name}</h3>
             {category.productsCount > 0 && (
-              <p className="text-white/80 text-sm">{category.productsCount} ????</p>
+              <p className="text-white/80 text-sm">{category.productsCount} منتج</p>
             )}
           </div>
         </div>
@@ -34,4 +34,3 @@ const CategoryCard = ({ category }) => {
 }
 
 export default CategoryCard
-

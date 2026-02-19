@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
 import { FiX, FiTrash2, FiPlus, FiMinus } from 'react-icons/fi'
 import { useUIStore, useCartStore } from '../../store'
 
@@ -21,7 +21,7 @@ const CartSidebar = () => {
       <div className="absolute top-0 left-0 h-full w-96 max-w-full bg-white shadow-xl flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-bold text-gray-800">??? ??????</h2>
+          <h2 className="text-xl font-bold text-gray-800">سلة التسوق</h2>
           <button 
             onClick={closeCart}
             className="p-2 hover:bg-gray-100 rounded-lg"
@@ -34,19 +34,19 @@ const CartSidebar = () => {
         <div className="flex-1 overflow-y-auto p-4">
           {items.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-6xl mb-4">??</div>
+              <div className="text-6xl mb-4">🛒</div>
               <h3 className="text-lg font-medium text-gray-800 mb-2">
-                ????? ?????
+                السلة فارغة
               </h3>
               <p className="text-gray-500 mb-6">
-                ?? ??? ?? ?????? ???
+                لم تضف أي منتجات بعد
               </p>
               <Link 
                 to="/products"
                 onClick={closeCart}
                 className="btn-primary inline-block"
               >
-                ???? ????
+                تسوق الآن
               </Link>
             </div>
           ) : (
@@ -79,20 +79,20 @@ const CartSidebar = () => {
                     {/* Options */}
                     {(item.selectedSize || item.selectedColor) && (
                       <p className="text-sm text-gray-500 mt-1">
-                        {item.selectedSize && `??????: ${item.selectedSize}`}
+                        {item.selectedSize && `المقاس: ${item.selectedSize}`}
                         {item.selectedSize && item.selectedColor && ' | '}
-                        {item.selectedColor && `?????: ${item.selectedColor}`}
+                        {item.selectedColor && `اللون: ${item.selectedColor}`}
                       </p>
                     )}
                     
                     {/* Price */}
                     <div className="flex items-center gap-2 mt-1">
                       <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                        {item.price} ?.?
+                        {item.price} ج.م
                       </span>
                       {item.oldPrice && (
                         <span className="text-sm text-gray-400 line-through">
-                          {item.oldPrice} ?.?
+                          {item.oldPrice} ج.م
                         </span>
                       )}
                     </div>
@@ -134,27 +134,27 @@ const CartSidebar = () => {
             {/* Subtotal */}
             <div className="space-y-2">
               <div className="flex justify-between text-gray-600">
-                <span>??????? ??????</span>
-                <span>{total} ?.?</span>
+                <span>المجموع الفرعي</span>
+                <span>{total} ج.م</span>
               </div>
               <div className="flex justify-between text-gray-600">
-                <span>?????</span>
+                <span>الشحن</span>
                 <span>
                   {shippingCost === 0 ? (
-                    <span className="text-green-600">?????</span>
+                    <span className="text-green-600">مجاني</span>
                   ) : (
-                    `${shippingCost} ?.?`
+                    `${shippingCost} ج.م`
                   )}
                 </span>
               </div>
               {total < 500 && (
                 <p className="text-sm text-gray-500">
-                  ??? {500 - total} ?.? ?????? ??? ??? ?????
+                  أضف {500 - total} ج.م للحصول على شحن مجاني
                 </p>
               )}
               <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                <span>????????</span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">{total + shippingCost} ?.?</span>
+                <span>الإجمالي</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">{total + shippingCost} ج.م</span>
               </div>
             </div>
 
@@ -165,14 +165,14 @@ const CartSidebar = () => {
                 onClick={closeCart}
                 className="btn-primary w-full text-center block"
               >
-                ????? ??????
+                إتمام الشراء
               </Link>
               <Link 
                 to="/cart"
                 onClick={closeCart}
                 className="btn-outline w-full text-center block"
               >
-                ??? ?????
+                عرض السلة
               </Link>
             </div>
           </div>
@@ -183,4 +183,3 @@ const CartSidebar = () => {
 }
 
 export default CartSidebar
-

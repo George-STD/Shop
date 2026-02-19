@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
 import { FiX, FiUser, FiMapPin, FiPhone, FiSettings } from 'react-icons/fi'
 import { useUIStore, useAuthStore } from '../../store'
 
@@ -8,26 +8,26 @@ const MobileMenu = () => {
   const isAdmin = user?.role === 'admin'
 
   const categories = [
-    { name: 'كل الهدايا', slug: '' },
-    { name: 'هدايا عيد ميلاد', slug: 'birthday-gifts' },
-    { name: 'هدايا زفاف', slug: 'wedding-gifts' },
-    { name: 'بوكيهات ورد', slug: 'flower-bouquets' },
-    { name: 'شوكولاتة وحلويات', slug: 'chocolates-sweets' },
-    { name: 'عطور', slug: 'perfumes' },
-    { name: 'ساعات وإكسسوارات', slug: 'watches-accessories' },
+    { name: 'جميع المنتجات', slug: '' },
+    { name: 'هدايا عيد الميلاد', slug: 'birthday-gifts' },
+    { name: 'هدايا الزفاف', slug: 'wedding-gifts' },
+    { name: 'باقات الورد', slug: 'flower-bouquets' },
+    { name: 'الشوكولاتة والحلويات', slug: 'chocolates-sweets' },
+    { name: 'العطور', slug: 'perfumes' },
+    { name: 'الساعات والإكسسوارات', slug: 'watches-accessories' },
     { name: 'هدايا شخصية', slug: 'personalized-gifts' },
-    { name: 'هدايا أطفال', slug: 'kids-gifts' },
-    { name: 'ديكور منزلي', slug: 'home-decor' },
-    { name: 'بطاقات هدايا', slug: 'gift-cards' },
+    { name: 'هدايا الأطفال', slug: 'kids-gifts' },
+    { name: 'المنزل والديكور', slug: 'home-decor' },
+    { name: 'كروت هدايا', slug: 'gift-cards' },
   ]
 
   const occasions = [
     { name: 'عيد ميلاد', value: 'عيد ميلاد' },
     { name: 'زفاف', value: 'زفاف' },
+    { name: 'عيد الحب', value: 'عيد الحب' },
+    { name: 'عيد الأم', value: 'عيد الأم' },
     { name: 'تخرج', value: 'تخرج' },
-    { name: 'مولود', value: 'مولود' },
-    { name: 'عيد أم', value: 'عيد أم' },
-    { name: 'مناسبات أخرى', value: 'مناسبات أخرى' },
+    { name: 'مولود جديد', value: 'ولادة' },
   ]
 
   return (
@@ -104,17 +104,17 @@ const MobileMenu = () => {
             onClick={closeMobileMenu}
             className="flex items-center gap-3 bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white p-4 rounded-xl"
           >
-            <span className="text-2xl">??</span>
+            <span className="text-2xl">🎯</span>
             <div>
-              <span className="font-bold">???? ??? ?????? ????????</span>
-              <p className="text-sm text-purple-100">???? ?????? ?? ????????</p>
+              <span className="font-bold">اعثر على الهدية المثالية</span>
+              <p className="text-sm text-purple-100">دعنا نساعدك في الاختيار</p>
             </div>
           </Link>
         </div>
 
         {/* Categories */}
         <div className="p-4 border-b">
-          <h3 className="font-bold text-gray-800 mb-3">?????????</h3>
+          <h3 className="font-bold text-gray-800 mb-3">التصنيفات</h3>
           <ul className="space-y-2">
             {categories.map((category) => (
               <li key={category.slug}>
@@ -132,7 +132,7 @@ const MobileMenu = () => {
 
         {/* Shop by Occasion */}
         <div className="p-4 border-b">
-          <h3 className="font-bold text-gray-800 mb-3">???? ??? ????????</h3>
+          <h3 className="font-bold text-gray-800 mb-3">تسوق حسب المناسبة</h3>
           <div className="flex flex-wrap gap-2">
             {occasions.map((occasion) => (
               <Link 
@@ -149,7 +149,7 @@ const MobileMenu = () => {
 
         {/* Quick Links */}
         <div className="p-4 border-b">
-          <h3 className="font-bold text-gray-800 mb-3">????? ?????</h3>
+          <h3 className="font-bold text-gray-800 mb-3">روابط سريعة</h3>
           <ul className="space-y-2">
             <li>
               <Link 
@@ -157,7 +157,7 @@ const MobileMenu = () => {
                 onClick={closeMobileMenu}
                 className="block py-2 text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
               >
-                ???? ????
+                تتبع طلبك
               </Link>
             </li>
             <li>
@@ -166,7 +166,7 @@ const MobileMenu = () => {
                 onClick={closeMobileMenu}
                 className="block py-2 text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
               >
-                ??????
+                فروعنا
               </Link>
             </li>
             <li>
@@ -175,7 +175,7 @@ const MobileMenu = () => {
                 onClick={closeMobileMenu}
                 className="block py-2 text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
               >
-                ??????? ???????
+                الأسئلة الشائعة
               </Link>
             </li>
             <li>
@@ -184,7 +184,7 @@ const MobileMenu = () => {
                 onClick={closeMobileMenu}
                 className="block py-2 text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
               >
-                ???? ???
+                اتصل بنا
               </Link>
             </li>
           </ul>
@@ -192,7 +192,7 @@ const MobileMenu = () => {
 
         {/* Contact Info */}
         <div className="p-4">
-          <h3 className="font-bold text-gray-800 mb-3">????? ????</h3>
+          <h3 className="font-bold text-gray-800 mb-3">تواصل معنا</h3>
           <div className="space-y-3 text-gray-600">
             <a href="tel:+201000000000" className="flex items-center gap-3">
               <FiPhone className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600" />
@@ -200,7 +200,7 @@ const MobileMenu = () => {
             </a>
             <div className="flex items-start gap-3">
               <FiMapPin className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mt-1" />
-              <span>???????? ???</span>
+              <span>القاهرة، مصر</span>
             </div>
           </div>
         </div>
@@ -210,4 +210,3 @@ const MobileMenu = () => {
 }
 
 export default MobileMenu
-

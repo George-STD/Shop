@@ -1,4 +1,4 @@
-import { Helmet } from 'react-helmet-async'
+﻿import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { FiHeart, FiTrash2, FiShoppingCart } from 'react-icons/fi'
 import { useWishlistStore, useCartStore } from '../store'
@@ -16,7 +16,7 @@ const WishlistPage = () => {
     <>
       <Helmet>
         <title>قائمة الأمنيات | For You</title>
-        <meta name="description" content="قائمة الأمنيات - كل منتجاتك المفضلة في مكان واحد" />
+        <meta name="description" content="قائمة أمنياتك - احفظ منتجاتك المفضلة واشتريها لاحقاً" />
       </Helmet>
 
       <div className="min-h-screen bg-gray-50 py-8">
@@ -33,7 +33,7 @@ const WishlistPage = () => {
                 className="text-red-500 hover:text-red-600 flex items-center gap-2"
               >
                 <FiTrash2 />
-                حذف الكل
+                مسح الكل
               </button>
             )}
           </div>
@@ -42,7 +42,7 @@ const WishlistPage = () => {
             <div className="text-center py-16">
               <FiHeart className="text-6xl text-gray-300 mx-auto mb-4" />
               <h2 className="text-xl font-bold text-gray-800 mb-2">قائمة الأمنيات فارغة</h2>
-              <p className="text-gray-500 mb-6">لم تقم بإضافة أي منتجات بعد</p>
+              <p className="text-gray-500 mb-6">أضف منتجاتك المفضلة واحتفظ بها لوقت لاحق</p>
               <Link to="/products" className="btn-primary">
                 تصفح المنتجات
               </Link>
@@ -90,7 +90,7 @@ const WishlistPage = () => {
                       className="mt-4 w-full btn-primary flex items-center justify-center gap-2"
                     >
                       <FiShoppingCart />
-                      أضف إلى السلة
+                      أضف للسلة
                     </button>
                   </div>
                 </div>
@@ -104,4 +104,3 @@ const WishlistPage = () => {
 }
 
 export default WishlistPage
-
