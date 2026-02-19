@@ -15,8 +15,8 @@ const WishlistPage = () => {
   return (
     <>
       <Helmet>
-        <title>????? ???????? | For You</title>
-        <meta name="description" content="????? ??????? - ???? ??????? ??????? ???????? ??????" />
+        <title>قائمة الأمنيات | For You</title>
+        <meta name="description" content="قائمة الأمنيات - كل منتجاتك المفضلة في مكان واحد" />
       </Helmet>
 
       <div className="min-h-screen bg-gray-50 py-8">
@@ -24,8 +24,8 @@ const WishlistPage = () => {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">????? ????????</h1>
-              <p className="text-gray-500 mt-1">{items.length} ????</p>
+              <h1 className="text-3xl font-bold text-gray-800">قائمة الأمنيات</h1>
+              <p className="text-gray-500 mt-1">{items.length} منتج</p>
             </div>
             {items.length > 0 && (
               <button
@@ -33,7 +33,7 @@ const WishlistPage = () => {
                 className="text-red-500 hover:text-red-600 flex items-center gap-2"
               >
                 <FiTrash2 />
-                ??? ????
+                حذف الكل
               </button>
             )}
           </div>
@@ -41,10 +41,10 @@ const WishlistPage = () => {
           {items.length === 0 ? (
             <div className="text-center py-16">
               <FiHeart className="text-6xl text-gray-300 mx-auto mb-4" />
-              <h2 className="text-xl font-bold text-gray-800 mb-2">????? ???????? ?????</h2>
-              <p className="text-gray-500 mb-6">??? ??????? ??????? ?????? ??? ???? ????</p>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">قائمة الأمنيات فارغة</h2>
+              <p className="text-gray-500 mb-6">لم تقم بإضافة أي منتجات بعد</p>
               <Link to="/products" className="btn-primary">
-                ???? ????????
+                تصفح المنتجات
               </Link>
             </div>
           ) : (
@@ -76,11 +76,11 @@ const WishlistPage = () => {
                       <div className="flex items-center gap-2">
                         {product.comparePrice && (
                           <span className="text-gray-400 line-through text-sm">
-                            {product.comparePrice} ?.?
+                            {product.comparePrice} ج.م
                           </span>
                         )}
                         <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                          {product.price} ?.?
+                          {product.price} ج.م
                         </span>
                       </div>
                     </div>
@@ -90,7 +90,7 @@ const WishlistPage = () => {
                       className="mt-4 w-full btn-primary flex items-center justify-center gap-2"
                     >
                       <FiShoppingCart />
-                      ??? ?????
+                      أضف إلى السلة
                     </button>
                   </div>
                 </div>
