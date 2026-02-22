@@ -360,10 +360,18 @@ router.post('/products', [
       .replace(/\-\-+/g, '-')
       + '-' + Date.now();
 
-    const product = await Product.create({
-      ...req.body,
-      slug
-    });
+      // Auto-generate SKU if not provided
+      let sku = req.body.sku;
+      if (!sku) {
+        // Simple SKU generation: 'SKU-' + timestamp + random 3 digits
+        sku = 'SKU-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+      }
+
+      const product = await Product.create({
+        ...req.body,
+        slug,
+        sku
+      });
 
     res.status(201).json({
       success: true,

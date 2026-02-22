@@ -17,6 +17,7 @@ const AdminProducts = () => {
     comparePrice: '',
     category: '',
     stock: '',
+    sku: '',
     images: [{ url: '', alt: '' }],
     isActive: true,
     isFeatured: false,
@@ -71,6 +72,7 @@ const AdminProducts = () => {
       comparePrice: '',
       category: '',
       stock: '',
+      sku: '',
       images: [{ url: '', alt: '' }],
       isActive: true,
       isFeatured: false,
@@ -88,6 +90,7 @@ const AdminProducts = () => {
       comparePrice: product.comparePrice || '',
       category: product.category?._id || product.category,
       stock: product.stock,
+      sku: product.sku || '',
       images: product.images?.length ? product.images : [{ url: '', alt: '' }],
       isActive: product.isActive,
       isFeatured: product.isFeatured || false,
@@ -302,6 +305,16 @@ const AdminProducts = () => {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
                   required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">رمز المنتج (SKU)</label>
+                <input
+                  type="text"
+                  value={formData.sku}
+                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                  className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+                  placeholder="مثال: SKU-12345"
                 />
               </div>
 
