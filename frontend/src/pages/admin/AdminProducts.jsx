@@ -19,6 +19,8 @@ const AdminProducts = () => {
     stock: '',
     sku: '',
     images: [{ url: '', alt: '' }],
+    hasColors: false,
+    colors: [],
     isActive: true,
     isFeatured: false,
     isBestseller: false
@@ -74,6 +76,8 @@ const AdminProducts = () => {
       stock: '',
       sku: '',
       images: [{ url: '', alt: '' }],
+      hasColors: false,
+      colors: [],
       isActive: true,
       isFeatured: false,
       isBestseller: false
@@ -92,6 +96,8 @@ const AdminProducts = () => {
       stock: product.stock,
       sku: product.sku || '',
       images: product.images?.length ? product.images : [{ url: '', alt: '' }],
+      hasColors: product.colors && product.colors.length > 0,
+      colors: product.colors || [],
       isActive: product.isActive,
       isFeatured: product.isFeatured || false,
       isBestseller: product.isBestseller || false
@@ -297,6 +303,54 @@ const AdminProducts = () => {
               </h2>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                            {/* Allow color selection toggle */}
+                            <div>
+                              <label className="block text-sm font-medium mb-1">هل يمكن اختيار لون المنتج؟</label>
+                              <input
+                                type="checkbox"
+                                checked={formData.hasColors}
+                                onChange={e => setFormData({ ...formData, hasColors: e.target.checked, colors: e.target.checked ? (formData.colors.length ? formData.colors : [{ name: '', hex: '' }]) : [] })}
+                                className="mr-2"
+                              />
+                              <span>نعم</span>
+                            </div>
+
+                            {/* If hasColors, show color options */}
+                            {formData.hasColors && (
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium mb-1">ألوان المنتج</label>
+                                {formData.colors.map((color, idx) => (
+                                  <div key={idx} className="flex items-center gap-2 mb-2">
+                                    <input
+                                      type="text"
+                                      placeholder="اسم اللون"
+                                      value={color.name}
+                                      onChange={e => {
+                                        const newColors = [...formData.colors];
+                                        newColors[idx].name = e.target.value;
+                                        setFormData({ ...formData, colors: newColors });
+                                      }}
+                                      className="border rounded-lg px-2 py-1"
+                                    />
+                                    <input
+                                      type="color"
+                                      value={color.hex || '#000000'}
+                                      onChange={e => {
+                                        const newColors = [...formData.colors];
+                                        newColors[idx].hex = e.target.value;
+                                        setFormData({ ...formData, colors: newColors });
+                                      }}
+                                      className="w-8 h-8 border rounded"
+                                    />
+                                    <button type="button" onClick={() => {
+                                      const newColors = formData.colors.filter((_, i) => i !== idx);
+                                      setFormData({ ...formData, colors: newColors });
+                                    }} className="text-red-500 px-2">حذف</button>
+                                  </div>
+                                ))}
+                                <button type="button" onClick={() => setFormData({ ...formData, colors: [...formData.colors, { name: '', hex: '' }] })} className="text-blue-600">إضافة لون</button>
+                              </div>
+                            )}
               <div>
                 <label className="block text-sm font-medium mb-1">اسم المنتج</label>
                 <input
