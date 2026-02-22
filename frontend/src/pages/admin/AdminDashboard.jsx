@@ -88,25 +88,25 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {overviewCards.map((card, index) => (
           <div 
             key={index}
-            className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
+            className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">{card.title}</p>
-                <p className="text-2xl font-bold mt-1">{card.value}</p>
+                <p className="text-gray-500 text-xs sm:text-sm">{card.title}</p>
+                <p className="text-lg sm:text-2xl font-bold mt-1">{card.value}</p>
               </div>
-              <div className={`w-12 h-12 ${card.color} rounded-xl flex items-center justify-center text-white`}>
-                <card.icon className="w-6 h-6" />
+              <div className={`w-8 h-8 sm:w-12 sm:h-12 ${card.color} rounded-xl flex items-center justify-center text-white`}>
+                <card.icon className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
             </div>
             {card.link && (
               <Link 
                 to={card.link}
-                className="inline-flex items-center gap-1 text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mt-4 hover:underline"
+                className="inline-flex items-center gap-1 text-xs sm:text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mt-4 hover:underline"
               >
                 عرض الكل
                 <FiArrowUpRight className="w-4 h-4" />
@@ -116,14 +116,14 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Orders by Status */}
         <div className="bg-white rounded-2xl p-6 shadow-sm">
           <h2 className="text-lg font-bold mb-4">الطلبات حسب الحالة</h2>
           <div className="space-y-3">
             {Object.entries(stats?.ordersByStatus || {}).map(([status, count]) => (
               <div key={status} className="flex items-center justify-between">
-                <span className={`px-3 py-1 rounded-full text-sm ${statusColors[status]}`}>
+                <span className={`px-2 py-1 rounded-full text-xs sm:text-sm ${statusColors[status]}`}>
                   {statusLabels[status]}
                 </span>
                 <span className="font-medium">{count}</span>
@@ -141,21 +141,21 @@ const AdminDashboard = () => {
           <div className="space-y-4">
             {stats?.topProducts?.map((product, index) => (
               <div key={product._id} className="flex items-center gap-3">
-                <span className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-sm font-medium">
+                <span className="w-5 h-5 sm:w-6 sm:h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium">
                   {index + 1}
                 </span>
                 {product.images?.[0] && (
                   <img 
                     src={product.images[0].url} 
                     alt={product.name}
-                    className="w-10 h-10 object-cover rounded-lg"
+                    className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded-lg"
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{product.name}</p>
-                  <p className="text-sm text-gray-500">{formatCurrency(product.price)}</p>
+                  <p className="font-medium truncate text-xs sm:text-sm">{product.name}</p>
+                  <p className="text-xs sm:text-sm text-gray-500">{formatCurrency(product.price)}</p>
                 </div>
-                <span className="text-sm text-gray-500">{product.salesCount} مبيعات</span>
+                <span className="text-xs sm:text-sm text-gray-500">{product.salesCount} مبيعات</span>
               </div>
             ))}
             {stats?.topProducts?.length === 0 && (
@@ -174,20 +174,20 @@ const AdminDashboard = () => {
           </Link>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-xs sm:text-sm">
             <thead>
               <tr className="border-b">
-                <th className="text-right py-3 px-2 text-gray-500 font-medium">رقم الطلب</th>
-                <th className="text-right py-3 px-2 text-gray-500 font-medium">العميل</th>
-                <th className="text-right py-3 px-2 text-gray-500 font-medium">المبلغ</th>
-                <th className="text-right py-3 px-2 text-gray-500 font-medium">الحالة</th>
-                <th className="text-right py-3 px-2 text-gray-500 font-medium">التاريخ</th>
+                <th className="text-right py-2 px-1 sm:py-3 sm:px-2 text-gray-500 font-medium">رقم الطلب</th>
+                <th className="text-right py-2 px-1 sm:py-3 sm:px-2 text-gray-500 font-medium">العميل</th>
+                <th className="text-right py-2 px-1 sm:py-3 sm:px-2 text-gray-500 font-medium">المبلغ</th>
+                <th className="text-right py-2 px-1 sm:py-3 sm:px-2 text-gray-500 font-medium">الحالة</th>
+                <th className="text-right py-2 px-1 sm:py-3 sm:px-2 text-gray-500 font-medium">التاريخ</th>
               </tr>
             </thead>
             <tbody>
               {stats?.recentOrders?.map((order) => (
                 <tr key={order._id} className="border-b last:border-0">
-                  <td className="py-3 px-2">
+                  <td className="py-2 px-1 sm:py-3 sm:px-2">
                     <Link 
                       to={`/admin/orders/${order._id}`}
                       className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline"
@@ -195,23 +195,23 @@ const AdminDashboard = () => {
                       #{order.orderNumber}
                     </Link>
                   </td>
-                  <td className="py-3 px-2">
+                  <td className="py-2 px-1 sm:py-3 sm:px-2">
                     {order.user?.firstName} {order.user?.lastName}
                   </td>
-                  <td className="py-3 px-2">{formatCurrency(order.total)}</td>
-                  <td className="py-3 px-2">
-                    <span className={`px-2 py-1 rounded-full text-xs ${statusColors[order.status]}`}>
+                  <td className="py-2 px-1 sm:py-3 sm:px-2">{formatCurrency(order.total)}</td>
+                  <td className="py-2 px-1 sm:py-3 sm:px-2">
+                    <span className={`px-1 py-1 rounded-full text-xs ${statusColors[order.status]}`}>
                       {statusLabels[order.status]}
                     </span>
                   </td>
-                  <td className="py-3 px-2 text-gray-500">
+                  <td className="py-2 px-1 sm:py-3 sm:px-2 text-gray-500">
                     {new Date(order.createdAt).toLocaleDateString('ar-EG')}
                   </td>
                 </tr>
               ))}
               {stats?.recentOrders?.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="py-8 text-center text-gray-500">
+                  <td colSpan="5" className="py-8 text-center text-gray-500 text-xs">
                     لا توجد طلبات حتى الآن
                   </td>
                 </tr>

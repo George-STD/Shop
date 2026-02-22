@@ -187,58 +187,53 @@ const AdminProducts = () => {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full text-xs sm:text-sm">
                 <thead className="bg-gray-50 text-xs md:text-sm">
                   <tr>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">المنتج</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">الفئة</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">السعر</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">المخزون</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">الحالة</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">الإجراءات</th>
+                    <th className="text-right py-2 px-2 sm:py-4 sm:px-6 font-medium text-gray-600">المنتج</th>
+                    <th className="text-right py-2 px-2 sm:py-4 sm:px-6 font-medium text-gray-600">الفئة</th>
+                    <th className="text-right py-2 px-2 sm:py-4 sm:px-6 font-medium text-gray-600">السعر</th>
+                    <th className="text-right py-2 px-2 sm:py-4 sm:px-6 font-medium text-gray-600">المخزون</th>
+                    <th className="text-right py-2 px-2 sm:py-4 sm:px-6 font-medium text-gray-600">الحالة</th>
+                    <th className="text-right py-2 px-2 sm:py-4 sm:px-6 font-medium text-gray-600">الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {products?.data?.map((product) => (
                     <tr key={product._id} className="hover:bg-gray-50">
-                      <td className="py-2 px-2 md:py-4 md:px-6">
+                      <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6">
                         <div className="flex items-center gap-3">
                           {product.images?.[0] && (
                             <img 
                               src={product.images[0].url} 
                               alt={product.name}
-                              className="w-12 h-12 object-cover rounded-lg"
+                              className="w-8 h-8 sm:w-12 sm:h-12 object-cover rounded-lg"
                             />
                           )}
                           <div>
-                            <p className="font-medium">{product.name}</p>
-                            <p className="text-sm text-gray-500">{product.sku}</p>
+                            <p className="font-medium text-xs sm:text-sm">{product.name}</p>
+                            <p className="text-xs sm:text-sm text-gray-500">{product.sku}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-gray-600">
-                                              <td className="py-2 px-2 md:py-4 md:px-6 text-gray-600">
-                                              <td className="py-2 px-2 md:py-4 md:px-6">
-                                              <td className="py-2 px-2 md:py-4 md:px-6">
-                                              <td className="py-2 px-2 md:py-4 md:px-6">
-                                              <td className="py-2 px-2 md:py-4 md:px-6">
+                      <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6 text-gray-600">
                         {product.category?.name || '-'}
                       </td>
-                      <td className="py-4 px-6">
-                        <span className="font-medium">{formatCurrency(product.price)}</span>
+                      <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6">
+                        <span className="font-medium text-xs sm:text-sm">{formatCurrency(product.price)}</span>
                         {product.comparePrice && (
-                          <span className="text-sm text-gray-400 line-through mr-2">
+                          <span className="text-xs sm:text-sm text-gray-400 line-through mr-2">
                             {formatCurrency(product.comparePrice)}
                           </span>
                         )}
                       </td>
-                      <td className="py-4 px-6">
-                        <span className={`${product.stock < 10 ? 'text-red-600' : 'text-gray-600'}`}>
+                      <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6">
+                        <span className={`${product.stock < 10 ? 'text-red-600' : 'text-gray-600'} text-xs sm:text-sm`}>
                           {product.stock}
                         </span>
                       </td>
-                      <td className="py-4 px-6">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
+                      <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6">
+                        <span className={`px-1 py-1 rounded-full text-xs ${
                           product.isActive 
                             ? 'bg-green-100 text-green-700' 
                             : 'bg-red-100 text-red-700'
@@ -246,18 +241,18 @@ const AdminProducts = () => {
                           {product.isActive ? 'نشط' : 'مخفي'}
                         </span>
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-2">
+                      <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6">
+                        <div className="flex items-center gap-1 sm:gap-2">
                           <button
                             onClick={() => handleEdit(product)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                            className="p-1 sm:p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                             title="تعديل"
                           >
                             <FiEdit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(product)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                            className="p-1 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg"
                             title="حذف"
                           >
                             <FiTrash2 className="w-4 h-4" />
@@ -272,25 +267,25 @@ const AdminProducts = () => {
 
             {/* Pagination */}
             {products?.pagination && (
-              <div className="p-4 border-t flex items-center justify-between">
-                <p className="text-gray-600">
+              <div className="p-2 sm:p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-2">
+                <p className="text-gray-600 text-xs sm:text-sm">
                   عرض {products.data.length} من {products.pagination.total} منتج
                 </p>
-                <div className="flex gap-2">
+                <div className="flex gap-1 sm:gap-2">
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="px-4 py-2 border rounded-lg disabled:opacity-50"
+                    className="px-2 sm:px-4 py-1 sm:py-2 border rounded-lg disabled:opacity-50 text-xs sm:text-sm"
                   >
                     السابق
                   </button>
-                  <span className="px-4 py-2">
+                  <span className="px-2 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm">
                     صفحة {page} من {products.pagination.pages}
                   </span>
                   <button
                     onClick={() => setPage(p => Math.min(products.pagination.pages, p + 1))}
                     disabled={page >= products.pagination.pages}
-                    className="px-4 py-2 border rounded-lg disabled:opacity-50"
+                    className="px-2 sm:px-4 py-1 sm:py-2 border rounded-lg disabled:opacity-50 text-xs sm:text-sm"
                   >
                     التالي
                   </button>
@@ -303,14 +298,14 @@ const AdminProducts = () => {
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b sticky top-0 bg-white">
-              <h2 className="text-xl font-bold">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4">
+          <div className="bg-white rounded-2xl max-w-md sm:max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-4 sm:p-6 border-b sticky top-0 bg-white">
+              <h2 className="text-lg sm:text-xl font-bold">
                 {editingProduct ? 'تعديل المنتج' : 'إضافة منتج جديد'}
               </h2>
             </div>
-            <form onSubmit={handleSubmit} className="p-2 md:p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-2 sm:p-6 space-y-3 sm:space-y-4">
                                           {/* Recipients (هدية لـ) */}
                                           <div>
                                             <label className="block text-sm font-medium mb-1">ينفع هدية لـ</label>
