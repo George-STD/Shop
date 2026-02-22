@@ -179,7 +179,7 @@ const AdminProducts = () => {
       </div>
 
       {/* Products Table */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
         {isLoading ? (
           <div className="p-8 text-center">
             <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full mx-auto" />
@@ -188,7 +188,7 @@ const AdminProducts = () => {
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 text-xs md:text-sm">
                   <tr>
                     <th className="text-right py-4 px-6 font-medium text-gray-600">المنتج</th>
                     <th className="text-right py-4 px-6 font-medium text-gray-600">الفئة</th>
@@ -201,7 +201,7 @@ const AdminProducts = () => {
                 <tbody className="divide-y">
                   {products?.data?.map((product) => (
                     <tr key={product._id} className="hover:bg-gray-50">
-                      <td className="py-4 px-6">
+                      <td className="py-2 px-2 md:py-4 md:px-6">
                         <div className="flex items-center gap-3">
                           {product.images?.[0] && (
                             <img 
@@ -217,6 +217,11 @@ const AdminProducts = () => {
                         </div>
                       </td>
                       <td className="py-4 px-6 text-gray-600">
+                                              <td className="py-2 px-2 md:py-4 md:px-6 text-gray-600">
+                                              <td className="py-2 px-2 md:py-4 md:px-6">
+                                              <td className="py-2 px-2 md:py-4 md:px-6">
+                                              <td className="py-2 px-2 md:py-4 md:px-6">
+                                              <td className="py-2 px-2 md:py-4 md:px-6">
                         {product.category?.name || '-'}
                       </td>
                       <td className="py-4 px-6">
@@ -305,7 +310,7 @@ const AdminProducts = () => {
                 {editingProduct ? 'تعديل المنتج' : 'إضافة منتج جديد'}
               </h2>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-2 md:p-6 space-y-4">
                                           {/* Recipients (هدية لـ) */}
                                           <div>
                                             <label className="block text-sm font-medium mb-1">ينفع هدية لـ</label>

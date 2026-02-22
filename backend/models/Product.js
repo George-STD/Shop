@@ -53,7 +53,7 @@ const productSchema = new mongoose.Schema({
   }],
   recipients: [{
     type: String,
-    enum: ['wife', 'husband', 'mother', 'father', 'friend', 'colleague', 'child', 'boyfriend', 'girlfriend', 'boss', 'teacher', 'anyone']
+    enum: ['زوجة', 'زوج', 'أم', 'أب', 'أخت', 'أخ', 'صديقة', 'صديق', 'أطفال', 'عروسين']
   }],
   budgetRange: {
     type: String,
