@@ -17,7 +17,7 @@ const ProductsPage = () => {
   const sort = searchParams.get('sort') || 'newest'
   const minPrice = searchParams.get('minPrice') || ''
   const maxPrice = searchParams.get('maxPrice') || ''
-  const occasion = searchParams.get('occasion') || ''
+  // مناسبة لم تعد مستخدمة
   const recipient = searchParams.get('recipient') || ''
   const search = searchParams.get('search') || ''
 
@@ -30,14 +30,13 @@ const ProductsPage = () => {
 
   // Fetch products - use categorySlug directly
   const { data: productsData, isLoading } = useQuery({
-    queryKey: ['products', { categorySlug, page, sort, minPrice, maxPrice, occasion, recipient, search }],
+    queryKey: ['products', { categorySlug, page, sort, minPrice, maxPrice, recipient, search }],
     queryFn: () => productsAPI.getAll({
       categorySlug,
       page,
       sort,
       minPrice,
       maxPrice,
-      occasion,
       recipient,
       search
     }).then(res => res.data)
@@ -60,10 +59,7 @@ const ProductsPage = () => {
     { value: 'bestselling', label: 'الأكثر مبيعاً' },
   ]
 
-  const occasions = [
-    'عيد ميلاد', 'زفاف', 'خطوبة', 'عيد الحب', 'عيد الأم', 
-    'عيد الأب', 'تخرج', 'ولادة', 'ذكرى زواج', 'شكر'
-  ]
+  // مناسبة لم تعد مستخدمة
 
   const recipients = [
     'زوجة', 'زوج', 'أم', 'أب', 'أخت', 'أخ', 
@@ -79,12 +75,20 @@ const ProductsPage = () => {
 
   const updateFilter = (key, value) => {
     const newParams = new URLSearchParams(searchParams)
-    if (value) {
-      newParams.set(key, value)
+    if (key === 'page') {
+      if (value) {
+        newParams.set('page', value)
+      } else {
+        newParams.delete('page')
+      }
     } else {
-      newParams.delete(key)
+      if (value) {
+        newParams.set(key, value)
+      } else {
+        newParams.delete(key)
+      }
+      newParams.set('page', '1') // Reset to first page on filter change
     }
-    newParams.set('page', '1') // Reset to first page on filter change
     setSearchParams(newParams)
   }
 
@@ -100,7 +104,7 @@ const ProductsPage = () => {
     setSearchParams(newParams)
   }
 
-  const hasActiveFilters = minPrice || maxPrice || occasion || recipient
+  const hasActiveFilters = minPrice || maxPrice || recipient
 
   // Page title and description
   const pageTitle = categoryInfo?.name 
@@ -220,24 +224,7 @@ const ProductsPage = () => {
                   </div>
                 </div>
 
-                {/* Occasions */}
-                <div className="mb-6">
-                  <h3 className="font-medium text-gray-700 mb-3">المناسبة</h3>
-                  <div className="space-y-2">
-                    {occasions.map((occ) => (
-                      <label key={occ} className="flex items-center gap-2 cursor-pointer">
-                        <input 
-                          type="radio"
-                          name="occasion"
-                          checked={occasion === occ}
-                          onChange={() => updateFilter('occasion', occ)}
-                          className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
-                        />
-                        <span className="text-gray-600">{occ}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+                {/* ...مناسبة محذوفة... */}
 
                 {/* Recipients */}
                 <div>
@@ -315,26 +302,27 @@ const ProductsPage = () => {
               {/* Active Filters */}
               {hasActiveFilters && (
                 <div className="flex flex-wrap gap-2 mb-6">
-                  {occasion && (
-                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-700 px-3 py-1 rounded-full text-sm">
-                      {occasion}
-                      <button onClick={() => updateFilter('occasion', '')}>
-                        <FiX size={14} />
-                      </button>
-                    </span>
-                  )}
+                  {/* ...مناسبة محذوفة من الفلاتر النشطة... */}
                   {recipient && (
-                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-700 px-3 py-1 rounded-full text-sm">
+                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1 rounded-full text-sm border border-purple-200">
                       هدية لـ {recipient}
-                      <button onClick={() => updateFilter('recipient', '')}>
+                      <button onClick={() => updateFilter('recipient', '')} className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none">
                         <FiX size={14} />
                       </button>
                     </span>
                   )}
-                  {(minPrice || maxPrice) && (
-                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-700 px-3 py-1 rounded-full text-sm">
-                      {minPrice && maxPrice ? `${minPrice} - ${maxPrice} ج.م` : minPrice ? `أكثر من ${minPrice} ج.م` : `أقل من ${maxPrice} ج.م`}
-                      <button onClick={clearPriceFilter}>
+                  {minPrice && (
+                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1 rounded-full text-sm border border-purple-200">
+                      أكثر من {minPrice} ج.م
+                      <button onClick={() => updateFilter('minPrice', '')} className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none">
+                        <FiX size={14} />
+                      </button>
+                    </span>
+                  )}
+                  {maxPrice && (
+                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1 rounded-full text-sm border border-purple-200">
+                      أقل من {maxPrice} ج.م
+                      <button onClick={() => updateFilter('maxPrice', '')} className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none">
                         <FiX size={14} />
                       </button>
                     </span>
@@ -454,25 +442,7 @@ const ProductsPage = () => {
                     </div>
                   </div>
 
-                  {/* Recipients */}
-                  <div>
-                    <h3 className="font-medium text-gray-700 mb-3">هدية لـ</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {recipients.map((rec) => (
-                        <button
-                          key={rec}
-                          onClick={() => updateFilter('recipient', recipient === rec ? '' : rec)}
-                          className={`px-4 py-2 rounded-full border ${
-                            recipient === rec 
-                              ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white border-purple-500' 
-                              : 'border-gray-300'
-                          }`}
-                        >
-                          {rec}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  {/* ...مناسبة محذوفة من فلاتر الموبايل... */}
                 </div>
               </div>
               <div className="p-4 border-t flex gap-4">

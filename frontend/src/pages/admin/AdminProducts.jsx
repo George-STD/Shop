@@ -21,6 +21,7 @@ const AdminProducts = () => {
     images: [{ url: '', alt: '' }],
     hasColors: false,
     colors: [],
+    recipients: [],
     isActive: true,
     isFeatured: false,
     isBestseller: false
@@ -78,6 +79,7 @@ const AdminProducts = () => {
       images: [{ url: '', alt: '' }],
       hasColors: false,
       colors: [],
+      recipients: [],
       isActive: true,
       isFeatured: false,
       isBestseller: false
@@ -98,6 +100,7 @@ const AdminProducts = () => {
       images: product.images?.length ? product.images : [{ url: '', alt: '' }],
       hasColors: product.colors && product.colors.length > 0,
       colors: product.colors || [],
+      recipients: product.recipients || [],
       isActive: product.isActive,
       isFeatured: product.isFeatured || false,
       isBestseller: product.isBestseller || false
@@ -303,6 +306,29 @@ const AdminProducts = () => {
               </h2>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                                          {/* Recipients (هدية لـ) */}
+                                          <div>
+                                            <label className="block text-sm font-medium mb-1">ينفع هدية لـ</label>
+                                            <div className="flex flex-wrap gap-2">
+                                              {['زوجة', 'زوج', 'أم', 'أب', 'أخت', 'أخ', 'صديقة', 'صديق', 'أطفال', 'عروسين'].map((rec) => (
+                                                <label key={rec} className="flex items-center gap-1 cursor-pointer border rounded px-2 py-1">
+                                                  <input
+                                                    type="checkbox"
+                                                    checked={formData.recipients.includes(rec)}
+                                                    onChange={e => {
+                                                      if (e.target.checked) {
+                                                        setFormData({ ...formData, recipients: [...formData.recipients, rec] })
+                                                      } else {
+                                                        setFormData({ ...formData, recipients: formData.recipients.filter(r => r !== rec) })
+                                                      }
+                                                    }}
+                                                    className="rounded"
+                                                  />
+                                                  <span>{rec}</span>
+                                                </label>
+                                              ))}
+                                            </div>
+                                          </div>
                             {/* Allow color selection toggle */}
                             <div>
                               <label className="block text-sm font-medium mb-1">هل يمكن اختيار لون المنتج؟</label>
