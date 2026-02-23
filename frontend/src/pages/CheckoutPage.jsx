@@ -213,7 +213,7 @@ const CheckoutPage = () => {
                           <span className="font-medium">Instapay: 01286153004</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span role="img" aria-label="WhatsApp" className="text-2xl">🟢</span>
+                          <img src="/images/whatsapp.png" alt="WhatsApp" className="h-5 w-5" />
                           <a href="https://wa.me/201286153004" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline">تواصل عبر واتساب</a>
                         </div>
                       </div>

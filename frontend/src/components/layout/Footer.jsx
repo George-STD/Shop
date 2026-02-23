@@ -45,16 +45,13 @@ const Footer = () => {
               متجرك الأول للهدايا في مصر. نقدم لك أفضل تشكيلة من الهدايا لجميع المناسبات مع توصيل سريع لباب بيتك.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 transition-colors">
+              <a href="https://www.facebook.com/share/1BzYfakvLp/?mibextid=wwXIfr" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 transition-colors" target='_blank'>
                 <FiFacebook size={18} />
               </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 transition-colors">
+              <a href="https://www.instagram.com/foryou._.21?igsh=d3llMHFjdmE3Z25w&utm_source=qr" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 transition-colors" target='_blank'>
                 <FiInstagram size={18} />
               </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 transition-colors">
-                <FiTwitter size={18} />
-              </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 transition-colors">
+              <a href="https://youtube.com/@foryou-l1k?si=wL0zO2sHLypUtE-p" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 transition-colors" target='_blank'>
                 <FiYoutube size={18} />
               </a>
             </div>
