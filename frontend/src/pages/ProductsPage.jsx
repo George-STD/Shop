@@ -468,7 +468,10 @@ const ProductsPage = () => {
               </div>
               <div className="p-4 border-t flex gap-4">
                 <button 
-                  onClick={clearFilters}
+                  onClick={() => {
+                    navigate('/products');
+                    setShowFilters(false);
+                  }}
                   className="flex-1 btn-outline"
                 >
                   مسح الكل
