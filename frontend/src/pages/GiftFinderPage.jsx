@@ -15,16 +15,16 @@ const occasions = [
 ]
 
 const recipients = [
-  { id: 'wife', name: 'زوجة', icon: '👩' },
-  { id: 'husband', name: 'زوج', icon: '👨' },
-  { id: 'mother', name: 'أم', icon: '👩‍🦳' },
-  { id: 'father', name: 'أب', icon: '👨‍🦳' },
-  { id: 'sister', name: 'أخت', icon: '👧' },
-  { id: 'brother', name: 'أخ', icon: '👦' },
-  { id: 'female-friend', name: 'صديقة', icon: '👩‍❤️‍👩' },
-  { id: 'male-friend', name: 'صديق', icon: '👨‍❤️‍👨' },
-  { id: 'kids', name: 'أطفال', icon: '🧒' },
-  { id: 'couple', name: 'عروسين', icon: '👰‍♀️🤵‍♂️' },
+  { id: 'زوجة', name: 'زوجة', icon: '👩' },
+  { id: 'زوج', name: 'زوج', icon: '👨' },
+  { id: 'أم', name: 'أم', icon: '👩‍🦳' },
+  { id: 'أب', name: 'أب', icon: '👨‍🦳' },
+  { id: 'أخت', name: 'أخت', icon: '👧' },
+  { id: 'أخ', name: 'أخ', icon: '👦' },
+  { id: 'صديقة', name: 'صديقة', icon: '👩‍❤️‍👩' },
+  { id: 'صديق', name: 'صديق', icon: '👨‍❤️‍👨' },
+  { id: 'أطفال', name: 'أطفال', icon: '🧒' },
+  { id: 'عروسين', name: 'عروسين', icon: '👰‍♀️🤵‍♂️' },
 ]
 
 const priceRanges = [
@@ -82,11 +82,13 @@ const GiftFinderPage = () => {
     if (step < 4) {
       setStep(step + 1)
     } else {
+      const selectedRecipient = recipients.find(r => r.id === selections.recipient)?.name || '';
       const params = new URLSearchParams({
         occasion: selections.occasion || '',
-        recipient: selections.recipient || '',
+        recipient: selectedRecipient,
         minPrice: priceRanges.find(p => p.id === selections.priceRange)?.min || '',
         maxPrice: priceRanges.find(p => p.id === selections.priceRange)?.max || '',
+        page: 1,
       })
       navigate(`/products?${params.toString()}`)
     }
