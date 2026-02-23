@@ -159,7 +159,7 @@ const Dashboard = () => {
                     to={item.path}
                     className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
                       (item.exact ? location.pathname === item.path : location.pathname.startsWith(item.path))
-                        ? 'bg-gradient-to-r from-purple-50 to-pink-50 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600'
+                        ? 'bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 text-transparent'
                         : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >

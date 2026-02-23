@@ -7,7 +7,7 @@ const CartPage = () => {
   const { items, removeItem, updateQuantity, getTotal, clearCart } = useCartStore()
   
   const subtotal = getTotal()
-  const shippingCost = subtotal >= 500 ? 0 : 30
+  const shippingCost = 60
   const total = subtotal + shippingCost
 
   if (items.length === 0) {
@@ -68,9 +68,7 @@ const CartPage = () => {
                             {item.selectedColor && `اللون: ${item.selectedColor}`}
                           </p>
                         )}
-                        {item.giftWrap?.enabled && (
-                          <p className="text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mt-1">🎁 تغليف هدايا</p>
-                        )}
+
                       </div>
                       <button 
                         onClick={() => removeItem(item.id, item.selectedSize, item.selectedColor)}
@@ -133,9 +131,7 @@ const CartPage = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">الشحن</span>
-                    <span className={shippingCost === 0 ? 'text-green-600' : ''}>
-                      {shippingCost === 0 ? 'مجاني' : `${shippingCost} ج.م`}
-                    </span>
+                    <span>{`${shippingCost} ج.م`}</span>
                   </div>
                   {subtotal < 500 && (
                     <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">

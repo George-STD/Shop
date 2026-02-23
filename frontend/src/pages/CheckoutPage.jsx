@@ -27,15 +27,12 @@ const CheckoutPage = () => {
     apartment: '',
     paymentMethod: 'cod',
     deliveryType: 'standard',
-    isGift: false,
-    giftMessage: '',
+    // isGift and giftMessage removed
     customerNote: ''
-  })
-
-  const subtotal = getTotal()
-  const shippingCost = formData.deliveryType === 'express' ? 50 : (subtotal >= 500 ? 0 : 30)
-  const total = subtotal + shippingCost
-
+                      [
+                        { value: 'cod', label: 'الدفع عند الاستلام', icon: '💵' },
+                        { value: 'instapay', label: 'انستاباي', icon: '📱' },
+                      ].map(method => (
   const governorates = [
     'القاهرة', 'الجيزة', 'الإسكندرية', 'البحيرة', 'الدقهلية', 
     'الشرقية', 'المنوفية', 'الغربية', 'كفر الشيخ', 'القليوبية',
@@ -64,7 +61,7 @@ const CheckoutPage = () => {
           selectedSize: item.selectedSize,
           selectedColor: item.selectedColor,
           addons: item.addons,
-          giftWrap: item.giftWrap
+          // giftWrap removed
         })),
         shippingAddress: {
           firstName: formData.firstName,
@@ -80,8 +77,7 @@ const CheckoutPage = () => {
         },
         paymentMethod: formData.paymentMethod,
         deliveryType: formData.deliveryType,
-        isGift: formData.isGift,
-        giftMessage: formData.giftMessage,
+        // isGift and giftMessage removed
         customerNote: formData.customerNote,
         guestEmail: !isAuthenticated ? formData.email : undefined,
         guestPhone: !isAuthenticated ? formData.phone : undefined
@@ -347,29 +343,18 @@ const CheckoutPage = () => {
                         </label>
                       ))}
                     </div>
-
-                    {/* Gift Option */}
-                    <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          name="isGift"
-                          checked={formData.isGift}
-                          onChange={handleChange}
-                        />
-                        <span className="font-medium">🎁 هذا الطلب هدية</span>
-                      </label>
-                      {formData.isGift && (
-                        <textarea
-                          name="giftMessage"
-                          value={formData.giftMessage}
-                          onChange={handleChange}
-                          placeholder="رسالة الهدية (اختياري)"
-                          className="input-field mt-4"
-                          rows="3"
-                        />
-                      )}
+                    <div className="mt-6 p-4 bg-gray-50 rounded-xl flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <img src="/images/payments/instapay.svg" alt="InstaPay" className="h-5 w-5" />
+                        <span className="font-medium">Instapay: 01286153004</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <img src="/images/whatsapp.png" alt="WhatsApp" className="h-5 w-5" />
+                        <a href="https://wa.me/201286153004" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline">تواصل عبر واتساب</a>
+                      </div>
                     </div>
+
+
 
                     {/* Notes */}
                     <div className="mt-6">
@@ -429,9 +414,7 @@ const CheckoutPage = () => {
                       </h3>
                       <p className="text-gray-600">
                         {formData.paymentMethod === 'cod' && 'الدفع عند الاستلام'}
-                        {formData.paymentMethod === 'card' && 'بطاقة ائتمان'}
                         {formData.paymentMethod === 'instapay' && 'انستاباي'}
-                        {formData.paymentMethod === 'vodafone_cash' && 'فودافون كاش'}
                       </p>
                     </div>
 
@@ -507,9 +490,7 @@ const CheckoutPage = () => {
                     </div>
                     <div className="flex justify-between text-gray-600">
                       <span>الشحن</span>
-                      <span className={shippingCost === 0 ? 'text-green-600' : ''}>
-                        {shippingCost === 0 ? 'مجاني' : `${shippingCost} ج.م`}
-                      </span>
+                      <span>{`${shippingCost} ج.م`}</span>
                     </div>
                   </div>
 

@@ -198,7 +198,7 @@ const Header = () => {
             <li>
               <Link 
                 to="/gift-finder" 
-                className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-pink-700 font-medium flex items-center gap-1"
+                className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 font-medium flex items-center gap-1"
               >
                 <span>🎯</span>
                 اعثر على الهدية المثالية

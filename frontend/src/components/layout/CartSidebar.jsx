@@ -7,7 +7,7 @@ const CartSidebar = () => {
   const { items, removeItem, updateQuantity, getTotal } = useCartStore()
   
   const total = getTotal()
-  const shippingCost = total >= 500 ? 0 : 30
+  const shippingCost = 60
 
   return (
     <div className="fixed inset-0 z-50">
@@ -139,19 +139,9 @@ const CartSidebar = () => {
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>الشحن</span>
-                <span>
-                  {shippingCost === 0 ? (
-                    <span className="text-green-600">مجاني</span>
-                  ) : (
-                    `${shippingCost} ج.م`
-                  )}
-                </span>
+                <span>{`${shippingCost} ج.م`}</span>
               </div>
-              {total < 500 && (
-                <p className="text-sm text-gray-500">
-                  أضف {500 - total} ج.م للحصول على شحن مجاني
-                </p>
-              )}
+
               <div className="flex justify-between text-lg font-bold pt-2 border-t">
                 <span>الإجمالي</span>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">{total + shippingCost} ج.م</span>

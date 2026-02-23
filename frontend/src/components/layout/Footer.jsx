@@ -120,6 +120,14 @@ const Footer = () => {
                 <span dir="ltr">+20 12 86153004</span>
               </li>
               <li className="flex items-center gap-3">
+                <img src="/images/payments/instapay.svg" alt="InstaPay" className="h-5 w-5 flex-shrink-0" />
+                <span dir="ltr">Instapay: 01286153004</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <img src="/images/whatsapp.png" alt="WhatsApp" className="h-5 w-5 flex-shrink-0" />
+                <a href="https://wa.me/201286153004" target="_blank" rel="noopener noreferrer" className="hover:text-pink-400 transition-colors">تواصل واتساب</a>
+              </li>
+              <li className="flex items-center gap-3">
                 <FiMail className="flex-shrink-0 text-pink-400" size={18} />
                 <span>dev.george.osama@gmail.com</span>
               </li>

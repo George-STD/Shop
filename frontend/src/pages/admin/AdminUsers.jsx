@@ -125,7 +125,7 @@ const AdminUsers = () => {
                     <tr key={user._id} className="hover:bg-gray-50">
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full flex items-center justify-center text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium">
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 text-transparent font-medium">
                             {user.firstName?.charAt(0)}
                           </div>
                           <span className="font-medium">{user.firstName} {user.lastName}</span>

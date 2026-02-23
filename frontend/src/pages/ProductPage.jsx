@@ -320,7 +320,7 @@ const ProductPage = () => {
                         onClick={() => setSelectedSize(size)}
                         className={`px-4 py-2 rounded-lg border-2 transition-colors ${
                           selectedSize === size
-                            ? 'border-purple-500 bg-gradient-to-r from-purple-50 to-pink-50 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600'
+                            ? 'border-purple-500 bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 text-transparent'
                             : 'border-gray-300 hover:border-purple-500'
                         }`}
                       >
@@ -504,7 +504,7 @@ const ProductPage = () => {
                           <Link
                             key={tag}
                             to={`/products?search=${tag}`}
-                            className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600 hover:bg-gradient-to-r from-purple-100 to-pink-100 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
+                            className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600 bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-100 hover:to-pink-100 hover:text-transparent"
                           >
                             {tag}
                           </Link>

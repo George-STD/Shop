@@ -139,7 +139,7 @@ const MobileMenu = () => {
                 key={occasion.value}
                 to={`/products?occasion=${occasion.value}`}
                 onClick={closeMobileMenu}
-                className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700 hover:bg-gradient-to-r from-purple-100 to-pink-100 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 transition-colors"
+                className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700 bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-100 hover:to-pink-100 hover:text-transparent transition-colors"
               >
                 {occasion.name}
               </Link>
