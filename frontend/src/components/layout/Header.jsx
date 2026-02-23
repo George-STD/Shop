@@ -42,7 +42,7 @@ const Header = () => {
       {/* Top Bar */}
       <div className="bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white text-sm py-2">
         <div className="container-custom flex justify-between items-center">
-          <p>توصيل مجاني للطلبات أكثر من 500 جنيه 🎁</p>
+          <p>تفاصيل صغيرة، تصنع ذكريات كبيرة. ✨</p>
           <div className="hidden md:flex gap-4">
             <Link to="/track-order" className="hover:underline">تتبع طلبك</Link>
             <Link to="/stores" className="hover:underline">فروعنا</Link>
