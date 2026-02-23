@@ -12,6 +12,7 @@ const CheckoutPage = () => {
   const { isAuthenticated, user } = useAuthStore()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState({})
 
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -48,6 +49,41 @@ const CheckoutPage = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
+    // Clear error for this field when user types
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }))
+    }
+  }
+
+  const validateStep1 = () => {
+    const newErrors = {}
+
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'الاسم الأول مطلوب'
+    }
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'رقم الهاتف مطلوب'
+    }
+    if (!formData.governorate) {
+      newErrors.governorate = 'المحافظة مطلوبة'
+    }
+    if (!formData.street.trim()) {
+      newErrors.street = 'العنوان التفصيلي مطلوب'
+    }
+
+    setErrors(newErrors)
+
+    if (Object.keys(newErrors).length > 0) {
+      toast.error('الرجاء ملء جميع الحقول المطلوبة')
+      return false
+    }
+    return true
+  }
+
+  const handleNextStep1 = () => {
+    if (validateStep1()) {
+      setStep(2)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -116,11 +152,10 @@ const CheckoutPage = () => {
           <div className="flex items-center justify-center mb-8">
             {['معلومات الشحن', 'طريقة الدفع', 'تأكيد الطلب'].map((label, index) => (
               <div key={index} className="flex items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  step > index + 1 ? 'bg-green-500 text-white' :
-                  step === index + 1 ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white' :
-                  'bg-gray-200 text-gray-500'
-                }`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step > index + 1 ? 'bg-green-500 text-white' :
+                    step === index + 1 ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white' :
+                      'bg-gray-200 text-gray-500'
+                  }`}>
                   {step > index + 1 ? <FiCheck /> : index + 1}
                 </div>
                 <span className={`mx-2 hidden sm:inline ${step === index + 1 ? 'font-medium' : 'text-gray-500'}`}>{label}</span>
@@ -142,40 +177,76 @@ const CheckoutPage = () => {
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-gray-700 mb-2">الاسم الأول *</label>
-                        <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required className="input-field" />
+                        <input
+                          type="text"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleChange}
+                          className={`input-field ${errors.firstName ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                        />
+                        {errors.firstName && (
+                          <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
+                        )}
                       </div>
                       <div>
-                        <label className="block text-gray-700 mb-2">الاسم الأخير *</label>
-                        <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} required className="input-field" />
+                        <label className="block text-gray-700 mb-2">الاسم الأخير</label>
+                        <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} className="input-field" />
                       </div>
                       <div>
-                        <label className="block text-gray-700 mb-2">البريد الإلكتروني *</label>
-                        <input type="email" name="email" value={formData.email} onChange={handleChange} required className="input-field" />
+                        <label className="block text-gray-700 mb-2">البريد الإلكتروني</label>
+                        <input type="email" name="email" value={formData.email} onChange={handleChange} className="input-field" />
                       </div>
                       <div>
                         <label className="block text-gray-700 mb-2">رقم الهاتف *</label>
-                        <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required className="input-field" />
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleChange}
+                          className={`input-field ${errors.phone ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                        />
+                        {errors.phone && (
+                          <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-gray-700 mb-2">المحافظة *</label>
-                        <select name="governorate" value={formData.governorate} onChange={handleChange} required className="input-field">
+                        <select
+                          name="governorate"
+                          value={formData.governorate}
+                          onChange={handleChange}
+                          className={`input-field ${errors.governorate ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                        >
                           <option value="">اختر المحافظة</option>
                           {governorates.map((gov) => (
                             <option key={gov} value={gov}>{gov}</option>
                           ))}
                         </select>
+                        {errors.governorate && (
+                          <p className="text-red-500 text-sm mt-1">{errors.governorate}</p>
+                        )}
                       </div>
                       <div>
-                        <label className="block text-gray-700 mb-2">المدينة *</label>
-                        <input type="text" name="city" value={formData.city} onChange={handleChange} required className="input-field" />
+                        <label className="block text-gray-700 mb-2">المدينة</label>
+                        <input type="text" name="city" value={formData.city} onChange={handleChange} className="input-field" />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-gray-700 mb-2">المنطقة / الحي *</label>
-                        <input type="text" name="area" value={formData.area} onChange={handleChange} required className="input-field" />
+                        <label className="block text-gray-700 mb-2">المنطقة / الحي</label>
+                        <input type="text" name="area" value={formData.area} onChange={handleChange} className="input-field" />
                       </div>
                       <div className="md:col-span-2">
                         <label className="block text-gray-700 mb-2">العنوان التفصيلي *</label>
-                        <input type="text" name="street" value={formData.street} onChange={handleChange} required className="input-field" placeholder="اسم الشارع ورقم العمارة" />
+                        <input
+                          type="text"
+                          name="street"
+                          value={formData.street}
+                          onChange={handleChange}
+                          className={`input-field ${errors.street ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                          placeholder="اسم الشارع ورقم العمارة"
+                        />
+                        {errors.street && (
+                          <p className="text-red-500 text-sm mt-1">{errors.street}</p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-gray-700 mb-2">الدور</label>
@@ -186,7 +257,7 @@ const CheckoutPage = () => {
                         <input type="text" name="apartment" value={formData.apartment} onChange={handleChange} className="input-field" />
                       </div>
                     </div>
-                    <button type="button" onClick={() => setStep(2)} className="btn-primary w-full mt-6">التالي</button>
+                    <button type="button" onClick={handleNextStep1} className="btn-primary w-full mt-6">التالي</button>
                   </div>
                 )}
 
