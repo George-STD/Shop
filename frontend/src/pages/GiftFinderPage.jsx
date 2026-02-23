@@ -15,12 +15,16 @@ const occasions = [
 ]
 
 const recipients = [
-  { id: 'her', name: 'لها', icon: '👩' },
-  { id: 'him', name: 'له', icon: '👨' },
-  { id: 'kids', name: 'للأطفال', icon: '👧' },
-  { id: 'family', name: 'للعائلة', icon: '👨‍👩‍👧‍👦' },
-  { id: 'friends', name: 'للأصدقاء', icon: '👥' },
-  { id: 'colleagues', name: 'للزملاء', icon: '💼' },
+  { id: 'wife', name: 'زوجة', icon: '👩' },
+  { id: 'husband', name: 'زوج', icon: '👨' },
+  { id: 'mother', name: 'أم', icon: '👩‍🦳' },
+  { id: 'father', name: 'أب', icon: '👨‍🦳' },
+  { id: 'sister', name: 'أخت', icon: '👧' },
+  { id: 'brother', name: 'أخ', icon: '👦' },
+  { id: 'female-friend', name: 'صديقة', icon: '👩‍❤️‍👩' },
+  { id: 'male-friend', name: 'صديق', icon: '👨‍❤️‍👨' },
+  { id: 'kids', name: 'أطفال', icon: '🧒' },
+  { id: 'couple', name: 'عروسين', icon: '👰‍♀️🤵‍♂️' },
 ]
 
 const priceRanges = [
