@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { useParams, useSearchParams, Link } from 'react-router-dom'
+import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { FiGrid, FiList, FiFilter, FiX, FiChevronDown } from 'react-icons/fi'
 import { productsAPI, categoriesAPI } from '../services/api'
@@ -11,6 +11,7 @@ const ProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [showFilters, setShowFilters] = useState(false)
   const [viewMode, setViewMode] = useState('grid')
+  const navigate = useNavigate();
   
   // Get filter values from URL
   const page = parseInt(searchParams.get('page')) || 1
@@ -407,12 +408,12 @@ const ProductsPage = () => {
                         <button
                           key={index}
                           onClick={() => {
-                            updateFilter('minPrice', range.min)
-                            updateFilter('maxPrice', range.max)
+                            updateFilter('minPrice', range.min !== '' ? range.min : '')
+                            updateFilter('maxPrice', range.max !== '' ? range.max : '')
                           }}
                           className={`px-4 py-2 rounded-full border ${
-                            minPrice === String(range.min) 
-                              ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white border-purple-500' 
+                            minPrice === String(range.min) && maxPrice === String(range.max)
+                              ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white border-purple-500'
                               : 'border-gray-300'
                           }`}
                         >
@@ -436,7 +437,19 @@ const ProductsPage = () => {
                       ].map((cat) => (
                         <button
                           key={cat.slug}
-                          onClick={() => updateFilter('categorySlug', categorySlug === cat.slug ? '' : cat.slug)}
+                          onClick={() => {
+                            const slugMap = {
+                              'special-men': 'men-premium',
+                              'special-women': 'women-premium',
+                              'men': 'men',
+                              'women': 'women',
+                              'personal-gifts': 'personal-gifts',
+                              'perfumes': 'perfumes',
+                            };
+                            const prettySlug = slugMap[cat.slug] || cat.slug;
+                            navigate(`/products/${prettySlug}`);
+                            setShowFilters(false);
+                          }}
                           className={`px-4 py-2 rounded-full border ${
                             categorySlug === cat.slug
                               ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white border-purple-500'
