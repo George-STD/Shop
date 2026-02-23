@@ -422,21 +422,28 @@ const ProductsPage = () => {
                     </div>
                   </div>
 
-                  {/* Occasions */}
+                  {/* Categories Filter */}
                   <div>
-                    <h3 className="font-medium text-gray-700 mb-3">المناسبة</h3>
+                    <h3 className="font-medium text-gray-700 mb-3">الفئة</h3>
                     <div className="flex flex-wrap gap-2">
-                      {occasions.map((occ) => (
+                      {[
+                        { name: 'رجالي مميز', slug: 'special-men' },
+                        { name: 'نسائي مميز', slug: 'special-women' },
+                        { name: 'رجالي', slug: 'men' },
+                        { name: 'نسائي', slug: 'women' },
+                        { name: 'الهدايا الشخصية', slug: 'personal-gifts' },
+                        { name: 'العطور', slug: 'perfumes' },
+                      ].map((cat) => (
                         <button
-                          key={occ}
-                          onClick={() => updateFilter('occasion', occasion === occ ? '' : occ)}
+                          key={cat.slug}
+                          onClick={() => updateFilter('categorySlug', categorySlug === cat.slug ? '' : cat.slug)}
                           className={`px-4 py-2 rounded-full border ${
-                            occasion === occ 
-                              ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white border-purple-500' 
+                            categorySlug === cat.slug
+                              ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white border-purple-500'
                               : 'border-gray-300'
                           }`}
                         >
-                          {occ}
+                          {cat.name}
                         </button>
                       ))}
                     </div>
