@@ -410,6 +410,7 @@ const ProductsPage = () => {
                           onClick={() => {
                             updateFilter('minPrice', range.min !== '' ? range.min : '')
                             updateFilter('maxPrice', range.max !== '' ? range.max : '')
+                            setShowFilters(false);
                           }}
                           className={`px-4 py-2 rounded-full border ${
                             minPrice === String(range.min) && maxPrice === String(range.max)
