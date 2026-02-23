@@ -27,14 +27,12 @@ const Header = () => {
   }
 
   const categories = [
-    { name: 'هدايا عيد الميلاد', slug: 'birthday-gifts' },
-    { name: 'هدايا الزفاف', slug: 'wedding-gifts' },
-    { name: 'باقات الورد', slug: 'flower-bouquets' },
-    { name: 'الشوكولاتة', slug: 'chocolates-sweets' },
+    { name: 'رجالي مميز', slug: 'special-men' },
+    { name: 'نسائي مميز', slug: 'special-women' },
+    { name: 'رجالي', slug: 'men' },
+    { name: 'نسائي', slug: 'women' },
+    { name: 'الهدايا الشخصية', slug: 'personal-gifts' },
     { name: 'العطور', slug: 'perfumes' },
-    { name: 'الساعات', slug: 'watches-accessories' },
-    { name: 'هدايا شخصية', slug: 'personalized-gifts' },
-    { name: 'هدايا الأطفال', slug: 'kids-gifts' },
   ]
 
   return (
