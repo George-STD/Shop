@@ -142,11 +142,8 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-gray-400 text-sm">طرق الدفع المتاحة:</p>
             <div className="flex items-center gap-4">
-              <img src="/images/payments/visa.svg" alt="Visa" className="h-8" />
-              <img src="/images/payments/mastercard.svg" alt="Mastercard" className="h-8" />
               <img src="/images/payments/cash.svg" alt="Cash on Delivery" className="h-8" />
               <img src="/images/payments/instapay.svg" alt="InstaPay" className="h-8" />
-              <img src="/images/payments/vodafone-cash.svg" alt="Vodafone Cash" className="h-8" />
             </div>
           </div>
         </div>

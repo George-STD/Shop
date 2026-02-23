@@ -21,7 +21,6 @@ const ProductPage = () => {
   const [selectedSize, setSelectedSize] = useState(null)
   const [selectedColor, setSelectedColor] = useState(null)
   const [selectedAddons, setSelectedAddons] = useState([])
-  const [giftWrap, setGiftWrap] = useState(false)
   const [activeTab, setActiveTab] = useState('description')
 
   const { addItem } = useCartStore()
@@ -62,8 +61,7 @@ const ProductPage = () => {
     addItem(product, quantity, {
       selectedSize,
       selectedColor,
-      addons: selectedAddons,
-      giftWrap: { enabled: giftWrap }
+      addons: selectedAddons
     })
     toast.success('تمت الإضافة إلى السلة')
   }
@@ -104,7 +102,6 @@ const ProductPage = () => {
     if (!product) return 0
     let total = product.price * quantity
     selectedAddons.forEach(addon => total += addon.price)
-    if (giftWrap) total += 25
     return total
   }
 
@@ -388,25 +385,6 @@ const ProductPage = () => {
                   </div>
                 </div>
               )}
-
-              {/* Gift Wrap */}
-              <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${
-                giftWrap ? 'border-purple-500 bg-gradient-to-r from-purple-50 to-pink-50' : 'border-gray-300'
-              }`}>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={giftWrap}
-                    onChange={(e) => setGiftWrap(e.target.checked)}
-                    className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
-                  />
-                  <div>
-                    <span className="font-medium">🎁 تغليف هدايا</span>
-                    <p className="text-sm text-gray-500">تغليف أنيق مع بطاقة معايدة</p>
-                  </div>
-                </div>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium">+25 ج.م</span>
-              </label>
 
               {/* Quantity & Add to Cart */}
               <div className="flex flex-col sm:flex-row gap-4">
