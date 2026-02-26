@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
@@ -49,7 +50,7 @@ router.get('/product/:productId', async (req, res) => {
     const ratingStats = await Review.aggregate([
       { 
         $match: { 
-          product: require('mongoose').Types.ObjectId(req.params.productId),
+          product: mongoose.Types.ObjectId(req.params.productId),
           isApproved: true 
         } 
       },
