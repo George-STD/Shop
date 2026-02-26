@@ -263,6 +263,19 @@ const OrdersPage = () => {
                       <div className="font-medium">{item.name}</div>
                       <div className="text-sm text-gray-500">الكمية: {item.quantity}</div>
                     </div>
+                    <a
+                      href={`/product/${item.slug || item.product}`}
+                      className="btn-primary ml-2"
+                      onClick={e => {
+                        // Optionally scroll to review form after navigation
+                        setTimeout(() => {
+                          const el = document.querySelector('form[action="#review-form"]') || document.querySelector('.bg-white.p-6.rounded-xl.shadow.mb-6.max-w-xl.mx-auto');
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }, 500);
+                      }}
+                    >
+                      تقييم
+                    </a>
                   </div>
                 ))}
               </div>

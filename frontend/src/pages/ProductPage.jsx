@@ -1,12 +1,12 @@
 ﻿import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useParams, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Thumbs, Navigation, Zoom } from 'swiper/modules'
 import { FiHeart, FiShare2, FiMinus, FiPlus, FiCheck, FiTruck, FiRotateCcw, FiShield } from 'react-icons/fi'
 import { productsAPI, reviewsAPI } from '../services/api'
-import { useCartStore, useWishlistStore } from '../store'
+import { useCartStore, useWishlistStore, useAuthStore } from '../store'
 import ProductCard from '../components/product/ProductCard'
 import toast from 'react-hot-toast'
 import 'swiper/css'
@@ -14,10 +14,135 @@ import 'swiper/css/thumbs'
 import 'swiper/css/navigation'
 import 'swiper/css/zoom'
 
+// تم فصل مكون إضافة التقييم ليكون مكوناً مستقلاً ونظيفاً
+const ReviewForm = ({ productId, refreshReviews }) => {
+  const { isAuthenticated } = useAuthStore();
+  const [form, setForm] = useState({
+    rating: 0,
+    title: '',
+    comment: '',
+    guestName: '',
+    guestEmail: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleRating = (r) => {
+    setForm({ ...form, rating: r });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (form.rating === 0) return setError('الرجاء اختيار التقييم');
+    if (!isAuthenticated && (!form.guestName || !form.guestEmail)) return setError('الرجاء إدخال الاسم والبريد الإلكتروني');
+    
+    setLoading(true);
+    try {
+      await reviewsAPI.create({
+        product: productId,
+        rating: form.rating,
+        title: form.title,
+        comment: form.comment,
+        guestName: isAuthenticated ? undefined : form.guestName,
+        guestEmail: isAuthenticated ? undefined : form.guestEmail
+      });
+      setSuccess(true);
+      setForm({ rating: 0, title: '', comment: '', guestName: '', guestEmail: '' });
+      refreshReviews();
+    } catch (err) {
+      setError(err.response?.data?.message || 'حدث خطأ أثناء إرسال التقييم');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="bg-green-50 text-green-700 p-4 rounded-xl mb-6 text-center shadow-sm">
+        تم إرسال تقييمك بنجاح!
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm border mb-8 max-w-2xl mx-auto">
+      <h3 className="font-bold text-lg mb-4 text-gray-800">أضف تقييمك</h3>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="font-medium text-gray-700">التقييم:</span>
+        <div className="flex">
+          {[1, 2, 3, 4, 5].map((r) => (
+            <button 
+              type="button" 
+              key={r} 
+              onClick={() => handleRating(r)} 
+              className={`text-2xl transition-colors ${r <= form.rating ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-200'}`}
+            >
+              ★
+            </button>
+          ))}
+        </div>
+      </div>
+      <input
+        type="text"
+        name="title"
+        placeholder="عنوان التقييم (اختياري)"
+        value={form.title}
+        onChange={handleChange}
+        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-3 bg-gray-50"
+      />
+      <textarea
+        name="comment"
+        placeholder="اكتب تعليقك هنا"
+        value={form.comment}
+        onChange={handleChange}
+        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-3 bg-gray-50 min-h-[100px]"
+        required
+      />
+      {!isAuthenticated && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+          <input
+            type="text"
+            name="guestName"
+            placeholder="اسمك"
+            value={form.guestName}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50"
+            required
+          />
+          <input
+            type="email"
+            name="guestEmail"
+            placeholder="بريدك الإلكتروني"
+            value={form.guestEmail}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50"
+            required
+          />
+        </div>
+      )}
+      {error && <div className="text-red-500 text-sm mb-3 font-medium">{error}</div>}
+      <button 
+        type="submit" 
+        className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50" 
+        disabled={loading}
+      >
+        {loading ? 'جاري الإرسال...' : 'إرسال التقييم'}
+      </button>
+    </form>
+  );
+};
+
 const ProductPage = () => {
   const { slug } = useParams()
+  const queryClient = useQueryClient()
   const [thumbsSwiper, setThumbsSwiper] = useState(null)
-  const [quantity, setQuantity] = useState(1)
+  const[quantity, setQuantity] = useState(1)
   const [selectedSize, setSelectedSize] = useState(null)
   const [selectedColor, setSelectedColor] = useState(null)
   const [selectedAddons, setSelectedAddons] = useState([])
@@ -25,6 +150,7 @@ const ProductPage = () => {
 
   const { addItem } = useCartStore()
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlistStore()
+  const { isAuthenticated } = useAuthStore()
 
   // Fetch product
   const { data: product, isLoading } = useQuery({
@@ -493,14 +619,20 @@ const ProductPage = () => {
                 </div>
               ) : (
                 <div>
+                  {/* Review Form Component */}
+                  <ReviewForm 
+                    productId={product._id} 
+                    refreshReviews={() => queryClient.invalidateQueries(['reviews', product._id])} 
+                  />
+
                   {reviewsData?.data?.length > 0 ? (
                     <div className="space-y-6">
                       {reviewsData.data.map((review) => (
-                        <div key={review._id} className="bg-white p-6 rounded-xl">
+                        <div key={review._id} className="bg-white p-6 rounded-xl border">
                           <div className="flex items-start justify-between">
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-medium">{review.user?.firstName}</span>
+                                <span className="font-medium">{review.user?.firstName || review.guestName}</span>
                                 {review.isVerifiedPurchase && (
                                   <span className="text-green-600 text-sm flex items-center gap-1">
                                     <FiCheck size={14} />
