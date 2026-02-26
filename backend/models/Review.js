@@ -9,7 +9,15 @@ const reviewSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false
+  },
+  guestName: {
+    type: String,
+    trim: true
+  },
+  guestEmail: {
+    type: String,
+    trim: true
   },
   order: {
     type: mongoose.Schema.Types.ObjectId,
@@ -69,8 +77,9 @@ const reviewSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Prevent duplicate reviews from same user on same product
-reviewSchema.index({ product: 1, user: 1 }, { unique: true });
+// Prevent duplicate reviews from same user or guest email on same product
+reviewSchema.index({ product: 1, user: 1 }, { unique: true, partialFilterExpression: { user: { $exists: true, $ne: null } } });
+reviewSchema.index({ product: 1, guestEmail: 1 }, { unique: true, partialFilterExpression: { guestEmail: { $exists: true, $ne: null } } });
 reviewSchema.index({ product: 1, isApproved: 1 });
 reviewSchema.index({ createdAt: -1 });
 

@@ -91,15 +91,19 @@ router.get('/product/:productId', async (req, res) => {
 router.post('/', [
   body('productId').notEmpty().withMessage('معرف المنتج مطلوب'),
   body('rating').isInt({ min: 1, max: 5 }).withMessage('التقييم يجب أن يكون بين 1 و 5'),
-  body('comment').trim().isLength({ min: 10 }).withMessage('التعليق يجب أن يكون 10 أحرف على الأقل')
+  body('comment').trim().isLength({ min: 10 }).withMessage('التعليق يجب أن يكون 10 أحرف على الأقل'),
+  body('guestName').optional().trim().notEmpty().withMessage('اسم الضيف مطلوب'),
+  body('guestEmail').optional().isEmail().withMessage('بريد إلكتروني صحيح مطلوب')
 ], async (req, res) => {
   try {
     const userId = await getUser(req);
-    
-    if (!userId) {
-      return res.status(401).json({
+    const { productId, rating, title, comment, pros, cons, images, orderId, guestName, guestEmail } = req.body;
+
+    // If not logged in, require guestName and guestEmail
+    if (!userId && (!guestName || !guestEmail)) {
+      return res.status(400).json({
         success: false,
-        message: 'يجب تسجيل الدخول لإضافة تقييم'
+        message: 'يجب إدخال الاسم والبريد الإلكتروني للزائر'
       });
     }
 
@@ -111,14 +115,13 @@ router.post('/', [
       });
     }
 
-    const { productId, rating, title, comment, pros, cons, images, orderId } = req.body;
-
-    // Check if user already reviewed this product
-    const existingReview = await Review.findOne({
-      product: productId,
-      user: userId
-    });
-
+    // Check for duplicate review by user or guest
+    let existingReview = null;
+    if (userId) {
+      existingReview = await Review.findOne({ product: productId, user: userId });
+    } else {
+      existingReview = await Review.findOne({ product: productId, guestEmail });
+    }
     if (existingReview) {
       return res.status(400).json({
         success: false,
@@ -126,21 +129,24 @@ router.post('/', [
       });
     }
 
-    // Check if this is a verified purchase
+    // Check if this is a verified purchase (only for logged in)
     let isVerifiedPurchase = false;
-    const userOrders = await Order.find({
-      user: userId,
-      status: 'delivered',
-      'items.product': productId
-    });
-    
-    if (userOrders.length > 0) {
-      isVerifiedPurchase = true;
+    if (userId) {
+      const userOrders = await Order.find({
+        user: userId,
+        status: 'delivered',
+        'items.product': productId
+      });
+      if (userOrders.length > 0) {
+        isVerifiedPurchase = true;
+      }
     }
 
     const review = await Review.create({
       product: productId,
-      user: userId,
+      user: userId || undefined,
+      guestName: !userId ? guestName : undefined,
+      guestEmail: !userId ? guestEmail : undefined,
       order: orderId,
       rating,
       title,
@@ -152,7 +158,7 @@ router.post('/', [
       isApproved: true // Auto-approve for now
     });
 
-    await review.populate('user', 'firstName lastName avatar');
+    if (userId) await review.populate('user', 'firstName lastName avatar');
 
     res.status(201).json({
       success: true,
