@@ -27,7 +27,7 @@ const ProductsPage = () => {
     queryKey: ['category', categorySlug],
     queryFn: () => categoriesAPI.getBySlug(categorySlug).then(res => res.data.data),
     enabled: !!categorySlug
-  })
+  });
 
   // Fetch products - use categorySlug directly
   const { data: productsData, isLoading } = useQuery({
@@ -41,13 +41,13 @@ const ProductsPage = () => {
       recipient,
       search
     }).then(res => res.data)
-  })
+  });
 
   // Fetch categories for filter
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesAPI.getAll().then(res => res.data.data)
-  })
+  });
 
   const products = productsData?.data || []
   const pagination = productsData?.pagination || {}

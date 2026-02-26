@@ -15,7 +15,7 @@ const AdminReviews = () => {
       page,
       limit: 20 
     }).then(res => res.data)
-  })
+  });
 
   const approveMutation = useMutation({
     mutationFn: ({ id, isApproved }) => adminAPI.approveReview(id, isApproved),

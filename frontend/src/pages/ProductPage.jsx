@@ -30,21 +30,21 @@ const ProductPage = () => {
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', slug],
     queryFn: () => productsAPI.getBySlug(slug).then(res => res.data.data)
-  })
+  });
 
   // Fetch related products
   const { data: relatedProducts } = useQuery({
     queryKey: ['products', 'related', product?._id],
     queryFn: () => productsAPI.getRelated(product._id).then(res => res.data.data),
     enabled: !!product?._id
-  })
+  });
 
   // Fetch reviews
   const { data: reviewsData } = useQuery({
     queryKey: ['reviews', product?._id],
     queryFn: () => reviewsAPI.getByProduct(product._id).then(res => res.data),
     enabled: !!product?._id
-  })
+  });
 
   const inWishlist = product ? isInWishlist(product._id) : false
 

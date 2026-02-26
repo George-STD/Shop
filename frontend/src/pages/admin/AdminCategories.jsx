@@ -20,7 +20,7 @@ const AdminCategories = () => {
   const { data: categories, isLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesAPI.getAll().then(res => res.data.data)
-  })
+  });
 
   const createMutation = useMutation({
     mutationFn: (data) => adminAPI.createCategory(data),

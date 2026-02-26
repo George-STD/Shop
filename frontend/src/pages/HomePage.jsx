@@ -17,25 +17,25 @@ const HomePage = () => {
   const { data: featuredProducts, isLoading: loadingFeatured } = useQuery({
     queryKey: ['products', 'featured'],
     queryFn: () => productsAPI.getFeatured(8).then(res => res.data.data)
-  })
+  });
 
   // Fetch bestsellers
   const { data: bestsellers, isLoading: loadingBestsellers } = useQuery({
     queryKey: ['products', 'bestsellers'],
     queryFn: () => productsAPI.getBestsellers(8).then(res => res.data.data)
-  })
+  });
 
   // Fetch new arrivals
   const { data: newArrivals, isLoading: loadingNew } = useQuery({
     queryKey: ['products', 'new'],
     queryFn: () => productsAPI.getNew(8).then(res => res.data.data)
-  })
+  });
 
   // Fetch categories
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesAPI.getAll().then(res => res.data.data)
-  })
+  });
 
   const occasions = [
     { name: 'عيد ميلاد', icon: '🎂', color: 'from-pink-400 to-pink-600' },

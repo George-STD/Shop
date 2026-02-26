@@ -11,7 +11,7 @@ const AdminDashboard = () => {
     queryKey: ['admin-stats'],
     queryFn: () => adminAPI.getStats().then(res => res.data.data),
     refetchInterval: 60000 // Refresh every minute
-  })
+  });
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('ar-EG', {

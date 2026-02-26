@@ -35,12 +35,12 @@ const AdminProducts = () => {
       page,
       limit: 20 
     }).then(res => res.data)
-  })
+  });
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesAPI.getAll().then(res => res.data.data)
-  })
+  });
 
   const createMutation = useMutation({
     mutationFn: (data) => adminAPI.createProduct(data),

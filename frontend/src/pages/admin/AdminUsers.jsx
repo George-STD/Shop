@@ -20,7 +20,7 @@ const AdminUsers = () => {
       page,
       limit: 20 
     }).then(res => res.data)
-  })
+  });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => adminAPI.updateUser(id, data),

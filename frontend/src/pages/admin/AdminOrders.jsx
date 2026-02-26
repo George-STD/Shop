@@ -19,7 +19,7 @@ const AdminOrders = () => {
       page,
       limit: 20 
     }).then(res => res.data)
-  })
+  });
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }) => adminAPI.updateOrderStatus(id, status),

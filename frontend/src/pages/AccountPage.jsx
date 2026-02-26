@@ -226,7 +226,10 @@ import { useQuery } from '@tanstack/react-query'
 import { ordersAPI } from '../services/api'
 
 const OrdersPage = () => {
-  const { data, isLoading } = useQuery(['my-orders'], () => ordersAPI.getAll().then(res => res.data.data));
+  const { data, isLoading } = useQuery({
+    queryKey: ['my-orders'],
+    queryFn: () => ordersAPI.getAll().then(res => res.data.data)
+  });
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">طلباتي</h1>
