@@ -50,7 +50,8 @@ router.get('/product/:productId', async (req, res) => {
     const ratingStats = await Review.aggregate([
       { 
         $match: { 
-          product: mongoose.Types.ObjectId(req.params.productId),
+          // تم إضافة كلمة new هنا لإصلاح الخطأ
+          product: new mongoose.Types.ObjectId(req.params.productId),
           isApproved: true 
         } 
       },
@@ -89,8 +90,9 @@ router.get('/product/:productId', async (req, res) => {
 // @route   POST /api/reviews
 // @desc    Create a review
 // @access  Private
-router.post('/', [
-  body('productId').notEmpty().withMessage('معرف المنتج مطلوب'),
+router.post('/',[
+  // تم تغيير productId إلى product ليتوافق مع ما ترسله واجهة الـ React
+  body('product').notEmpty().withMessage('معرف المنتج مطلوب'),
   body('rating').isInt({ min: 1, max: 5 }).withMessage('التقييم يجب أن يكون بين 1 و 5'),
   body('comment').trim().isLength({ min: 10 }).withMessage('التعليق يجب أن يكون 10 أحرف على الأقل'),
   body('guestName').optional().trim().notEmpty().withMessage('اسم الضيف مطلوب'),
@@ -98,7 +100,11 @@ router.post('/', [
 ], async (req, res) => {
   try {
     const userId = await getUser(req);
-    const { productId, rating, title, comment, pros, cons, images, orderId, guestName, guestEmail } = req.body;
+    // تم استخراج product بدلاً من productId
+    const { product, rating, title, comment, pros, cons, images, orderId, guestName, guestEmail } = req.body;
+    
+    // إنشاء متغير productId ليتوافق مع باقي الكود القديم
+    const productId = product;
 
     // If not logged in, require guestName and guestEmail
     if (!userId && (!guestName || !guestEmail)) {
@@ -123,6 +129,7 @@ router.post('/', [
     } else {
       existingReview = await Review.findOne({ product: productId, guestEmail });
     }
+    
     if (existingReview) {
       return res.status(400).json({
         success: false,
@@ -259,7 +266,8 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
-    await review.remove();
+    // تم التحديث من remove إلى deleteOne لأن remove غير مدعومة في الإصدارات الحديثة
+    await review.deleteOne();
 
     res.json({
       success: true,

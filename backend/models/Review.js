@@ -25,7 +25,7 @@ const reviewSchema = new mongoose.Schema({
   },
   rating: {
     type: Number,
-    required: [true, 'التقييم مطلوب'],
+    required:[true, 'التقييم مطلوب'],
     min: 1,
     max: 5
   },
@@ -36,7 +36,7 @@ const reviewSchema = new mongoose.Schema({
   },
   comment: {
     type: String,
-    required: [true, 'التعليق مطلوب'],
+    required:[true, 'التعليق مطلوب'],
     trim: true,
     maxlength: 1000
   },
@@ -60,7 +60,7 @@ const reviewSchema = new mongoose.Schema({
   },
   helpful: {
     count: { type: Number, default: 0 },
-    users: [{
+    users:[{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     }]
@@ -114,7 +114,12 @@ reviewSchema.post('save', function() {
   this.constructor.calcAverageRating(this.product);
 });
 
-// Update product rating after remove
+// Update product rating after remove (For newer mongoose versions using deleteOne)
+reviewSchema.post('deleteOne', { document: true }, function() {
+  this.constructor.calcAverageRating(this.product);
+});
+
+// Fallback for older mongoose versions
 reviewSchema.post('remove', function() {
   this.constructor.calcAverageRating(this.product);
 });
