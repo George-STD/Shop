@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const { sendOrderConfirmationEmail } = require('../utils/mailer');
 
 // Auth middleware helper
 const getUser = async (req) => {
@@ -109,6 +110,7 @@ router.post('/', async (req, res) => {
     // Calculate total
     const total = subtotal + shippingCost;
 
+
     // Create order
     const order = await Order.create({
       user: userId,
@@ -134,6 +136,24 @@ router.post('/', async (req, res) => {
         note: 'تم استلام الطلب'
       }]
     });
+
+    // Send confirmation email (to user or guest)
+    try {
+      let emailTo = null;
+      if (userId) {
+        // Get user email from DB
+        const User = require('../models/User');
+        const user = await User.findById(userId);
+        emailTo = user?.email;
+      } else if (guestEmail) {
+        emailTo = guestEmail;
+      }
+      if (emailTo) {
+        await sendOrderConfirmationEmail(emailTo, order);
+      }
+    } catch (mailErr) {
+      console.error('Order email error:', mailErr);
+    }
 
     // Update product stock
     for (const item of orderItems) {

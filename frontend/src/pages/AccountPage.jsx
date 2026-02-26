@@ -222,12 +222,54 @@ const ProfileOverview = () => {
   )
 }
 
-const OrdersPage = () => (
-  <div>
-    <h1 className="text-2xl font-bold mb-6">طلباتي</h1>
-    <p className="text-gray-500">لا توجد طلبات بعد</p>
-  </div>
-)
+import { useQuery } from '@tanstack/react-query'
+import { ordersAPI } from '../services/api'
+
+const OrdersPage = () => {
+  const { data, isLoading } = useQuery(['my-orders'], () => ordersAPI.getAll().then(res => res.data.data));
+  return (
+    <div>
+      <h1 className="text-2xl font-bold mb-6">طلباتي</h1>
+      {isLoading ? (
+        <p>جاري التحميل...</p>
+      ) : !data || data.length === 0 ? (
+        <p className="text-gray-500">لا توجد طلبات بعد</p>
+      ) : (
+        <div className="space-y-6">
+          {data.map(order => (
+            <div key={order._id} className="border rounded-xl p-4 bg-gray-50">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
+                <div>
+                  <span className="font-bold">رقم الطلب:</span> {order._id}
+                </div>
+                <div>
+                  <span className="font-bold">الحالة:</span> {order.statusHistory?.[order.statusHistory.length-1]?.status || '---'}
+                </div>
+                <div>
+                  <span className="font-bold">التاريخ:</span> {new Date(order.createdAt).toLocaleString('ar-EG')}
+                </div>
+                <div>
+                  <span className="font-bold">الإجمالي:</span> {order.total} ج.م
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {order.items.map(item => (
+                  <div key={item.product} className="flex items-center gap-2 border rounded p-2 bg-white">
+                    {item.image && <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded" />}
+                    <div>
+                      <div className="font-medium">{item.name}</div>
+                      <div className="text-sm text-gray-500">الكمية: {item.quantity}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 const AddressesPage = () => (
   <div>
