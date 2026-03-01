@@ -37,6 +37,7 @@ const AdminLayout = () => {
     { path: '/admin/orders', icon: FiShoppingCart, label: 'الطلبات' },
     { path: '/admin/categories', icon: FiGrid, label: 'الفئات' },
     { path: '/admin/reviews', icon: FiStar, label: 'التقييمات' },
+    { path: '/admin/occasions', icon: FiGrid, label: 'المناسبات' },
   ]
 
   const isActive = (path, exact = false) => {

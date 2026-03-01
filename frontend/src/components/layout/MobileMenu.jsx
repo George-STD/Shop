@@ -1,11 +1,18 @@
 ﻿import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { FiX, FiUser, FiMapPin, FiPhone, FiSettings } from 'react-icons/fi'
 import { useUIStore, useAuthStore } from '../../store'
+import { occasionsAPI } from '../../services/api'
 
 const MobileMenu = () => {
   const { closeMobileMenu } = useUIStore()
   const { isAuthenticated, user } = useAuthStore()
   const isAdmin = user?.role === 'admin'
+
+  const { data: occasions } = useQuery({
+    queryKey: ['occasions'],
+    queryFn: () => occasionsAPI.getAll().then(res => res.data.data)
+  })
 
   const categories = [
     { name: 'جميع المنتجات', slug: '' },
@@ -19,15 +26,6 @@ const MobileMenu = () => {
     { name: 'هدايا الأطفال', slug: 'kids-gifts' },
     { name: 'المنزل والديكور', slug: 'home-decor' },
     { name: 'كروت هدايا', slug: 'gift-cards' },
-  ]
-
-  const occasions = [
-    { name: 'عيد ميلاد', value: 'عيد ميلاد' },
-    { name: 'زفاف', value: 'زفاف' },
-    { name: 'عيد الحب', value: 'عيد الحب' },
-    { name: 'عيد الأم', value: 'عيد الأم' },
-    { name: 'تخرج', value: 'تخرج' },
-    { name: 'مولود جديد', value: 'ولادة' },
   ]
 
   return (
@@ -134,10 +132,10 @@ const MobileMenu = () => {
         <div className="p-4 border-b">
           <h3 className="font-bold text-gray-800 mb-3">تسوق حسب المناسبة</h3>
           <div className="flex flex-wrap gap-2">
-            {occasions.map((occasion) => (
+            {occasions?.map((occasion) => (
               <Link 
-                key={occasion.value}
-                to={`/products?occasion=${occasion.value}`}
+                key={occasion._id}
+                to={`/products?occasion=${encodeURIComponent(occasion.name)}`}
                 onClick={closeMobileMenu}
                 className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700 bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-100 hover:to-pink-100 hover:text-transparent transition-colors"
               >

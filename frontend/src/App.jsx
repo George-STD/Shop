@@ -29,6 +29,7 @@ import AdminProducts from './pages/admin/AdminProducts'
 import AdminOrders from './pages/admin/AdminOrders'
 import AdminCategories from './pages/admin/AdminCategories'
 import AdminReviews from './pages/admin/AdminReviews'
+import AdminOccasions from './pages/admin/AdminOccasions'
 
 function App() {
   return (
@@ -64,6 +65,7 @@ function App() {
         <Route path="orders" element={<AdminOrders />} />
         <Route path="categories" element={<AdminCategories />} />
         <Route path="reviews" element={<AdminReviews />} />
+        <Route path="occasions" element={<AdminOccasions />} />
       </Route>
     </Routes>
   )

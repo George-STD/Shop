@@ -82,6 +82,11 @@ export const reviewsAPI = {
   markHelpful: (id) => api.post(`/reviews/${id}/helpful`),
 }
 
+// Occasions API
+export const occasionsAPI = {
+  getAll: () => api.get('/occasions'),
+}
+
 // Admin API
 export const adminAPI = {
   // Dashboard
@@ -112,6 +117,12 @@ export const adminAPI = {
   getReviews: (params) => api.get('/admin/reviews', { params }),
   approveReview: (id, isApproved) => api.put(`/admin/reviews/${id}/approve`, { isApproved }),
   deleteReview: (id) => api.delete(`/admin/reviews/${id}`),
+  
+  // Occasions
+  getOccasions: () => api.get('/admin/occasions'),
+  createOccasion: (data) => api.post('/admin/occasions', data),
+  updateOccasion: (id, data) => api.put(`/admin/occasions/${id}`, data),
+  deleteOccasion: (id) => api.delete(`/admin/occasions/${id}`),
 }
 
 export default api

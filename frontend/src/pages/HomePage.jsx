@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Autoplay, Pagination, Navigation } from 'swiper/modules'
-import { productsAPI, categoriesAPI } from '../services/api'
+import { productsAPI, categoriesAPI, occasionsAPI } from '../services/api'
 import ProductCard from '../components/product/ProductCard'
 import CategoryCard from '../components/home/CategoryCard'
 import FeatureCard from '../components/home/FeatureCard'
@@ -37,14 +37,11 @@ const HomePage = () => {
     queryFn: () => categoriesAPI.getAll().then(res => res.data.data)
   });
 
-  const occasions = [
-    { name: 'عيد ميلاد', icon: '🎂', color: 'from-pink-400 to-pink-600' },
-    { name: 'زفاف', icon: '💍', color: 'from-purple-400 to-purple-600' },
-    { name: 'عيد الحب', icon: '❤️', color: 'from-red-400 to-red-600' },
-    { name: 'عيد الأم', icon: '👩', color: 'from-rose-400 to-rose-600' },
-    { name: 'تخرج', icon: '🎓', color: 'from-blue-400 to-blue-600' },
-    { name: 'ولادة', icon: '👶', color: 'from-cyan-400 to-cyan-600' },
-  ]
+  // Fetch occasions
+  const { data: occasions } = useQuery({
+    queryKey: ['occasions'],
+    queryFn: () => occasionsAPI.getAll().then(res => res.data.data)
+  });
 
   const features = [
     { icon: '🚚', title: 'شحن سريع', description: 'توصيل لباب البيت' },
@@ -133,8 +130,8 @@ const HomePage = () => {
         <div className="container-custom">
           <h2 className="section-title">تسوق حسب المناسبة</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {occasions.map((occasion, index) => (
-              <OccasionCard key={index} {...occasion} />
+            {occasions?.map((occasion) => (
+              <OccasionCard key={occasion._id} {...occasion} />
             ))}
           </div>
         </div>

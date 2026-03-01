@@ -1,18 +1,9 @@
 ﻿import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { FiArrowRight, FiArrowLeft, FiGift, FiHeart, FiDollarSign, FiUser } from 'react-icons/fi'
-
-const occasions = [
-  { id: 'birthday', name: 'عيد ميلاد', icon: '🎂' },
-  { id: 'wedding', name: 'زفاف', icon: '💒' },
-  { id: 'graduation', name: 'تخرج', icon: '🎓' },
-  { id: 'baby', name: 'مولود جديد', icon: '👶' },
-  { id: 'eid', name: 'عيد', icon: '🌙' },
-  { id: 'anniversary', name: 'ذكرى زواج', icon: '💍' },
-  { id: 'thank-you', name: 'شكر وتقدير', icon: '🙏' },
-  { id: 'get-well', name: 'سلامات', icon: '💐' },
-]
+import { occasionsAPI } from '../services/api'
 
 const recipients = [
   { id: 'زوجة', name: 'زوجة', icon: '👩' },
@@ -48,6 +39,11 @@ const interests = [
 const GiftFinderPage = () => {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
+
+  const { data: occasions = [] } = useQuery({
+    queryKey: ['occasions'],
+    queryFn: () => occasionsAPI.getAll().then(res => res.data.data)
+  })
   const [selections, setSelections] = useState({
     occasion: null,
     recipient: null,
@@ -107,10 +103,10 @@ const GiftFinderPage = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {occasions.map((item) => (
                 <button
-                  key={item.id}
-                  onClick={() => handleSelect('occasion', item.id)}
+                  key={item._id}
+                  onClick={() => handleSelect('occasion', item.name)}
                   className={`p-6 rounded-xl border-2 text-center transition-all ${
-                    selections.occasion === item.id
+                    selections.occasion === item.name
                       ? 'border-purple-500 bg-gradient-to-r from-purple-50 to-pink-50'
                       : 'border-gray-200 hover:border-pink-300'
                   }`}

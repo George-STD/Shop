@@ -48,8 +48,7 @@ const productSchema = new mongoose.Schema({
   },
   tags: [String],
   occasions: [{
-    type: String,
-    enum: ['birthday', 'wedding', 'graduation', 'valentine', 'mothers-day', 'ramadan', 'eid', 'newborn', 'anniversary', 'get-well', 'thank-you', 'congratulations']
+    type: String
   }],
   recipients: [{
     type: String,
