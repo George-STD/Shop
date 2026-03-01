@@ -159,7 +159,7 @@ router.get('/new', async (req, res) => {
   try {
     const { limit = 8 } = req.query;
     
-    const products = await Product.find({ isActive: true, isNewArrival: true })
+    const products = await Product.find({ isActive: true })
       .populate('category', 'name slug')
       .sort({ createdAt: -1 })
       .limit(Number(limit));
