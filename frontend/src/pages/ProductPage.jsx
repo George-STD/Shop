@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Thumbs, Navigation, Zoom } from 'swiper/modules'
@@ -56,7 +56,14 @@ const ReviewForm = ({ productId, refreshReviews }) => {
       setForm({ rating: 0, title: '', comment: '', guestName: '', guestEmail: '' });
       refreshReviews();
     } catch (err) {
-      setError(err.response?.data?.message || 'حدث خطأ أثناء إرسال التقييم');
+      const errorData = err.response?.data;
+      if (errorData?.errors?.length > 0) {
+        setError(errorData.errors[0].msg);
+      } else if (errorData?.message) {
+        setError(errorData.message);
+      } else {
+        setError('حدث خطأ أثناء إرسال التقييم');
+      }
     } finally {
       setLoading(false);
     }
@@ -140,13 +147,14 @@ const ReviewForm = ({ productId, refreshReviews }) => {
 
 const ProductPage = () => {
   const { slug } = useParams()
+  const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const [thumbsSwiper, setThumbsSwiper] = useState(null)
-  const[quantity, setQuantity] = useState(1)
+  const [quantity, setQuantity] = useState(1)
   const [selectedSize, setSelectedSize] = useState(null)
   const [selectedColor, setSelectedColor] = useState(null)
   const [selectedAddons, setSelectedAddons] = useState([])
-  const [activeTab, setActiveTab] = useState('description')
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'reviews' ? 'reviews' : 'description')
 
   const { addItem } = useCartStore()
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlistStore()

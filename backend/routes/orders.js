@@ -84,6 +84,7 @@ router.post('/', async (req, res) => {
       orderItems.push({
         product: product._id,
         name: product.name,
+        slug: product.slug,
         image: product.images[0]?.url,
         price: product.price,
         quantity: item.quantity,
