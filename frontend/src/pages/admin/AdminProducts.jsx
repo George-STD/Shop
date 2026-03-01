@@ -1,7 +1,7 @@
 ﻿import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { FiSearch, FiEdit2, FiTrash2, FiPlus, FiEye, FiEyeOff } from 'react-icons/fi'
-import { adminAPI, productsAPI, categoriesAPI } from '../../services/api'
+import { adminAPI, productsAPI, categoriesAPI, occasionsAPI } from '../../services/api'
 
 const AdminProducts = () => {
   const queryClient = useQueryClient()
@@ -21,6 +21,7 @@ const AdminProducts = () => {
     images: [{ url: '', alt: '' }],
     hasColors: false,
     colors: [],
+    occasions: [],
     recipients: [],
     isActive: true,
     isFeatured: false,
@@ -40,6 +41,11 @@ const AdminProducts = () => {
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesAPI.getAll().then(res => res.data.data)
+  });
+
+  const { data: occasionsList } = useQuery({
+    queryKey: ['occasions'],
+    queryFn: () => occasionsAPI.getAll().then(res => res.data.data)
   });
 
   const createMutation = useMutation({
@@ -79,6 +85,7 @@ const AdminProducts = () => {
       images: [{ url: '', alt: '' }],
       hasColors: false,
       colors: [],
+      occasions: [],
       recipients: [],
       isActive: true,
       isFeatured: false,
@@ -100,6 +107,7 @@ const AdminProducts = () => {
       images: product.images?.length ? product.images : [{ url: '', alt: '' }],
       hasColors: product.colors && product.colors.length > 0,
       colors: product.colors || [],
+      occasions: product.occasions || [],
       recipients: product.recipients || [],
       isActive: product.isActive,
       isFeatured: product.isFeatured || false,
@@ -306,6 +314,35 @@ const AdminProducts = () => {
               </h2>
             </div>
             <form onSubmit={handleSubmit} className="p-2 sm:p-6 space-y-3 sm:space-y-4">
+                                          {/* Occasions (المناسبات) */}
+                                          <div>
+                                            <label className="block text-sm font-medium mb-1">المناسبات</label>
+                                            <div className="flex flex-wrap gap-2">
+                                              {occasionsList?.map((occ) => (
+                                                <label key={occ._id} className={`flex items-center gap-1 cursor-pointer border rounded-lg px-3 py-1.5 transition-colors ${
+                                                  formData.occasions.includes(occ.name)
+                                                    ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                                    : 'border-gray-300 hover:border-purple-300'
+                                                }`}>
+                                                  <input
+                                                    type="checkbox"
+                                                    checked={formData.occasions.includes(occ.name)}
+                                                    onChange={e => {
+                                                      if (e.target.checked) {
+                                                        setFormData({ ...formData, occasions: [...formData.occasions, occ.name] })
+                                                      } else {
+                                                        setFormData({ ...formData, occasions: formData.occasions.filter(o => o !== occ.name) })
+                                                      }
+                                                    }}
+                                                    className="rounded"
+                                                  />
+                                                  <span>{occ.icon}</span>
+                                                  <span>{occ.name}</span>
+                                                </label>
+                                              ))}
+                                            </div>
+                                          </div>
+
                                           {/* Recipients (هدية لـ) */}
                                           <div>
                                             <label className="block text-sm font-medium mb-1">ينفع هدية لـ</label>

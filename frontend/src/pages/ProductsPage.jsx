@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async'
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { FiGrid, FiList, FiFilter, FiX, FiChevronDown } from 'react-icons/fi'
-import { productsAPI, categoriesAPI } from '../services/api'
+import { productsAPI, categoriesAPI, occasionsAPI } from '../services/api'
 import ProductCard from '../components/product/ProductCard'
 
 const ProductsPage = () => {
@@ -18,7 +18,7 @@ const ProductsPage = () => {
   const sort = searchParams.get('sort') || 'newest'
   const minPrice = searchParams.get('minPrice') || ''
   const maxPrice = searchParams.get('maxPrice') || ''
-  // مناسبة لم تعد مستخدمة
+  const occasion = searchParams.get('occasion') || ''
   const recipient = searchParams.get('recipient') || ''
   const search = searchParams.get('search') || ''
 
@@ -31,13 +31,14 @@ const ProductsPage = () => {
 
   // Fetch products - use categorySlug directly
   const { data: productsData, isLoading } = useQuery({
-    queryKey: ['products', { categorySlug, page, sort, minPrice, maxPrice, recipient, search }],
+    queryKey: ['products', { categorySlug, page, sort, minPrice, maxPrice, occasion, recipient, search }],
     queryFn: () => productsAPI.getAll({
       categorySlug,
       page,
       sort,
       minPrice,
       maxPrice,
+      occasion,
       recipient,
       search
     }).then(res => res.data)
@@ -47,6 +48,12 @@ const ProductsPage = () => {
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesAPI.getAll().then(res => res.data.data)
+  });
+
+  // Fetch occasions for filter
+  const { data: occasions } = useQuery({
+    queryKey: ['occasions'],
+    queryFn: () => occasionsAPI.getAll().then(res => res.data.data)
   });
 
   const products = productsData?.data || []
@@ -59,8 +66,6 @@ const ProductsPage = () => {
     { value: 'rating', label: 'الأعلى تقييماً' },
     { value: 'bestselling', label: 'الأكثر مبيعاً' },
   ]
-
-  // مناسبة لم تعد مستخدمة
 
   const recipients = [
     'زوجة', 'زوج', 'أم', 'أب', 'أخت', 'أخ', 
@@ -105,7 +110,7 @@ const ProductsPage = () => {
     setSearchParams(newParams)
   }
 
-  const hasActiveFilters = minPrice || maxPrice || recipient
+  const hasActiveFilters = minPrice || maxPrice || occasion || recipient
 
   // Page title and description
   const pageTitle = categoryInfo?.name 
@@ -225,7 +230,27 @@ const ProductsPage = () => {
                   </div>
                 </div>
 
-                {/* ...مناسبة محذوفة... */}
+                {/* Occasions */}
+                {occasions?.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="font-medium text-gray-700 mb-3">المناسبة</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {occasions.map((occ) => (
+                        <button
+                          key={occ._id}
+                          onClick={() => updateFilter('occasion', occasion === occ.name ? '' : occ.name)}
+                          className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                            occasion === occ.name 
+                              ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white border-purple-500' 
+                              : 'border-gray-300 text-gray-600 hover:border-purple-500'
+                          }`}
+                        >
+                          {occ.icon} {occ.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Recipients */}
                 <div>
@@ -303,7 +328,14 @@ const ProductsPage = () => {
               {/* Active Filters */}
               {hasActiveFilters && (
                 <div className="flex flex-wrap gap-2 mb-6">
-                  {/* ...مناسبة محذوفة من الفلاتر النشطة... */}
+                  {occasion && (
+                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1 rounded-full text-sm border border-purple-200">
+                      مناسبة: {occasion}
+                      <button onClick={() => updateFilter('occasion', '')} className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none">
+                        <FiX size={14} />
+                      </button>
+                    </span>
+                  )}
                   {recipient && (
                     <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1 rounded-full text-sm border border-purple-200">
                       هدية لـ {recipient}
@@ -463,7 +495,30 @@ const ProductsPage = () => {
                     </div>
                   </div>
 
-                  {/* ...مناسبة محذوفة من فلاتر الموبايل... */}
+                  {/* Occasions */}
+                  {occasions?.length > 0 && (
+                    <div>
+                      <h3 className="font-medium text-gray-700 mb-3">المناسبة</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {occasions.map((occ) => (
+                          <button
+                            key={occ._id}
+                            onClick={() => {
+                              updateFilter('occasion', occasion === occ.name ? '' : occ.name)
+                              setShowFilters(false)
+                            }}
+                            className={`px-4 py-2 rounded-full border ${
+                              occasion === occ.name
+                                ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white border-purple-500'
+                                : 'border-gray-300'
+                            }`}
+                          >
+                            {occ.icon} {occ.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="p-4 border-t flex gap-4">
