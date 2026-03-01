@@ -88,7 +88,7 @@ const ProductsPage = () => {
         newParams.delete('page')
       }
     } else {
-      if (value) {
+      if (value || value === 0) {
         newParams.set(key, value)
       } else {
         newParams.delete(key)
@@ -98,16 +98,36 @@ const ProductsPage = () => {
     setSearchParams(newParams)
   }
 
+  const updatePriceFilter = (min, max) => {
+    const newParams = new URLSearchParams(searchParams)
+    if (min || min === 0) {
+      newParams.set('minPrice', min)
+    } else {
+      newParams.delete('minPrice')
+    }
+    if (max) {
+      newParams.set('maxPrice', max)
+    } else {
+      newParams.delete('maxPrice')
+    }
+    newParams.set('page', '1')
+    setSearchParams(newParams)
+  }
+
   const clearFilters = () => {
     setSearchParams({ sort })
   }
 
-  const clearPriceFilter = () => {
-    const newParams = new URLSearchParams(searchParams)
-    newParams.delete('minPrice')
-    newParams.delete('maxPrice')
-    newParams.set('page', '1')
-    setSearchParams(newParams)
+  const getPriceLabel = () => {
+    const range = priceRanges.find(r => 
+      String(r.min) === minPrice && String(r.max) === maxPrice
+    )
+    if (range) return range.label + ' ج.م'
+    // fallback for partial matches
+    if (minPrice && maxPrice) return `${minPrice} - ${maxPrice} ج.م`
+    if (minPrice) return `أكثر من ${minPrice} ج.م`
+    if (maxPrice) return `أقل من ${maxPrice} ج.م`
+    return ''
   }
 
   const hasActiveFilters = minPrice || maxPrice || occasion || recipient
@@ -212,21 +232,22 @@ const ProductsPage = () => {
                 <div className="mb-6">
                   <h3 className="font-medium text-gray-700 mb-3">السعر</h3>
                   <div className="space-y-2">
-                    {priceRanges.map((range, index) => (
-                      <label key={index} className="flex items-center gap-2 cursor-pointer">
-                        <input 
-                          type="radio"
-                          name="price"
-                          checked={minPrice === String(range.min) && maxPrice === String(range.max)}
-                          onChange={() => {
-                            updateFilter('minPrice', range.min)
-                            updateFilter('maxPrice', range.max)
-                          }}
-                          className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
-                        />
-                        <span className="text-gray-600">{range.label} ج.م</span>
-                      </label>
-                    ))}
+                    {priceRanges.map((range, index) => {
+                      const isSelected = minPrice === String(range.min) && 
+                        (range.max === '' ? !maxPrice : maxPrice === String(range.max))
+                      return (
+                        <label key={index} className="flex items-center gap-2 cursor-pointer">
+                          <input 
+                            type="radio"
+                            name="price"
+                            checked={isSelected}
+                            onChange={() => updatePriceFilter(range.min, range.max)}
+                            className="text-purple-600"
+                          />
+                          <span className="text-gray-600">{range.label} ج.م</span>
+                        </label>
+                      )
+                    })}
                   </div>
                 </div>
 
@@ -344,18 +365,10 @@ const ProductsPage = () => {
                       </button>
                     </span>
                   )}
-                  {minPrice && (
+                  {(minPrice || maxPrice) && (
                     <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1 rounded-full text-sm border border-purple-200">
-                      أكثر من {minPrice} ج.م
-                      <button onClick={() => updateFilter('minPrice', '')} className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none">
-                        <FiX size={14} />
-                      </button>
-                    </span>
-                  )}
-                  {maxPrice && (
-                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1 rounded-full text-sm border border-purple-200">
-                      أقل من {maxPrice} ج.م
-                      <button onClick={() => updateFilter('maxPrice', '')} className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none">
+                      {getPriceLabel()}
+                      <button onClick={() => updatePriceFilter('', '')} className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none">
                         <FiX size={14} />
                       </button>
                     </span>
@@ -436,23 +449,26 @@ const ProductsPage = () => {
                   <div>
                     <h3 className="font-medium text-gray-700 mb-3">السعر</h3>
                     <div className="flex flex-wrap gap-2">
-                      {priceRanges.map((range, index) => (
-                        <button
-                          key={index}
-                          onClick={() => {
-                            updateFilter('minPrice', range.min !== '' ? range.min : '')
-                            updateFilter('maxPrice', range.max !== '' ? range.max : '')
-                            setShowFilters(false);
-                          }}
-                          className={`px-4 py-2 rounded-full border ${
-                            minPrice === String(range.min) && maxPrice === String(range.max)
-                              ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white border-purple-500'
-                              : 'border-gray-300'
-                          }`}
-                        >
-                          {range.label} ج.م
-                        </button>
-                      ))}
+                      {priceRanges.map((range, index) => {
+                        const isSelected = minPrice === String(range.min) && 
+                          (range.max === '' ? !maxPrice : maxPrice === String(range.max))
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              updatePriceFilter(range.min, range.max)
+                              setShowFilters(false)
+                            }}
+                            className={`px-4 py-2 rounded-full border ${
+                              isSelected
+                                ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white border-purple-500'
+                                : 'border-gray-300'
+                            }`}
+                          >
+                            {range.label} ج.م
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
 
@@ -460,28 +476,12 @@ const ProductsPage = () => {
                   <div>
                     <h3 className="font-medium text-gray-700 mb-3">الفئة</h3>
                     <div className="flex flex-wrap gap-2">
-                      {[
-                        { name: 'رجالي مميز', slug: 'special-men' },
-                        { name: 'نسائي مميز', slug: 'special-women' },
-                        { name: 'رجالي', slug: 'men' },
-                        { name: 'نسائي', slug: 'women' },
-                        { name: 'الهدايا الشخصية', slug: 'personal-gifts' },
-                        { name: 'العطور', slug: 'perfumes' },
-                      ].map((cat) => (
+                      {categories?.map((cat) => (
                         <button
-                          key={cat.slug}
+                          key={cat._id}
                           onClick={() => {
-                            const slugMap = {
-                              'special-men': 'men-premium',
-                              'special-women': 'women-premium',
-                              'men': 'men',
-                              'women': 'women',
-                              'personal-gifts': 'personal-gifts',
-                              'perfumes': 'perfumes',
-                            };
-                            const prettySlug = slugMap[cat.slug] || cat.slug;
-                            navigate(`/products/${prettySlug}`);
-                            setShowFilters(false);
+                            navigate(`/products/${cat.slug}`)
+                            setShowFilters(false)
                           }}
                           className={`px-4 py-2 rounded-full border ${
                             categorySlug === cat.slug
@@ -519,6 +519,29 @@ const ProductsPage = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* Recipients */}
+                  <div>
+                    <h3 className="font-medium text-gray-700 mb-3">هدية لـ</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {recipients.map((rec) => (
+                        <button
+                          key={rec}
+                          onClick={() => {
+                            updateFilter('recipient', recipient === rec ? '' : rec)
+                            setShowFilters(false)
+                          }}
+                          className={`px-4 py-2 rounded-full border ${
+                            recipient === rec
+                              ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white border-purple-500'
+                              : 'border-gray-300'
+                          }`}
+                        >
+                          {rec}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="p-4 border-t flex gap-4">
