@@ -242,8 +242,8 @@ const OrdersPage = () => {
           {data.map(order => (
             <div key={order._id} className="border rounded-xl p-4 bg-gray-50">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
-                <div>
-                  <span className="font-bold">رقم الطلب:</span> {order._id}
+                <div className="break-all">
+                  <span className="font-bold">رقم الطلب:</span> <span className="text-sm">{order._id}</span>
                 </div>
                 <div>
                   <span className="font-bold">الحالة:</span> {order.statusHistory?.[order.statusHistory.length-1]?.status || '---'}
@@ -255,17 +255,17 @@ const OrdersPage = () => {
                   <span className="font-bold">الإجمالي:</span> {order.total} ج.م
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
                 {order.items.map(item => (
-                  <div key={item.product} className="flex items-center gap-2 border rounded p-2 bg-white">
-                    {item.image && <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded" />}
-                    <div>
-                      <div className="font-medium">{item.name}</div>
+                  <div key={item.product} className="flex items-center gap-2 border rounded p-2 bg-white w-full sm:w-auto">
+                    {item.image && <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded flex-shrink-0" />}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{item.name}</div>
                       <div className="text-sm text-gray-500">الكمية: {item.quantity}</div>
                     </div>
                     <Link
                       to={`/product/${item.slug || item.product}?tab=reviews`}
-                      className="btn-primary ml-2 text-sm"
+                      className="btn-primary text-sm flex-shrink-0"
                     >
                       تقييم
                     </Link>

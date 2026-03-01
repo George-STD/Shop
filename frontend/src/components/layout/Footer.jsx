@@ -39,7 +39,7 @@ const Footer = () => {
             <img 
               src="/images/logo.jpeg" 
               alt="For You Gift Shop" 
-              className="h-32 w-auto mb-4 bg-white rounded-xl p-3 object-contain"
+              className="h-20 sm:h-32 w-auto mb-4 bg-white rounded-xl p-2 sm:p-3 object-contain"
             />
             <p className="text-gray-400 mb-4 leading-relaxed">
               متجرك الأول للهدايا في مصر. نقدم لك أفضل تشكيلة من الهدايا لجميع المناسبات مع توصيل سريع لباب بيتك.

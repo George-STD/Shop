@@ -18,7 +18,7 @@ const CartSidebar = () => {
       />
       
       {/* Cart Panel */}
-      <div className="absolute top-0 left-0 h-full w-96 max-w-full bg-white shadow-xl flex flex-col">
+      <div className="absolute top-0 left-0 h-full w-[85vw] sm:w-96 max-w-full bg-white shadow-xl flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-xl font-bold text-gray-800">سلة التسوق</h2>

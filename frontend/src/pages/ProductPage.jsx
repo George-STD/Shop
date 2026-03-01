@@ -317,23 +317,23 @@ const ProductPage = () => {
         {/* Breadcrumb */}
         <div className="bg-white border-b">
           <div className="container-custom py-4">
-            <nav className="flex items-center gap-2 text-sm">
-              <Link to="/" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">الرئيسية</Link>
-              <span className="text-gray-400">/</span>
-              <Link to="/products" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">المنتجات</Link>
+            <nav className="flex items-center gap-2 text-sm overflow-x-auto whitespace-nowrap scrollbar-hide">
+              <Link to="/" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex-shrink-0">الرئيسية</Link>
+              <span className="text-gray-400 flex-shrink-0">/</span>
+              <Link to="/products" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex-shrink-0">المنتجات</Link>
               {product.category && (
                 <>
-                  <span className="text-gray-400">/</span>
+                  <span className="text-gray-400 flex-shrink-0">/</span>
                   <Link 
                     to={`/products/${product.category.slug}`} 
-                    className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
+                    className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex-shrink-0"
                   >
                     {product.category.name}
                   </Link>
                 </>
               )}
-              <span className="text-gray-400">/</span>
-              <span className="text-gray-800 line-clamp-1">{product.name}</span>
+              <span className="text-gray-400 flex-shrink-0">/</span>
+              <span className="text-gray-800 truncate max-w-[150px] sm:max-w-none">{product.name}</span>
             </nav>
           </div>
         </div>
@@ -404,7 +404,7 @@ const ProductPage = () => {
               </div>
 
               {/* Name */}
-              <h1 className="text-3xl font-bold text-gray-800">{product.name}</h1>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">{product.name}</h1>
 
               {/* Rating */}
               {product.rating?.count > 0 && (
@@ -423,13 +423,13 @@ const ProductPage = () => {
               )}
 
               {/* Price */}
-              <div className="flex items-center gap-4">
-                <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+              <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+                <span className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
                   {product.price} ج.م
                 </span>
                 {product.oldPrice && (
                   <>
-                    <span className="text-xl text-gray-400 line-through">
+                    <span className="text-base sm:text-xl text-gray-400 line-through">
                       {product.oldPrice} ج.م
                     </span>
                     <span className="badge badge-sale">وفر {discount}%</span>

@@ -71,24 +71,24 @@ const HomePage = () => {
           autoplay={{ delay: 5000, disableOnInteraction: false }}
           pagination={{ clickable: true }}
           navigation
-          className="h-[500px] md:h-[600px]"
+          className="h-[350px] sm:h-[450px] md:h-[600px]"
         >
           <SwiperSlide>
             <div className="h-full flex items-center">
               <div className="container-custom">
                 <div className="max-w-2xl animate-fadeInUp">
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-6 leading-tight">
+                  <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-4 sm:mb-6 leading-tight">
                     اجعل كل مناسبة 
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"> لحظة لا تُنسى</span>
                   </h1>
-                  <p className="text-xl text-gray-600 mb-8">
+                  <p className="text-base sm:text-xl text-gray-600 mb-6 sm:mb-8">
                     اكتشف تشكيلة واسعة من الهدايا المميزة لجميع المناسبات مع توصيل سريع لباب بيتك
                   </p>
-                  <div className="flex flex-wrap gap-4">
-                    <Link to="/products" className="btn-primary text-lg px-8">
+                  <div className="flex flex-wrap gap-3 sm:gap-4">
+                    <Link to="/products" className="btn-primary text-sm sm:text-lg px-6 sm:px-8">
                       تسوق الآن
                     </Link>
-                    <Link to="/gift-finder" className="btn-outline text-lg px-8">
+                    <Link to="/gift-finder" className="btn-outline text-sm sm:text-lg px-6 sm:px-8">
                       اعثر على الهدية المثالية
                     </Link>
                   </div>
@@ -100,14 +100,14 @@ const HomePage = () => {
             <div className="h-full flex items-center bg-gradient-to-r from-purple-50 via-fuchsia-50 to-pink-50">
               <div className="container-custom">
                 <div className="max-w-2xl animate-fadeInUp">
-                  <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
+                  <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-4 sm:mb-6">
                     خصومات تصل إلى 
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"> 50%</span>
                   </h2>
-                  <p className="text-xl text-gray-600 mb-8">
+                  <p className="text-base sm:text-xl text-gray-600 mb-6 sm:mb-8">
                     استمتع بأفضل العروض على الهدايا المميزة. عرض لفترة محدودة!
                   </p>
-                  <Link to="/products?sort=discount" className="btn-gold text-lg px-8">
+                  <Link to="/products?sort=discount" className="btn-gold text-sm sm:text-lg px-6 sm:px-8">
                     تسوق العروض
                   </Link>
                 </div>
@@ -207,10 +207,9 @@ const HomePage = () => {
             </div>
           ) : (
             <Swiper
-              modules={[Autoplay, Navigation]}
+              modules={[Autoplay]}
               spaceBetween={24}
               slidesPerView={2}
-              navigation
               autoplay={{ delay: 4000 }}
               breakpoints={{
                 640: { slidesPerView: 2 },
@@ -253,10 +252,9 @@ const HomePage = () => {
             </div>
           ) : (
             <Swiper
-              modules={[Autoplay, Navigation]}
+              modules={[Autoplay]}
               spaceBetween={24}
               slidesPerView={2}
-              navigation
               autoplay={{ delay: 4000 }}
               breakpoints={{
                 640: { slidesPerView: 2 },

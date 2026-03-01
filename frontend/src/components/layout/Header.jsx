@@ -65,7 +65,7 @@ const Header = () => {
             <img 
               src="/images/logo.jpeg" 
               alt="For You Gift Shop" 
-              className="h-24 md:h-28 w-auto object-contain"
+              className="h-14 sm:h-20 md:h-28 w-auto object-contain"
             />
           </Link>
 
@@ -102,7 +102,7 @@ const Header = () => {
             {isAdmin && (
               <Link 
                 to="/admin" 
-                className="p-2 hover:bg-gray-100 rounded-lg hidden sm:flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
+                className="p-2 hover:bg-gray-100 rounded-lg flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
                 title="لوحة التحكم"
               >
                 <FiSettings size={22} />

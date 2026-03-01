@@ -7,10 +7,19 @@ import {
 import { useAuthStore } from '../../store'
 
 const AdminLayout = () => {
-  const { user, isAuthenticated, logout } = useAuthStore()
+  const { user, isAuthenticated, logout, _hasHydrated } = useAuthStore()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Wait for auth store to rehydrate before checking auth
+  if (!_hasHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full"></div>
+      </div>
+    )
+  }
 
   // Protect admin routes - redirect if not admin
   if (!isAuthenticated) {
