@@ -252,11 +252,24 @@ const HomePage = () => {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {newArrivals?.slice(0, 8).map((product) => (
-                <ProductCard key={product._id} product={product} />
+            <Swiper
+              modules={[Autoplay, Navigation]}
+              spaceBetween={24}
+              slidesPerView={2}
+              navigation
+              autoplay={{ delay: 4000 }}
+              breakpoints={{
+                640: { slidesPerView: 2 },
+                768: { slidesPerView: 3 },
+                1024: { slidesPerView: 4 },
+              }}
+            >
+              {newArrivals?.map((product) => (
+                <SwiperSlide key={product._id}>
+                  <ProductCard product={product} />
+                </SwiperSlide>
               ))}
-            </div>
+            </Swiper>
           )}
         </div>
       </section>
