@@ -5,7 +5,7 @@ import MobileMenu from './MobileMenu'
 import CartSidebar from './CartSidebar'
 import { useUIStore } from '../../store'
 
-const Layout = () => {
+const Layout = ({ children }) => {
   const { isMobileMenuOpen, isCartOpen } = useUIStore()
 
   return (
@@ -13,7 +13,7 @@ const Layout = () => {
       <Header />
       
       <main className="flex-grow">
-        <Outlet />
+        {children || <Outlet />}
       </main>
       
       <Footer />

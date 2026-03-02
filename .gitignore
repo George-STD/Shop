@@ -4,3 +4,7 @@ node_modules
 dist/
 build/
 db_credentials.txt
+
+# Next.js
+.next/
+out/

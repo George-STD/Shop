@@ -6,7 +6,7 @@ import {
 } from 'react-icons/fi'
 import { useAuthStore } from '../../store'
 
-const AdminLayout = () => {
+const AdminLayout = ({ children }) => {
   const { user, isAuthenticated, logout, _hasHydrated } = useAuthStore()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -200,7 +200,7 @@ const AdminLayout = () => {
 
         {/* Page Content */}
         <main className="flex-1 p-2 sm:p-4 lg:p-8 overflow-auto">
-          <Outlet />
+          {children || <Outlet />}
         </main>
       </div>
     </div>
