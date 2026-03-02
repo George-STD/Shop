@@ -87,7 +87,7 @@ const ProductCard = ({ product }) => {
         {/* Category */}
         {product.category && (
           <Link 
-            to={`/products/${product.category.slug}`}
+            to={`/products?category=${product.category.slug}`}
             className="text-sm text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
           >
             {product.category.name}

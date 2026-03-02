@@ -54,7 +54,7 @@ export default async function sitemap() {
       const data = await res.json()
       const categories = data.data || []
       categoryPages = categories.map((category) => ({
-        url: `${baseUrl}/products/${category.slug}`,
+        url: `${baseUrl}/products?category=${category.slug}`,
         lastModified: new Date(category.updatedAt || category.createdAt),
         changeFrequency: 'weekly',
         priority: 0.7,

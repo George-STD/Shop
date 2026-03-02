@@ -325,7 +325,7 @@ const ProductPage = () => {
                 <>
                   <span className="text-gray-400 flex-shrink-0">/</span>
                   <Link 
-                    to={`/products/${product.category.slug}`} 
+                    to={`/products?category=${product.category.slug}`} 
                     className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex-shrink-0"
                   >
                     {product.category.name}
@@ -393,7 +393,7 @@ const ProductPage = () => {
               <div className="flex items-center gap-3">
                 {product.category && (
                   <Link 
-                    to={`/products/${product.category.slug}`}
+                    to={`/products?category=${product.category.slug}`}
                     className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline"
                   >
                     {product.category.name}

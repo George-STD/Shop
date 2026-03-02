@@ -186,7 +186,7 @@ const Header = () => {
             {categories.map((category) => (
               <li key={category.slug}>
                 <Link 
-                  to={`/products/${category.slug}`}
+                  to={`/products?category=${category.slug}`}
                   className="text-gray-700 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 transition-colors"
                 >
                   {category.name}

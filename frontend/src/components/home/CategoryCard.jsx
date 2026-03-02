@@ -3,7 +3,7 @@
 const CategoryCard = ({ category }) => {
   return (
     <Link 
-      to={`/products/${category.slug}`}
+      to={`/products?category=${category.slug}`}
       className="group block"
     >
       <div className="relative overflow-hidden rounded-2xl aspect-square bg-gradient-to-br from-gray-100 to-gray-200">

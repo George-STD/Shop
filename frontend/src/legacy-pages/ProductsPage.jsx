@@ -1,17 +1,15 @@
 ﻿import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { FiGrid, FiList, FiFilter, FiX, FiChevronDown } from 'react-icons/fi'
 import { productsAPI, categoriesAPI, occasionsAPI } from '../services/api'
 import ProductCard from '../components/product/ProductCard'
 
 const ProductsPage = () => {
-  const { category: categorySlug } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
   const [showFilters, setShowFilters] = useState(false)
   const [viewMode, setViewMode] = useState('grid')
-  const navigate = useNavigate();
   
   // Get filter values from URL
   const page = parseInt(searchParams.get('page')) || 1
@@ -21,6 +19,7 @@ const ProductsPage = () => {
   const occasion = searchParams.get('occasion') || ''
   const recipient = searchParams.get('recipient') || ''
   const search = searchParams.get('search') || ''
+  const categorySlug = searchParams.get('category') || ''
 
   // Fetch category info (for display only)
   const { data: categoryInfo } = useQuery({
@@ -130,7 +129,7 @@ const ProductsPage = () => {
     return ''
   }
 
-  const hasActiveFilters = minPrice || maxPrice || occasion || recipient
+  const hasActiveFilters = categorySlug || minPrice || maxPrice || occasion || recipient
 
   // Page title and description
   const pageTitle = categoryInfo?.name 
@@ -148,7 +147,7 @@ const ProductsPage = () => {
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
         <meta name="keywords" content={categoryInfo?.seo?.keywords?.join(', ') || 'هدايا، متجر هدايا، هدايا مصر'} />
-        <link rel="canonical" href={`https://hadaya.com/products${categorySlug ? `/${categorySlug}` : ''}`} />
+        <link rel="canonical" href={`https://foryo.me/products${categorySlug ? `?category=${categorySlug}` : ''}`} />
       </Helmet>
 
       <div className="bg-gray-50 min-h-screen">
@@ -206,26 +205,21 @@ const ProductsPage = () => {
                 {/* Categories */}
                 <div className="mb-6">
                   <h3 className="font-medium text-gray-700 mb-3">الفئات</h3>
-                  <ul className="space-y-2">
-                    <li>
-                      <Link 
-                        to="/products"
-                        className={`block py-1 ${!categorySlug ? 'text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium' : 'text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600'}`}
-                      >
-                        جميع الفئات
-                      </Link>
-                    </li>
+                  <div className="flex flex-wrap gap-2">
                     {categories?.map(cat => (
-                      <li key={cat._id}>
-                        <Link 
-                          to={`/products/${cat.slug}`}
-                          className={`block py-1 ${categorySlug === cat.slug ? 'text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium' : 'text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600'}`}
-                        >
-                          {cat.name}
-                        </Link>
-                      </li>
+                      <button
+                        key={cat._id}
+                        onClick={() => updateFilter('category', categorySlug === cat.slug ? '' : cat.slug)}
+                        className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                          categorySlug === cat.slug 
+                            ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white border-purple-500' 
+                            : 'border-gray-300 text-gray-600 hover:border-purple-500'
+                        }`}
+                      >
+                        {cat.name}
+                      </button>
                     ))}
-                  </ul>
+                  </div>
                 </div>
 
                 {/* Price Range */}
@@ -349,6 +343,14 @@ const ProductsPage = () => {
               {/* Active Filters */}
               {hasActiveFilters && (
                 <div className="flex flex-wrap gap-2 mb-6">
+                  {categorySlug && categoryInfo && (
+                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1 rounded-full text-sm border border-purple-200">
+                      الفئة: {categoryInfo.name}
+                      <button onClick={() => updateFilter('category', '')} className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none">
+                        <FiX size={14} />
+                      </button>
+                    </span>
+                  )}
                   {occasion && (
                     <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1 rounded-full text-sm border border-purple-200">
                       مناسبة: {occasion}
@@ -480,7 +482,7 @@ const ProductsPage = () => {
                         <button
                           key={cat._id}
                           onClick={() => {
-                            navigate(`/products/${cat.slug}`)
+                            updateFilter('category', categorySlug === cat.slug ? '' : cat.slug)
                             setShowFilters(false)
                           }}
                           className={`px-4 py-2 rounded-full border ${
@@ -547,7 +549,7 @@ const ProductsPage = () => {
               <div className="p-4 border-t flex gap-4">
                 <button 
                   onClick={() => {
-                    navigate('/products');
+                    clearFilters();
                     setShowFilters(false);
                   }}
                   className="flex-1 btn-outline"

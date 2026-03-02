@@ -117,7 +117,7 @@ const MobileMenu = () => {
             {categories.map((category) => (
               <li key={category.slug}>
                 <Link 
-                  to={`/products${category.slug ? `/${category.slug}` : ''}`}
+                  to={`/products?category=${category.slug}`}
                   onClick={closeMobileMenu}
                   className="block py-2 text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 transition-colors"
                 >
