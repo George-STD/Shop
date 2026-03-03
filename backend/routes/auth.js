@@ -3,6 +3,8 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
+const { sendVerificationEmail, sendPasswordResetEmail, generateVerificationCode } = require('../utils/mailer');
+const { loginLimiter } = require('../middleware/auth');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -12,7 +14,7 @@ const generateToken = (id) => {
 };
 
 // @route   POST /api/auth/register
-// @desc    Register new user
+// @desc    Register new user (sends verification code to email)
 // @access  Public
 router.post('/register', [
   body('firstName').trim().notEmpty().withMessage('الاسم الأول مطلوب'),
@@ -35,36 +37,61 @@ router.post('/register', [
     // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
+      // If user exists but not verified, allow re-registration with new code
+      if (!existingUser.isVerified) {
+        const code = generateVerificationCode();
+        existingUser.firstName = firstName;
+        existingUser.lastName = lastName;
+        existingUser.phone = phone;
+        existingUser.password = password;
+        existingUser.emailVerificationCode = code;
+        existingUser.emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+        await existingUser.save();
+
+        try {
+          await sendVerificationEmail(email, code);
+        } catch (emailError) {
+          console.error('Email send error:', emailError);
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: 'تم إرسال كود التحقق إلى بريدك الإلكتروني',
+          data: { email, requiresVerification: true }
+        });
+      }
       return res.status(400).json({
         success: false,
         message: 'البريد الإلكتروني مسجل مسبقاً'
       });
     }
 
-    // Create user
+    // Generate verification code
+    const code = generateVerificationCode();
+
+    // Create user (not verified yet)
     const user = await User.create({
       firstName,
       lastName,
       email,
       phone,
-      password
+      password,
+      isVerified: false,
+      emailVerificationCode: code,
+      emailVerificationExpires: new Date(Date.now() + 10 * 60 * 1000) // 10 min
     });
 
-    const token = generateToken(user._id);
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, code);
+    } catch (emailError) {
+      console.error('Email send error:', emailError);
+    }
 
     res.status(201).json({
       success: true,
-      message: 'تم إنشاء الحساب بنجاح',
-      data: {
-        user: {
-          id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          phone: user.phone
-        },
-        token
-      }
+      message: 'تم إرسال كود التحقق إلى بريدك الإلكتروني',
+      data: { email, requiresVerification: true }
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -75,10 +102,107 @@ router.post('/register', [
   }
 });
 
+// @route   POST /api/auth/verify-email
+// @desc    Verify email with code
+// @access  Public
+router.post('/verify-email', [
+  body('email').isEmail().withMessage('البريد الإلكتروني غير صالح'),
+  body('code').isLength({ min: 6, max: 6 }).withMessage('الكود يجب أن يكون 6 أرقام')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { email, code } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'المستخدم غير موجود' });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ success: false, message: 'الحساب مفعّل بالفعل' });
+    }
+
+    if (user.emailVerificationCode !== code) {
+      return res.status(400).json({ success: false, message: 'الكود غير صحيح' });
+    }
+
+    if (user.emailVerificationExpires < new Date()) {
+      return res.status(400).json({ success: false, message: 'الكود منتهي الصلاحية. أعد إرسال كود جديد' });
+    }
+
+    // Verify user
+    user.isVerified = true;
+    user.emailVerificationCode = undefined;
+    user.emailVerificationExpires = undefined;
+    user.lastLogin = new Date();
+    await user.save({ validateBeforeSave: false });
+
+    const token = generateToken(user._id);
+
+    res.json({
+      success: true,
+      message: 'تم تأكيد الحساب بنجاح',
+      data: {
+        user: {
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone,
+          role: user.role
+        },
+        token
+      }
+    });
+  } catch (error) {
+    console.error('Verify email error:', error);
+    res.status(500).json({ success: false, message: 'حدث خطأ أثناء التحقق' });
+  }
+});
+
+// @route   POST /api/auth/resend-code
+// @desc    Resend verification code
+// @access  Public
+router.post('/resend-code', [
+  body('email').isEmail().withMessage('البريد الإلكتروني غير صالح')
+], async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'المستخدم غير موجود' });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ success: false, message: 'الحساب مفعّل بالفعل' });
+    }
+
+    const code = generateVerificationCode();
+    user.emailVerificationCode = code;
+    user.emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save({ validateBeforeSave: false });
+
+    try {
+      await sendVerificationEmail(email, code);
+    } catch (emailError) {
+      console.error('Email send error:', emailError);
+    }
+
+    res.json({ success: true, message: 'تم إرسال كود جديد إلى بريدك الإلكتروني' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'حدث خطأ' });
+  }
+});
+
 // @route   POST /api/auth/login
 // @desc    Login user
 // @access  Public
-router.post('/login', [
+router.post('/login', loginLimiter, [
   body('email').isEmail().withMessage('البريد الإلكتروني غير صالح'),
   body('password').notEmpty().withMessage('كلمة المرور مطلوبة')
 ], async (req, res) => {
@@ -107,6 +231,27 @@ router.post('/login', [
       return res.status(401).json({
         success: false,
         message: 'الحساب غير مفعل'
+      });
+    }
+
+    // Check if email is verified
+    if (!user.isVerified) {
+      // Send a new verification code
+      const code = generateVerificationCode();
+      user.emailVerificationCode = code;
+      user.emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000);
+      await user.save({ validateBeforeSave: false });
+
+      try {
+        await sendVerificationEmail(email, code);
+      } catch (emailError) {
+        console.error('Email send error:', emailError);
+      }
+
+      return res.status(403).json({
+        success: false,
+        message: 'يجب تأكيد بريدك الإلكتروني أولاً. تم إرسال كود جديد',
+        data: { email, requiresVerification: true }
       });
     }
 
@@ -327,6 +472,119 @@ router.delete('/wishlist/:productId', async (req, res) => {
       success: false,
       message: 'حدث خطأ'
     });
+  }
+});
+
+// @route   POST /api/auth/forgot-password
+// @desc    Send password reset code to email
+// @access  Public
+router.post('/forgot-password', loginLimiter, [
+  body('email').isEmail().withMessage('البريد الإلكتروني غير صالح')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return res.json({ success: true, message: 'إذا كان البريد مسجلاً، سيتم إرسال كود إعادة التعيين' });
+    }
+
+    const code = generateVerificationCode();
+    user.resetPasswordToken = code;
+    user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+    await user.save({ validateBeforeSave: false });
+
+    try {
+      await sendPasswordResetEmail(email, code);
+    } catch (emailError) {
+      console.error('Email send error:', emailError);
+    }
+
+    res.json({ success: true, message: 'تم إرسال كود إعادة التعيين إلى بريدك الإلكتروني' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ success: false, message: 'حدث خطأ' });
+  }
+});
+
+// @route   POST /api/auth/verify-reset-code
+// @desc    Verify the password reset code
+// @access  Public
+router.post('/verify-reset-code', [
+  body('email').isEmail().withMessage('البريد الإلكتروني غير صالح'),
+  body('code').isLength({ min: 6, max: 6 }).withMessage('الكود يجب أن يكون 6 أرقام')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { email, code } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'المستخدم غير موجود' });
+    }
+
+    if (user.resetPasswordToken !== code) {
+      return res.status(400).json({ success: false, message: 'الكود غير صحيح' });
+    }
+
+    if (user.resetPasswordExpires < new Date()) {
+      return res.status(400).json({ success: false, message: 'الكود منتهي الصلاحية. أعد المحاولة' });
+    }
+
+    res.json({ success: true, message: 'الكود صحيح' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'حدث خطأ' });
+  }
+});
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset password with verified code
+// @access  Public
+router.post('/reset-password', [
+  body('email').isEmail().withMessage('البريد الإلكتروني غير صالح'),
+  body('code').isLength({ min: 6, max: 6 }).withMessage('الكود غير صالح'),
+  body('newPassword').isLength({ min: 6 }).withMessage('كلمة المرور يجب أن تكون 6 أحرف على الأقل')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { email, code, newPassword } = req.body;
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'المستخدم غير موجود' });
+    }
+
+    if (user.resetPasswordToken !== code) {
+      return res.status(400).json({ success: false, message: 'الكود غير صحيح' });
+    }
+
+    if (user.resetPasswordExpires < new Date()) {
+      return res.status(400).json({ success: false, message: 'الكود منتهي الصلاحية' });
+    }
+
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({ success: true, message: 'تم تغيير كلمة المرور بنجاح. يمكنك تسجيل الدخول الآن' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ success: false, message: 'حدث خطأ' });
   }
 });
 

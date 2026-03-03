@@ -1,54 +1,287 @@
-﻿import { useState } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
-import { FiUser, FiPackage, FiHeart, FiMapPin, FiSettings, FiLogOut } from 'react-icons/fi'
+import { FiUser, FiPackage, FiHeart, FiMapPin, FiSettings, FiLogOut, FiArrowRight, FiMail, FiLock } from 'react-icons/fi'
 import { useAuthStore } from '../store'
 import { authAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
 // Login/Register Component
 const AuthForm = () => {
-  const [isLogin, setIsLogin] = useState(true)
+  // Modes: 'login' | 'register' | 'verify-email' | 'forgot-password' | 'verify-reset' | 'reset-password'
+  const [mode, setMode] = useState('login')
   const [loading, setLoading] = useState(false)
   const { setAuth } = useAuthStore()
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', email: '', phone: '', password: '', confirmPassword: ''
   })
+  const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', ''])
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [resendCooldown, setResendCooldown] = useState(0)
+  const [verifyEmail, setVerifyEmail] = useState('') // email used for verification
+  const inputRefs = useRef([])
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [resendCooldown])
+
+  const resetCodeInputs = () => {
+    setVerificationCode(['', '', '', '', '', ''])
+    setTimeout(() => inputRefs.current[0]?.focus(), 100)
+  }
+
+  const handleCodeChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return
+    const newCode = [...verificationCode]
+    newCode[index] = value.slice(-1)
+    setVerificationCode(newCode)
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus()
+    }
+  }
+
+  const handleCodeKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus()
+    }
+  }
+
+  const handleCodePaste = (e) => {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+    if (pasted.length === 6) {
+      setVerificationCode(pasted.split(''))
+      inputRefs.current[5]?.focus()
+    }
+  }
+
+  const getCodeString = () => verificationCode.join('')
+
+  // Login handler
+  const handleLogin = async () => {
+    try {
+      const res = await authAPI.login({ email: formData.email, password: formData.password })
+      setAuth(res.data.data.user, res.data.data.token)
+      toast.success('تم تسجيل الدخول بنجاح')
+    } catch (error) {
+      const data = error.response?.data
+      if (data?.requiresVerification) {
+        setVerifyEmail(formData.email)
+        resetCodeInputs()
+        setMode('verify-email')
+        setResendCooldown(60)
+        toast('حسابك غير مُفعّل. تم إرسال كود التفعيل', { icon: '📧' })
+      } else {
+        toast.error(data?.message || 'حدث خطأ في تسجيل الدخول')
+      }
+    }
+  }
+
+  // Register handler
+  const handleRegister = async () => {
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('كلمتا المرور غير متطابقتين')
+      return
+    }
+    if (formData.password.length < 6) {
+      toast.error('كلمة المرور يجب أن تكون 6 أحرف على الأقل')
+      return
+    }
+    try {
+      await authAPI.register(formData)
+      setVerifyEmail(formData.email)
+      resetCodeInputs()
+      setMode('verify-email')
+      setResendCooldown(60)
+      toast.success('تم إرسال كود التفعيل إلى بريدك الإلكتروني')
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'حدث خطأ في التسجيل')
+    }
+  }
+
+  // Verify email handler
+  const handleVerifyEmail = async () => {
+    const code = getCodeString()
+    if (code.length !== 6) {
+      toast.error('أدخل الكود المكوّن من 6 أرقام')
+      return
+    }
+    try {
+      const res = await authAPI.verifyEmail({ email: verifyEmail, code })
+      setAuth(res.data.data.user, res.data.data.token)
+      toast.success('تم تفعيل حسابك بنجاح!')
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'الكود غير صحيح')
+    }
+  }
+
+  // Resend code handler
+  const handleResendCode = async () => {
+    if (resendCooldown > 0) return
+    try {
+      if (mode === 'verify-reset') {
+        await authAPI.forgotPassword({ email: verifyEmail })
+      } else {
+        await authAPI.resendCode({ email: verifyEmail })
+      }
+      setResendCooldown(60)
+      resetCodeInputs()
+      toast.success('تم إرسال كود جديد')
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'حدث خطأ')
+    }
+  }
+
+  // Forgot password handler
+  const handleForgotPassword = async () => {
+    if (!formData.email) {
+      toast.error('أدخل بريدك الإلكتروني')
+      return
+    }
+    try {
+      await authAPI.forgotPassword({ email: formData.email })
+      setVerifyEmail(formData.email)
+      resetCodeInputs()
+      setMode('verify-reset')
+      setResendCooldown(60)
+      toast.success('تم إرسال كود إعادة التعيين إلى بريدك الإلكتروني')
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'حدث خطأ')
+    }
+  }
+
+  // Verify reset code handler
+  const handleVerifyResetCode = async () => {
+    const code = getCodeString()
+    if (code.length !== 6) {
+      toast.error('أدخل الكود المكوّن من 6 أرقام')
+      return
+    }
+    try {
+      await authAPI.verifyResetCode({ email: verifyEmail, code })
+      setMode('reset-password')
+      toast.success('الكود صحيح. أدخل كلمة المرور الجديدة')
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'الكود غير صحيح')
+    }
+  }
+
+  // Reset password handler
+  const handleResetPassword = async () => {
+    if (newPassword.length < 6) {
+      toast.error('كلمة المرور يجب أن تكون 6 أحرف على الأقل')
+      return
+    }
+    if (newPassword !== confirmNewPassword) {
+      toast.error('كلمتا المرور غير متطابقتين')
+      return
+    }
+    try {
+      await authAPI.resetPassword({ email: verifyEmail, code: getCodeString(), newPassword })
+      toast.success('تم تغيير كلمة المرور بنجاح!')
+      setMode('login')
+      setFormData(prev => ({ ...prev, password: '' }))
+      setNewPassword('')
+      setConfirmNewPassword('')
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'حدث خطأ')
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     try {
-      if (isLogin) {
-        const res = await authAPI.login({ email: formData.email, password: formData.password })
-        setAuth(res.data.data.user, res.data.data.token)
-        toast.success('تم تسجيل الدخول بنجاح')
-      } else {
-        if (formData.password !== formData.confirmPassword) {
-          toast.error('كلمتا المرور غير متطابقتين')
-          return
-        }
-        const res = await authAPI.register(formData)
-        setAuth(res.data.data.user, res.data.data.token)
-        toast.success('تم إنشاء الحساب بنجاح')
+      switch (mode) {
+        case 'login': await handleLogin(); break
+        case 'register': await handleRegister(); break
+        case 'verify-email': await handleVerifyEmail(); break
+        case 'forgot-password': await handleForgotPassword(); break
+        case 'verify-reset': await handleVerifyResetCode(); break
+        case 'reset-password': await handleResetPassword(); break
       }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'حدث خطأ')
     } finally {
       setLoading(false)
     }
   }
 
+  const goBack = () => {
+    if (mode === 'verify-email') setMode('login')
+    else if (mode === 'forgot-password') setMode('login')
+    else if (mode === 'verify-reset') setMode('forgot-password')
+    else if (mode === 'reset-password') setMode('verify-reset')
+  }
+
+  // Title based on mode
+  const titles = {
+    'login': 'تسجيل الدخول',
+    'register': 'إنشاء حساب جديد',
+    'verify-email': 'تفعيل الحساب',
+    'forgot-password': 'نسيت كلمة المرور',
+    'verify-reset': 'إدخال كود التحقق',
+    'reset-password': 'كلمة مرور جديدة',
+  }
+
+  // Code input component
+  const CodeInputGroup = () => (
+    <div className="flex justify-center gap-2 my-6 dir-ltr" dir="ltr">
+      {verificationCode.map((digit, i) => (
+        <input
+          key={i}
+          ref={el => inputRefs.current[i] = el}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={digit}
+          onChange={e => handleCodeChange(i, e.target.value)}
+          onKeyDown={e => handleCodeKeyDown(i, e)}
+          onPaste={i === 0 ? handleCodePaste : undefined}
+          className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
+        />
+      ))}
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container-custom">
         <div className="max-w-md mx-auto bg-white rounded-2xl p-8 shadow-lg">
-          <h1 className="text-2xl font-bold text-center mb-8">
-            {isLogin ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}
-          </h1>
+          {/* Back button */}
+          {mode !== 'login' && mode !== 'register' && (
+            <button onClick={goBack} className="flex items-center gap-1 text-gray-500 hover:text-gray-700 mb-4 text-sm">
+              <FiArrowRight className="text-lg" />
+              رجوع
+            </button>
+          )}
+
+          {/* Title & Icon */}
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
+              {(mode === 'verify-email' || mode === 'verify-reset') ? (
+                <FiMail className="text-2xl text-purple-600" />
+              ) : mode === 'reset-password' ? (
+                <FiLock className="text-2xl text-purple-600" />
+              ) : (
+                <FiUser className="text-2xl text-purple-600" />
+              )}
+            </div>
+            <h1 className="text-2xl font-bold">{titles[mode]}</h1>
+            {(mode === 'verify-email' || mode === 'verify-reset') && (
+              <p className="text-gray-500 text-sm mt-2">
+                تم إرسال كود مكوّن من 6 أرقام إلى<br />
+                <span className="text-gray-800 font-medium" dir="ltr">{verifyEmail}</span>
+              </p>
+            )}
+          </div>
           
           <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
+            {/* Register fields */}
+            {mode === 'register' && (
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <input
@@ -78,23 +311,31 @@ const AuthForm = () => {
                 />
               </>
             )}
-            <input
-              type="email"
-              placeholder="البريد الإلكتروني"
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
-              required
-              className="input-field"
-            />
-            <input
-              type="password"
-              placeholder="كلمة المرور"
-              value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
-              required
-              className="input-field"
-            />
-            {!isLogin && (
+
+            {/* Login/Register common fields */}
+            {(mode === 'login' || mode === 'register') && (
+              <>
+                <input
+                  type="email"
+                  placeholder="البريد الإلكتروني"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  required
+                  className="input-field"
+                />
+                <input
+                  type="password"
+                  placeholder="كلمة المرور"
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  required
+                  className="input-field"
+                />
+              </>
+            )}
+
+            {/* Register confirm password */}
+            {mode === 'register' && (
               <input
                 type="password"
                 placeholder="تأكيد كلمة المرور"
@@ -104,20 +345,106 @@ const AuthForm = () => {
                 className="input-field"
               />
             )}
+
+            {/* Forgot password link (on login page) */}
+            {mode === 'login' && (
+              <div className="text-left">
+                <button
+                  type="button"
+                  onClick={() => setMode('forgot-password')}
+                  className="text-sm text-purple-600 hover:text-purple-800 hover:underline"
+                >
+                  نسيت كلمة المرور؟
+                </button>
+              </div>
+            )}
+
+            {/* Forgot password - email input */}
+            {mode === 'forgot-password' && (
+              <input
+                type="email"
+                placeholder="أدخل بريدك الإلكتروني"
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                required
+                className="input-field"
+              />
+            )}
+
+            {/* Verification code inputs */}
+            {(mode === 'verify-email' || mode === 'verify-reset') && (
+              <>
+                <CodeInputGroup />
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={handleResendCode}
+                    disabled={resendCooldown > 0}
+                    className={`text-sm ${resendCooldown > 0 ? 'text-gray-400' : 'text-purple-600 hover:text-purple-800 hover:underline'}`}
+                  >
+                    {resendCooldown > 0 ? `إعادة الإرسال بعد ${resendCooldown} ثانية` : 'إعادة إرسال الكود'}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Reset password fields */}
+            {mode === 'reset-password' && (
+              <>
+                <input
+                  type="password"
+                  placeholder="كلمة المرور الجديدة"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="input-field"
+                />
+                <input
+                  type="password"
+                  placeholder="تأكيد كلمة المرور الجديدة"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="input-field"
+                />
+              </>
+            )}
+
+            {/* Submit button */}
             <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? 'جاري...' : isLogin ? 'تسجيل الدخول' : 'إنشاء حساب'}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  جاري...
+                </span>
+              ) : {
+                'login': 'تسجيل الدخول',
+                'register': 'إنشاء حساب',
+                'verify-email': 'تفعيل الحساب',
+                'forgot-password': 'إرسال كود التحقق',
+                'verify-reset': 'تحقق',
+                'reset-password': 'تغيير كلمة المرور',
+              }[mode]}
             </button>
           </form>
           
-          <p className="text-center mt-6 text-gray-600">
-            {isLogin ? 'ليس لديك حساب؟' : 'لديك حساب بالفعل؟'}
-            <button 
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline mr-2"
-            >
-              {isLogin ? 'سجل الآن' : 'سجل دخولك'}
-            </button>
-          </p>
+          {/* Toggle login/register */}
+          {(mode === 'login' || mode === 'register') && (
+            <p className="text-center mt-6 text-gray-600">
+              {mode === 'login' ? 'ليس لديك حساب؟' : 'لديك حساب بالفعل؟'}
+              <button 
+                onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+                className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline mr-2"
+              >
+                {mode === 'login' ? 'سجل الآن' : 'سجل دخولك'}
+              </button>
+            </p>
+          )}
         </div>
       </div>
     </div>
