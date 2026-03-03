@@ -48,12 +48,18 @@ router.post('/register', [
         existingUser.emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
         await existingUser.save();
 
-        await sendVerificationEmail(email, code);
+        let emailSent = false;
+        try {
+          await sendVerificationEmail(email, code);
+          emailSent = true;
+        } catch (emailError) {
+          console.error('Email send error:', emailError.message);
+        }
 
         return res.status(200).json({
           success: true,
-          message: 'تم إرسال كود التحقق إلى بريدك الإلكتروني',
-          data: { email, requiresVerification: true }
+          message: emailSent ? 'تم إرسال كود التحقق إلى بريدك الإلكتروني' : 'تم إنشاء الحساب لكن فشل إرسال الكود. جرب إعادة الإرسال',
+          data: { email, requiresVerification: true, emailSent }
         });
       }
       return res.status(400).json({
@@ -78,19 +84,24 @@ router.post('/register', [
     });
 
     // Send verification email
-    await sendVerificationEmail(email, code);
+    let emailSent = false;
+    try {
+      await sendVerificationEmail(email, code);
+      emailSent = true;
+    } catch (emailError) {
+      console.error('Email send error:', emailError.message);
+    }
 
     res.status(201).json({
       success: true,
-      message: 'تم إرسال كود التحقق إلى بريدك الإلكتروني',
-      data: { email, requiresVerification: true }
+      message: emailSent ? 'تم إرسال كود التحقق إلى بريدك الإلكتروني' : 'تم إنشاء الحساب لكن فشل إرسال الكود. جرب إعادة الإرسال',
+      data: { email, requiresVerification: true, emailSent }
     });
   } catch (error) {
     console.error('Registration error:', error);
-    const isEmailError = error.code === 'ECONNREFUSED' || error.code === 'ESOCKET' || error.code === 'EAUTH' || error.responseCode;
     res.status(500).json({
       success: false,
-      message: isEmailError ? 'فشل في إرسال البريد الإلكتروني. تأكد من صحة بريدك وأعد المحاولة' : 'حدث خطأ أثناء إنشاء الحساب'
+      message: 'حدث خطأ أثناء إنشاء الحساب'
     });
   }
 });
@@ -180,13 +191,17 @@ router.post('/resend-code', [
     user.emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save({ validateBeforeSave: false });
 
-    await sendVerificationEmail(email, code);
+    try {
+      await sendVerificationEmail(email, code);
+    } catch (emailError) {
+      console.error('Resend code email error:', emailError.message);
+      return res.status(500).json({ success: false, message: 'فشل في إرسال البريد. تأكد من إعدادات SMTP وأعد المحاولة' });
+    }
 
     res.json({ success: true, message: 'تم إرسال كود جديد إلى بريدك الإلكتروني' });
   } catch (error) {
     console.error('Resend code error:', error);
-    const isEmailError = error.code === 'ECONNREFUSED' || error.code === 'ESOCKET' || error.code === 'EAUTH' || error.responseCode;
-    res.status(500).json({ success: false, message: isEmailError ? 'فشل في إرسال البريد. أعد المحاولة لاحقاً' : 'حدث خطأ' });
+    res.status(500).json({ success: false, message: 'حدث خطأ' });
   }
 });
 
@@ -233,12 +248,18 @@ router.post('/login', loginLimiter, [
       user.emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000);
       await user.save({ validateBeforeSave: false });
 
-      await sendVerificationEmail(email, code);
+      let emailSent = false;
+      try {
+        await sendVerificationEmail(email, code);
+        emailSent = true;
+      } catch (emailError) {
+        console.error('Verification email error:', emailError.message);
+      }
 
       return res.status(403).json({
         success: false,
-        message: 'يجب تأكيد بريدك الإلكتروني أولاً. تم إرسال كود جديد',
-        data: { email, requiresVerification: true }
+        message: emailSent ? 'يجب تأكيد بريدك الإلكتروني أولاً. تم إرسال كود جديد' : 'يجب تأكيد بريدك الإلكتروني. فشل إرسال الكود، جرب إعادة الإرسال',
+        data: { email, requiresVerification: true, emailSent }
       });
     }
 
@@ -487,13 +508,17 @@ router.post('/forgot-password', loginLimiter, [
     user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
     await user.save({ validateBeforeSave: false });
 
-    await sendPasswordResetEmail(email, code);
+    try {
+      await sendPasswordResetEmail(email, code);
+    } catch (emailError) {
+      console.error('Password reset email error:', emailError.message);
+      return res.status(500).json({ success: false, message: 'فشل في إرسال البريد. أعد المحاولة لاحقاً' });
+    }
 
     res.json({ success: true, message: 'تم إرسال كود إعادة التعيين إلى بريدك الإلكتروني' });
   } catch (error) {
     console.error('Forgot password error:', error);
-    const isEmailError = error.code === 'ECONNREFUSED' || error.code === 'ESOCKET' || error.code === 'EAUTH' || error.responseCode;
-    res.status(500).json({ success: false, message: isEmailError ? 'فشل في إرسال البريد. أعد المحاولة لاحقاً' : 'حدث خطأ' });
+    res.status(500).json({ success: false, message: 'حدث خطأ' });
   }
 });
 
