@@ -1,26 +1,54 @@
-const nodemailer = require('nodemailer');
+/**
+ * Mailer utility using Resend HTTP API
+ * (SMTP ports are blocked on Render, so we use HTTPS instead)
+ */
 
-// Configure the transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT) || 465,
-  secure: process.env.SMTP_SECURE === 'true',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 15000
-});
-
-// Verify SMTP connection on startup
-transporter.verify()
-  .then(() => console.log('✅ SMTP connection verified successfully'))
-  .catch((err) => console.error('❌ SMTP connection failed:', err.message));
-
-const FROM_EMAIL = process.env.SMTP_FROM || 'no-reply@foryo.me';
+const RESEND_API_KEY = process.env.SMTP_PASS; // Resend API key
+const FROM_EMAIL = process.env.SMTP_FROM || 'For You <no-reply@foryo.me>';
 const BRAND_NAME = 'For You - فور يو';
+
+/**
+ * Send email via Resend HTTP API
+ */
+async function sendEmail({ to, subject, html }) {
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    console.error('Resend API error:', data);
+    throw new Error(data.message || `Resend API error: ${res.status}`);
+  }
+
+  return data;
+}
+
+// Verify API key on startup
+(async () => {
+  if (!RESEND_API_KEY) {
+    console.error('❌ SMTP_PASS (Resend API key) is not set');
+    return;
+  }
+  try {
+    const res = await fetch('https://api.resend.com/domains', {
+      headers: { 'Authorization': `Bearer ${RESEND_API_KEY}` }
+    });
+    if (res.ok) {
+      console.log('✅ Resend API key verified successfully');
+    } else {
+      console.error('❌ Resend API key invalid:', (await res.json()).message);
+    }
+  } catch (err) {
+    console.error('❌ Resend API check failed:', err.message);
+  }
+})();
 
 /**
  * Send order confirmation email
@@ -40,7 +68,7 @@ async function sendOrderConfirmationEmail(to, order) {
       </div>
     </div>
   `;
-  await transporter.sendMail({ from: FROM_EMAIL, to, subject, html });
+  await sendEmail({ to, subject, html });
 }
 
 /**
@@ -64,7 +92,7 @@ async function sendVerificationEmail(to, code) {
       </div>
     </div>
   `;
-  await transporter.sendMail({ from: FROM_EMAIL, to, subject, html });
+  await sendEmail({ to, subject, html });
 }
 
 /**
@@ -88,7 +116,7 @@ async function sendPasswordResetEmail(to, code) {
       </div>
     </div>
   `;
-  await transporter.sendMail({ from: FROM_EMAIL, to, subject, html });
+  await sendEmail({ to, subject, html });
 }
 
 /**
