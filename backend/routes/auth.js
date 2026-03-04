@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { sendVerificationEmail, sendPasswordResetEmail, generateVerificationCode } = require('../utils/mailer');
@@ -40,13 +41,15 @@ router.post('/register', [
       // If user exists but not verified, allow re-registration with new code
       if (!existingUser.isVerified) {
         const code = generateVerificationCode();
-        existingUser.firstName = firstName;
-        existingUser.lastName = lastName;
-        existingUser.phone = phone;
-        existingUser.password = password;
-        existingUser.emailVerificationCode = code;
-        existingUser.emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
-        await existingUser.save();
+        const hashedPassword = await bcrypt.hash(password, 12);
+        await User.findByIdAndUpdate(existingUser._id, {
+          $set: {
+            firstName, lastName, phone,
+            password: hashedPassword,
+            emailVerificationCode: code,
+            emailVerificationExpires: new Date(Date.now() + 10 * 60 * 1000)
+          }
+        });
 
         let emailSent = false;
         try {
@@ -138,12 +141,11 @@ router.post('/verify-email', [
       return res.status(400).json({ success: false, message: 'الكود منتهي الصلاحية. أعد إرسال كود جديد' });
     }
 
-    // Verify user
-    user.isVerified = true;
-    user.emailVerificationCode = undefined;
-    user.emailVerificationExpires = undefined;
-    user.lastLogin = new Date();
-    await user.save({ validateBeforeSave: false });
+    // Verify user using findByIdAndUpdate to bypass pre-save hooks
+    await User.findByIdAndUpdate(user._id, {
+      $set: { isVerified: true, lastLogin: new Date() },
+      $unset: { emailVerificationCode: 1, emailVerificationExpires: 1 }
+    });
 
     const token = generateToken(user._id);
 
@@ -187,9 +189,12 @@ router.post('/resend-code', [
     }
 
     const code = generateVerificationCode();
-    user.emailVerificationCode = code;
-    user.emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000);
-    await user.save({ validateBeforeSave: false });
+    await User.findByIdAndUpdate(user._id, {
+      $set: {
+        emailVerificationCode: code,
+        emailVerificationExpires: new Date(Date.now() + 10 * 60 * 1000)
+      }
+    });
 
     try {
       await sendVerificationEmail(email, code);
@@ -244,9 +249,12 @@ router.post('/login', loginLimiter, [
     if (!user.isVerified) {
       // Send a new verification code
       const code = generateVerificationCode();
-      user.emailVerificationCode = code;
-      user.emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000);
-      await user.save({ validateBeforeSave: false });
+      await User.findByIdAndUpdate(user._id, {
+        $set: {
+          emailVerificationCode: code,
+          emailVerificationExpires: new Date(Date.now() + 10 * 60 * 1000)
+        }
+      });
 
       let emailSent = false;
       try {
@@ -264,8 +272,7 @@ router.post('/login', loginLimiter, [
     }
 
     // Update last login
-    user.lastLogin = new Date();
-    await user.save({ validateBeforeSave: false });
+    await User.findByIdAndUpdate(user._id, { $set: { lastLogin: new Date() } });
 
     const token = generateToken(user._id);
 
@@ -397,8 +404,8 @@ router.put('/change-password', [
       });
     }
 
-    user.password = newPassword;
-    await user.save();
+    const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+    await User.findByIdAndUpdate(decoded.id, { $set: { password: hashedNewPassword } });
 
     res.json({
       success: true,
@@ -436,8 +443,9 @@ router.post('/wishlist/:productId', async (req, res) => {
       });
     }
 
-    user.wishlist.push(req.params.productId);
-    await user.save();
+    await User.findByIdAndUpdate(decoded.id, {
+      $addToSet: { wishlist: req.params.productId }
+    });
 
     res.json({
       success: true,
@@ -504,9 +512,12 @@ router.post('/forgot-password', loginLimiter, [
     }
 
     const code = generateVerificationCode();
-    user.resetPasswordToken = code;
-    user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
-    await user.save({ validateBeforeSave: false });
+    await User.findByIdAndUpdate(user._id, {
+      $set: {
+        resetPasswordToken: code,
+        resetPasswordExpires: new Date(Date.now() + 10 * 60 * 1000)
+      }
+    });
 
     try {
       await sendPasswordResetEmail(email, code);
@@ -585,10 +596,12 @@ router.post('/reset-password', [
       return res.status(400).json({ success: false, message: 'الكود منتهي الصلاحية' });
     }
 
-    user.password = newPassword;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
-    await user.save();
+    // Hash password manually since we're bypassing pre-save hook
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    await User.findByIdAndUpdate(user._id, {
+      $set: { password: hashedPassword },
+      $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 }
+    });
 
     res.json({ success: true, message: 'تم تغيير كلمة المرور بنجاح. يمكنك تسجيل الدخول الآن' });
   } catch (error) {
