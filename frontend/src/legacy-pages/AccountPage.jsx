@@ -69,15 +69,15 @@ const AuthForm = () => {
       setAuth(res.data.data.user, res.data.data.token)
       toast.success('تم تسجيل الدخول بنجاح')
     } catch (error) {
-      const data = error.response?.data
-      if (data?.requiresVerification) {
+      const responseData = error.response?.data
+      if (responseData?.data?.requiresVerification) {
         setVerifyEmail(formData.email)
         resetCodeInputs()
         setMode('verify-email')
         setResendCooldown(60)
         toast('حسابك غير مُفعّل. تم إرسال كود التفعيل', { icon: '📧' })
       } else {
-        toast.error(data?.message || 'حدث خطأ في تسجيل الدخول')
+        toast.error(responseData?.message || 'حدث خطأ في تسجيل الدخول')
       }
     }
   }
