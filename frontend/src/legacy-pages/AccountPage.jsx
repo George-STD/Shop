@@ -227,25 +227,7 @@ const AuthForm = () => {
     'reset-password': 'كلمة مرور جديدة',
   }
 
-  // Code input component
-  const CodeInputGroup = () => (
-    <div className="flex justify-center gap-2 my-6 dir-ltr" dir="ltr">
-      {verificationCode.map((digit, i) => (
-        <input
-          key={i}
-          ref={el => inputRefs.current[i] = el}
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={digit}
-          onChange={e => handleCodeChange(i, e.target.value)}
-          onKeyDown={e => handleCodeKeyDown(i, e)}
-          onPaste={i === 0 ? handleCodePaste : undefined}
-          className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
-        />
-      ))}
-    </div>
-  )
+  // Code input rendered inline (not as a component to prevent remounting)
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -374,7 +356,23 @@ const AuthForm = () => {
             {/* Verification code inputs */}
             {(mode === 'verify-email' || mode === 'verify-reset') && (
               <>
-                <CodeInputGroup />
+                <div className="flex justify-center gap-2 my-6" dir="ltr">
+                  {verificationCode.map((digit, i) => (
+                    <input
+                      key={i}
+                      ref={el => inputRefs.current[i] = el}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={e => handleCodeChange(i, e.target.value)}
+                      onKeyDown={e => handleCodeKeyDown(i, e)}
+                      onPaste={i === 0 ? handleCodePaste : undefined}
+                      autoFocus={i === 0}
+                      className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
+                    />
+                  ))}
+                </div>
                 <div className="text-center">
                   <button
                     type="button"
