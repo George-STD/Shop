@@ -567,7 +567,7 @@ const OrdersPage = () => {
             <div key={order._id} className="border rounded-xl p-4 bg-gray-50">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
                 <div className="break-all">
-                  <span className="font-bold">رقم الطلب:</span> <span className="text-sm">{order._id}</span>
+                  <span className="font-bold">رقم الطلب:</span> <span className="text-sm">{order.orderNumber || order._id}</span>
                 </div>
                 <div>
                   <span className="font-bold">الحالة:</span> {order.statusHistory?.[order.statusHistory.length-1]?.status || '---'}
