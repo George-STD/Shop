@@ -1,5 +1,4 @@
-﻿import { useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { FiCheck, FiCreditCard, FiTruck } from 'react-icons/fi'
 import { useCartStore, useAuthStore } from '../store'
@@ -143,9 +142,6 @@ const CheckoutPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>إتمام الشراء | For You</title>
-      </Helmet>
       <div className="bg-gray-50 min-h-screen py-8">
         <div className="container-custom">
           {/* Progress Steps */}

@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom'
 import { 
   FiUsers, FiPackage, FiShoppingCart, FiDollarSign,
-  FiTrendingUp, FiArrowUpRight, FiArrowDownRight
+  FiTrendingUp, FiArrowUpRight
 } from 'react-icons/fi'
 import { adminAPI } from '../../services/api'
 

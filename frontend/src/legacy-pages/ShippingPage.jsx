@@ -1,4 +1,3 @@
-﻿import { Helmet } from 'react-helmet-async'
 import { FiTruck, FiClock, FiMapPin, FiPackage, FiGift, FiCheckCircle } from 'react-icons/fi'
 
 const ShippingPage = () => {
@@ -35,10 +34,6 @@ const ShippingPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>الشحن والتوصيل | For You - توصيل سريع لجميع أنحاء مصر</title>
-        <meta name="description" content="تعرف على خيارات الشحن والتوصيل المتاحة. توصيل مجاني للطلبات فوق 500 جنيه. توصيل سريع في نفس اليوم للقاهرة والجيزة." />
-      </Helmet>
 
       <div className="min-h-screen bg-gray-50">
         {/* Hero */}

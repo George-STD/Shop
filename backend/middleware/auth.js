@@ -126,34 +126,29 @@ const loginLimiter = rateLimit({
   skipSuccessfulRequests: true, // Don't count successful logins
 });
 
-// =====================================================
-// IDOR PROTECTION - Verify resource ownership
-// =====================================================
+// Rate limiter for verification code attempts (brute-force protection)
+const verifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per 15 minutes
+  message: {
+    success: false,
+    message: 'عدد كبير جداً من المحاولات. حاول مرة أخرى بعد 15 دقيقة'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-// Verify the user owns the resource or is admin
-const verifyOwnership = (resourceUserIdField = 'user') => {
-  return async (req, res, next) => {
-    try {
-      const resourceId = req.params.id;
-      
-      // Admin can access any resource
-      if (req.user.role === 'admin') {
-        return next();
-      }
-
-      // For regular users, check ownership
-      // This will be validated in the route handler
-      req.checkOwnership = true;
-      req.resourceUserIdField = resourceUserIdField;
-      next();
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'خطأ في التحقق من الصلاحيات'
-      });
-    }
-  };
-};
+// Rate limiter for registration (prevent mass account creation)
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // 5 registrations per IP per hour
+  message: {
+    success: false,
+    message: 'عدد كبير جداً من عمليات التسجيل. حاول مرة أخرى لاحقاً'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // =====================================================
 // VALIDATE OBJECT ID - Prevent NoSQL injection
@@ -228,7 +223,8 @@ module.exports = {
   apiLimiter,
   adminLimiter,
   loginLimiter,
-  verifyOwnership,
+  verifyLimiter,
+  registerLimiter,
   validateObjectId,
   sanitizeInput,
   logAdminAction

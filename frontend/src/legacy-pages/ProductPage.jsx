@@ -1,5 +1,4 @@
-﻿import { useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useState } from 'react'
 import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -274,44 +273,6 @@ const ProductPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>{product.seo?.metaTitle || `${product.name} | For You`}</title>
-        <meta name="description" content={product.seo?.metaDescription || product.description} />
-        <meta name="keywords" content={product.seo?.keywords?.join(', ') || product.tags?.join(', ')} />
-        <link rel="canonical" href={`https://hadaya.com/product/${product.slug}`} />
-        
-        {/* Open Graph */}
-        <meta property="og:title" content={product.name} />
-        <meta property="og:description" content={product.description} />
-        <meta property="og:image" content={product.images?.[0]?.url} />
-        <meta property="og:type" content="product" />
-        <meta property="product:price:amount" content={product.price} />
-        <meta property="product:price:currency" content="EGP" />
-        
-        {/* Structured Data */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Product",
-            "name": product.name,
-            "description": product.description,
-            "image": product.images?.map(img => img.url),
-            "sku": product.sku,
-            "brand": { "@type": "Brand", "name": "هدايا" },
-            "offers": {
-              "@type": "Offer",
-              "price": product.price,
-              "priceCurrency": "EGP",
-              "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
-            },
-            "aggregateRating": product.rating?.count > 0 ? {
-              "@type": "AggregateRating",
-              "ratingValue": product.rating.average,
-              "reviewCount": product.rating.count
-            } : undefined
-          })}
-        </script>
-      </Helmet>
 
       <div className="bg-gray-50 min-h-screen">
         {/* Breadcrumb */}

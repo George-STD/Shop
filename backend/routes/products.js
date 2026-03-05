@@ -27,22 +27,24 @@ router.get('/', async (req, res) => {
     // Build query
     const query = { isActive: true };
 
-    // Handle category by ID or slug
+    // Handle category by ID or slug (sanitize to prevent NoSQL injection)
     if (category) {
-      query.category = category;
+      query.category = String(category);
     } else if (categorySlug) {
-      const categoryDoc = await Category.findOne({ slug: categorySlug });
+      const categoryDoc = await Category.findOne({ slug: String(categorySlug) });
       if (categoryDoc) {
         query.category = categoryDoc._id;
       }
     }
 
     if (occasion) {
-      query.occasions = { $in: Array.isArray(occasion) ? occasion : [occasion] };
+      const occasions = Array.isArray(occasion) ? occasion.map(String) : [String(occasion)];
+      query.occasions = { $in: occasions };
     }
 
     if (recipient) {
-      query.recipients = { $in: Array.isArray(recipient) ? recipient : [recipient] };
+      const recipients = Array.isArray(recipient) ? recipient.map(String) : [String(recipient)];
+      query.recipients = { $in: recipients };
     }
 
     if (minPrice || maxPrice) {
@@ -64,7 +66,7 @@ router.get('/', async (req, res) => {
     }
 
     if (search) {
-      query.$text = { $search: search };
+      query.$text = { $search: String(search) };
     }
 
     // Build sort

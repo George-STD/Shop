@@ -1,4 +1,3 @@
-﻿import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi'
 import { useCartStore } from '../store'
@@ -13,9 +12,6 @@ const CartPage = () => {
   if (items.length === 0) {
     return (
       <>
-        <Helmet>
-          <title>سلة التسوق | For You</title>
-        </Helmet>
         <div className="container-custom py-16 text-center">
           <div className="text-8xl mb-6">🛒</div>
           <h1 className="text-3xl font-bold text-gray-800 mb-4">السلة فارغة</h1>
@@ -31,9 +27,6 @@ const CartPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>سلة التسوق ({items.length}) | For You</title>
-      </Helmet>
 
       <div className="bg-gray-50 min-h-screen py-8">
         <div className="container-custom">

@@ -1,7 +1,6 @@
 'use client'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { HelmetProvider } from 'react-helmet-async'
 import { Toaster } from 'react-hot-toast'
 import { useState } from 'react'
 
@@ -20,19 +19,17 @@ export default function Providers({ children }) {
   )
 
   return (
-    <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
-        {children}
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              fontFamily: 'Tajawal, sans-serif',
-            },
-          }}
-        />
-      </QueryClientProvider>
-    </HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      {children}
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            fontFamily: 'Tajawal, sans-serif',
+          },
+        }}
+      />
+    </QueryClientProvider>
   )
 }

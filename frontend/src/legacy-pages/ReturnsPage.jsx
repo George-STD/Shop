@@ -1,4 +1,3 @@
-﻿import { Helmet } from 'react-helmet-async'
 import { FiRefreshCw, FiCheckCircle, FiXCircle, FiAlertCircle } from 'react-icons/fi'
 import { Link } from 'react-router-dom'
 
@@ -27,10 +26,6 @@ const ReturnsPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>الاستبدال والاسترجاع | For You - سياسة إرجاع مرنة</title>
-        <meta name="description" content="سياسة الاستبدال والاسترجاع في هدايا. إرجاع سهل خلال 14 يوماً واسترداد كامل المبلغ. تعرف على الشروط والاستثناءات." />
-      </Helmet>
 
       <div className="min-h-screen bg-gray-50">
         {/* Hero */}

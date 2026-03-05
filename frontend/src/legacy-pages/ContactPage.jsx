@@ -1,5 +1,4 @@
-﻿import { useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useState } from 'react'
 import { FiPhone, FiMail, FiMapPin, FiClock, FiSend, FiMessageCircle } from 'react-icons/fi'
 import { FaWhatsapp, FaTwitter, FaInstagram, FaSnapchat } from 'react-icons/fa'
 import toast from 'react-hot-toast'
@@ -35,10 +34,6 @@ const ContactPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>تواصل معنا | For You - خدمة عملاء متميزة</title>
-        <meta name="description" content="تواصل مع فريق هدايا عبر الهاتف، الواتساب، البريد الإلكتروني أو زيارة فروعنا. نحن هنا لمساعدتك في اختيار أفضل الهدايا." />
-      </Helmet>
 
       <div className="min-h-screen bg-gray-50">
         {/* Hero */}

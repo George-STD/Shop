@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { FiSearch, FiEdit2, FiTrash2, FiUserCheck, FiUserX, FiShield, FiUser } from 'react-icons/fi'
+import { FiSearch, FiTrash2, FiUserCheck, FiUserX, FiShield, FiUser } from 'react-icons/fi'
 import { adminAPI } from '../../services/api'
 
 const AdminUsers = () => {

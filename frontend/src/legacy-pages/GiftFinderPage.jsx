@@ -1,5 +1,4 @@
-﻿import { useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { FiArrowRight, FiArrowLeft, FiGift, FiHeart, FiDollarSign, FiUser } from 'react-icons/fi'
@@ -206,10 +205,6 @@ const GiftFinderPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>باحث الهدايا | For You - اعثر على الهدية المثالية</title>
-        <meta name="description" content="استخدم باحث الهدايا الذكي للعثور على الهدية المثالية لأي مناسبة. أجب على بعض الأسئلة واحصل على توصيات مخصصة." />
-      </Helmet>
 
       <div className="min-h-screen bg-gradient-to-b from-purple-50 via-pink-50 to-white py-12">
         <div className="container-custom">

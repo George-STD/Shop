@@ -1,5 +1,4 @@
-﻿import { useState, useEffect } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { FiGrid, FiList, FiFilter, FiX, FiChevronDown } from 'react-icons/fi'
@@ -143,12 +142,6 @@ const ProductsPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDescription} />
-        <meta name="keywords" content={categoryInfo?.seo?.keywords?.join(', ') || 'هدايا، متجر هدايا، هدايا مصر'} />
-        <link rel="canonical" href={`https://foryo.me/products${categorySlug ? `?category=${categorySlug}` : ''}`} />
-      </Helmet>
 
       <div className="bg-gray-50 min-h-screen">
         {/* Breadcrumb */}

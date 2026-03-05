@@ -1,4 +1,3 @@
-﻿import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -52,12 +51,6 @@ const HomePage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>For You - متجر الهدايا الأول في مصر | هدايا لجميع المناسبات</title>
-        <meta name="description" content="تسوق أفضل الهدايا لجميع المناسبات - عيد ميلاد، زفاف، تخرج، عيد الأم والمزيد. توصيل سريع لجميع أنحاء مصر. ورد، شوكولاتة، عطور، هدايا شخصية." />
-        <meta name="keywords" content="For You, متجر هدايا، هدايا عيد ميلاد، هدايا زفاف، ورد، شوكولاتة، عطور، هدايا مصر" />
-        <link rel="canonical" href="https://foryou-gifts.com/" />
-      </Helmet>
 
       {/* Hero Section */}
       <section className="hero-gradient">

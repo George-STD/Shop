@@ -1,5 +1,4 @@
-﻿import { useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useState } from 'react'
 import { FiSearch, FiPackage, FiTruck, FiCheckCircle, FiMapPin } from 'react-icons/fi'
 
 const TrackOrderPage = () => {
@@ -68,10 +67,6 @@ const TrackOrderPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>تتبع الطلب | For You - تتبع شحنتك لحظة بلحظة</title>
-        <meta name="description" content="تتبع طلبك ومعرفة حالة الشحنة لحظة بلحظة. أدخل رقم الطلب للحصول على تحديثات مباشرة عن موقع شحنتك." />
-      </Helmet>
 
       <div className="min-h-screen bg-gray-50">
         {/* Hero */}

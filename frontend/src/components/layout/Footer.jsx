@@ -1,5 +1,5 @@
 ﻿import { Link } from 'react-router-dom'
-import { FiFacebook, FiInstagram, FiTwitter, FiYoutube, FiMail, FiPhone, FiMapPin } from 'react-icons/fi'
+import { FiFacebook, FiInstagram, FiYoutube, FiMail, FiPhone, FiMapPin } from 'react-icons/fi'
 
 const Footer = () => {
   const currentYear = new Date().getFullYear()

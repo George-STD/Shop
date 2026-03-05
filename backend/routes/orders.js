@@ -1,18 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const { protect, apiLimiter } = require('../middleware/auth');
 const { sendOrderConfirmationEmail } = require('../utils/mailer');
 
-// Auth middleware helper
-const getUser = async (req) => {
+// Optional auth helper — returns userId or null (for guest checkout)
+const getOptionalUserId = (req) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return null;
-  
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return decoded.id;
+    return jwt.verify(token, process.env.JWT_SECRET).id;
   } catch {
     return null;
   }
@@ -21,9 +21,21 @@ const getUser = async (req) => {
 // @route   POST /api/orders
 // @desc    Create new order
 // @access  Public (guest checkout allowed)
-router.post('/', async (req, res) => {
+router.post('/', apiLimiter, [
+  body('items').isArray({ min: 1 }).withMessage('يجب إضافة منتج واحد على الأقل'),
+  body('shippingAddress.address').trim().notEmpty().withMessage('العنوان مطلوب'),
+  body('shippingAddress.city').trim().notEmpty().withMessage('المدينة مطلوبة'),
+  body('shippingAddress.phone').trim().notEmpty().withMessage('رقم الهاتف مطلوب'),
+  body('paymentMethod').isIn(['cash_on_delivery', 'credit_card', 'instapay', 'vodafone_cash']).withMessage('طريقة الدفع غير صالحة'),
+  body('guestEmail').optional().isEmail().withMessage('البريد الإلكتروني غير صالح'),
+], async (req, res) => {
   try {
-    const userId = await getUser(req);
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const userId = getOptionalUserId(req);
     
     const {
       items,
@@ -180,21 +192,15 @@ router.post('/', async (req, res) => {
 // @route   GET /api/orders
 // @desc    Get user orders
 // @access  Private
-router.get('/', async (req, res) => {
+router.get('/', protect, async (req, res) => {
   try {
-    const userId = await getUser(req);
-    
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: 'غير مصرح'
-      });
-    }
-
     const { page = 1, limit = 10, status } = req.query;
     
-    const query = { user: userId };
-    if (status) query.status = status;
+    const query = { user: req.user._id };
+    const allowedStatuses = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
+    if (status && allowedStatuses.includes(String(status))) {
+      query.status = String(status);
+    }
 
     const orders = await Order.find(query)
       .sort({ createdAt: -1 })
@@ -223,10 +229,8 @@ router.get('/', async (req, res) => {
 // @route   GET /api/orders/:id
 // @desc    Get order by ID
 // @access  Private
-router.get('/:id', async (req, res) => {
+router.get('/:id', protect, async (req, res) => {
   try {
-    const userId = await getUser(req);
-    
     const order = await Order.findById(req.params.id)
       .populate('items.product', 'name slug images');
 
@@ -237,8 +241,8 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    // Check if user owns this order or is admin
-    if (order.user && order.user.toString() !== userId) {
+    // Check if user owns this order
+    if (order.user && order.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'غير مصرح'
@@ -288,17 +292,8 @@ router.get('/track/:orderNumber', async (req, res) => {
 // @route   PUT /api/orders/:id/cancel
 // @desc    Cancel order
 // @access  Private
-router.put('/:id/cancel', async (req, res) => {
+router.put('/:id/cancel', protect, async (req, res) => {
   try {
-    const userId = await getUser(req);
-    
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: 'غير مصرح'
-      });
-    }
-
     const order = await Order.findById(req.params.id);
 
     if (!order) {
@@ -308,7 +303,7 @@ router.put('/:id/cancel', async (req, res) => {
       });
     }
 
-    if (order.user.toString() !== userId) {
+    if (order.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'غير مصرح'

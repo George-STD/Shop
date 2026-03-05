@@ -1,14 +1,9 @@
-﻿import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { FiHome, FiSearch, FiArrowRight } from 'react-icons/fi'
 
 const NotFoundPage = () => {
   return (
     <>
-      <Helmet>
-        <title>الصفحة غير موجودة | For You</title>
-        <meta name="robots" content="noindex" />
-      </Helmet>
 
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12">
         <div className="container-custom">

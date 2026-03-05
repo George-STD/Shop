@@ -1,5 +1,4 @@
-﻿import { useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useState } from 'react'
 import { FiChevronDown, FiSearch, FiPackage, FiTruck, FiRefreshCw, FiCreditCard, FiGift, FiShield } from 'react-icons/fi'
 
 const faqs = [
@@ -138,10 +137,6 @@ const FAQPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>الأسئلة الشائعة | For You - إجابات لجميع استفساراتك</title>
-        <meta name="description" content="اعثر على إجابات لجميع أسئلتك حول الطلبات، الشحن، الدفع، الإرجاع وغيرها. فريق خدمة العملاء متاح لمساعدتك." />
-      </Helmet>
 
       <div className="min-h-screen bg-gray-50">
         {/* Hero */}

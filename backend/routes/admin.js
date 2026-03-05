@@ -23,6 +23,9 @@ const {
 
 // Apply protection to all admin routes
 router.use(protect);
+
+// Escape regex special characters to prevent ReDoS
+const escapeRegex = (str) => String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 router.use(admin);
 router.use(adminLimiter);
 router.use(sanitizeInput);
@@ -137,11 +140,12 @@ router.get('/users', [
     const queryObj = {};
     
     if (req.query.search) {
+      const search = escapeRegex(req.query.search);
       queryObj.$or = [
-        { firstName: { $regex: req.query.search, $options: 'i' } },
-        { lastName: { $regex: req.query.search, $options: 'i' } },
-        { email: { $regex: req.query.search, $options: 'i' } },
-        { phone: { $regex: req.query.search, $options: 'i' } }
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } }
       ];
     }
     
@@ -490,7 +494,7 @@ router.get('/orders', [
 
     if (req.query.search) {
       queryObj.$or = [
-        { orderNumber: { $regex: req.query.search, $options: 'i' } }
+        { orderNumber: { $regex: escapeRegex(req.query.search), $options: 'i' } }
       ];
     }
 

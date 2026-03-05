@@ -5,15 +5,14 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const Review = require('../models/Review');
 const Order = require('../models/Order');
+const { protect, apiLimiter } = require('../middleware/auth');
 
-// Auth middleware helper
-const getUser = async (req) => {
+// Optional auth helper — returns userId or null (for guest reviews)
+const getOptionalUserId = (req) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return null;
-  
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return decoded.id;
+    return jwt.verify(token, process.env.JWT_SECRET).id;
   } catch {
     return null;
   }
@@ -90,7 +89,7 @@ router.get('/product/:productId', async (req, res) => {
 // @route   POST /api/reviews
 // @desc    Create a review
 // @access  Private
-router.post('/',[
+router.post('/', apiLimiter, [
   // تم تغيير productId إلى product ليتوافق مع ما ترسله واجهة الـ React
   body('product').notEmpty().withMessage('معرف المنتج مطلوب'),
   body('rating').isInt({ min: 1, max: 5 }).withMessage('التقييم يجب أن يكون بين 1 و 5'),
@@ -99,7 +98,7 @@ router.post('/',[
   body('guestEmail').optional().isEmail().withMessage('بريد إلكتروني صحيح مطلوب')
 ], async (req, res) => {
   try {
-    const userId = await getUser(req);
+    const userId = getOptionalUserId(req);
     // تم استخراج product بدلاً من productId
     const { product, rating, title, comment, pros, cons, images, orderId, guestName, guestEmail } = req.body;
     
@@ -185,17 +184,8 @@ router.post('/',[
 // @route   PUT /api/reviews/:id
 // @desc    Update a review
 // @access  Private
-router.put('/:id', async (req, res) => {
+router.put('/:id', protect, async (req, res) => {
   try {
-    const userId = await getUser(req);
-    
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: 'غير مصرح'
-      });
-    }
-
     const review = await Review.findById(req.params.id);
 
     if (!review) {
@@ -205,7 +195,7 @@ router.put('/:id', async (req, res) => {
       });
     }
 
-    if (review.user.toString() !== userId) {
+    if (review.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'غير مصرح'
@@ -239,17 +229,8 @@ router.put('/:id', async (req, res) => {
 // @route   DELETE /api/reviews/:id
 // @desc    Delete a review
 // @access  Private
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', protect, async (req, res) => {
   try {
-    const userId = await getUser(req);
-    
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: 'غير مصرح'
-      });
-    }
-
     const review = await Review.findById(req.params.id);
 
     if (!review) {
@@ -259,7 +240,7 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
-    if (review.user.toString() !== userId) {
+    if (review.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'غير مصرح'
@@ -284,17 +265,8 @@ router.delete('/:id', async (req, res) => {
 // @route   POST /api/reviews/:id/helpful
 // @desc    Mark review as helpful
 // @access  Private
-router.post('/:id/helpful', async (req, res) => {
+router.post('/:id/helpful', protect, async (req, res) => {
   try {
-    const userId = await getUser(req);
-    
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: 'يجب تسجيل الدخول'
-      });
-    }
-
     const review = await Review.findById(req.params.id);
 
     if (!review) {
@@ -304,8 +276,10 @@ router.post('/:id/helpful', async (req, res) => {
       });
     }
 
+    const userId = req.user._id.toString();
+
     // Check if user already marked as helpful
-    if (review.helpful.users.includes(userId)) {
+    if (review.helpful.users.includes(req.user._id)) {
       // Remove helpful
       review.helpful.users = review.helpful.users.filter(
         id => id.toString() !== userId
@@ -313,7 +287,7 @@ router.post('/:id/helpful', async (req, res) => {
       review.helpful.count -= 1;
     } else {
       // Add helpful
-      review.helpful.users.push(userId);
+      review.helpful.users.push(req.user._id);
       review.helpful.count += 1;
     }
 

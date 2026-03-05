@@ -1,12 +1,7 @@
-﻿import { Helmet } from 'react-helmet-async'
 
 const TermsPage = () => {
   return (
     <>
-      <Helmet>
-        <title>الشروط والأحكام | For You</title>
-        <meta name="description" content="الشروط والأحكام لاستخدام متجر هدايا. تعرف على حقوقك والتزاماتك عند التسوق معنا." />
-      </Helmet>
 
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="container-custom">

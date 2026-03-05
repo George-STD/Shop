@@ -1,4 +1,3 @@
-﻿import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { FiGift, FiHeart, FiTruck, FiAward, FiUsers, FiStar } from 'react-icons/fi'
 
@@ -42,10 +41,6 @@ const AboutPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>من نحن | For You - قصتنا ورؤيتنا</title>
-        <meta name="description" content="تعرف على قصة هدايا، متجر الهدايا الأول في مصر. نؤمن بأن كل هدية تحمل رسالة حب وتقدير." />
-      </Helmet>
 
       <div className="min-h-screen">
         {/* Hero */}

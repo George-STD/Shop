@@ -1,12 +1,7 @@
-﻿import { Helmet } from 'react-helmet-async'
 
 const PrivacyPage = () => {
   return (
     <>
-      <Helmet>
-        <title>سياسة الخصوصية | For You</title>
-        <meta name="description" content="سياسة الخصوصية لمتجر هدايا. تعرف على كيفية جمع واستخدام وحماية بياناتك الشخصية." />
-      </Helmet>
 
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="container-custom">

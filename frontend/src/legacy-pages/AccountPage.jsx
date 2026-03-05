@@ -1,5 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { useState, useEffect, useRef } from 'react'
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
 import { FiUser, FiPackage, FiHeart, FiMapPin, FiSettings, FiLogOut, FiArrowRight, FiMail, FiLock } from 'react-icons/fi'
 import { useAuthStore } from '../store'
@@ -625,9 +624,6 @@ const AccountPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>حسابي | For You</title>
-      </Helmet>
       {isAuthenticated ? <Dashboard /> : <AuthForm />}
     </>
   )

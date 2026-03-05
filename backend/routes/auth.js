@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { sendVerificationEmail, sendPasswordResetEmail, generateVerificationCode } = require('../utils/mailer');
-const { loginLimiter } = require('../middleware/auth');
+const { loginLimiter, verifyLimiter, registerLimiter, protect } = require('../middleware/auth');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -17,7 +17,7 @@ const generateToken = (id) => {
 // @route   POST /api/auth/register
 // @desc    Register new user (sends verification code to email)
 // @access  Public
-router.post('/register', [
+router.post('/register', registerLimiter, [
   body('firstName').trim().notEmpty().withMessage('الاسم الأول مطلوب'),
   body('lastName').trim().notEmpty().withMessage('الاسم الأخير مطلوب'),
   body('email').isEmail().withMessage('البريد الإلكتروني غير صالح'),
@@ -112,7 +112,7 @@ router.post('/register', [
 // @route   POST /api/auth/verify-email
 // @desc    Verify email with code
 // @access  Public
-router.post('/verify-email', [
+router.post('/verify-email', verifyLimiter, [
   body('email').isEmail().withMessage('البريد الإلكتروني غير صالح'),
   body('code').isLength({ min: 6, max: 6 }).withMessage('الكود يجب أن يكون 6 أرقام')
 ], async (req, res) => {
@@ -173,10 +173,15 @@ router.post('/verify-email', [
 // @route   POST /api/auth/resend-code
 // @desc    Resend verification code
 // @access  Public
-router.post('/resend-code', [
+router.post('/resend-code', verifyLimiter, [
   body('email').isEmail().withMessage('البريد الإلكتروني غير صالح')
 ], async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
     const { email } = req.body;
     const user = await User.findOne({ email });
 
@@ -303,20 +308,9 @@ router.post('/login', loginLimiter, [
 // @route   GET /api/auth/me
 // @desc    Get current user
 // @access  Private
-router.get('/me', async (req, res) => {
+router.get('/me', protect, async (req, res) => {
   try {
-    // Get token from header
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'غير مصرح'
-      });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id)
+    const user = await User.findById(req.user._id)
       .populate('wishlist', 'name slug price images');
 
     if (!user) {
@@ -331,9 +325,9 @@ router.get('/me', async (req, res) => {
       data: user
     });
   } catch (error) {
-    res.status(401).json({
+    res.status(500).json({
       success: false,
-      message: 'غير مصرح'
+      message: 'حدث خطأ'
     });
   }
 });
@@ -341,23 +335,21 @@ router.get('/me', async (req, res) => {
 // @route   PUT /api/auth/update-profile
 // @desc    Update user profile
 // @access  Private
-router.put('/update-profile', async (req, res) => {
+router.put('/update-profile', protect, [
+  body('firstName').optional().trim().isLength({ min: 2, max: 50 }).withMessage('الاسم الأول يجب أن يكون بين 2 و 50 حرف'),
+  body('lastName').optional().trim().isLength({ min: 2, max: 50 }).withMessage('الاسم الأخير يجب أن يكون بين 2 و 50 حرف'),
+  body('phone').optional().trim().notEmpty().withMessage('رقم الهاتف مطلوب'),
+], async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'غير مصرح'
-      });
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
     const { firstName, lastName, phone } = req.body;
     
     const user = await User.findByIdAndUpdate(
-      decoded.id,
+      req.user._id,
       { firstName, lastName, phone },
       { new: true, runValidators: true }
     );
@@ -378,22 +370,12 @@ router.put('/update-profile', async (req, res) => {
 // @route   PUT /api/auth/change-password
 // @desc    Change password
 // @access  Private
-router.put('/change-password', [
+router.put('/change-password', protect, [
   body('currentPassword').notEmpty().withMessage('كلمة المرور الحالية مطلوبة'),
   body('newPassword').isLength({ min: 6 }).withMessage('كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل')
 ], async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'غير مصرح'
-      });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select('+password');
+    const user = await User.findById(req.user._id).select('+password');
 
     const { currentPassword, newPassword } = req.body;
 
@@ -405,7 +387,7 @@ router.put('/change-password', [
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 12);
-    await User.findByIdAndUpdate(decoded.id, { $set: { password: hashedNewPassword } });
+    await User.findByIdAndUpdate(req.user._id, { $set: { password: hashedNewPassword } });
 
     res.json({
       success: true,
@@ -422,28 +404,16 @@ router.put('/change-password', [
 // @route   POST /api/auth/wishlist/:productId
 // @desc    Add product to wishlist
 // @access  Private
-router.post('/wishlist/:productId', async (req, res) => {
+router.post('/wishlist/:productId', protect, async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'غير مصرح'
-      });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-
-    if (user.wishlist.includes(req.params.productId)) {
+    if (req.user.wishlist.includes(req.params.productId)) {
       return res.status(400).json({
         success: false,
         message: 'المنتج موجود في قائمة الأمنيات'
       });
     }
 
-    await User.findByIdAndUpdate(decoded.id, {
+    await User.findByIdAndUpdate(req.user._id, {
       $addToSet: { wishlist: req.params.productId }
     });
 
@@ -462,20 +432,9 @@ router.post('/wishlist/:productId', async (req, res) => {
 // @route   DELETE /api/auth/wishlist/:productId
 // @desc    Remove product from wishlist
 // @access  Private
-router.delete('/wishlist/:productId', async (req, res) => {
+router.delete('/wishlist/:productId', protect, async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'غير مصرح'
-      });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    await User.findByIdAndUpdate(decoded.id, {
+    await User.findByIdAndUpdate(req.user._id, {
       $pull: { wishlist: req.params.productId }
     });
 
@@ -536,7 +495,7 @@ router.post('/forgot-password', loginLimiter, [
 // @route   POST /api/auth/verify-reset-code
 // @desc    Verify the password reset code
 // @access  Public
-router.post('/verify-reset-code', [
+router.post('/verify-reset-code', verifyLimiter, [
   body('email').isEmail().withMessage('البريد الإلكتروني غير صالح'),
   body('code').isLength({ min: 6, max: 6 }).withMessage('الكود يجب أن يكون 6 أرقام')
 ], async (req, res) => {
@@ -570,7 +529,7 @@ router.post('/verify-reset-code', [
 // @route   POST /api/auth/reset-password
 // @desc    Reset password with verified code
 // @access  Public
-router.post('/reset-password', [
+router.post('/reset-password', verifyLimiter, [
   body('email').isEmail().withMessage('البريد الإلكتروني غير صالح'),
   body('code').isLength({ min: 6, max: 6 }).withMessage('الكود غير صالح'),
   body('newPassword').isLength({ min: 6 }).withMessage('كلمة المرور يجب أن تكون 6 أحرف على الأقل')

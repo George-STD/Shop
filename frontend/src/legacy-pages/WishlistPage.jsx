@@ -1,4 +1,3 @@
-﻿import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { FiHeart, FiTrash2, FiShoppingCart } from 'react-icons/fi'
 import { useWishlistStore, useCartStore } from '../store'
@@ -14,10 +13,6 @@ const WishlistPage = () => {
 
   return (
     <>
-      <Helmet>
-        <title>قائمة الأمنيات | For You</title>
-        <meta name="description" content="قائمة أمنياتك - احفظ منتجاتك المفضلة واشتريها لاحقاً" />
-      </Helmet>
 
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="container-custom">
