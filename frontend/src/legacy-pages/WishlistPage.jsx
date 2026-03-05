@@ -1,14 +1,19 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { FiHeart, FiTrash2, FiShoppingCart } from 'react-icons/fi'
-import { useWishlistStore, useCartStore } from '../store'
+import { useWishlistStore, useCartStore, useAuthStore } from '../store'
 
 const WishlistPage = () => {
   const { items, removeItem, clearWishlist } = useWishlistStore()
   const { addItem } = useCartStore()
+  const { isAuthenticated } = useAuthStore()
+
+  if (!isAuthenticated) {
+    return <Navigate to="/account" replace />
+  }
 
   const handleAddToCart = (product) => {
     addItem(product)
-    removeItem(product._id)
+    removeItem(product.id)
   }
 
   return (
@@ -45,15 +50,15 @@ const WishlistPage = () => {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {items.map((product) => (
-                <div key={product._id} className="bg-white rounded-2xl overflow-hidden shadow-sm group">
+                <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm group">
                   <div className="relative aspect-square overflow-hidden">
                     <img
-                      src={product.images?.[0] || '/placeholder.jpg'}
+                      src={product.image || '/images/placeholder.jpg'}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     <button
-                      onClick={() => removeItem(product._id)}
+                      onClick={() => removeItem(product.id)}
                       className="absolute top-3 left-3 p-2 bg-white rounded-full shadow-md text-red-500 hover:bg-red-50"
                     >
                       <FiTrash2 />
@@ -69,9 +74,9 @@ const WishlistPage = () => {
                     
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        {product.comparePrice && (
+                        {product.oldPrice && (
                           <span className="text-gray-400 line-through text-sm">
-                            {product.comparePrice} ج.م
+                            {product.oldPrice} ج.م
                           </span>
                         )}
                         <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">

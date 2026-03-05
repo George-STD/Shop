@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, Link, useSearchParams } from 'react-router-dom'
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Thumbs, Navigation, Zoom } from 'swiper/modules'
@@ -158,6 +158,7 @@ const ProductPage = () => {
   const { addItem } = useCartStore()
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlistStore()
   const { isAuthenticated } = useAuthStore()
+  const navigate = useNavigate()
 
   // Fetch product
   const { data: product, isLoading } = useQuery({
@@ -200,6 +201,11 @@ const ProductPage = () => {
   }
 
   const handleToggleWishlist = () => {
+    if (!isAuthenticated) {
+      toast.error('سجل دخول أولاً لإضافة منتجات لقائمة الأمنيات')
+      navigate('/account')
+      return
+    }
     if (inWishlist) {
       removeFromWishlist(product._id)
       toast.success('تمت الإزالة من قائمة الأمنيات')

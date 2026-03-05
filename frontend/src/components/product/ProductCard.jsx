@@ -1,11 +1,13 @@
-﻿import { Link } from 'react-router-dom'
+﻿import { Link, useNavigate } from 'react-router-dom'
 import { FiHeart, FiShoppingBag, FiEye } from 'react-icons/fi'
-import { useCartStore, useWishlistStore } from '../../store'
+import { useCartStore, useWishlistStore, useAuthStore } from '../../store'
 import toast from 'react-hot-toast'
 
 const ProductCard = ({ product }) => {
   const { addItem } = useCartStore()
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlistStore()
+  const { isAuthenticated } = useAuthStore()
+  const navigate = useNavigate()
   
   const inWishlist = isInWishlist(product._id)
   
@@ -17,6 +19,11 @@ const ProductCard = ({ product }) => {
   
   const handleToggleWishlist = (e) => {
     e.preventDefault()
+    if (!isAuthenticated) {
+      toast.error('سجل دخول أولاً لإضافة منتجات لقائمة الأمنيات')
+      navigate('/account')
+      return
+    }
     if (inWishlist) {
       removeFromWishlist(product._id)
       toast.success('تمت الإزالة من قائمة الأمنيات')
