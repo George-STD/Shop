@@ -258,7 +258,7 @@ router.get('/track/:orderNumber', async (req, res) => {
   try {
     const order = await Order.findOne({ 
       orderNumber: req.params.orderNumber 
-    }).select('orderNumber status statusHistory items.name items.quantity shippingAddress.governorate shippingAddress.city estimatedDelivery deliveredAt createdAt');
+    }).select('orderNumber status statusHistory items.name items.quantity items.image items.price shippingAddress.firstName shippingAddress.lastName shippingAddress.governorate shippingAddress.city shippingAddress.street shippingAddress.phone estimatedDelivery deliveredAt createdAt total subtotal shippingCost');
 
     if (!order) {
       return res.status(404).json({

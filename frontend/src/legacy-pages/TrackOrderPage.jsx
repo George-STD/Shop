@@ -1,9 +1,20 @@
 import { useState } from 'react'
 import { FiSearch, FiPackage, FiTruck, FiCheckCircle, FiMapPin } from 'react-icons/fi'
+import { ordersAPI } from '../services/api'
+
+const statusLabels = {
+  pending: 'في الانتظار',
+  confirmed: 'تم التأكيد',
+  processing: 'جاري التجهيز',
+  shipped: 'تم الشحن',
+  delivered: 'تم التوصيل',
+  cancelled: 'ملغي',
+}
+
+const statusFlow = ['pending', 'confirmed', 'processing', 'shipped', 'delivered']
 
 const TrackOrderPage = () => {
   const [orderNumber, setOrderNumber] = useState('')
-  const [email, setEmail] = useState('')
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -12,41 +23,32 @@ const TrackOrderPage = () => {
     e.preventDefault()
     setLoading(true)
     setError('')
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // Demo order data
-    if (orderNumber === '123456' || orderNumber.length >= 5) {
-      setOrder({
-        number: orderNumber,
-        date: '15 ديسمبر 2024',
-        status: 'in-transit',
-        estimatedDelivery: '18 ديسمبر 2024',
-        items: [
-          { name: 'صندوق شوكولاتة فاخر', quantity: 1, image: 'https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=100' },
-          { name: 'باقة ورد أحمر', quantity: 1, image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=100' },
-        ],
-        timeline: [
-          { status: 'ordered', title: 'تم تقديم الطلب', date: '15 ديسمبر 2024 - 10:30 ص', completed: true },
-          { status: 'confirmed', title: 'تم تأكيد الطلب', date: '15 ديسمبر 2024 - 11:00 ص', completed: true },
-          { status: 'preparing', title: 'جاري تجهيز الطلب', date: '15 ديسمبر 2024 - 2:00 م', completed: true },
-          { status: 'shipped', title: 'تم الشحن', date: '16 ديسمبر 2024 - 9:00 ص', completed: true },
-          { status: 'in-transit', title: 'في الطريق إليك', date: '17 ديسمبر 2024', completed: true, current: true },
-          { status: 'delivered', title: 'تم التوصيل', date: '', completed: false },
-        ],
-        address: {
-          name: 'محمد أحمد',
-          street: 'شارع التسعين، التجمع الخامس',
-          city: 'القاهرة',
-          phone: '+20 10 123 4567'
-        }
-      })
-    } else {
-      setError('لم نتمكن من العثور على طلب بهذا الرقم. يرجى التحقق من البيانات المدخلة.')
+    setOrder(null)
+
+    try {
+      const res = await ordersAPI.track(orderNumber.trim())
+      if (res.data.success) {
+        setOrder(res.data.data)
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'لم نتمكن من العثور على طلب بهذا الرقم. يرجى التحقق من البيانات المدخلة.')
+    } finally {
+      setLoading(false)
     }
-    
-    setLoading(false)
+  }
+
+  const buildTimeline = (order) => {
+    const currentIdx = statusFlow.indexOf(order.status)
+    return statusFlow.map((status, idx) => {
+      const historyEntry = order.statusHistory?.find(h => h.status === status)
+      return {
+        status,
+        title: statusLabels[status],
+        date: historyEntry ? new Date(historyEntry.date || historyEntry.createdAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '',
+        completed: idx <= currentIdx,
+        current: idx === currentIdx,
+      }
+    })
   }
 
   const getStatusIcon = (status) => {
@@ -89,17 +91,7 @@ const TrackOrderPage = () => {
                   required
                   value={orderNumber}
                   onChange={(e) => setOrderNumber(e.target.value)}
-                  placeholder="أدخل رقم الطلب (مثال: 123456)"
-                  className="input-field"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">البريد الإلكتروني (اختياري)</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="البريد الإلكتروني المستخدم في الطلب"
+                  placeholder="أدخل رقم الطلب"
                   className="input-field"
                 />
               </div>
@@ -133,14 +125,17 @@ const TrackOrderPage = () => {
               <div className="bg-white rounded-2xl p-6 mb-6">
                 <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
                   <div>
-                    <h2 className="text-xl font-bold">طلب رقم #{order.number}</h2>
-                    <p className="text-gray-500">تاريخ الطلب: {order.date}</p>
+                    <h2 className="text-xl font-bold">طلب رقم #{order.orderNumber}</h2>
+                    <p className="text-gray-500">تاريخ الطلب: {new Date(order.createdAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                   </div>
                   <div className="text-left">
-                    <span className="inline-block px-4 py-2 bg-blue-100 text-blue-700 rounded-full font-medium">
-                      في الطريق إليك
+                    <span className={`inline-block px-4 py-2 rounded-full font-medium ${
+                      order.status === 'delivered' ? 'bg-green-100 text-green-700'
+                        : order.status === 'cancelled' ? 'bg-red-100 text-red-700'
+                        : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {statusLabels[order.status] || order.status}
                     </span>
-                    <p className="text-gray-500 mt-1">التوصيل المتوقع: {order.estimatedDelivery}</p>
                   </div>
                 </div>
 
@@ -150,7 +145,7 @@ const TrackOrderPage = () => {
                   <div className="space-y-3">
                     {order.items.map((item, idx) => (
                       <div key={idx} className="flex items-center gap-4">
-                        <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />
+                        {item.image && <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />}
                         <div>
                           <p className="font-medium">{item.name}</p>
                           <p className="text-gray-500 text-sm">الكمية: {item.quantity}</p>
@@ -162,40 +157,39 @@ const TrackOrderPage = () => {
               </div>
 
               {/* Timeline */}
-              <div className="bg-white rounded-2xl p-6 mb-6">
-                <h3 className="font-bold mb-6">حالة الشحنة</h3>
-                <div className="relative">
-                  {order.timeline.map((item, idx) => (
-                    <div key={idx} className="flex gap-4 pb-8 last:pb-0">
-                      {/* Icon */}
-                      <div className="relative">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          item.current
-                            ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white animate-pulse'
-                            : item.completed
-                            ? 'bg-green-500 text-white'
-                            : 'bg-gray-200 text-gray-400'
-                        }`}>
-                          {getStatusIcon(item.status)}
+              {order.status !== 'cancelled' && (
+                <div className="bg-white rounded-2xl p-6 mb-6">
+                  <h3 className="font-bold mb-6">حالة الشحنة</h3>
+                  <div className="relative">
+                    {buildTimeline(order).map((item, idx, arr) => (
+                      <div key={idx} className="flex gap-4 pb-8 last:pb-0">
+                        <div className="relative">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            item.current
+                              ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white animate-pulse'
+                              : item.completed
+                              ? 'bg-green-500 text-white'
+                              : 'bg-gray-200 text-gray-400'
+                          }`}>
+                            {getStatusIcon(item.status)}
+                          </div>
+                          {idx < arr.length - 1 && (
+                            <div className={`absolute top-10 right-1/2 w-0.5 h-full transform translate-x-1/2 ${
+                              item.completed ? 'bg-green-500' : 'bg-gray-200'
+                            }`} />
+                          )}
                         </div>
-                        {idx < order.timeline.length - 1 && (
-                          <div className={`absolute top-10 right-1/2 w-0.5 h-full transform translate-x-1/2 ${
-                            item.completed ? 'bg-green-500' : 'bg-gray-200'
-                          }`} />
-                        )}
+                        <div className="flex-1">
+                          <p className={`font-medium ${item.current ? 'text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600' : ''}`}>
+                            {item.title}
+                          </p>
+                          <p className="text-gray-500 text-sm">{item.date || 'قريباً'}</p>
+                        </div>
                       </div>
-                      
-                      {/* Content */}
-                      <div className="flex-1">
-                        <p className={`font-medium ${item.current ? 'text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600' : ''}`}>
-                          {item.title}
-                        </p>
-                        <p className="text-gray-500 text-sm">{item.date || 'قريباً'}</p>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Delivery Address */}
               <div className="bg-white rounded-2xl p-6">
@@ -204,10 +198,10 @@ const TrackOrderPage = () => {
                   عنوان التوصيل
                 </h3>
                 <div className="text-gray-600">
-                  <p className="font-medium text-gray-800">{order.address.name}</p>
-                  <p>{order.address.street}</p>
-                  <p>{order.address.city}</p>
-                  <p>{order.address.phone}</p>
+                  <p className="font-medium text-gray-800">{order.shippingAddress?.firstName} {order.shippingAddress?.lastName}</p>
+                  <p>{order.shippingAddress?.street}</p>
+                  <p>{order.shippingAddress?.governorate}{order.shippingAddress?.city ? ` - ${order.shippingAddress.city}` : ''}</p>
+                  <p dir="ltr" className="text-left">{order.shippingAddress?.phone}</p>
                 </div>
               </div>
             </div>
