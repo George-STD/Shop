@@ -18,6 +18,10 @@ app.use(cors({
   credentials: true
 }));
 app.use(morgan('dev'));
+
+// Webhook routes (must be before express.json() to get raw body for signature verification)
+app.use('/api/webhooks', require('./routes/webhooks'));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -28,9 +32,6 @@ app.use('/uploads', express.static('uploads'));
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ MongoDB Connected'))
   .catch(err => console.error('❌ MongoDB Error:', err));
-
-// Webhook routes (before rate limiter — webhooks need unrestricted access)
-app.use('/api/webhooks', require('./routes/webhooks'));
 
 // Rate limiting for API
 const { apiLimiter } = require('./middleware/auth');
