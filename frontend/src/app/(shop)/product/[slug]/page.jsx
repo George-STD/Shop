@@ -28,7 +28,7 @@ export async function generateMetadata({ params }) {
         title: `${product.name} | For You - فور يو`,
         description,
         url: `https://foryo.me/product/${slug}`,
-        type: 'product',
+        type: 'website',
         images: [{ url: image, width: 800, height: 800, alt: product.name }],
       },
       twitter: {
