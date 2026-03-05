@@ -43,7 +43,7 @@ const Header = () => {
           <p>تفاصيل صغيرة، تصنع ذكريات كبيرة. ✨</p>
           <div className="hidden md:flex gap-4">
             <Link to="/track-order" className="hover:underline">تتبع طلبك</Link>
-            <Link to="/stores" className="hover:underline">فروعنا</Link>
+            <Link to="/stores" className="hover:underline">متجرنا</Link>
             <Link to="/contact" className="hover:underline">اتصل بنا</Link>
           </div>
         </div>

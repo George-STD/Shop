@@ -71,7 +71,7 @@ const Footer = () => {
                 <Link to="/gift-finder" className="hover:text-pink-400 transition-colors">اعثر على الهدية المثالية</Link>
               </li>
               <li>
-                <Link to="/stores" className="hover:text-pink-400 transition-colors">فروعنا</Link>
+                <Link to="/stores" className="hover:text-pink-400 transition-colors">متجرنا</Link>
               </li>
               <li>
                 <Link to="/contact" className="hover:text-pink-400 transition-colors">اتصل بنا</Link>

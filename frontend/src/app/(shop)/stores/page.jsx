@@ -1,12 +1,12 @@
 import StoresPageClient from './StoresPageClient'
 
 export const metadata = {
-  title: 'فروعنا',
-  description: 'اكتشف فروع فور يو (For You) للهدايا في مصر. زورنا في أقرب فرع واستمتع بتجربة تسوق فريدة.',
+  title: 'متجرنا أونلاين',
+  description: 'فور يو (For You) متجر هدايا أونلاين في مصر. نوصّل لكل المحافظات — تسوق من بيتك واستلم هديتك لحد الباب.',
   alternates: { canonical: 'https://foryo.me/stores' },
   openGraph: {
-    title: 'فروعنا | For You - فور يو',
-    description: 'اكتشف فروع فور يو للهدايا في مصر.',
+    title: 'متجرنا أونلاين | For You - فور يو',
+    description: 'فور يو متجر هدايا أونلاين في مصر. نوصّل لكل المحافظات.',
     url: 'https://foryo.me/stores',
   },
 }

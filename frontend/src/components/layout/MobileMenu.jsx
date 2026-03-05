@@ -164,7 +164,7 @@ const MobileMenu = () => {
                 onClick={closeMobileMenu}
                 className="block py-2 text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
               >
-                فروعنا
+                متجرنا
               </Link>
             </li>
             <li>

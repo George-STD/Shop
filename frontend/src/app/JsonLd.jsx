@@ -33,7 +33,7 @@ export default function JsonLd() {
     openingHours: 'Mo-Su 09:00-23:00',
     priceRange: '$$',
     currenciesAccepted: 'EGP',
-    paymentAccepted: 'Cash, Credit Card, Fawry, Vodafone Cash, InstaPay',
+    paymentAccepted: 'Cash, InstaPay',
     hasOfferCatalog: {
       '@type': 'OfferCatalog',
       name: 'هدايا فور يو',

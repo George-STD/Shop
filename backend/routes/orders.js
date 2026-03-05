@@ -26,7 +26,7 @@ router.post('/', apiLimiter, [
   body('shippingAddress.address').trim().notEmpty().withMessage('العنوان مطلوب'),
   body('shippingAddress.city').trim().notEmpty().withMessage('المدينة مطلوبة'),
   body('shippingAddress.phone').trim().notEmpty().withMessage('رقم الهاتف مطلوب'),
-  body('paymentMethod').isIn(['cash_on_delivery', 'credit_card', 'instapay', 'vodafone_cash']).withMessage('طريقة الدفع غير صالحة'),
+  body('paymentMethod').isIn(['cod', 'instapay']).withMessage('طريقة الدفع غير صالحة'),
   body('guestEmail').optional().isEmail().withMessage('البريد الإلكتروني غير صالح'),
 ], async (req, res) => {
   try {
