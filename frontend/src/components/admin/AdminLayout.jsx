@@ -2,7 +2,7 @@
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom'
 import { 
   FiHome, FiUsers, FiPackage, FiShoppingCart, FiGrid, 
-  FiStar, FiSettings, FiLogOut, FiMenu, FiX, FiChevronLeft
+  FiStar, FiSettings, FiLogOut, FiMenu, FiX, FiChevronLeft, FiMail
 } from 'react-icons/fi'
 import { useAuthStore } from '../../store'
 
@@ -38,6 +38,7 @@ const AdminLayout = ({ children }) => {
     { path: '/admin/categories', icon: FiGrid, label: 'الفئات' },
     { path: '/admin/reviews', icon: FiStar, label: 'التقييمات' },
     { path: '/admin/occasions', icon: FiGrid, label: 'المناسبات' },
+    { path: '/admin/emails', icon: FiMail, label: 'البريد الوارد' },
   ]
 
   const isActive = (path, exact = false) => {

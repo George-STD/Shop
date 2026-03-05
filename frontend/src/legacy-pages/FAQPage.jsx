@@ -229,7 +229,7 @@ const FAQPage = () => {
                   <div className="flex items-center gap-3 mb-6">
                     {(() => {
                       const Icon = faqs[activeCategory].icon
-                      return <Icon className="text-2xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600" />
+                      return <Icon className="text-2xl text-purple-600" />
                     })()}
                     <h2 className="text-2xl font-bold">{faqs[activeCategory].category}</h2>
                   </div>

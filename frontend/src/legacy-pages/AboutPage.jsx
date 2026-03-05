@@ -3,10 +3,10 @@ import { FiGift, FiHeart, FiTruck, FiAward, FiUsers, FiStar } from 'react-icons/
 
 const AboutPage = () => {
   const stats = [
-    { number: '+50,000', label: 'عميل سعيد' },
-    { number: '+10,000', label: 'هدية تم توصيلها' },
-    { number: '+500', label: 'منتج فريد' },
-    { number: '5', label: 'سنوات خبرة' },
+    { number: '+50', label: 'عميل سعيد' },
+    { number: '+10', label: 'هدية تم توصيلها' },
+    { number: '+10', label: 'منتج فريد' },
+    { number: '1', label: 'سنوات خبرة' },
   ]
 
   const values = [
@@ -33,10 +33,8 @@ const AboutPage = () => {
   ]
 
   const team = [
-    { name: 'سارة أحمد', role: 'المؤسس والرئيس التنفيذي', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300' },
-    { name: 'محمد علي', role: 'مدير العمليات', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300' },
-    { name: 'نورة السعيد', role: 'مديرة التسويق', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300' },
-    { name: 'خالد العمري', role: 'مدير خدمة العملاء', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300' },
+    { name: 'ماريو روماني', role: 'المؤسس والرئيس التنفيذي', image: 'https://iili.io/qnah2Ev.md.jpg' },
+    { name: 'جورج أسامة', role: 'المؤسس والمسؤول التقني', image: 'https://iili.io/qnasqIs.jpg' },
   ]
 
   return (
@@ -80,15 +78,16 @@ const AboutPage = () => {
               <h2 className="text-3xl font-bold mt-2 mb-6">رحلة بدأت بفكرة بسيطة</h2>
               <div className="space-y-4 text-gray-600 leading-relaxed">
                 <p>
-                  بدأت قصتنا في عام 2019 عندما لاحظنا صعوبة إيجاد هدايا مميزة وفريدة في السوق المصري. 
-                  كان الحل التقليدي هو السفر أو البحث لساعات طويلة للعثور على الهدية المثالية.
+                  بدأت قصة هدايا (foryou) عندما لاحظ مؤسسوها، ماريو وجورج، صعوبة العثور على هدية
+                  مميزة تعبر عن مشاعرهم في مناسباتهم الخاصة. كانوا يبحثون عن شيء يتجاوز الهدايا التقليدية
+                  ويقدم تجربة فريدة من نوعها.
                 </p>
                 <p>
-                  من هنا جاءت فكرة "هدايا" - منصة تجمع أفضل المنتجات المختارة بعناية من أجود العلامات 
+                  من هنا جاءت فكرة "هدايا (foryou)" - منصة تجمع أفضل المنتجات المختارة بعناية من أجود العلامات 
                   التجارية المحلية والعالمية، مع خدمة تغليف هدايا احترافية وتوصيل موثوق.
                 </p>
                 <p>
-                  اليوم، نفخر بخدمة آلاف العملاء في جميع أنحاء مصر، ونواصل التطور لنقدم لكم 
+                  اليوم، نفخر بخدمة عشرات العملاء في جميع أنحاء مصر، ونواصل التطور لنقدم لكم 
                   تجربة تسوق هدايا لا مثيل لها.
                 </p>
               </div>
@@ -120,7 +119,7 @@ const AboutPage = () => {
               {values.map((value, idx) => (
                 <div key={idx} className="bg-white rounded-2xl p-6 text-center hover:shadow-lg transition-shadow">
                   <div className="w-16 h-16 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <value.icon className="text-3xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600" />
+                    <value.icon className="text-3xl text-purple-600" />
                   </div>
                   <h3 className="font-bold text-lg mb-2">{value.title}</h3>
                   <p className="text-gray-600 text-sm">{value.description}</p>

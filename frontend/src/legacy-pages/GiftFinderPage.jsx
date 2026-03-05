@@ -95,7 +95,7 @@ const GiftFinderPage = () => {
         return (
           <div>
             <div className="text-center mb-8">
-              <FiGift className="text-5xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mx-auto mb-4" />
+              <FiGift className="text-5xl text-purple-600 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">ما هي المناسبة؟</h2>
               <p className="text-gray-500">اختر المناسبة لنساعدك في اختيار الهدية المثالية</p>
             </div>
@@ -122,7 +122,7 @@ const GiftFinderPage = () => {
         return (
           <div>
             <div className="text-center mb-8">
-              <FiUser className="text-5xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mx-auto mb-4" />
+              <FiUser className="text-5xl text-purple-600 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">لمن الهدية؟</h2>
               <p className="text-gray-500">حدد الشخص المراد إهداؤه</p>
             </div>
@@ -149,7 +149,7 @@ const GiftFinderPage = () => {
         return (
           <div>
             <div className="text-center mb-8">
-              <FiDollarSign className="text-5xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mx-auto mb-4" />
+              <FiDollarSign className="text-5xl text-purple-600 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">ما ميزانيتك؟</h2>
               <p className="text-gray-500">حدد نطاق السعر المناسب</p>
             </div>
@@ -175,7 +175,7 @@ const GiftFinderPage = () => {
         return (
           <div>
             <div className="text-center mb-8">
-              <FiHeart className="text-5xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mx-auto mb-4" />
+              <FiHeart className="text-5xl text-purple-600 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">ما اهتماماته؟</h2>
               <p className="text-gray-500">اختر اهتمام واحد أو أكثر</p>
             </div>

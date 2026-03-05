@@ -1,5 +1,5 @@
 import { FiGlobe, FiTruck, FiShield, FiClock, FiPackage, FiHeart } from 'react-icons/fi'
-import { FaWhatsapp, FaInstagram, FaFacebookF, FaTiktok } from 'react-icons/fa'
+import { FaWhatsapp, FaInstagram, FaFacebookF, FaYoutube } from 'react-icons/fa'
 import Link from 'next/link'
 
 const features = [
@@ -36,9 +36,9 @@ const features = [
 ]
 
 const socialLinks = [
-  { icon: FaInstagram, name: 'Instagram', href: 'https://instagram.com/foryoegypt' },
-  { icon: FaFacebookF, name: 'Facebook', href: 'https://facebook.com/foryoegypt' },
-  { icon: FaTiktok, name: 'TikTok', href: 'https://tiktok.com/@foryoegypt' },
+  { icon: FaInstagram, name: 'Instagram', href: 'https://www.instagram.com/foryou._.21' },
+  { icon: FaFacebookF, name: 'Facebook', href: 'https://www.facebook.com/share/1BzYfakvLp/?mibextid=wwXIfr' },
+  { icon: FaYoutube, name: 'YouTube', href: 'https://www.youtube.com/@foryou-l1k' },
 ]
 
 const StoresPage = () => {
@@ -104,7 +104,7 @@ const StoresPage = () => {
             ))}
           </div>
           <a
-            href="https://wa.me/966501234567"
+            href="https://wa.me/201286153004"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-medium transition-colors"

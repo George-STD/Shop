@@ -46,9 +46,9 @@ export default function JsonLd() {
       ],
     },
     sameAs: [
-      'https://facebook.com/foryoegypt',
-      'https://instagram.com/foryoegypt',
-      'https://tiktok.com/@foryoegypt',
+      'https://www.facebook.com/share/1BzYfakvLp/?mibextid=wwXIfr',
+      'https://www.instagram.com/foryou._.21',
+      'https://www.youtube.com/@foryou-l1k',
     ],
   }
 

@@ -79,7 +79,7 @@ const ShippingPage = () => {
                 {deliveryTimes.map((item, idx) => (
                   <div key={idx} className="flex justify-between py-4">
                     <span className="flex items-center gap-2">
-                      <FiMapPin className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600" />
+                      <FiMapPin className="text-purple-600" />
                       {item.city}
                     </span>
                     <span className="text-gray-600">{item.time}</span>
@@ -101,7 +101,7 @@ const ShippingPage = () => {
               ].map((item, idx) => (
                 <div key={idx} className="bg-white rounded-2xl p-6 text-center">
                   <div className="w-14 h-14 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <item.icon className="text-2xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600" />
+                    <item.icon className="text-2xl text-purple-600" />
                   </div>
                   <h3 className="font-bold mb-2">{item.title}</h3>
                   <p className="text-gray-500 text-sm">{item.desc}</p>

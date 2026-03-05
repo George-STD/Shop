@@ -61,7 +61,7 @@ const MobileMenu = () => {
             className="flex items-center gap-3 text-gray-700"
           >
             <div className="w-10 h-10 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
-              <FiUser className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600" size={20} />
+              <FiUser className="text-purple-600" size={20} />
             </div>
             <div>
               {isAuthenticated ? (
@@ -85,7 +85,7 @@ const MobileMenu = () => {
               className="flex items-center gap-3 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
             >
               <div className="w-10 h-10 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
-                <FiSettings className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600" size={20} />
+                <FiSettings className="text-purple-600" size={20} />
               </div>
               <div>
                 <span className="font-bold">لوحة التحكم</span>
@@ -192,12 +192,12 @@ const MobileMenu = () => {
         <div className="p-4">
           <h3 className="font-bold text-gray-800 mb-3">تواصل معنا</h3>
           <div className="space-y-3 text-gray-600">
-            <a href="tel:+201000000000" className="flex items-center gap-3">
-              <FiPhone className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600" />
-              <span dir="ltr">+20 100 000 0000</span>
+            <a href="tel:+201286153004" className="flex items-center gap-3">
+              <FiPhone className="text-purple-600" />
+              <span dir="ltr">+20 12 86153004</span>
             </a>
             <div className="flex items-start gap-3">
-              <FiMapPin className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mt-1" />
+              <FiMapPin className="text-purple-600 mt-1" />
               <span>القاهرة، مصر</span>
             </div>
           </div>

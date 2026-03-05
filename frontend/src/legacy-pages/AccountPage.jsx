@@ -470,7 +470,7 @@ const Dashboard = () => {
             <div className="bg-white rounded-2xl p-6">
               <div className="text-center mb-6">
                 <div className="w-20 h-20 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FiUser className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 text-3xl" />
+                  <FiUser className="text-purple-600 text-3xl" />
                 </div>
                 <h2 className="font-bold text-gray-800">{user?.firstName} {user?.lastName}</h2>
                 <p className="text-gray-500 text-sm">{user?.email}</p>
@@ -527,17 +527,17 @@ const ProfileOverview = () => {
       <h1 className="text-2xl font-bold mb-6">مرحباً {user?.firstName}!</h1>
       <div className="grid md:grid-cols-3 gap-4">
         <Link to="/account/orders" className="p-6 bg-gray-50 rounded-xl hover:bg-gray-100">
-          <FiPackage className="text-3xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2" />
+          <FiPackage className="text-3xl text-purple-600 mb-2" />
           <h3 className="font-medium">طلباتي</h3>
           <p className="text-sm text-gray-500">تتبع وإدارة طلباتك</p>
         </Link>
         <Link to="/wishlist" className="p-6 bg-gray-50 rounded-xl hover:bg-gray-100">
-          <FiHeart className="text-3xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2" />
+          <FiHeart className="text-3xl text-purple-600 mb-2" />
           <h3 className="font-medium">قائمة الأمنيات</h3>
           <p className="text-sm text-gray-500">منتجاتك المفضلة</p>
         </Link>
         <Link to="/account/settings" className="p-6 bg-gray-50 rounded-xl hover:bg-gray-100">
-          <FiSettings className="text-3xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2" />
+          <FiSettings className="text-3xl text-purple-600 mb-2" />
           <h3 className="font-medium">الإعدادات</h3>
           <p className="text-sm text-gray-500">تعديل بياناتك</p>
         </Link>

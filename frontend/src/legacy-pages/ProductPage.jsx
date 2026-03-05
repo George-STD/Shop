@@ -531,15 +531,15 @@ const ProductPage = () => {
               {/* Features */}
               <div className="grid grid-cols-3 gap-4 pt-6 border-t">
                 <div className="text-center">
-                  <FiTruck className="mx-auto text-2xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2" />
+                  <FiTruck className="mx-auto text-2xl text-purple-600 mb-2" />
                   <span className="text-sm text-gray-600">توصيل سريع</span>
                 </div>
                 <div className="text-center">
-                  <FiRotateCcw className="mx-auto text-2xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2" />
+                  <FiRotateCcw className="mx-auto text-2xl text-purple-600 mb-2" />
                   <span className="text-sm text-gray-600">إرجاع خلال 14 يوم</span>
                 </div>
                 <div className="text-center">
-                  <FiShield className="mx-auto text-2xl text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2" />
+                  <FiShield className="mx-auto text-2xl text-purple-600 mb-2" />
                   <span className="text-sm text-gray-600">دفع آمن</span>
                 </div>
               </div>

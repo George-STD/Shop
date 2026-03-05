@@ -200,7 +200,7 @@ const TrackOrderPage = () => {
               {/* Delivery Address */}
               <div className="bg-white rounded-2xl p-6">
                 <h3 className="font-bold mb-4 flex items-center gap-2">
-                  <FiMapPin className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600" />
+                  <FiMapPin className="text-purple-600" />
                   عنوان التوصيل
                 </h3>
                 <div className="text-gray-600">

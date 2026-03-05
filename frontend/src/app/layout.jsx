@@ -63,8 +63,8 @@ export const metadata = {
     title: 'For You | فور يو - متجر الهدايا الأول في مصر',
     description: SITE_DESCRIPTION,
     images: [OG_IMAGE],
-    creator: '@foryoegypt',
-    site: '@foryoegypt',
+    creator: '@foryou._.21',
+    site: '@foryou._.21',
   },
   robots: {
     index: true,

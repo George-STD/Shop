@@ -128,6 +128,11 @@ export const adminAPI = {
   createOccasion: (data) => api.post('/admin/occasions', data),
   updateOccasion: (id, data) => api.put(`/admin/occasions/${id}`, data),
   deleteOccasion: (id) => api.delete(`/admin/occasions/${id}`),
+
+  // Emails
+  getEmails: (params) => api.get('/admin/emails', { params }),
+  getEmail: (id) => api.get(`/admin/emails/${id}`),
+  deleteEmail: (id) => api.delete(`/admin/emails/${id}`),
 }
 
 export default api

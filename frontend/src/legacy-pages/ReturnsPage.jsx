@@ -46,7 +46,7 @@ const ReturnsPage = () => {
               يمكنك إرجاعه خلال <strong>14 يوماً</strong> من تاريخ الاستلام واسترداد كامل المبلغ.
             </p>
             <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 flex items-center gap-3">
-              <FiAlertCircle className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 text-2xl flex-shrink-0" />
+              <FiAlertCircle className="text-purple-600 text-2xl flex-shrink-0" />
               <p className="text-purple-800">
                 الإرجاع مجاني تماماً - سنتحمل تكاليف الشحن عنك
               </p>
