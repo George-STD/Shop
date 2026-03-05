@@ -124,7 +124,7 @@ const PrivacyPage = () => {
                   إذا كانت لديك أي أسئلة حول سياسة الخصوصية، يرجى التواصل معنا:
                 </p>
                 <div className="mt-4 bg-gray-50 rounded-xl p-4">
-                  <p><strong>البريد الإلكتروني:</strong> dev.george.osama@gmail.com</p>
+                  <p><strong>البريد الإلكتروني:</strong> support@foryo.me</p>
                   <p><strong>الهاتف:</strong> +20 12 86153004</p>
                   <p><strong>العنوان:</strong> القاهرة، مصر</p>
                 </div>

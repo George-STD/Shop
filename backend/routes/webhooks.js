@@ -36,6 +36,15 @@ router.post('/resend', express.raw({ type: 'application/json' }), async (req, re
 
     const { from, to, subject, html, text } = event.data;
 
+    // Only accept emails sent to support@foryo.me
+    const recipients = Array.isArray(to) ? to : [to];
+    const isForSupport = recipients.some(
+      (addr) => addr.toLowerCase().includes('support@foryo.me')
+    );
+    if (!isForSupport) {
+      return res.status(200).json({ received: true, ignored: true });
+    }
+
     await ReceivedEmail.create({
       from: Array.isArray(from) ? from.join(', ') : from,
       to: Array.isArray(to) ? to.join(', ') : to,

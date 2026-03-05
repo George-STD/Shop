@@ -22,7 +22,7 @@ const ContactPage = () => {
   const contactInfo = [
     { icon: FiPhone, title: 'اتصل بنا', value: '+20 12 86153004', link: 'tel:+201286153004' },
     { icon: FaWhatsapp, title: 'واتساب', value: '+20 12 86153004', link: 'https://wa.me/201286153004' },
-    { icon: FiMail, title: 'البريد الإلكتروني', value: 'dev.george.osama@gmail.com', link: 'mailto:dev.george.osama@gmail.com' },
+    { icon: FiMail, title: 'البريد الإلكتروني', value: 'support@foryo.me', link: 'mailto:support@foryo.me' },
     { icon: FiClock, title: 'ساعات العمل', value: 'متاحين على مدار الساعة', link: null },
   ]
 

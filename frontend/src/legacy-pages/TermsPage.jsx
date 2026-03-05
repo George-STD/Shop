@@ -146,7 +146,7 @@ const TermsPage = () => {
                 <div className="mt-4 bg-gray-50 rounded-xl p-4">
                   <p><strong>العنوان:</strong> القاهرة، المقطم، شارع 9</p>
                   <p><strong>الهاتف:</strong> +20 12 86153004</p>
-                  <p><strong>البريد الإلكتروني:</strong> dev.george.osama@gmail.com</p>
+                  <p><strong>البريد الإلكتروني:</strong> support@foryo.me</p>
                 </div>
               </section>
             </div>

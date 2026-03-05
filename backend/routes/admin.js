@@ -1016,7 +1016,7 @@ router.get('/emails', async (req, res) => {
 // @route   GET /api/admin/emails/:id
 // @desc    Get single email
 // @access  Private/Admin
-router.get('/emails/:id', validateObjectId, async (req, res) => {
+router.get('/emails/:id', validateObjectId('id'), async (req, res) => {
   try {
     const email = await ReceivedEmail.findById(req.params.id);
     if (!email) return res.status(404).json({ success: false, message: 'الرسالة غير موجودة' });
@@ -1036,7 +1036,7 @@ router.get('/emails/:id', validateObjectId, async (req, res) => {
 // @route   DELETE /api/admin/emails/:id
 // @desc    Delete an email
 // @access  Private/Admin
-router.delete('/emails/:id', validateObjectId, async (req, res) => {
+router.delete('/emails/:id', validateObjectId('id'), async (req, res) => {
   try {
     const email = await ReceivedEmail.findByIdAndDelete(req.params.id);
     if (!email) return res.status(404).json({ success: false, message: 'الرسالة غير موجودة' });
