@@ -58,17 +58,42 @@ export function useParams() {
 export function useSearchParams() {
   const router = useRouter()
   const pathname = usePathname() || '/'
-  const [searchText, setSearchText] = useState(
+
+  const getSearch = () =>
     typeof window !== 'undefined' ? window.location.search.replace(/^\?/, '') : ''
-  )
+
+  const [searchText, setSearchText] = useState(getSearch)
+
+  // Re-sync whenever the pathname changes (Next.js client navigation)
+  // or on popstate (browser back/forward)
+  useEffect(() => {
+    setSearchText(getSearch())
+  }, [pathname])
 
   useEffect(() => {
-    const onPopState = () => {
-      setSearchText(window.location.search.replace(/^\?/, ''))
-    }
-
+    const onPopState = () => setSearchText(getSearch())
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  // Also patch pushState/replaceState to detect navigation from Next.js Link
+  useEffect(() => {
+    const origPush = history.pushState.bind(history)
+    const origReplace = history.replaceState.bind(history)
+
+    history.pushState = function (...args) {
+      origPush(...args)
+      setSearchText(getSearch())
+    }
+    history.replaceState = function (...args) {
+      origReplace(...args)
+      setSearchText(getSearch())
+    }
+
+    return () => {
+      history.pushState = origPush
+      history.replaceState = origReplace
+    }
   }, [])
 
   const current = useMemo(() => new URLSearchParams(searchText), [searchText])
@@ -92,7 +117,6 @@ export function useSearchParams() {
 
     const query = nextParams.toString()
     const nextUrl = query ? `${pathname}?${query}` : pathname
-    setSearchText(query)
     router.push(nextUrl)
   }
 
