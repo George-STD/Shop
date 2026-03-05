@@ -3,6 +3,8 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { body, validationResult, query } = require('express-validator');
 
+const ReceivedEmail = require('../models/ReceivedEmail');
+
 // Models
 const User = require('../models/User');
 const Product = require('../models/Product');
@@ -956,6 +958,67 @@ router.delete('/occasions/:id', [
       success: false,
       message: 'حدث خطأ أثناء حذف المناسبة'
     });
+  }
+});
+
+// =====================================================
+// RECEIVED EMAILS
+// =====================================================
+
+// @route   GET /api/admin/emails
+// @desc    Get all received emails
+// @access  Private/Admin
+router.get('/emails', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const [emails, total] = await Promise.all([
+      ReceivedEmail.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+      ReceivedEmail.countDocuments(),
+    ]);
+
+    res.json({
+      success: true,
+      data: emails,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'حدث خطأ أثناء جلب الرسائل' });
+  }
+});
+
+// @route   GET /api/admin/emails/:id
+// @desc    Get single email
+// @access  Private/Admin
+router.get('/emails/:id', validateObjectId, async (req, res) => {
+  try {
+    const email = await ReceivedEmail.findById(req.params.id);
+    if (!email) return res.status(404).json({ success: false, message: 'الرسالة غير موجودة' });
+    
+    // Mark as read
+    if (!email.isRead) {
+      email.isRead = true;
+      await email.save();
+    }
+
+    res.json({ success: true, data: email });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'حدث خطأ' });
+  }
+});
+
+// @route   DELETE /api/admin/emails/:id
+// @desc    Delete an email
+// @access  Private/Admin
+router.delete('/emails/:id', validateObjectId, async (req, res) => {
+  try {
+    const email = await ReceivedEmail.findByIdAndDelete(req.params.id);
+    if (!email) return res.status(404).json({ success: false, message: 'الرسالة غير موجودة' });
+    res.json({ success: true, message: 'تم حذف الرسالة' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'حدث خطأ أثناء حذف الرسالة' });
   }
 });
 

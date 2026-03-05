@@ -29,6 +29,9 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ MongoDB Connected'))
   .catch(err => console.error('❌ MongoDB Error:', err));
 
+// Webhook routes (before rate limiter — webhooks need unrestricted access)
+app.use('/api/webhooks', require('./routes/webhooks'));
+
 // Rate limiting for API
 const { apiLimiter } = require('./middleware/auth');
 app.use('/api', apiLimiter);
