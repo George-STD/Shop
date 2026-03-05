@@ -23,8 +23,8 @@ const getOptionalUserId = (req) => {
 // @access  Public (guest checkout allowed)
 router.post('/', apiLimiter, [
   body('items').isArray({ min: 1 }).withMessage('يجب إضافة منتج واحد على الأقل'),
-  body('shippingAddress.address').trim().notEmpty().withMessage('العنوان مطلوب'),
-  body('shippingAddress.city').trim().notEmpty().withMessage('المدينة مطلوبة'),
+  body('shippingAddress.street').trim().notEmpty().withMessage('العنوان مطلوب'),
+  body('shippingAddress.governorate').trim().notEmpty().withMessage('المحافظة مطلوبة'),
   body('shippingAddress.phone').trim().notEmpty().withMessage('رقم الهاتف مطلوب'),
   body('paymentMethod').isIn(['cod', 'instapay']).withMessage('طريقة الدفع غير صالحة'),
   body('guestEmail').optional().isEmail().withMessage('البريد الإلكتروني غير صالح'),
