@@ -15,7 +15,7 @@ export async function generateMetadata({ params }) {
     const description = product.description
       ? product.description.replace(/<[^>]+>/g, '').substring(0, 160)
       : `اشترِ ${product.name} من فور يو - متجر الهدايا الأول في مصر`
-    const image = product.images?.[0] || 'https://foryo.me/images/og-image.jpg'
+    const image = product.images?.[0]?.url || 'https://foryo.me/images/og-image.jpg'
     const price = product.salePrice || product.price
 
     return {

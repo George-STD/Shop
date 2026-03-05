@@ -12,7 +12,7 @@ export default async function ProductJsonLd({ slug }) {
       '@type': 'Product',
       name: product.name,
       description: product.description?.replace(/<[^>]+>/g, '').substring(0, 300) || '',
-      image: product.images || [],
+      image: product.images?.map(img => img.url) || [],
       sku: product._id,
       url: `https://foryo.me/product/${slug}`,
       brand: {
@@ -35,11 +35,11 @@ export default async function ProductJsonLd({ slug }) {
     }
 
     // Add aggregate rating if reviews exist
-    if (product.ratingsCount > 0) {
+    if (product.rating?.count > 0) {
       schema.aggregateRating = {
         '@type': 'AggregateRating',
-        ratingValue: product.ratingsAverage || 0,
-        reviewCount: product.ratingsCount,
+        ratingValue: product.rating?.average || 0,
+        reviewCount: product.rating?.count,
         bestRating: 5,
         worstRating: 1,
       }
