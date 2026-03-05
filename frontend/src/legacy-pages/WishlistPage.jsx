@@ -12,7 +12,15 @@ const WishlistPage = () => {
   }
 
   const handleAddToCart = (product) => {
-    addItem(product)
+    const cartProduct = {
+      _id: product.id,
+      name: product.name,
+      slug: product.slug,
+      price: product.price,
+      oldPrice: product.oldPrice,
+      images: [{ url: product.image }]
+    }
+    addItem(cartProduct)
     removeItem(product.id)
   }
 
