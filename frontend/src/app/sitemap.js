@@ -64,5 +64,26 @@ export default async function sitemap() {
     console.error('Sitemap: Error fetching categories:', error.message)
   }
 
-  return [...staticPages, ...productPages, ...categoryPages]
+  // Dynamic occasion pages
+  let occasionPages = []
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000)
+    const res = await fetch(`${API_URL}/occasions`, { signal: controller.signal })
+    clearTimeout(timeoutId)
+    if (res.ok) {
+      const data = await res.json()
+      const occasions = data.data || []
+      occasionPages = occasions.map((occasion) => ({
+        url: `${baseUrl}/products?occasion=${occasion._id}`,
+        lastModified: new Date(occasion.updatedAt || occasion.createdAt),
+        changeFrequency: 'weekly',
+        priority: 0.7,
+      }))
+    }
+  } catch (error) {
+    console.error('Sitemap: Error fetching occasions:', error.message)
+  }
+
+  return [...staticPages, ...productPages, ...categoryPages, ...occasionPages]
 }

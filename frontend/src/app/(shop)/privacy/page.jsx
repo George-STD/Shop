@@ -2,10 +2,8 @@ import PrivacyPageClient from './PrivacyPageClient'
 
 export const metadata = {
   title: 'سياسة الخصوصية',
-  description: 'سياسة الخصوصية وحماية البيانات في متجر فور يو للهدايا.',
-  alternates: {
-    canonical: 'https://foryo.me/privacy',
-  },
+  description: 'سياسة الخصوصية وحماية البيانات في متجر فور يو (For You) للهدايا. تعرف على كيفية حماية بياناتك.',
+  alternates: { canonical: 'https://foryo.me/privacy' },
 }
 
 export default function Page() {

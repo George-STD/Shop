@@ -4,7 +4,8 @@ import JsonLd from './JsonLd'
 
 const SITE_URL = 'https://foryo.me'
 const SITE_NAME = 'For You - فور يو'
-const SITE_DESCRIPTION = 'فور يو - متجر الهدايا الأول في مصر | تشكيلة واسعة من هدايا أعياد الميلاد، الزواج، التخرج وجميع المناسبات. شحن سريع وتغليف مجاني لكل أنحاء مصر.'
+const SITE_DESCRIPTION = 'فور يو (For You) - متجر الهدايا الأول في مصر | تشكيلة واسعة من هدايا أعياد الميلاد، الزواج، التخرج وجميع المناسبات. شحن سريع وتغليف مجاني لكل أنحاء مصر.'
+const OG_IMAGE = `${SITE_URL}/images/logo.jpeg`
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -14,12 +15,17 @@ export const metadata = {
   },
   description: SITE_DESCRIPTION,
   keywords: [
+    'foryo', 'for you', 'foryou', 'for you gift shop', 'foryo giftshop',
+    'foryo gifts', 'foryou gifts', 'foryo egypt', 'foryou egypt',
+    'foryo.me', 'for you gifts egypt', 'for you هدايا',
+    'فور يو', 'فوريو', 'فور يو هدايا', 'فور يو للهدايا', 'متجر فور يو',
+    'for you store', 'foryo store', 'foryou store',
     'هدايا', 'متجر هدايا', 'هدايا اون لاين', 'شراء هدايا', 'هدايا مصر',
     'هدايا عيد ميلاد', 'هدايا زواج', 'هدايا تخرج', 'هدايا خطوبة',
     'هدايا مواليد', 'هدايا رجالي', 'هدايا حريمي', 'هدايا اطفال',
-    'gift shop egypt', 'foryo', 'for you gifts', 'for you egypt',
+    'gift shop egypt', 'gifts egypt', 'online gift shop egypt',
     'هدايا فالنتاين', 'هدايا عيد الام', 'تغليف هدايا', 'توصيل هدايا',
-    'فور يو', 'فور يو هدايا', 'foryo.me',
+    'هدايا اونلاين مصر', 'أفضل متجر هدايا',
   ],
   authors: [{ name: 'For You - فور يو' }],
   creator: 'For You',
@@ -44,10 +50,10 @@ export const metadata = {
     description: SITE_DESCRIPTION,
     images: [
       {
-        url: `${SITE_URL}/images/og-image.jpg`,
+        url: OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: 'For You - فور يو | متجر الهدايا',
+        alt: 'For You - فور يو | متجر الهدايا الأول في مصر',
         type: 'image/jpeg',
       },
     ],
@@ -56,8 +62,9 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'For You | فور يو - متجر الهدايا الأول في مصر',
     description: SITE_DESCRIPTION,
-    images: [`${SITE_URL}/images/og-image.jpg`],
+    images: [OG_IMAGE],
     creator: '@foryoegypt',
+    site: '@foryoegypt',
   },
   robots: {
     index: true,
