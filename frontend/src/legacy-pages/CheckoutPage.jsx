@@ -127,7 +127,11 @@ const CheckoutPage = () => {
       if (response.data.success) {
         clearCart()
         toast.success('تم إنشاء الطلب بنجاح!')
-        navigate(`/account/orders?success=true&order=${response.data.data.orderNumber}`)
+        if (isAuthenticated) {
+          navigate(`/account/orders?success=true&order=${response.data.data.orderNumber}`)
+        } else {
+          navigate(`/track-order?order=${response.data.data.orderNumber}`)
+        }
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'حدث خطأ أثناء إنشاء الطلب')

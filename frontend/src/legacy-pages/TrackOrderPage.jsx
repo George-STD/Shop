@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FiSearch, FiPackage, FiTruck, FiCheckCircle, FiMapPin } from 'react-icons/fi'
+import { useSearchParams } from 'react-router-dom'
 import { ordersAPI } from '../services/api'
 
 const statusLabels = {
@@ -14,19 +15,18 @@ const statusLabels = {
 const statusFlow = ['pending', 'confirmed', 'processing', 'shipped', 'delivered']
 
 const TrackOrderPage = () => {
+  const [searchParams] = useSearchParams()
   const [orderNumber, setOrderNumber] = useState('')
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const fetchOrder = async (num) => {
     setLoading(true)
     setError('')
     setOrder(null)
-
     try {
-      const res = await ordersAPI.track(orderNumber.trim())
+      const res = await ordersAPI.track(num.trim())
       if (res.data.success) {
         setOrder(res.data.data)
       }
@@ -35,6 +35,19 @@ const TrackOrderPage = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    const orderParam = searchParams.get('order')
+    if (orderParam) {
+      setOrderNumber(orderParam)
+      fetchOrder(orderParam)
+    }
+  }, [])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    fetchOrder(orderNumber)
   }
 
   const buildTimeline = (order) => {
