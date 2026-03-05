@@ -60,6 +60,11 @@ const CheckoutPage = () => {
     if (!formData.firstName.trim()) {
       newErrors.firstName = 'الاسم الأول مطلوب'
     }
+    if (!formData.email.trim()) {
+      newErrors.email = 'البريد الإلكتروني مطلوب'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'البريد الإلكتروني غير صحيح'
+    }
     if (!formData.phone.trim()) {
       newErrors.phone = 'رقم الهاتف مطلوب'
     }
@@ -113,7 +118,7 @@ const CheckoutPage = () => {
         paymentMethod: formData.paymentMethod,
         deliveryType: formData.deliveryType,
         customerNote: formData.customerNote,
-        guestEmail: !isAuthenticated ? formData.email : undefined,
+        guestEmail: formData.email,
         guestPhone: !isAuthenticated ? formData.phone : undefined
       }
 
@@ -189,8 +194,17 @@ const CheckoutPage = () => {
                         <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} className="input-field" />
                       </div>
                       <div>
-                        <label className="block text-gray-700 mb-2">البريد الإلكتروني</label>
-                        <input type="email" name="email" value={formData.email} onChange={handleChange} className="input-field" />
+                        <label className="block text-gray-700 mb-2">البريد الإلكتروني *</label>
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          className={`input-field ${errors.email ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                        />
+                        {errors.email && (
+                          <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-gray-700 mb-2">رقم الهاتف *</label>

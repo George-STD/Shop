@@ -22,7 +22,7 @@ const AdminOrders = () => {
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }) => adminAPI.updateOrderStatus(id, status),
+    mutationFn: ({ id, status, trackingNumber }) => adminAPI.updateOrderStatus(id, { status, trackingNumber }),
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-orders'])
       setSelectedOrder(null)
@@ -58,7 +58,12 @@ const AdminOrders = () => {
   }
 
   const handleStatusChange = (orderId, newStatus) => {
-    if (window.confirm(`هل تريد تغيير حالة الطلب إلى "${statusLabels[newStatus]}"؟`)) {
+    if (newStatus === 'shipped') {
+      const trackingNumber = window.prompt('أدخل رمز التتبع (سيتم إرساله للعميل عبر البريد الإلكتروني):')
+      if (trackingNumber !== null) {
+        statusMutation.mutate({ id: orderId, status: newStatus, trackingNumber: trackingNumber.trim() || undefined })
+      }
+    } else if (window.confirm(`هل تريد تغيير حالة الطلب إلى "${statusLabels[newStatus]}"؟`)) {
       statusMutation.mutate({ id: orderId, status: newStatus })
     }
   }

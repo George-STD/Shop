@@ -126,11 +126,6 @@ const CartPage = () => {
                     <span className="text-gray-600">الشحن</span>
                     <span>{`${shippingCost} ج.م`}</span>
                   </div>
-                  {subtotal < 500 && (
-                    <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
-                      💡 أضف {500 - subtotal} ج.م للحصول على شحن مجاني
-                    </p>
-                  )}
                   <div className="border-t pt-4 flex justify-between text-lg font-bold">
                     <span>الإجمالي</span>
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">{total} ج.م</span>

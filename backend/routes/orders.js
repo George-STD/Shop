@@ -110,15 +110,8 @@ router.post('/', apiLimiter, [
       subtotal += itemSubtotal;
     }
 
-    // Calculate shipping
-    let shippingCost = 0;
-    if (deliveryType === 'express') {
-      shippingCost = 50;
-    } else if (deliveryType === 'same_day') {
-      shippingCost = 100;
-    } else if (subtotal < 500) {
-      shippingCost = 30;
-    }
+    // Calculate shipping - flat rate 60 EGP
+    const shippingCost = 60;
 
     // Calculate total
     const total = subtotal + shippingCost;
@@ -127,7 +120,7 @@ router.post('/', apiLimiter, [
     // Create order
     const order = await Order.create({
       user: userId,
-      guestEmail: !userId ? guestEmail : undefined,
+      guestEmail: guestEmail || undefined,
       guestPhone: !userId ? guestPhone : undefined,
       items: orderItems,
       shippingAddress,
@@ -150,16 +143,13 @@ router.post('/', apiLimiter, [
       }]
     });
 
-    // Send confirmation email (to user or guest)
+    // Send confirmation email - always use guestEmail from form if provided
     try {
-      let emailTo = null;
-      if (userId) {
-        // Get user email from DB
+      let emailTo = guestEmail || null;
+      if (!emailTo && userId) {
         const User = require('../models/User');
         const user = await User.findById(userId);
         emailTo = user?.email;
-      } else if (guestEmail) {
-        emailTo = guestEmail;
       }
       if (emailTo) {
         await sendOrderConfirmationEmail(emailTo, order);

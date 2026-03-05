@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const { body, validationResult, query } = require('express-validator');
 
 const ReceivedEmail = require('../models/ReceivedEmail');
+const { sendTrackingEmail } = require('../utils/mailer');
 
 // Models
 const User = require('../models/User');
@@ -563,10 +564,11 @@ router.get('/orders/:id', validateObjectId('id'), async (req, res) => {
 router.put('/orders/:id/status', [
   validateObjectId('id'),
   logAdminAction('UPDATE_ORDER_STATUS'),
-  body('status').isIn(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'])
+  body('status').isIn(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']),
+  body('trackingNumber').optional().trim()
 ], async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, trackingNumber } = req.body;
 
     const order = await Order.findById(req.params.id);
 
@@ -585,7 +587,29 @@ router.put('/orders/:id/status', [
       note: `تم تحديث الحالة بواسطة المسؤول`
     });
 
+    // Save tracking number if provided
+    if (trackingNumber) {
+      order.trackingNumber = trackingNumber;
+    }
+
     await order.save();
+
+    // Send tracking email when order is shipped
+    if (status === 'shipped' && (trackingNumber || order.trackingNumber)) {
+      try {
+        let emailTo = order.guestEmail;
+        if (!emailTo && order.user) {
+          const User = require('../models/User');
+          const user = await User.findById(order.user);
+          emailTo = user?.email;
+        }
+        if (emailTo) {
+          await sendTrackingEmail(emailTo, order, trackingNumber || order.trackingNumber);
+        }
+      } catch (mailErr) {
+        console.error('Tracking email error:', mailErr);
+      }
+    }
 
     res.json({
       success: true,

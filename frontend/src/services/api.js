@@ -111,7 +111,7 @@ export const adminAPI = {
   // Orders
   getOrders: (params) => api.get('/admin/orders', { params }),
   getOrder: (id) => api.get(`/admin/orders/${id}`),
-  updateOrderStatus: (id, status) => api.put(`/admin/orders/${id}/status`, { status }),
+  updateOrderStatus: (id, data) => api.put(`/admin/orders/${id}/status`, data),
   
   // Categories
   createCategory: (data) => api.post('/admin/categories', data),

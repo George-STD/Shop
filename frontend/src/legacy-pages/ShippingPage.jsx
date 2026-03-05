@@ -3,23 +3,10 @@ import { FiTruck, FiClock, FiMapPin, FiPackage, FiGift, FiCheckCircle } from 're
 const ShippingPage = () => {
   const shippingOptions = [
     {
-      title: 'التوصيل العادي',
-      price: '25 ج.م',
+      title: 'التوصيل',
+      price: '60 ج.م',
       time: '2-5 أيام عمل',
-      description: 'توصيل إلى جميع محافظات مصر',
-      free: 'مجاني للطلبات فوق 500 ج.م'
-    },
-    {
-      title: 'التوصيل السريع',
-      price: '45 ج.م',
-      time: '1-2 يوم عمل',
-      description: 'للقاهرة والجيزة والإسكندرية'
-    },
-    {
-      title: 'توصيل نفس اليوم',
-      price: '75 ج.م',
-      time: 'نفس اليوم',
-      description: 'القاهرة والجيزة - للطلبات قبل 2 ظهراً'
+      description: 'توصيل إلى جميع محافظات مصر بسعر موحد'
     },
   ]
 
@@ -48,26 +35,20 @@ const ShippingPage = () => {
         <div className="container-custom py-12">
           {/* Shipping Options */}
           <section className="mb-16">
-            <h2 className="text-2xl font-bold mb-8 text-center">خيارات التوصيل</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              {shippingOptions.map((option, idx) => (
-                <div key={idx} className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-xl font-bold">{option.title}</h3>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-bold">{option.price}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-600 mb-2">
-                    <FiClock />
-                    <span>{option.time}</span>
-                  </div>
-                  <p className="text-gray-500 text-sm">{option.description}</p>
-                  {option.free && (
-                    <div className="mt-4 bg-green-50 text-green-700 px-3 py-2 rounded-lg text-sm">
-                      ✓ {option.free}
-                    </div>
-                  )}
+            <h2 className="text-2xl font-bold mb-8 text-center">التوصيل</h2>
+            <div className="max-w-md mx-auto">
+              <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <FiTruck className="text-3xl text-purple-600" />
                 </div>
-              ))}
+                <h3 className="text-xl font-bold mb-2">سعر الشحن الموحد</h3>
+                <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">60 ج.م</span>
+                <div className="flex items-center justify-center gap-2 text-gray-600 mt-4 mb-2">
+                  <FiClock />
+                  <span>2-5 أيام عمل</span>
+                </div>
+                <p className="text-gray-500 text-sm">توصيل إلى جميع محافظات مصر بسعر موحد</p>
+              </div>
             </div>
           </section>
 
