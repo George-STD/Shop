@@ -153,6 +153,7 @@ const ProductPage = () => {
   const [selectedSize, setSelectedSize] = useState(null)
   const [selectedColor, setSelectedColor] = useState(null)
   const [selectedAddons, setSelectedAddons] = useState([])
+  const [boxSelections, setBoxSelections] = useState({})
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'reviews' ? 'reviews' : 'description')
 
   const { addItem } = useCartStore()
@@ -192,10 +193,26 @@ const ProductPage = () => {
       return
     }
 
+    // Validate box selections
+    if (product.isCustomBox && product.boxSlots?.length > 0) {
+      for (const slot of product.boxSlots) {
+        if (slot.required && !boxSelections[slot.slotLabel]) {
+          toast.error(`الرجاء اختيار: ${slot.slotLabel}`)
+          return
+        }
+      }
+    }
+
     addItem(product, quantity, {
       selectedSize,
       selectedColor,
-      addons: selectedAddons
+      addons: selectedAddons,
+      boxSelections: product.isCustomBox ? Object.entries(boxSelections).map(([slotLabel, opt]) => ({
+        slotLabel,
+        chosenOption: opt.name,
+        image: opt.image,
+        extraPrice: opt.extraPrice || 0
+      })) : undefined
     })
     toast.success('تمت الإضافة إلى السلة')
   }
@@ -241,6 +258,7 @@ const ProductPage = () => {
     if (!product) return 0
     let total = product.price * quantity
     selectedAddons.forEach(addon => total += addon.price)
+    Object.values(boxSelections).forEach(opt => total += (opt.extraPrice || 0))
     return total
   }
 
@@ -484,6 +502,58 @@ const ProductPage = () => {
                       </label>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Box Builder */}
+              {product.isCustomBox && product.boxSlots?.length > 0 && (
+                <div className="space-y-6">
+                  <h3 className="text-lg font-bold text-gray-800">🎁 شكّل البوكس بتاعك</h3>
+                  {product.boxSlots.map((slot) => (
+                    <div key={slot.slotLabel} className="space-y-3">
+                      <h4 className="font-medium text-gray-800">
+                        {slot.slotLabel}
+                        {slot.required && <span className="text-red-500 mr-1">*</span>}
+                      </h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {slot.options.map((opt) => {
+                          const isSelected = boxSelections[slot.slotLabel]?.name === opt.name
+                          return (
+                            <button
+                              key={opt.name}
+                              type="button"
+                              onClick={() => setBoxSelections(prev => ({
+                                ...prev,
+                                [slot.slotLabel]: isSelected ? undefined : opt
+                              }))}
+                              className={`relative rounded-xl border-2 overflow-hidden transition-all ${
+                                isSelected
+                                  ? 'border-purple-500 ring-2 ring-purple-200 scale-[1.02]'
+                                  : 'border-gray-200 hover:border-purple-300'
+                              }`}
+                            >
+                              {opt.image && (
+                                <div className="aspect-square">
+                                  <img src={opt.image} alt={opt.name} className="w-full h-full object-cover" />
+                                </div>
+                              )}
+                              <div className="p-2 text-center">
+                                <p className="text-sm font-medium text-gray-800">{opt.name}</p>
+                                {opt.extraPrice > 0 && (
+                                  <p className="text-xs text-purple-600 font-medium">+{opt.extraPrice} ج.م</p>
+                                )}
+                              </div>
+                              {isSelected && (
+                                <div className="absolute top-2 left-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                                  <FiCheck className="text-white text-sm" />
+                                </div>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
 

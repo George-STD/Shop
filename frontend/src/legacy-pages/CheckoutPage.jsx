@@ -102,6 +102,7 @@ const CheckoutPage = () => {
           selectedSize: item.selectedSize,
           selectedColor: item.selectedColor,
           addons: item.addons,
+          boxSelections: item.boxSelections,
         })),
         shippingAddress: {
           firstName: formData.firstName,
@@ -373,6 +374,13 @@ const CheckoutPage = () => {
                         <div className="flex-1">
                           <p className="text-sm font-medium line-clamp-2">{item.name}</p>
                           <p className="text-sm text-gray-500">{item.price} ج.م</p>
+                          {item.boxSelections?.length > 0 && (
+                            <div className="text-xs text-gray-400 mt-1">
+                              {item.boxSelections.map((sel, i) => (
+                                <p key={i}>{sel.slotLabel}: {sel.chosenOption}</p>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}

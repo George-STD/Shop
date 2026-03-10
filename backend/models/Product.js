@@ -98,6 +98,20 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Custom Box (بوكس قابل للتخصيص)
+  isCustomBox: {
+    type: Boolean,
+    default: false
+  },
+  boxSlots: [{
+    slotLabel: { type: String, required: true },   // e.g. "اختر المج"
+    required: { type: Boolean, default: true },
+    options: [{
+      name: String,
+      image: String,     // URL of the option image
+      extraPrice: { type: Number, default: 0 }
+    }]
+  }],
   rating: {
     average: { type: Number, default: 0, min: 0, max: 5 },
     count: { type: Number, default: 0 }

@@ -25,7 +25,9 @@ const AdminProducts = () => {
     recipients: [],
     isActive: true,
     isFeatured: false,
-    isBestseller: false
+    isBestseller: false,
+    isCustomBox: false,
+    boxSlots: []
   })
 
   const { data: products, isLoading } = useQuery({
@@ -89,7 +91,9 @@ const AdminProducts = () => {
       recipients: [],
       isActive: true,
       isFeatured: false,
-      isBestseller: false
+      isBestseller: false,
+      isCustomBox: false,
+      boxSlots: []
     })
     setEditingProduct(null)
   }
@@ -111,7 +115,9 @@ const AdminProducts = () => {
       recipients: product.recipients || [],
       isActive: product.isActive,
       isFeatured: product.isFeatured || false,
-      isBestseller: product.isBestseller || false
+      isBestseller: product.isBestseller || false,
+      isCustomBox: product.isCustomBox || false,
+      boxSlots: product.boxSlots || []
     })
     setShowModal(true)
   }
@@ -537,6 +543,138 @@ const AdminProducts = () => {
                   <span>الأكثر مبيعاً</span>
                 </label>
               </div>
+
+              {/* Custom Box Toggle */}
+              <div className="border-t pt-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isCustomBox}
+                    onChange={(e) => setFormData({ ...formData, isCustomBox: e.target.checked, boxSlots: e.target.checked ? (formData.boxSlots.length ? formData.boxSlots : [{ slotLabel: '', required: true, options: [{ name: '', image: '', extraPrice: 0 }] }]) : [] })}
+                    className="rounded"
+                  />
+                  <span className="font-medium">بوكس قابل للتخصيص (العميل يختار المحتويات)</span>
+                </label>
+              </div>
+
+              {/* Box Slots Builder */}
+              {formData.isCustomBox && (
+                <div className="space-y-4 border rounded-xl p-4 bg-purple-50/50">
+                  <h3 className="font-bold text-purple-700">خانات البوكس</h3>
+                  {formData.boxSlots.map((slot, slotIdx) => (
+                    <div key={slotIdx} className="border rounded-lg p-3 bg-white space-y-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder="عنوان الخانة (مثال: اختر المج)"
+                          value={slot.slotLabel}
+                          onChange={(e) => {
+                            const newSlots = [...formData.boxSlots]
+                            newSlots[slotIdx] = { ...newSlots[slotIdx], slotLabel: e.target.value }
+                            setFormData({ ...formData, boxSlots: newSlots })
+                          }}
+                          className="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500"
+                          required
+                        />
+                        <label className="flex items-center gap-1 text-sm whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={slot.required}
+                            onChange={(e) => {
+                              const newSlots = [...formData.boxSlots]
+                              newSlots[slotIdx] = { ...newSlots[slotIdx], required: e.target.checked }
+                              setFormData({ ...formData, boxSlots: newSlots })
+                            }}
+                            className="rounded"
+                          />
+                          إجباري
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, boxSlots: formData.boxSlots.filter((_, i) => i !== slotIdx) })}
+                          className="text-red-500 hover:text-red-700 text-sm"
+                        >حذف الخانة</button>
+                      </div>
+
+                      {/* Options for this slot */}
+                      <div className="space-y-2 mr-4">
+                        <p className="text-sm text-gray-600 font-medium">الخيارات:</p>
+                        {slot.options.map((opt, optIdx) => (
+                          <div key={optIdx} className="flex flex-wrap items-center gap-2 bg-gray-50 p-2 rounded-lg">
+                            <input
+                              type="text"
+                              placeholder="اسم الخيار"
+                              value={opt.name}
+                              onChange={(e) => {
+                                const newSlots = [...formData.boxSlots]
+                                const newOpts = [...newSlots[slotIdx].options]
+                                newOpts[optIdx] = { ...newOpts[optIdx], name: e.target.value }
+                                newSlots[slotIdx] = { ...newSlots[slotIdx], options: newOpts }
+                                setFormData({ ...formData, boxSlots: newSlots })
+                              }}
+                              className="flex-1 min-w-[120px] border rounded px-2 py-1 text-sm"
+                              required
+                            />
+                            <input
+                              type="url"
+                              placeholder="رابط الصورة"
+                              value={opt.image}
+                              onChange={(e) => {
+                                const newSlots = [...formData.boxSlots]
+                                const newOpts = [...newSlots[slotIdx].options]
+                                newOpts[optIdx] = { ...newOpts[optIdx], image: e.target.value }
+                                newSlots[slotIdx] = { ...newSlots[slotIdx], options: newOpts }
+                                setFormData({ ...formData, boxSlots: newSlots })
+                              }}
+                              className="flex-1 min-w-[150px] border rounded px-2 py-1 text-sm"
+                            />
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                placeholder="سعر إضافي"
+                                value={opt.extraPrice || ''}
+                                onChange={(e) => {
+                                  const newSlots = [...formData.boxSlots]
+                                  const newOpts = [...newSlots[slotIdx].options]
+                                  newOpts[optIdx] = { ...newOpts[optIdx], extraPrice: Number(e.target.value) || 0 }
+                                  newSlots[slotIdx] = { ...newSlots[slotIdx], options: newOpts }
+                                  setFormData({ ...formData, boxSlots: newSlots })
+                                }}
+                                className="w-20 border rounded px-2 py-1 text-sm"
+                                min="0"
+                              />
+                              <span className="text-xs text-gray-500">ج.م</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newSlots = [...formData.boxSlots]
+                                newSlots[slotIdx] = { ...newSlots[slotIdx], options: newSlots[slotIdx].options.filter((_, i) => i !== optIdx) }
+                                setFormData({ ...formData, boxSlots: newSlots })
+                              }}
+                              className="text-red-400 hover:text-red-600 text-sm"
+                            >✕</button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newSlots = [...formData.boxSlots]
+                            newSlots[slotIdx] = { ...newSlots[slotIdx], options: [...newSlots[slotIdx].options, { name: '', image: '', extraPrice: 0 }] }
+                            setFormData({ ...formData, boxSlots: newSlots })
+                          }}
+                          className="text-purple-600 text-sm hover:underline"
+                        >+ إضافة خيار</button>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, boxSlots: [...formData.boxSlots, { slotLabel: '', required: true, options: [{ name: '', image: '', extraPrice: 0 }] }] })}
+                    className="w-full border-2 border-dashed border-purple-300 text-purple-600 rounded-lg py-2 hover:bg-purple-50"
+                  >+ إضافة خانة جديدة</button>
+                </div>
+              )}
 
               <div className="flex gap-4 pt-4 border-t">
                 <button

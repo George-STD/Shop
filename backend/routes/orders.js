@@ -93,6 +93,13 @@ router.post('/', apiLimiter, [
         });
       }
 
+      // Add box selections extra price
+      if (item.boxSelections && item.boxSelections.length > 0) {
+        item.boxSelections.forEach(sel => {
+          itemSubtotal += (sel.extraPrice || 0);
+        });
+      }
+
       orderItems.push({
         product: product._id,
         name: product.name,
@@ -103,6 +110,7 @@ router.post('/', apiLimiter, [
         selectedSize: item.selectedSize,
         selectedColor: item.selectedColor,
         addons: item.addons,
+        boxSelections: item.boxSelections,
         giftWrap: item.giftWrap,
         subtotal: itemSubtotal
       });

@@ -266,6 +266,13 @@ const AdminOrders = () => {
                       <div className="flex-1">
                         <p className="font-medium">{item.product?.name || item.name}</p>
                         <p className="text-sm text-gray-500">الكمية: {item.quantity}</p>
+                        {item.boxSelections?.length > 0 && (
+                          <div className="text-xs text-purple-600 mt-1">
+                            {item.boxSelections.map((sel, i) => (
+                              <p key={i}>• {sel.slotLabel}: {sel.chosenOption}{sel.extraPrice > 0 ? ` (+${sel.extraPrice} ج.م)` : ''}</p>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <p className="font-medium">{formatCurrency(item.price * item.quantity)}</p>
                     </div>
