@@ -108,7 +108,7 @@ const productSchema = new mongoose.Schema({
     required: { type: Boolean, default: true },
     options: [{
       name: String,
-      image: String      // URL of the option image
+      images: [String]   // Array of image URLs for the option
     }]
   }],
   rating: {

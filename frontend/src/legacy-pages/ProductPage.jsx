@@ -1,11 +1,23 @@
 import { useState, useRef, useCallback } from 'react'
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { FiHeart, FiShare2, FiMinus, FiPlus, FiCheck, FiTruck, FiRotateCcw, FiShield, FiZoomIn } from 'react-icons/fi'
+import { FiHeart, FiShare2, FiMinus, FiPlus, FiCheck, FiTruck, FiRotateCcw, FiShield, FiZoomIn, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Autoplay, Pagination, Navigation } from 'swiper/modules'
+import 'swiper/css'
+import 'swiper/css/pagination'
+import 'swiper/css/navigation'
 import { productsAPI, reviewsAPI } from '../services/api'
 import { useCartStore, useWishlistStore, useAuthStore } from '../store'
 import ProductCard from '../components/product/ProductCard'
 import toast from 'react-hot-toast'
+
+// Helper: get images array from option (backward compatible with old single image field)
+const getOptImages = (opt) => {
+  if (opt.images?.length) return opt.images.filter(Boolean)
+  if (opt.image) return [opt.image]
+  return []
+}
 
 // تم فصل مكون إضافة التقييم ليكون مكوناً مستقلاً ونظيفاً
 const ReviewForm = ({ productId, refreshReviews }) => {
@@ -208,7 +220,7 @@ const ProductPage = () => {
       boxSelections: product.isCustomBox ? Object.entries(boxSelections).filter(([, opt]) => opt).map(([slotLabel, opt]) => ({
         slotLabel,
         chosenOption: opt.name,
-        image: opt.image
+        image: getOptImages(opt)[0] || ''
       })) : undefined
     })
     toast.success('تمت الإضافة إلى السلة')
@@ -397,23 +409,25 @@ const ProductPage = () => {
                   </button>
                 ))}
                 {/* Box selection thumbnails inline */}
-                {product.isCustomBox && Object.entries(boxSelections).filter(([, opt]) => opt?.image).map(([label, opt]) => (
-                  <button
-                    key={`box-${label}`}
-                    onClick={() => setActiveBoxImage(opt.image)}
-                    onMouseEnter={() => setActiveBoxImage(opt.image)}
-                    className={`flex-shrink-0 rounded-lg overflow-hidden w-16 sm:w-20 border-2 transition-all ${
-                      activeBoxImage === opt.image
-                        ? 'border-purple-500 shadow-md scale-105'
-                        : 'border-transparent hover:border-purple-300'
-                    }`}
-                  >
-                    <div className="aspect-square relative">
-                      <img src={opt.image} alt={opt.name} className="w-full h-full object-cover" />
-                      <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[9px] text-center py-0.5 truncate px-1">🎁 {opt.name}</span>
-                    </div>
-                  </button>
-                ))}
+                {product.isCustomBox && Object.entries(boxSelections).filter(([, opt]) => opt && getOptImages(opt).length > 0).flatMap(([label, opt]) =>
+                  getOptImages(opt).map((imgUrl, imgIdx) => (
+                    <button
+                      key={`box-${label}-${imgIdx}`}
+                      onClick={() => setActiveBoxImage(imgUrl)}
+                      onMouseEnter={() => setActiveBoxImage(imgUrl)}
+                      className={`flex-shrink-0 rounded-lg overflow-hidden w-16 sm:w-20 border-2 transition-all ${
+                        activeBoxImage === imgUrl
+                          ? 'border-purple-500 shadow-md scale-105'
+                          : 'border-transparent hover:border-purple-300'
+                      }`}
+                    >
+                      <div className="aspect-square relative">
+                        <img src={imgUrl} alt={opt.name} className="w-full h-full object-cover" />
+                        <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[9px] text-center py-0.5 truncate px-1">🎁 {opt.name}</span>
+                      </div>
+                    </button>
+                  ))
+                )}
               </div>
             </div>
 
@@ -563,6 +577,7 @@ const ProductPage = () => {
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {slot.options.map((opt) => {
                           const isSelected = boxSelections[slot.slotLabel]?.name === opt.name
+                          const optImages = getOptImages(opt)
                           return (
                             <button
                               key={opt.name}
@@ -577,16 +592,33 @@ const ProductPage = () => {
                                   : 'border-gray-200 hover:border-purple-300'
                               }`}
                             >
-                              {opt.image && (
-                                <div className="aspect-square">
-                                  <img src={opt.image} alt={opt.name} className="w-full h-full object-cover" />
+                              {optImages.length > 1 ? (
+                                <div className="aspect-square" onClick={(e) => e.stopPropagation()}>
+                                  <Swiper
+                                    modules={[Autoplay, Pagination]}
+                                    spaceBetween={0}
+                                    slidesPerView={1}
+                                    autoplay={{ delay: 3000, disableOnInteraction: false }}
+                                    pagination={{ clickable: true }}
+                                    className="h-full w-full box-option-swiper"
+                                  >
+                                    {optImages.map((imgUrl, imgIdx) => (
+                                      <SwiperSlide key={imgIdx}>
+                                        <img src={imgUrl} alt={opt.name} className="w-full h-full object-cover" />
+                                      </SwiperSlide>
+                                    ))}
+                                  </Swiper>
                                 </div>
-                              )}
+                              ) : optImages.length === 1 ? (
+                                <div className="aspect-square">
+                                  <img src={optImages[0]} alt={opt.name} className="w-full h-full object-cover" />
+                                </div>
+                              ) : null}
                               <div className="p-2 text-center">
                                 <p className="text-sm font-medium text-gray-800">{opt.name}</p>
                               </div>
                               {isSelected && (
-                                <div className="absolute top-2 left-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                                <div className="absolute top-2 left-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center z-10">
                                   <FiCheck className="text-white text-sm" />
                                 </div>
                               )}

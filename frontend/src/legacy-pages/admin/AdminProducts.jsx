@@ -550,7 +550,7 @@ const AdminProducts = () => {
                   <input
                     type="checkbox"
                     checked={formData.isCustomBox}
-                    onChange={(e) => setFormData({ ...formData, isCustomBox: e.target.checked, boxSlots: e.target.checked ? (formData.boxSlots.length ? formData.boxSlots : [{ slotLabel: '', required: true, options: [{ name: '', image: '' }] }]) : [] })}
+                    onChange={(e) => setFormData({ ...formData, isCustomBox: e.target.checked, boxSlots: e.target.checked ? (formData.boxSlots.length ? formData.boxSlots : [{ slotLabel: '', required: true, options: [{ name: '', images: [''] }] }]) : [] })}
                     className="rounded"
                   />
                   <span className="font-medium">بوكس قابل للتخصيص (العميل يختار المحتويات)</span>
@@ -600,51 +600,87 @@ const AdminProducts = () => {
                       <div className="space-y-2 mr-4">
                         <p className="text-sm text-gray-600 font-medium">الخيارات:</p>
                         {slot.options.map((opt, optIdx) => (
-                          <div key={optIdx} className="flex flex-wrap items-center gap-2 bg-gray-50 p-2 rounded-lg">
-                            <input
-                              type="text"
-                              placeholder="اسم الخيار"
-                              value={opt.name}
-                              onChange={(e) => {
-                                const newSlots = [...formData.boxSlots]
-                                const newOpts = [...newSlots[slotIdx].options]
-                                newOpts[optIdx] = { ...newOpts[optIdx], name: e.target.value }
-                                newSlots[slotIdx] = { ...newSlots[slotIdx], options: newOpts }
-                                setFormData({ ...formData, boxSlots: newSlots })
-                              }}
-                              className="flex-1 min-w-[120px] border rounded px-2 py-1 text-sm"
-                              required
-                            />
-                            <input
-                              type="url"
-                              placeholder="رابط الصورة"
-                              value={opt.image}
-                              onChange={(e) => {
-                                const newSlots = [...formData.boxSlots]
-                                const newOpts = [...newSlots[slotIdx].options]
-                                newOpts[optIdx] = { ...newOpts[optIdx], image: e.target.value }
-                                newSlots[slotIdx] = { ...newSlots[slotIdx], options: newOpts }
-                                setFormData({ ...formData, boxSlots: newSlots })
-                              }}
-                              className="flex-1 min-w-[150px] border rounded px-2 py-1 text-sm"
-                            />
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newSlots = [...formData.boxSlots]
-                                newSlots[slotIdx] = { ...newSlots[slotIdx], options: newSlots[slotIdx].options.filter((_, i) => i !== optIdx) }
-                                setFormData({ ...formData, boxSlots: newSlots })
-                              }}
-                              className="text-red-400 hover:text-red-600 text-sm"
-                            >✕</button>
+                          <div key={optIdx} className="bg-gray-50 p-2 rounded-lg space-y-2">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                placeholder="اسم الخيار"
+                                value={opt.name}
+                                onChange={(e) => {
+                                  const newSlots = [...formData.boxSlots]
+                                  const newOpts = [...newSlots[slotIdx].options]
+                                  newOpts[optIdx] = { ...newOpts[optIdx], name: e.target.value }
+                                  newSlots[slotIdx] = { ...newSlots[slotIdx], options: newOpts }
+                                  setFormData({ ...formData, boxSlots: newSlots })
+                                }}
+                                className="flex-1 min-w-[120px] border rounded px-2 py-1 text-sm"
+                                required
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newSlots = [...formData.boxSlots]
+                                  newSlots[slotIdx] = { ...newSlots[slotIdx], options: newSlots[slotIdx].options.filter((_, i) => i !== optIdx) }
+                                  setFormData({ ...formData, boxSlots: newSlots })
+                                }}
+                                className="text-red-400 hover:text-red-600 text-sm"
+                              >✕</button>
+                            </div>
+                            {/* Multiple images */}
+                            <div className="space-y-1 mr-4">
+                              {(opt.images || [opt.image].filter(Boolean)).map((imgUrl, imgIdx) => (
+                                <div key={imgIdx} className="flex items-center gap-1">
+                                  <input
+                                    type="url"
+                                    placeholder={`رابط الصورة ${imgIdx + 1}`}
+                                    value={imgUrl || ''}
+                                    onChange={(e) => {
+                                      const newSlots = [...formData.boxSlots]
+                                      const newOpts = [...newSlots[slotIdx].options]
+                                      const newImages = [...(newOpts[optIdx].images || [newOpts[optIdx].image].filter(Boolean))]
+                                      newImages[imgIdx] = e.target.value
+                                      newOpts[optIdx] = { ...newOpts[optIdx], images: newImages }
+                                      newSlots[slotIdx] = { ...newSlots[slotIdx], options: newOpts }
+                                      setFormData({ ...formData, boxSlots: newSlots })
+                                    }}
+                                    className="flex-1 border rounded px-2 py-1 text-xs"
+                                  />
+                                  {(opt.images || [opt.image].filter(Boolean)).length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newSlots = [...formData.boxSlots]
+                                        const newOpts = [...newSlots[slotIdx].options]
+                                        const newImages = [...(newOpts[optIdx].images || [])].filter((_, i) => i !== imgIdx)
+                                        newOpts[optIdx] = { ...newOpts[optIdx], images: newImages }
+                                        newSlots[slotIdx] = { ...newSlots[slotIdx], options: newOpts }
+                                        setFormData({ ...formData, boxSlots: newSlots })
+                                      }}
+                                      className="text-red-300 hover:text-red-500 text-xs"
+                                    >✕</button>
+                                  )}
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newSlots = [...formData.boxSlots]
+                                  const newOpts = [...newSlots[slotIdx].options]
+                                  const currentImages = newOpts[optIdx].images || [newOpts[optIdx].image].filter(Boolean)
+                                  newOpts[optIdx] = { ...newOpts[optIdx], images: [...currentImages, ''] }
+                                  newSlots[slotIdx] = { ...newSlots[slotIdx], options: newOpts }
+                                  setFormData({ ...formData, boxSlots: newSlots })
+                                }}
+                                className="text-purple-500 text-xs hover:underline"
+                              >+ صورة إضافية</button>
+                            </div>
                           </div>
                         ))}
                         <button
                           type="button"
                           onClick={() => {
                             const newSlots = [...formData.boxSlots]
-                            newSlots[slotIdx] = { ...newSlots[slotIdx], options: [...newSlots[slotIdx].options, { name: '', image: '' }] }
+                            newSlots[slotIdx] = { ...newSlots[slotIdx], options: [...newSlots[slotIdx].options, { name: '', images: [''] }] }
                             setFormData({ ...formData, boxSlots: newSlots })
                           }}
                           className="text-purple-600 text-sm hover:underline"
@@ -654,7 +690,7 @@ const AdminProducts = () => {
                   ))}
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, boxSlots: [...formData.boxSlots, { slotLabel: '', required: true, options: [{ name: '', image: '' }] }] })}
+                    onClick={() => setFormData({ ...formData, boxSlots: [...formData.boxSlots, { slotLabel: '', required: true, options: [{ name: '', images: [''] }] }] })}
                     className="w-full border-2 border-dashed border-purple-300 text-purple-600 rounded-lg py-2 hover:bg-purple-50"
                   >+ إضافة خانة جديدة</button>
                 </div>

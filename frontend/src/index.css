@@ -235,6 +235,16 @@ body {
   background-clip: text;
 }
 
+/* Mini swiper for box option cards */
+.box-option-swiper .swiper-pagination-bullet {
+  width: 6px !important;
+  height: 6px !important;
+  margin: 0 2px !important;
+}
+.box-option-swiper .swiper-pagination {
+  bottom: 4px !important;
+}
+
 /* Additional Gradient Utilities */
 .text-gradient {
   background: linear-gradient(135deg, #a855f7, #d946ef, #ec4899);
