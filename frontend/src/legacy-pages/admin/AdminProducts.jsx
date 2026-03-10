@@ -550,7 +550,7 @@ const AdminProducts = () => {
                   <input
                     type="checkbox"
                     checked={formData.isCustomBox}
-                    onChange={(e) => setFormData({ ...formData, isCustomBox: e.target.checked, boxSlots: e.target.checked ? (formData.boxSlots.length ? formData.boxSlots : [{ slotLabel: '', required: true, options: [{ name: '', image: '', extraPrice: 0 }] }]) : [] })}
+                    onChange={(e) => setFormData({ ...formData, isCustomBox: e.target.checked, boxSlots: e.target.checked ? (formData.boxSlots.length ? formData.boxSlots : [{ slotLabel: '', required: true, options: [{ name: '', image: '' }] }]) : [] })}
                     className="rounded"
                   />
                   <span className="font-medium">بوكس قابل للتخصيص (العميل يختار المحتويات)</span>
@@ -628,23 +628,7 @@ const AdminProducts = () => {
                               }}
                               className="flex-1 min-w-[150px] border rounded px-2 py-1 text-sm"
                             />
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="number"
-                                placeholder="سعر إضافي"
-                                value={opt.extraPrice || ''}
-                                onChange={(e) => {
-                                  const newSlots = [...formData.boxSlots]
-                                  const newOpts = [...newSlots[slotIdx].options]
-                                  newOpts[optIdx] = { ...newOpts[optIdx], extraPrice: Number(e.target.value) || 0 }
-                                  newSlots[slotIdx] = { ...newSlots[slotIdx], options: newOpts }
-                                  setFormData({ ...formData, boxSlots: newSlots })
-                                }}
-                                className="w-20 border rounded px-2 py-1 text-sm"
-                                min="0"
-                              />
-                              <span className="text-xs text-gray-500">ج.م</span>
-                            </div>
+
                             <button
                               type="button"
                               onClick={() => {
@@ -660,7 +644,7 @@ const AdminProducts = () => {
                           type="button"
                           onClick={() => {
                             const newSlots = [...formData.boxSlots]
-                            newSlots[slotIdx] = { ...newSlots[slotIdx], options: [...newSlots[slotIdx].options, { name: '', image: '', extraPrice: 0 }] }
+                            newSlots[slotIdx] = { ...newSlots[slotIdx], options: [...newSlots[slotIdx].options, { name: '', image: '' }] }
                             setFormData({ ...formData, boxSlots: newSlots })
                           }}
                           className="text-purple-600 text-sm hover:underline"
@@ -670,7 +654,7 @@ const AdminProducts = () => {
                   ))}
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, boxSlots: [...formData.boxSlots, { slotLabel: '', required: true, options: [{ name: '', image: '', extraPrice: 0 }] }] })}
+                    onClick={() => setFormData({ ...formData, boxSlots: [...formData.boxSlots, { slotLabel: '', required: true, options: [{ name: '', image: '' }] }] })}
                     className="w-full border-2 border-dashed border-purple-300 text-purple-600 rounded-lg py-2 hover:bg-purple-50"
                   >+ إضافة خانة جديدة</button>
                 </div>

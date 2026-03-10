@@ -269,7 +269,7 @@ const AdminOrders = () => {
                         {item.boxSelections?.length > 0 && (
                           <div className="text-xs text-purple-600 mt-1">
                             {item.boxSelections.map((sel, i) => (
-                              <p key={i}>• {sel.slotLabel}: {sel.chosenOption}{sel.extraPrice > 0 ? ` (+${sel.extraPrice} ج.م)` : ''}</p>
+                              <p key={i}>• {sel.slotLabel}: {sel.chosenOption}</p>
                             ))}
                           </div>
                         )}

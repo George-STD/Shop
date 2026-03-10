@@ -1,17 +1,11 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Swiper, SwiperSlide } from 'swiper/react'
-import { Thumbs, Navigation, Zoom } from 'swiper/modules'
-import { FiHeart, FiShare2, FiMinus, FiPlus, FiCheck, FiTruck, FiRotateCcw, FiShield } from 'react-icons/fi'
+import { FiHeart, FiShare2, FiMinus, FiPlus, FiCheck, FiTruck, FiRotateCcw, FiShield, FiZoomIn } from 'react-icons/fi'
 import { productsAPI, reviewsAPI } from '../services/api'
 import { useCartStore, useWishlistStore, useAuthStore } from '../store'
 import ProductCard from '../components/product/ProductCard'
 import toast from 'react-hot-toast'
-import 'swiper/css'
-import 'swiper/css/thumbs'
-import 'swiper/css/navigation'
-import 'swiper/css/zoom'
 
 // تم فصل مكون إضافة التقييم ليكون مكوناً مستقلاً ونظيفاً
 const ReviewForm = ({ productId, refreshReviews }) => {
@@ -148,8 +142,11 @@ const ProductPage = () => {
   const { slug } = useParams()
   const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
-  const [thumbsSwiper, setThumbsSwiper] = useState(null)
   const [quantity, setQuantity] = useState(1)
+  const [isZooming, setIsZooming] = useState(false)
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
+  const [activeImageIdx, setActiveImageIdx] = useState(0)
+  const imgContainerRef = useRef(null)
   const [selectedSize, setSelectedSize] = useState(null)
   const [selectedColor, setSelectedColor] = useState(null)
   const [selectedAddons, setSelectedAddons] = useState([])
@@ -207,11 +204,10 @@ const ProductPage = () => {
       selectedSize,
       selectedColor,
       addons: selectedAddons,
-      boxSelections: product.isCustomBox ? Object.entries(boxSelections).map(([slotLabel, opt]) => ({
+      boxSelections: product.isCustomBox ? Object.entries(boxSelections).filter(([, opt]) => opt).map(([slotLabel, opt]) => ({
         slotLabel,
         chosenOption: opt.name,
-        image: opt.image,
-        extraPrice: opt.extraPrice || 0
+        image: opt.image
       })) : undefined
     })
     toast.success('تمت الإضافة إلى السلة')
@@ -258,7 +254,6 @@ const ProductPage = () => {
     if (!product) return 0
     let total = product.price * quantity
     selectedAddons.forEach(addon => total += addon.price)
-    Object.values(boxSelections).forEach(opt => total += (opt.extraPrice || 0))
     return total
   }
 
@@ -328,47 +323,84 @@ const ProductPage = () => {
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
             {/* Images */}
             <div className="space-y-4">
-              <Swiper
-                modules={[Thumbs, Navigation, Zoom]}
-                thumbs={{ swiper: thumbsSwiper }}
-                navigation
-                zoom
-                className="rounded-2xl overflow-hidden bg-white aspect-square"
+              {/* Main Image with Amazon-style zoom */}
+              <div
+                ref={imgContainerRef}
+                className="relative rounded-2xl overflow-hidden bg-white aspect-square cursor-crosshair group"
+                onMouseEnter={() => setIsZooming(true)}
+                onMouseLeave={() => setIsZooming(false)}
+                onMouseMove={(e) => {
+                  const rect = imgContainerRef.current?.getBoundingClientRect()
+                  if (!rect) return
+                  const x = ((e.clientX - rect.left) / rect.width) * 100
+                  const y = ((e.clientY - rect.top) / rect.height) * 100
+                  setZoomPos({ x, y })
+                }}
               >
-                {product.images?.map((image, index) => (
-                  <SwiperSlide key={index}>
-                    <div className="swiper-zoom-container">
-                      <img 
-                        src={image.url} 
-                        alt={image.alt || product.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
+                <img
+                  src={product.images?.[activeImageIdx]?.url}
+                  alt={product.images?.[activeImageIdx]?.alt || product.name}
+                  className="w-full h-full object-cover"
+                  draggable={false}
+                />
+                {/* Zoom lens indicator */}
+                {isZooming && (
+                  <div
+                    className="absolute pointer-events-none border-2 border-purple-400/50 bg-purple-200/20 rounded-sm"
+                    style={{
+                      width: '120px',
+                      height: '120px',
+                      left: `calc(${zoomPos.x}% - 60px)`,
+                      top: `calc(${zoomPos.y}% - 60px)`,
+                    }}
+                  />
+                )}
+                {/* Zoomed overlay */}
+                {isZooming && (
+                  <div
+                    className="hidden lg:block absolute top-0 left-[calc(100%+16px)] w-[500px] h-[500px] bg-white border-2 border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                  >
+                    <img
+                      src={product.images?.[activeImageIdx]?.url}
+                      alt="zoom"
+                      className="absolute max-w-none"
+                      style={{
+                        width: '250%',
+                        height: '250%',
+                        left: `${-zoomPos.x * 2.5 + 125}%`,
+                        top: `${-zoomPos.y * 2.5 + 125}%`,
+                      }}
+                      draggable={false}
+                    />
+                  </div>
+                )}
+                <div className="absolute bottom-3 left-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-gray-600 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity lg:flex hidden">
+                  <FiZoomIn className="w-3 h-3" />
+                  مرر الماوس للتكبير
+                </div>
+              </div>
 
               {product.images?.length > 1 && (
-                <Swiper
-                  modules={[Thumbs]}
-                  onSwiper={setThumbsSwiper}
-                  slidesPerView={4}
-                  spaceBetween={12}
-                  watchSlidesProgress
-                  className="thumbs-swiper"
-                >
+                <div className="flex gap-3 overflow-x-auto pb-2">
                   {product.images.map((image, index) => (
-                    <SwiperSlide key={index} className="cursor-pointer">
-                      <div className="rounded-lg overflow-hidden aspect-square border-2 border-transparent hover:border-purple-500 transition-colors">
-                        <img 
-                          src={image.url} 
-                          alt={image.alt}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </SwiperSlide>
+                    <button
+                      key={index}
+                      onClick={() => setActiveImageIdx(index)}
+                      onMouseEnter={() => setActiveImageIdx(index)}
+                      className={`flex-shrink-0 rounded-lg overflow-hidden aspect-square w-16 sm:w-20 border-2 transition-all ${
+                        activeImageIdx === index
+                          ? 'border-purple-500 shadow-md scale-105'
+                          : 'border-transparent hover:border-purple-300'
+                      }`}
+                    >
+                      <img 
+                        src={image.url} 
+                        alt={image.alt}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
                   ))}
-                </Swiper>
+                </div>
               )}
             </div>
 
@@ -539,9 +571,6 @@ const ProductPage = () => {
                               )}
                               <div className="p-2 text-center">
                                 <p className="text-sm font-medium text-gray-800">{opt.name}</p>
-                                {opt.extraPrice > 0 && (
-                                  <p className="text-xs text-purple-600 font-medium">+{opt.extraPrice} ج.م</p>
-                                )}
                               </div>
                               {isSelected && (
                                 <div className="absolute top-2 left-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">

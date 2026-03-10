@@ -64,7 +64,7 @@ const CartPage = () => {
                         {item.boxSelections?.length > 0 && (
                           <div className="text-sm text-gray-500 mt-1 space-y-0.5">
                             {item.boxSelections.map((sel, i) => (
-                              <p key={i}>{sel.slotLabel}: {sel.chosenOption}{sel.extraPrice > 0 ? ` (+${sel.extraPrice} ج.م)` : ''}</p>
+                              <p key={i}>{sel.slotLabel}: {sel.chosenOption}</p>
                             ))}
                           </div>
                         )}

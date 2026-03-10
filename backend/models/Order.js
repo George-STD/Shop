@@ -24,8 +24,7 @@ const orderItemSchema = new mongoose.Schema({
   boxSelections: [{
     slotLabel: String,
     chosenOption: String,
-    image: String,
-    extraPrice: { type: Number, default: 0 }
+    image: String
   }],
   giftWrap: {
     enabled: { type: Boolean, default: false },

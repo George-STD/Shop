@@ -71,9 +71,6 @@ export const useCartStore = create(
           if (item.addons) {
             itemTotal += item.addons.reduce((sum, addon) => sum + addon.price, 0)
           }
-          if (item.boxSelections) {
-            itemTotal += item.boxSelections.reduce((sum, sel) => sum + (sel.extraPrice || 0), 0)
-          }
           if (item.giftWrap?.enabled) {
             itemTotal += 25 // Gift wrap price
           }
