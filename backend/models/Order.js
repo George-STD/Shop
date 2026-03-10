@@ -17,6 +17,7 @@ const orderItemSchema = new mongoose.Schema({
   },
   selectedSize: String,
   selectedColor: String,
+  selectedShape: String,
   addons: [{
     name: String,
     price: Number

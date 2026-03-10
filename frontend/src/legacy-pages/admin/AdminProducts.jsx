@@ -21,6 +21,8 @@ const AdminProducts = () => {
     images: [{ url: '', alt: '' }],
     hasColors: false,
     colors: [],
+    hasShapes: false,
+    shapes: [],
     occasions: [],
     recipients: [],
     isActive: true,
@@ -87,6 +89,8 @@ const AdminProducts = () => {
       images: [{ url: '', alt: '' }],
       hasColors: false,
       colors: [],
+      hasShapes: false,
+      shapes: [],
       occasions: [],
       recipients: [],
       isActive: true,
@@ -111,6 +115,8 @@ const AdminProducts = () => {
       images: product.images?.length ? product.images : [{ url: '', alt: '' }],
       hasColors: product.colors && product.colors.length > 0,
       colors: product.colors || [],
+      hasShapes: product.shapes && product.shapes.length > 0,
+      shapes: product.shapes || [],
       occasions: product.occasions || [],
       recipients: product.recipients || [],
       isActive: product.isActive,
@@ -420,6 +426,59 @@ const AdminProducts = () => {
                                 <button type="button" onClick={() => setFormData({ ...formData, colors: [...formData.colors, { name: '', hex: '' }] })} className="text-blue-600">إضافة لون</button>
                               </div>
                             )}
+
+                            {/* Shapes toggle */}
+                            <div>
+                              <label className="block text-sm font-medium mb-1">هل المنتج له أشكال متعددة؟</label>
+                              <input
+                                type="checkbox"
+                                checked={formData.hasShapes}
+                                onChange={e => setFormData({ ...formData, hasShapes: e.target.checked, shapes: e.target.checked ? (formData.shapes.length ? formData.shapes : [{ name: '', image: '' }]) : [] })}
+                                className="mr-2"
+                              />
+                              <span>نعم</span>
+                            </div>
+
+                            {formData.hasShapes && (
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium mb-1">أشكال المنتج</label>
+                                {formData.shapes.map((shape, idx) => (
+                                  <div key={idx} className="flex flex-wrap items-center gap-2 mb-2">
+                                    <input
+                                      type="text"
+                                      placeholder="اسم الشكل"
+                                      value={shape.name}
+                                      onChange={e => {
+                                        const newShapes = [...formData.shapes];
+                                        newShapes[idx] = { ...newShapes[idx], name: e.target.value };
+                                        setFormData({ ...formData, shapes: newShapes });
+                                      }}
+                                      className="flex-1 min-w-[120px] border rounded-lg px-2 py-1"
+                                    />
+                                    <input
+                                      type="url"
+                                      placeholder="رابط صورة الشكل"
+                                      value={shape.image || ''}
+                                      onChange={e => {
+                                        const newShapes = [...formData.shapes];
+                                        newShapes[idx] = { ...newShapes[idx], image: e.target.value };
+                                        setFormData({ ...formData, shapes: newShapes });
+                                      }}
+                                      className="flex-1 min-w-[150px] border rounded-lg px-2 py-1 text-sm"
+                                    />
+                                    {shape.image && (
+                                      <img src={shape.image} alt={shape.name} className="w-10 h-10 object-cover rounded border" />
+                                    )}
+                                    <button type="button" onClick={() => {
+                                      const newShapes = formData.shapes.filter((_, i) => i !== idx);
+                                      setFormData({ ...formData, shapes: newShapes });
+                                    }} className="text-red-500 px-2">حذف</button>
+                                  </div>
+                                ))}
+                                <button type="button" onClick={() => setFormData({ ...formData, shapes: [...formData.shapes, { name: '', image: '' }] })} className="text-purple-600">إضافة شكل</button>
+                              </div>
+                            )}
+
               <div>
                 <label className="block text-sm font-medium mb-1">اسم المنتج</label>
                 <input

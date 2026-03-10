@@ -162,6 +162,7 @@ const ProductPage = () => {
   const imgContainerRef = useRef(null)
   const [selectedSize, setSelectedSize] = useState(null)
   const [selectedColor, setSelectedColor] = useState(null)
+  const [selectedShape, setSelectedShape] = useState(null)
   const [selectedAddons, setSelectedAddons] = useState([])
   const [boxSelections, setBoxSelections] = useState({})
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'reviews' ? 'reviews' : 'description')
@@ -202,6 +203,10 @@ const ProductPage = () => {
       toast.error('الرجاء اختيار اللون')
       return
     }
+    if (product.shapes?.length > 0 && !selectedShape) {
+      toast.error('الرجاء اختيار الشكل')
+      return
+    }
 
     // Validate box selections
     if (product.isCustomBox && product.boxSlots?.length > 0) {
@@ -216,6 +221,7 @@ const ProductPage = () => {
     addItem(product, quantity, {
       selectedSize,
       selectedColor,
+      selectedShape,
       addons: selectedAddons,
       boxSelections: product.isCustomBox ? Object.entries(boxSelections).filter(([, opt]) => opt).map(([slotLabel, opt]) => ({
         slotLabel,
@@ -527,6 +533,54 @@ const ProductPage = () => {
                       >
                         {selectedColor === color.name && (
                           <FiCheck className={`${color.code === '#ffffff' || color.code === '#fff' ? 'text-gray-800' : 'text-white'}`} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Shapes */}
+              {product.shapes?.length > 0 && (
+                <div>
+                  <h3 className="font-medium text-gray-800 mb-3">
+                    الشكل: {selectedShape && <span className="text-gray-500">{selectedShape}</span>}
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    {/* Default shape = main product image */}
+                    <button
+                      onClick={() => {
+                        setSelectedShape(null)
+                        setActiveImageIdx(0)
+                        setActiveBoxImage(null)
+                      }}
+                      className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all ${
+                        !selectedShape
+                          ? 'border-purple-500 ring-2 ring-purple-200 scale-105'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                      title="الشكل الأصلي"
+                    >
+                      <img src={product.images?.[0]?.url} alt="الشكل الأصلي" className="w-full h-full object-cover" />
+                    </button>
+                    {product.shapes.map((shape) => (
+                      <button
+                        key={shape.name}
+                        onClick={() => {
+                          setSelectedShape(shape.name)
+                          if (shape.image) setActiveBoxImage(shape.image)
+                        }}
+                        className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all ${
+                          selectedShape === shape.name
+                            ? 'border-purple-500 ring-2 ring-purple-200 scale-105'
+                            : 'border-gray-200 hover:border-purple-300'
+                        }`}
+                        title={shape.name}
+                      >
+                        {shape.image ? (
+                          <img src={shape.image} alt={shape.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-xs text-gray-600 flex items-center justify-center h-full">{shape.name}</span>
                         )}
                       </button>
                     ))}

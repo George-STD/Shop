@@ -102,6 +102,7 @@ router.post('/', apiLimiter, [
         quantity: item.quantity,
         selectedSize: item.selectedSize,
         selectedColor: item.selectedColor,
+        selectedShape: item.selectedShape,
         addons: item.addons,
         boxSelections: item.boxSelections,
         giftWrap: item.giftWrap,

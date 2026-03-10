@@ -12,7 +12,8 @@ export const useCartStore = create(
         const existingIndex = items.findIndex(
           item => item.id === product._id && 
                   item.selectedSize === options.selectedSize &&
-                  item.selectedColor === options.selectedColor
+                  item.selectedColor === options.selectedColor &&
+                  item.selectedShape === options.selectedShape
         )
         
         if (existingIndex > -1) {
@@ -31,6 +32,7 @@ export const useCartStore = create(
               quantity,
               selectedSize: options.selectedSize,
               selectedColor: options.selectedColor,
+              selectedShape: options.selectedShape,
               addons: options.addons || [],
               boxSelections: options.boxSelections || [],
               giftWrap: options.giftWrap || { enabled: false }
@@ -39,23 +41,25 @@ export const useCartStore = create(
         }
       },
       
-      removeItem: (id, selectedSize, selectedColor) => {
+      removeItem: (id, selectedSize, selectedColor, selectedShape) => {
         set({
           items: get().items.filter(
             item => !(item.id === id && 
                      item.selectedSize === selectedSize &&
-                     item.selectedColor === selectedColor)
+                     item.selectedColor === selectedColor &&
+                     item.selectedShape === selectedShape)
           )
         })
       },
       
-      updateQuantity: (id, quantity, selectedSize, selectedColor) => {
+      updateQuantity: (id, quantity, selectedSize, selectedColor, selectedShape) => {
         if (quantity < 1) return
         
         const items = get().items.map(item => {
           if (item.id === id && 
               item.selectedSize === selectedSize &&
-              item.selectedColor === selectedColor) {
+              item.selectedColor === selectedColor &&
+              item.selectedShape === selectedShape) {
             return { ...item, quantity }
           }
           return item

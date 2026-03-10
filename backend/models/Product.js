@@ -77,6 +77,10 @@ const productSchema = new mongoose.Schema({
     hex: String,
     image: String
   }],
+  shapes: [{
+    name: String,
+    image: String
+  }],
   addons: [{
     name: String,
     price: Number,

@@ -61,6 +61,9 @@ const CartPage = () => {
                             {item.selectedColor && `اللون: ${item.selectedColor}`}
                           </p>
                         )}
+                        {item.selectedShape && (
+                          <p className="text-sm text-gray-500 mt-1">الشكل: {item.selectedShape}</p>
+                        )}
                         {item.boxSelections?.length > 0 && (
                           <div className="text-sm text-gray-500 mt-1 space-y-0.5">
                             {item.boxSelections.map((sel, i) => (
@@ -71,7 +74,7 @@ const CartPage = () => {
 
                       </div>
                       <button 
-                        onClick={() => removeItem(item.id, item.selectedSize, item.selectedColor)}
+                        onClick={() => removeItem(item.id, item.selectedSize, item.selectedColor, item.selectedShape)}
                         className="text-red-500 hover:bg-red-50 p-2 rounded-lg"
                       >
                         <FiTrash2 />
@@ -81,7 +84,7 @@ const CartPage = () => {
                     <div className="flex items-center justify-between mt-4">
                       <div className="flex items-center border border-gray-300 rounded-lg">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.selectedSize, item.selectedColor)}
+                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.selectedSize, item.selectedColor, item.selectedShape)}
                           className="p-2 hover:bg-gray-100"
                           disabled={item.quantity <= 1}
                         >
@@ -89,7 +92,7 @@ const CartPage = () => {
                         </button>
                         <span className="px-4 font-medium">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.selectedSize, item.selectedColor)}
+                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.selectedSize, item.selectedColor, item.selectedShape)}
                           className="p-2 hover:bg-gray-100"
                         >
                           <FiPlus size={16} />
