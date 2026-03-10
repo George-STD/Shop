@@ -365,21 +365,14 @@ const ProductPage = () => {
                 {/* Zoomed overlay — outside overflow-hidden so it's not clipped */}
                 {isZooming && (
                   <div
-                    className="hidden lg:block absolute top-0 right-[calc(100%+16px)] w-[500px] h-[500px] bg-white border-2 border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden"
-                  >
-                    <img
-                      src={activeBoxImage || product.images?.[activeImageIdx]?.url}
-                      alt="zoom"
-                      className="absolute max-w-none"
-                      style={{
-                        width: '250%',
-                        height: '250%',
-                        left: `${-zoomPos.x * 2.5 + 125}%`,
-                        top: `${-zoomPos.y * 2.5 + 125}%`,
-                      }}
-                      draggable={false}
-                    />
-                  </div>
+                    className="hidden lg:block absolute top-0 right-[calc(100%+16px)] w-[500px] h-[500px] bg-white border-2 border-gray-200 rounded-2xl shadow-2xl z-50"
+                    style={{
+                      backgroundImage: `url(${activeBoxImage || product.images?.[activeImageIdx]?.url})`,
+                      backgroundSize: '250%',
+                      backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
+                      backgroundRepeat: 'no-repeat',
+                    }}
+                  />
                 )}
               </div>
 
