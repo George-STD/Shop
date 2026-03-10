@@ -365,7 +365,7 @@ const ProductPage = () => {
                 {/* Zoomed overlay — outside overflow-hidden so it's not clipped */}
                 {isZooming && (
                   <div
-                    className="hidden lg:block absolute top-0 left-[calc(100%+16px)] w-[500px] h-[500px] bg-white border-2 border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                    className="hidden lg:block absolute top-0 right-[calc(100%+16px)] w-[500px] h-[500px] bg-white border-2 border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden"
                   >
                     <img
                       src={activeBoxImage || product.images?.[activeImageIdx]?.url}
@@ -383,55 +383,45 @@ const ProductPage = () => {
                 )}
               </div>
 
-              {/* Product image thumbnails */}
-              {product.images?.length > 1 && (
-                <div className="flex gap-3 overflow-x-auto pb-2">
-                  {product.images.map((image, index) => (
-                    <button
-                      key={index}
-                      onClick={() => { setActiveImageIdx(index); setActiveBoxImage(null) }}
-                      onMouseEnter={() => { setActiveImageIdx(index); setActiveBoxImage(null) }}
-                      className={`flex-shrink-0 rounded-lg overflow-hidden aspect-square w-16 sm:w-20 border-2 transition-all ${
-                        !activeBoxImage && activeImageIdx === index
-                          ? 'border-purple-500 shadow-md scale-105'
-                          : 'border-transparent hover:border-purple-300'
-                      }`}
-                    >
-                      <img 
-                        src={image.url} 
-                        alt={image.alt}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Box selection thumbnails */}
-              {product.isCustomBox && Object.entries(boxSelections).some(([, opt]) => opt?.image) && (
-                <div>
-                  <p className="text-sm text-gray-600 mb-2 font-medium">🎁 اختياراتك:</p>
-                  <div className="flex gap-3 overflow-x-auto pb-2">
-                    {Object.entries(boxSelections).filter(([, opt]) => opt?.image).map(([label, opt]) => (
-                      <button
-                        key={label}
-                        onClick={() => setActiveBoxImage(opt.image)}
-                        onMouseEnter={() => setActiveBoxImage(opt.image)}
-                        className={`flex-shrink-0 rounded-lg overflow-hidden w-16 sm:w-20 border-2 transition-all ${
-                          activeBoxImage === opt.image
-                            ? 'border-purple-500 shadow-md scale-105'
-                            : 'border-transparent hover:border-purple-300'
-                        }`}
-                      >
-                        <div className="aspect-square">
-                          <img src={opt.image} alt={opt.name} className="w-full h-full object-cover" />
-                        </div>
-                        <p className="text-[10px] text-center truncate px-1 py-0.5 text-gray-600">{opt.name}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Thumbnails — product images + box selections in one row */}
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {product.images?.map((image, index) => (
+                  <button
+                    key={`img-${index}`}
+                    onClick={() => { setActiveImageIdx(index); setActiveBoxImage(null) }}
+                    onMouseEnter={() => { setActiveImageIdx(index); setActiveBoxImage(null) }}
+                    className={`flex-shrink-0 rounded-lg overflow-hidden aspect-square w-16 sm:w-20 border-2 transition-all ${
+                      !activeBoxImage && activeImageIdx === index
+                        ? 'border-purple-500 shadow-md scale-105'
+                        : 'border-transparent hover:border-purple-300'
+                    }`}
+                  >
+                    <img 
+                      src={image.url} 
+                      alt={image.alt}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+                {/* Box selection thumbnails inline */}
+                {product.isCustomBox && Object.entries(boxSelections).filter(([, opt]) => opt?.image).map(([label, opt]) => (
+                  <button
+                    key={`box-${label}`}
+                    onClick={() => setActiveBoxImage(opt.image)}
+                    onMouseEnter={() => setActiveBoxImage(opt.image)}
+                    className={`flex-shrink-0 rounded-lg overflow-hidden w-16 sm:w-20 border-2 transition-all ${
+                      activeBoxImage === opt.image
+                        ? 'border-purple-500 shadow-md scale-105'
+                        : 'border-transparent hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="aspect-square relative">
+                      <img src={opt.image} alt={opt.name} className="w-full h-full object-cover" />
+                      <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[9px] text-center py-0.5 truncate px-1">🎁 {opt.name}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Info */}
