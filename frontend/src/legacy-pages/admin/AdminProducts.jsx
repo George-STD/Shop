@@ -433,7 +433,7 @@ const AdminProducts = () => {
                               <input
                                 type="checkbox"
                                 checked={formData.hasShapes}
-                                onChange={e => setFormData({ ...formData, hasShapes: e.target.checked, shapes: e.target.checked ? (formData.shapes.length ? formData.shapes : [{ name: '', image: '' }]) : [] })}
+                                onChange={e => setFormData({ ...formData, hasShapes: e.target.checked, shapes: e.target.checked ? (formData.shapes.length ? formData.shapes : [{ name: '', images: [''] }]) : [] })}
                                 className="mr-2"
                               />
                               <span>نعم</span>
@@ -443,39 +443,61 @@ const AdminProducts = () => {
                               <div className="space-y-2">
                                 <label className="block text-sm font-medium mb-1">أشكال المنتج</label>
                                 {formData.shapes.map((shape, idx) => (
-                                  <div key={idx} className="flex flex-wrap items-center gap-2 mb-2">
-                                    <input
-                                      type="text"
-                                      placeholder="اسم الشكل"
-                                      value={shape.name}
-                                      onChange={e => {
-                                        const newShapes = [...formData.shapes];
-                                        newShapes[idx] = { ...newShapes[idx], name: e.target.value };
+                                  <div key={idx} className="bg-gray-50 p-2 rounded-lg space-y-2 mb-2">
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="text"
+                                        placeholder="اسم الشكل"
+                                        value={shape.name}
+                                        onChange={e => {
+                                          const newShapes = [...formData.shapes];
+                                          newShapes[idx] = { ...newShapes[idx], name: e.target.value };
+                                          setFormData({ ...formData, shapes: newShapes });
+                                        }}
+                                        className="flex-1 min-w-[120px] border rounded-lg px-2 py-1"
+                                      />
+                                      <button type="button" onClick={() => {
+                                        const newShapes = formData.shapes.filter((_, i) => i !== idx);
                                         setFormData({ ...formData, shapes: newShapes });
-                                      }}
-                                      className="flex-1 min-w-[120px] border rounded-lg px-2 py-1"
-                                    />
-                                    <input
-                                      type="url"
-                                      placeholder="رابط صورة الشكل"
-                                      value={shape.image || ''}
-                                      onChange={e => {
+                                      }} className="text-red-500 px-2">حذف</button>
+                                    </div>
+                                    <div className="space-y-1 mr-4">
+                                      {(shape.images || [shape.image].filter(Boolean)).map((imgUrl, imgIdx) => (
+                                        <div key={imgIdx} className="flex items-center gap-1">
+                                          <input
+                                            type="url"
+                                            placeholder={`رابط الصورة ${imgIdx + 1}`}
+                                            value={imgUrl || ''}
+                                            onChange={e => {
+                                              const newShapes = [...formData.shapes];
+                                              const newImages = [...(newShapes[idx].images || [newShapes[idx].image].filter(Boolean))];
+                                              newImages[imgIdx] = e.target.value;
+                                              newShapes[idx] = { ...newShapes[idx], images: newImages };
+                                              setFormData({ ...formData, shapes: newShapes });
+                                            }}
+                                            className="flex-1 border rounded px-2 py-1 text-xs"
+                                          />
+                                          {imgUrl && <img src={imgUrl} alt="" className="w-8 h-8 object-cover rounded border" />}
+                                          {(shape.images || [shape.image].filter(Boolean)).length > 1 && (
+                                            <button type="button" onClick={() => {
+                                              const newShapes = [...formData.shapes];
+                                              const newImages = [...(newShapes[idx].images || [])].filter((_, i) => i !== imgIdx);
+                                              newShapes[idx] = { ...newShapes[idx], images: newImages };
+                                              setFormData({ ...formData, shapes: newShapes });
+                                            }} className="text-red-300 hover:text-red-500 text-xs">✕</button>
+                                          )}
+                                        </div>
+                                      ))}
+                                      <button type="button" onClick={() => {
                                         const newShapes = [...formData.shapes];
-                                        newShapes[idx] = { ...newShapes[idx], image: e.target.value };
+                                        const currentImages = newShapes[idx].images || [newShapes[idx].image].filter(Boolean);
+                                        newShapes[idx] = { ...newShapes[idx], images: [...currentImages, ''] };
                                         setFormData({ ...formData, shapes: newShapes });
-                                      }}
-                                      className="flex-1 min-w-[150px] border rounded-lg px-2 py-1 text-sm"
-                                    />
-                                    {shape.image && (
-                                      <img src={shape.image} alt={shape.name} className="w-10 h-10 object-cover rounded border" />
-                                    )}
-                                    <button type="button" onClick={() => {
-                                      const newShapes = formData.shapes.filter((_, i) => i !== idx);
-                                      setFormData({ ...formData, shapes: newShapes });
-                                    }} className="text-red-500 px-2">حذف</button>
+                                      }} className="text-purple-500 text-xs hover:underline">+ صورة إضافية</button>
+                                    </div>
                                   </div>
                                 ))}
-                                <button type="button" onClick={() => setFormData({ ...formData, shapes: [...formData.shapes, { name: '', image: '' }] })} className="text-purple-600">إضافة شكل</button>
+                                <button type="button" onClick={() => setFormData({ ...formData, shapes: [...formData.shapes, { name: '', images: [''] }] })} className="text-purple-600">إضافة شكل</button>
                               </div>
                             )}
 

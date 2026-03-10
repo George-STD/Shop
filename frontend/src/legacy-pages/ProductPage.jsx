@@ -434,6 +434,26 @@ const ProductPage = () => {
                     </button>
                   ))
                 )}
+                {/* Shape images thumbnails */}
+                {selectedShape && product.shapes?.filter(s => s.name === selectedShape).flatMap(shape =>
+                  getOptImages(shape).map((imgUrl, imgIdx) => (
+                    <button
+                      key={`shape-${shape.name}-${imgIdx}`}
+                      onClick={() => setActiveBoxImage(imgUrl)}
+                      onMouseEnter={() => setActiveBoxImage(imgUrl)}
+                      className={`flex-shrink-0 rounded-lg overflow-hidden w-16 sm:w-20 border-2 transition-all ${
+                        activeBoxImage === imgUrl
+                          ? 'border-purple-500 shadow-md scale-105'
+                          : 'border-transparent hover:border-purple-300'
+                      }`}
+                    >
+                      <div className="aspect-square relative">
+                        <img src={imgUrl} alt={shape.name} className="w-full h-full object-cover" />
+                        <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[9px] text-center py-0.5 truncate px-1">{shape.name}</span>
+                      </div>
+                    </button>
+                  ))
+                )}
               </div>
             </div>
 
@@ -563,27 +583,30 @@ const ProductPage = () => {
                     >
                       <img src={product.images?.[0]?.url} alt="الشكل الأصلي" className="w-full h-full object-cover" />
                     </button>
-                    {product.shapes.map((shape) => (
-                      <button
-                        key={shape.name}
-                        onClick={() => {
-                          setSelectedShape(shape.name)
-                          if (shape.image) setActiveBoxImage(shape.image)
-                        }}
-                        className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all ${
-                          selectedShape === shape.name
-                            ? 'border-purple-500 ring-2 ring-purple-200 scale-105'
-                            : 'border-gray-200 hover:border-purple-300'
-                        }`}
-                        title={shape.name}
-                      >
-                        {shape.image ? (
-                          <img src={shape.image} alt={shape.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-xs text-gray-600 flex items-center justify-center h-full">{shape.name}</span>
-                        )}
-                      </button>
-                    ))}
+                    {product.shapes.map((shape) => {
+                      const shapeImages = getOptImages(shape)
+                      return (
+                        <button
+                          key={shape.name}
+                          onClick={() => {
+                            setSelectedShape(shape.name)
+                            if (shapeImages.length > 0) setActiveBoxImage(shapeImages[0])
+                          }}
+                          className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all ${
+                            selectedShape === shape.name
+                              ? 'border-purple-500 ring-2 ring-purple-200 scale-105'
+                              : 'border-gray-200 hover:border-purple-300'
+                          }`}
+                          title={shape.name}
+                        >
+                          {shapeImages.length > 0 ? (
+                            <img src={shapeImages[0]} alt={shape.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-xs text-gray-600 flex items-center justify-center h-full">{shape.name}</span>
+                          )}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )}
