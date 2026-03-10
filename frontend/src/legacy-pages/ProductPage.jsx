@@ -146,6 +146,7 @@ const ProductPage = () => {
   const [isZooming, setIsZooming] = useState(false)
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
   const [activeImageIdx, setActiveImageIdx] = useState(0)
+  const [activeBoxImage, setActiveBoxImage] = useState(null)
   const imgContainerRef = useRef(null)
   const [selectedSize, setSelectedSize] = useState(null)
   const [selectedColor, setSelectedColor] = useState(null)
@@ -324,44 +325,50 @@ const ProductPage = () => {
             {/* Images */}
             <div className="space-y-4">
               {/* Main Image with Amazon-style zoom */}
-              <div
-                ref={imgContainerRef}
-                className="relative rounded-2xl overflow-hidden bg-white aspect-square cursor-crosshair group"
-                onMouseEnter={() => setIsZooming(true)}
-                onMouseLeave={() => setIsZooming(false)}
-                onMouseMove={(e) => {
-                  const rect = imgContainerRef.current?.getBoundingClientRect()
-                  if (!rect) return
-                  const x = ((e.clientX - rect.left) / rect.width) * 100
-                  const y = ((e.clientY - rect.top) / rect.height) * 100
-                  setZoomPos({ x, y })
-                }}
-              >
-                <img
-                  src={product.images?.[activeImageIdx]?.url}
-                  alt={product.images?.[activeImageIdx]?.alt || product.name}
-                  className="w-full h-full object-cover"
-                  draggable={false}
-                />
-                {/* Zoom lens indicator */}
-                {isZooming && (
-                  <div
-                    className="absolute pointer-events-none border-2 border-purple-400/50 bg-purple-200/20 rounded-sm"
-                    style={{
-                      width: '120px',
-                      height: '120px',
-                      left: `calc(${zoomPos.x}% - 60px)`,
-                      top: `calc(${zoomPos.y}% - 60px)`,
-                    }}
+              <div className="relative">
+                <div
+                  ref={imgContainerRef}
+                  className="relative rounded-2xl overflow-hidden bg-white aspect-square cursor-crosshair group"
+                  onMouseEnter={() => setIsZooming(true)}
+                  onMouseLeave={() => setIsZooming(false)}
+                  onMouseMove={(e) => {
+                    const rect = imgContainerRef.current?.getBoundingClientRect()
+                    if (!rect) return
+                    const x = ((e.clientX - rect.left) / rect.width) * 100
+                    const y = ((e.clientY - rect.top) / rect.height) * 100
+                    setZoomPos({ x, y })
+                  }}
+                >
+                  <img
+                    src={activeBoxImage || product.images?.[activeImageIdx]?.url}
+                    alt={activeBoxImage ? 'اختيار البوكس' : (product.images?.[activeImageIdx]?.alt || product.name)}
+                    className="w-full h-full object-cover"
+                    draggable={false}
                   />
-                )}
-                {/* Zoomed overlay */}
+                  {/* Zoom lens indicator */}
+                  {isZooming && (
+                    <div
+                      className="absolute pointer-events-none border-2 border-purple-400/50 bg-purple-200/20 rounded-sm"
+                      style={{
+                        width: '120px',
+                        height: '120px',
+                        left: `calc(${zoomPos.x}% - 60px)`,
+                        top: `calc(${zoomPos.y}% - 60px)`,
+                      }}
+                    />
+                  )}
+                  <div className="absolute bottom-3 left-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-gray-600 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity lg:flex hidden">
+                    <FiZoomIn className="w-3 h-3" />
+                    مرر الماوس للتكبير
+                  </div>
+                </div>
+                {/* Zoomed overlay — outside overflow-hidden so it's not clipped */}
                 {isZooming && (
                   <div
                     className="hidden lg:block absolute top-0 left-[calc(100%+16px)] w-[500px] h-[500px] bg-white border-2 border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden"
                   >
                     <img
-                      src={product.images?.[activeImageIdx]?.url}
+                      src={activeBoxImage || product.images?.[activeImageIdx]?.url}
                       alt="zoom"
                       className="absolute max-w-none"
                       style={{
@@ -374,21 +381,18 @@ const ProductPage = () => {
                     />
                   </div>
                 )}
-                <div className="absolute bottom-3 left-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-gray-600 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity lg:flex hidden">
-                  <FiZoomIn className="w-3 h-3" />
-                  مرر الماوس للتكبير
-                </div>
               </div>
 
+              {/* Product image thumbnails */}
               {product.images?.length > 1 && (
                 <div className="flex gap-3 overflow-x-auto pb-2">
                   {product.images.map((image, index) => (
                     <button
                       key={index}
-                      onClick={() => setActiveImageIdx(index)}
-                      onMouseEnter={() => setActiveImageIdx(index)}
+                      onClick={() => { setActiveImageIdx(index); setActiveBoxImage(null) }}
+                      onMouseEnter={() => { setActiveImageIdx(index); setActiveBoxImage(null) }}
                       className={`flex-shrink-0 rounded-lg overflow-hidden aspect-square w-16 sm:w-20 border-2 transition-all ${
-                        activeImageIdx === index
+                        !activeBoxImage && activeImageIdx === index
                           ? 'border-purple-500 shadow-md scale-105'
                           : 'border-transparent hover:border-purple-300'
                       }`}
@@ -400,6 +404,32 @@ const ProductPage = () => {
                       />
                     </button>
                   ))}
+                </div>
+              )}
+
+              {/* Box selection thumbnails */}
+              {product.isCustomBox && Object.entries(boxSelections).some(([, opt]) => opt?.image) && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-2 font-medium">🎁 اختياراتك:</p>
+                  <div className="flex gap-3 overflow-x-auto pb-2">
+                    {Object.entries(boxSelections).filter(([, opt]) => opt?.image).map(([label, opt]) => (
+                      <button
+                        key={label}
+                        onClick={() => setActiveBoxImage(opt.image)}
+                        onMouseEnter={() => setActiveBoxImage(opt.image)}
+                        className={`flex-shrink-0 rounded-lg overflow-hidden w-16 sm:w-20 border-2 transition-all ${
+                          activeBoxImage === opt.image
+                            ? 'border-purple-500 shadow-md scale-105'
+                            : 'border-transparent hover:border-purple-300'
+                        }`}
+                      >
+                        <div className="aspect-square">
+                          <img src={opt.image} alt={opt.name} className="w-full h-full object-cover" />
+                        </div>
+                        <p className="text-[10px] text-center truncate px-1 py-0.5 text-gray-600">{opt.name}</p>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
