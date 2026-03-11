@@ -663,7 +663,7 @@ const AdminProducts = () => {
                   <input
                     type="checkbox"
                     checked={formData.hasVariantGroups}
-                    onChange={e => setFormData({ ...formData, hasVariantGroups: e.target.checked, variantGroups: e.target.checked ? (formData.variantGroups.length ? formData.variantGroups : [{ name: '', replaceMainImage: false, options: [{ name: '', thumbnail: '' }] }]) : [] })}
+                    onChange={e => setFormData({ ...formData, hasVariantGroups: e.target.checked, variantGroups: e.target.checked ? (formData.variantGroups.length ? formData.variantGroups : [{ name: '', replaceMainImage: false, defaultOption: '', options: [{ name: '', thumbnail: '' }] }]) : [] })}
                     className="rounded"
                   />
                   <span className="font-medium">مجموعات اختيارات (تصفية الصور حسب الاختيار)</span>
@@ -751,11 +751,30 @@ const AdminProducts = () => {
                           newGroups[gIdx] = { ...newGroups[gIdx], options: [...newGroups[gIdx].options, { name: '', thumbnail: '' }] }
                           setFormData({ ...formData, variantGroups: newGroups })
                         }} className="text-blue-600 text-sm hover:underline">+ إضافة اختيار</button>
+                        {group.options.filter(o => o.name).length > 0 && (
+                          <div className="mt-2 pt-2 border-t">
+                            <label className="text-sm text-gray-600 font-medium">الاختيار الافتراضي:</label>
+                            <select
+                              value={group.defaultOption || ''}
+                              onChange={(e) => {
+                                const newGroups = [...formData.variantGroups]
+                                newGroups[gIdx] = { ...newGroups[gIdx], defaultOption: e.target.value }
+                                setFormData({ ...formData, variantGroups: newGroups })
+                              }}
+                              className="mr-2 border rounded px-2 py-1 text-sm"
+                            >
+                              <option value="">بدون اختيار افتراضي</option>
+                              {group.options.filter(o => o.name).map(opt => (
+                                <option key={opt.name} value={opt.name}>{opt.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
                   <button type="button" onClick={() => {
-                    setFormData({ ...formData, variantGroups: [...formData.variantGroups, { name: '', replaceMainImage: false, options: [{ name: '', thumbnail: '' }] }] })
+                    setFormData({ ...formData, variantGroups: [...formData.variantGroups, { name: '', replaceMainImage: false, defaultOption: '', options: [{ name: '', thumbnail: '' }] }] })
                   }} className="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-lg py-2 hover:bg-blue-50">+ إضافة مجموعة جديدة</button>
                 </div>
               )}

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { FiHeart, FiShare2, FiMinus, FiPlus, FiCheck, FiTruck, FiRotateCcw, FiShield, FiZoomIn, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
@@ -178,6 +178,22 @@ const ProductPage = () => {
     queryKey: ['product', slug],
     queryFn: () => productsAPI.getBySlug(slug).then(res => res.data.data)
   });
+
+  // Set default variant selections when product loads
+  const defaultsAppliedRef = useRef(false)
+  useEffect(() => {
+    if (!product?.variantGroups?.length || defaultsAppliedRef.current) return
+    const defaults = {}
+    for (const group of product.variantGroups) {
+      if (group.defaultOption) {
+        defaults[group.name] = group.defaultOption
+      }
+    }
+    if (Object.keys(defaults).length > 0) {
+      setSelectedVariants(defaults)
+      defaultsAppliedRef.current = true
+    }
+  }, [product])
 
   // Fetch related products
   const { data: relatedProducts } = useQuery({
