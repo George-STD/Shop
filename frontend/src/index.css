@@ -245,25 +245,6 @@ body {
   bottom: 4px !important;
 }
 
-/* Thumbnail swiper below main image */
-.thumbnail-swiper {
-  padding: 4px 0;
-}
-.thumbnail-swiper .swiper-slide {
-  width: auto !important;
-}
-.thumbnail-swiper .swiper-button-next,
-.thumbnail-swiper .swiper-button-prev {
-  width: 28px;
-  height: 28px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.thumbnail-swiper .swiper-button-next::after,
-.thumbnail-swiper .swiper-button-prev::after {
-  font-size: 14px;
-}
-
 /* Additional Gradient Utilities */
 .text-gradient {
   background: linear-gradient(135deg, #a855f7, #d946ef, #ec4899);

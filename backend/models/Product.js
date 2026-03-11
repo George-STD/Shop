@@ -79,8 +79,7 @@ const productSchema = new mongoose.Schema({
   }],
   shapes: [{
     name: String,
-    images: [String],
-    forOption: String
+    images: [String]
   }],
   addons: [{
     name: String,

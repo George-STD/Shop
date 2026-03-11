@@ -394,77 +394,67 @@ const ProductPage = () => {
                 )}
               </div>
 
-              {/* Thumbnails — product images + box selections in one Swiper */}
-              <Swiper
-                modules={[Autoplay, Navigation]}
-                slidesPerView="auto"
-                spaceBetween={12}
-                navigation
-                autoplay={{ delay: 3000, disableOnInteraction: true }}
-                className="thumbnail-swiper"
-              >
+              {/* Thumbnails — product images + box selections in one row */}
+              <div className="flex gap-3 overflow-x-auto pb-2">
                 {product.images?.map((image, index) => (
-                  <SwiperSlide key={`img-${index}`} style={{ width: 'auto' }}>
-                    <button
-                      onClick={() => { setActiveImageIdx(index); setActiveBoxImage(null) }}
-                      onMouseEnter={() => { setActiveImageIdx(index); setActiveBoxImage(null) }}
-                      className={`rounded-lg overflow-hidden aspect-square w-16 sm:w-20 border-2 transition-all ${
-                        !activeBoxImage && activeImageIdx === index
-                          ? 'border-purple-500 shadow-md scale-105'
-                          : 'border-transparent hover:border-purple-300'
-                      }`}
-                    >
-                      <img 
-                        src={image.url} 
-                        alt={image.alt}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  </SwiperSlide>
+                  <button
+                    key={`img-${index}`}
+                    onClick={() => { setActiveImageIdx(index); setActiveBoxImage(null) }}
+                    onMouseEnter={() => { setActiveImageIdx(index); setActiveBoxImage(null) }}
+                    className={`flex-shrink-0 rounded-lg overflow-hidden aspect-square w-16 sm:w-20 border-2 transition-all ${
+                      !activeBoxImage && activeImageIdx === index
+                        ? 'border-purple-500 shadow-md scale-105'
+                        : 'border-transparent hover:border-purple-300'
+                    }`}
+                  >
+                    <img 
+                      src={image.url} 
+                      alt={image.alt}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
                 ))}
                 {/* Box selection thumbnails inline */}
                 {product.isCustomBox && Object.entries(boxSelections).filter(([, opt]) => opt && getOptImages(opt).length > 0).flatMap(([label, opt]) =>
                   getOptImages(opt).map((imgUrl, imgIdx) => (
-                    <SwiperSlide key={`box-${label}-${imgIdx}`} style={{ width: 'auto' }}>
-                      <button
-                        onClick={() => setActiveBoxImage(imgUrl)}
-                        onMouseEnter={() => setActiveBoxImage(imgUrl)}
-                        className={`rounded-lg overflow-hidden w-16 sm:w-20 border-2 transition-all ${
-                          activeBoxImage === imgUrl
-                            ? 'border-purple-500 shadow-md scale-105'
-                            : 'border-transparent hover:border-purple-300'
-                        }`}
-                      >
-                        <div className="aspect-square relative">
-                          <img src={imgUrl} alt={opt.name} className="w-full h-full object-cover" />
-                          <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[9px] text-center py-0.5 truncate px-1">🎁 {opt.name}</span>
-                        </div>
-                      </button>
-                    </SwiperSlide>
+                    <button
+                      key={`box-${label}-${imgIdx}`}
+                      onClick={() => setActiveBoxImage(imgUrl)}
+                      onMouseEnter={() => setActiveBoxImage(imgUrl)}
+                      className={`flex-shrink-0 rounded-lg overflow-hidden w-16 sm:w-20 border-2 transition-all ${
+                        activeBoxImage === imgUrl
+                          ? 'border-purple-500 shadow-md scale-105'
+                          : 'border-transparent hover:border-purple-300'
+                      }`}
+                    >
+                      <div className="aspect-square relative">
+                        <img src={imgUrl} alt={opt.name} className="w-full h-full object-cover" />
+                        <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[9px] text-center py-0.5 truncate px-1">🎁 {opt.name}</span>
+                      </div>
+                    </button>
                   ))
                 )}
                 {/* Shape images thumbnails */}
                 {selectedShape && product.shapes?.filter(s => s.name === selectedShape).flatMap(shape =>
                   getOptImages(shape).map((imgUrl, imgIdx) => (
-                    <SwiperSlide key={`shape-${shape.name}-${imgIdx}`} style={{ width: 'auto' }}>
-                      <button
-                        onClick={() => setActiveBoxImage(imgUrl)}
-                        onMouseEnter={() => setActiveBoxImage(imgUrl)}
-                        className={`rounded-lg overflow-hidden w-16 sm:w-20 border-2 transition-all ${
-                          activeBoxImage === imgUrl
-                            ? 'border-purple-500 shadow-md scale-105'
-                            : 'border-transparent hover:border-purple-300'
-                        }`}
-                      >
-                        <div className="aspect-square relative">
-                          <img src={imgUrl} alt={shape.name} className="w-full h-full object-cover" />
-                          <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[9px] text-center py-0.5 truncate px-1">{shape.name}</span>
-                        </div>
-                      </button>
-                    </SwiperSlide>
+                    <button
+                      key={`shape-${shape.name}-${imgIdx}`}
+                      onClick={() => setActiveBoxImage(imgUrl)}
+                      onMouseEnter={() => setActiveBoxImage(imgUrl)}
+                      className={`flex-shrink-0 rounded-lg overflow-hidden w-16 sm:w-20 border-2 transition-all ${
+                        activeBoxImage === imgUrl
+                          ? 'border-purple-500 shadow-md scale-105'
+                          : 'border-transparent hover:border-purple-300'
+                      }`}
+                    >
+                      <div className="aspect-square relative">
+                        <img src={imgUrl} alt={shape.name} className="w-full h-full object-cover" />
+                        <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[9px] text-center py-0.5 truncate px-1">{shape.name}</span>
+                      </div>
+                    </button>
                   ))
                 )}
-              </Swiper>
+              </div>
             </div>
 
             {/* Info */}
@@ -571,14 +561,7 @@ const ProductPage = () => {
               )}
 
               {/* Shapes */}
-              {product.shapes?.length > 0 && (() => {
-                const selectedOptionNames = product.isCustomBox
-                  ? Object.values(boxSelections).filter(Boolean).map(opt => opt.name)
-                  : []
-                const visibleShapes = product.shapes.filter(shape =>
-                  !shape.forOption || selectedOptionNames.includes(shape.forOption)
-                )
-                return visibleShapes.length > 0 && (
+              {product.shapes?.length > 0 && (
                 <div>
                   <h3 className="font-medium text-gray-800 mb-3">
                     الشكل: {selectedShape && <span className="text-gray-500">{selectedShape}</span>}
@@ -600,7 +583,7 @@ const ProductPage = () => {
                     >
                       <img src={product.images?.[0]?.url} alt="الشكل الأصلي" className="w-full h-full object-cover" />
                     </button>
-                    {visibleShapes.map((shape) => {
+                    {product.shapes.map((shape) => {
                       const shapeImages = getOptImages(shape)
                       return (
                         <button
@@ -626,8 +609,7 @@ const ProductPage = () => {
                     })}
                   </div>
                 </div>
-                )
-              })()}
+              )}
 
               {/* Addons */}
               {product.addons?.length > 0 && (
@@ -677,23 +659,10 @@ const ProductPage = () => {
                             <button
                               key={opt.name}
                               type="button"
-                              onClick={() => {
-                                const newSelections = {
-                                  ...boxSelections,
-                                  [slot.slotLabel]: isSelected ? undefined : opt
-                                }
-                                setBoxSelections(newSelections)
-                                // Reset shape if it's no longer visible after box option change
-                                if (selectedShape && product.shapes?.length) {
-                                  const optionNames = Object.values(newSelections).filter(Boolean).map(o => o.name)
-                                  const currentShape = product.shapes.find(s => s.name === selectedShape)
-                                  if (currentShape?.forOption && !optionNames.includes(currentShape.forOption)) {
-                                    setSelectedShape(null)
-                                    setActiveImageIdx(0)
-                                    setActiveBoxImage(null)
-                                  }
-                                }
-                              }}
+                              onClick={() => setBoxSelections(prev => ({
+                                ...prev,
+                                [slot.slotLabel]: isSelected ? undefined : opt
+                              }))}
                               className={`relative rounded-xl border-2 overflow-hidden transition-all ${
                                 isSelected
                                   ? 'border-purple-500 ring-2 ring-purple-200 scale-[1.02]'

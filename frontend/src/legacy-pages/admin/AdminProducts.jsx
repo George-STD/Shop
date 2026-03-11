@@ -433,7 +433,7 @@ const AdminProducts = () => {
                               <input
                                 type="checkbox"
                                 checked={formData.hasShapes}
-                                onChange={e => setFormData({ ...formData, hasShapes: e.target.checked, shapes: e.target.checked ? (formData.shapes.length ? formData.shapes : [{ name: '', images: [''], forOption: '' }]) : [] })}
+                                onChange={e => setFormData({ ...formData, hasShapes: e.target.checked, shapes: e.target.checked ? (formData.shapes.length ? formData.shapes : [{ name: '', images: [''] }]) : [] })}
                                 className="mr-2"
                               />
                               <span>نعم</span>
@@ -456,19 +456,6 @@ const AdminProducts = () => {
                                         }}
                                         className="flex-1 min-w-[120px] border rounded-lg px-2 py-1"
                                       />
-                                      {formData.isCustomBox && (
-                                        <input
-                                          type="text"
-                                          placeholder="مرتبط بـ (اسم الاختيار)"
-                                          value={shape.forOption || ''}
-                                          onChange={e => {
-                                            const newShapes = [...formData.shapes];
-                                            newShapes[idx] = { ...newShapes[idx], forOption: e.target.value };
-                                            setFormData({ ...formData, shapes: newShapes });
-                                          }}
-                                          className="flex-1 min-w-[120px] border rounded-lg px-2 py-1 text-xs"
-                                        />
-                                      )}
                                       <button type="button" onClick={() => {
                                         const newShapes = formData.shapes.filter((_, i) => i !== idx);
                                         setFormData({ ...formData, shapes: newShapes });
@@ -510,7 +497,7 @@ const AdminProducts = () => {
                                     </div>
                                   </div>
                                 ))}
-                                <button type="button" onClick={() => setFormData({ ...formData, shapes: [...formData.shapes, { name: '', images: [''], forOption: '' }] })} className="text-purple-600">إضافة شكل</button>
+                                <button type="button" onClick={() => setFormData({ ...formData, shapes: [...formData.shapes, { name: '', images: [''] }] })} className="text-purple-600">إضافة شكل</button>
                               </div>
                             )}
 
