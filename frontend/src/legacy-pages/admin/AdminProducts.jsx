@@ -663,7 +663,7 @@ const AdminProducts = () => {
                   <input
                     type="checkbox"
                     checked={formData.hasVariantGroups}
-                    onChange={e => setFormData({ ...formData, hasVariantGroups: e.target.checked, variantGroups: e.target.checked ? (formData.variantGroups.length ? formData.variantGroups : [{ name: '', options: [{ name: '', thumbnail: '' }] }]) : [] })}
+                    onChange={e => setFormData({ ...formData, hasVariantGroups: e.target.checked, variantGroups: e.target.checked ? (formData.variantGroups.length ? formData.variantGroups : [{ name: '', replaceMainImage: false, options: [{ name: '', thumbnail: '' }] }]) : [] })}
                     className="rounded"
                   />
                   <span className="font-medium">مجموعات اختيارات (تصفية الصور حسب الاختيار)</span>
@@ -691,6 +691,21 @@ const AdminProducts = () => {
                           setFormData({ ...formData, variantGroups: formData.variantGroups.filter((_, i) => i !== gIdx) })
                         }} className="text-red-500 hover:text-red-700 text-sm">حذف</button>
                       </div>
+                      <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
+                        <input
+                          type="checkbox"
+                          checked={group.replaceMainImage || false}
+                          onChange={(e) => {
+                            const newGroups = formData.variantGroups.map((g, i) => ({
+                              ...g,
+                              replaceMainImage: i === gIdx ? e.target.checked : false
+                            }))
+                            setFormData({ ...formData, variantGroups: newGroups })
+                          }}
+                          className="rounded"
+                        />
+                        <span>الصورة المصغرة تحل محل الصورة الرئيسية</span>
+                      </label>
                       <div className="space-y-2 mr-4">
                         <p className="text-sm text-gray-600 font-medium">الخيارات:</p>
                         {group.options.map((opt, oIdx) => (
@@ -740,7 +755,7 @@ const AdminProducts = () => {
                     </div>
                   ))}
                   <button type="button" onClick={() => {
-                    setFormData({ ...formData, variantGroups: [...formData.variantGroups, { name: '', options: [{ name: '', thumbnail: '' }] }] })
+                    setFormData({ ...formData, variantGroups: [...formData.variantGroups, { name: '', replaceMainImage: false, options: [{ name: '', thumbnail: '' }] }] })
                   }} className="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-lg py-2 hover:bg-blue-50">+ إضافة مجموعة جديدة</button>
                 </div>
               )}

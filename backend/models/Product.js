@@ -92,6 +92,7 @@ const productSchema = new mongoose.Schema({
   }],
   variantGroups: [{
     name: String,
+    replaceMainImage: { type: Boolean, default: false },
     options: [{
       name: String,
       thumbnail: String

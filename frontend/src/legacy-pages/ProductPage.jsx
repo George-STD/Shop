@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { FiHeart, FiShare2, FiMinus, FiPlus, FiCheck, FiTruck, FiRotateCcw, FiShield, FiZoomIn, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
@@ -334,6 +334,48 @@ const ProductPage = () => {
   // Use filtered images for display (fallback to all images if no filter matches)
   const displayImages = filteredImages.length > 0 ? filteredImages : (product.images || [])
 
+  // Find the group that replaces main image + get its selected thumbnail
+  const replaceGroup = product.variantGroups?.find(g => g.replaceMainImage)
+  const replaceOption = replaceGroup && selectedVariants[replaceGroup.name]
+    ? replaceGroup.options.find(o => o.name === selectedVariants[replaceGroup.name])
+    : null
+  const mainOverrideImage = replaceOption?.thumbnail || null
+
+  // Cross-filter: for each group, determine which options are valid based on other groups' selections
+  const getVisibleOptions = (group) => {
+    if (!product.variantGroups || product.variantGroups.length < 2) return group.options
+    const otherSelections = Object.entries(selectedVariants).filter(([gName]) => gName !== group.name)
+    if (otherSelections.length === 0) return group.options
+    return group.options.filter(option => {
+      // Check if any product image is tagged with this option AND all other selected options
+      return product.images?.some(img => {
+        const tags = img.variantTags || {}
+        if (Object.keys(tags).length === 0) return true
+        const matchesThis = !tags[group.name] || tags[group.name] === option.name
+        const matchesOthers = otherSelections.every(([gName, gVal]) => {
+          return !tags[gName] || tags[gName] === gVal
+        })
+        return matchesThis && matchesOthers
+      })
+    })
+  }
+
+  // Auto-clear selections that become invisible due to cross-filtering
+  useEffect(() => {
+    if (!product.variantGroups || product.variantGroups.length < 2) return
+    const cleaned = { ...selectedVariants }
+    let changed = false
+    for (const group of product.variantGroups) {
+      if (!cleaned[group.name]) continue
+      const visible = getVisibleOptions(group)
+      if (!visible.some(o => o.name === cleaned[group.name])) {
+        delete cleaned[group.name]
+        changed = true
+      }
+    }
+    if (changed) setSelectedVariants(cleaned)
+  }, [selectedVariants, product.variantGroups])
+
   return (
     <>
 
@@ -383,8 +425,8 @@ const ProductPage = () => {
                   }}
                 >
                   <img
-                    src={activeBoxImage || displayImages[activeImageIdx]?.url}
-                    alt={activeBoxImage ? 'اختيار البوكس' : (displayImages[activeImageIdx]?.alt || product.name)}
+                    src={mainOverrideImage || activeBoxImage || displayImages[activeImageIdx]?.url}
+                    alt={mainOverrideImage ? 'الاختيار المحدد' : activeBoxImage ? 'اختيار البوكس' : (displayImages[activeImageIdx]?.alt || product.name)}
                     className="w-full h-full object-cover"
                     draggable={false}
                   />
@@ -410,7 +452,7 @@ const ProductPage = () => {
                   <div
                     className="hidden lg:block absolute top-0 right-[calc(100%+16px)] w-[500px] h-[500px] bg-white border-2 border-gray-200 rounded-2xl shadow-2xl z-50"
                     style={{
-                      backgroundImage: `url(${activeBoxImage || displayImages[activeImageIdx]?.url})`,
+                      backgroundImage: `url(${mainOverrideImage || activeBoxImage || displayImages[activeImageIdx]?.url})`,
                       backgroundSize: '250%',
                       backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
                       backgroundRepeat: 'no-repeat',
@@ -536,13 +578,15 @@ const ProductPage = () => {
               <p className="text-gray-600 leading-relaxed text-sm sm:text-base">{product.description}</p>
 
               {/* Variant Groups */}
-              {product.variantGroups?.length > 0 && product.variantGroups.map(group => (
+              {product.variantGroups?.length > 0 && product.variantGroups.map(group => {
+                const visibleOptions = getVisibleOptions(group)
+                return (
                 <div key={group.name}>
                   <h3 className="font-medium text-gray-800 mb-3">
                     {group.name}: {selectedVariants[group.name] && <span className="text-gray-500">{selectedVariants[group.name]}</span>}
                   </h3>
                   <div className="flex flex-wrap gap-2 sm:gap-3">
-                    {group.options.map(option => (
+                    {visibleOptions.map(option => (
                       <button
                         key={option.name}
                         onClick={() => {
@@ -567,7 +611,8 @@ const ProductPage = () => {
                     ))}
                   </div>
                 </div>
-              ))}
+                )
+              })}
 
               {/* Sizes */}
               {product.sizes?.length > 0 && (
