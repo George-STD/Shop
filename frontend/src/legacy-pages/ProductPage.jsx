@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { FiHeart, FiShare2, FiMinus, FiPlus, FiCheck, FiTruck, FiRotateCcw, FiShield, FiZoomIn, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
@@ -360,22 +360,6 @@ const ProductPage = () => {
     })
   }
 
-  // Auto-clear selections that become invisible due to cross-filtering
-  useEffect(() => {
-    if (!product.variantGroups || product.variantGroups.length < 2) return
-    const cleaned = { ...selectedVariants }
-    let changed = false
-    for (const group of product.variantGroups) {
-      if (!cleaned[group.name]) continue
-      const visible = getVisibleOptions(group)
-      if (!visible.some(o => o.name === cleaned[group.name])) {
-        delete cleaned[group.name]
-        changed = true
-      }
-    }
-    if (changed) setSelectedVariants(cleaned)
-  }, [selectedVariants, product.variantGroups])
-
   return (
     <>
 
@@ -591,6 +575,24 @@ const ProductPage = () => {
                         key={option.name}
                         onClick={() => {
                           const newVariants = { ...selectedVariants, [group.name]: option.name }
+                          // Auto-clear other groups' selections that become invisible
+                          if (product.variantGroups?.length >= 2) {
+                            for (const otherGroup of product.variantGroups) {
+                              if (otherGroup.name === group.name || !newVariants[otherGroup.name]) continue
+                              const otherSelections = Object.entries(newVariants).filter(([gName]) => gName !== otherGroup.name)
+                              const stillVisible = otherGroup.options.some(opt => {
+                                if (opt.name !== newVariants[otherGroup.name]) return false
+                                return product.images?.some(img => {
+                                  const tags = img.variantTags || {}
+                                  if (Object.keys(tags).length === 0) return true
+                                  const matchesOpt = !tags[otherGroup.name] || tags[otherGroup.name] === opt.name
+                                  const matchesRest = otherSelections.every(([gN, gV]) => !tags[gN] || tags[gN] === gV)
+                                  return matchesOpt && matchesRest
+                                })
+                              })
+                              if (!stillVisible) delete newVariants[otherGroup.name]
+                            }
+                          }
                           setSelectedVariants(newVariants)
                           setActiveImageIdx(0)
                           setActiveBoxImage(null)
