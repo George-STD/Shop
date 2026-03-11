@@ -9,11 +9,13 @@ export const useCartStore = create(
       
       addItem: (product, quantity = 1, options = {}) => {
         const items = get().items
+        const variantsKey = options.selectedVariants ? JSON.stringify(options.selectedVariants) : ''
         const existingIndex = items.findIndex(
           item => item.id === product._id && 
                   item.selectedSize === options.selectedSize &&
                   item.selectedColor === options.selectedColor &&
-                  item.selectedShape === options.selectedShape
+                  item.selectedShape === options.selectedShape &&
+                  (item._variantsKey || '') === variantsKey
         )
         
         if (existingIndex > -1) {
@@ -33,6 +35,8 @@ export const useCartStore = create(
               selectedSize: options.selectedSize,
               selectedColor: options.selectedColor,
               selectedShape: options.selectedShape,
+              selectedVariants: options.selectedVariants,
+              _variantsKey: variantsKey,
               addons: options.addons || [],
               boxSelections: options.boxSelections || [],
               giftWrap: options.giftWrap || { enabled: false }
@@ -41,25 +45,27 @@ export const useCartStore = create(
         }
       },
       
-      removeItem: (id, selectedSize, selectedColor, selectedShape) => {
+      removeItem: (id, selectedSize, selectedColor, selectedShape, _variantsKey) => {
         set({
           items: get().items.filter(
             item => !(item.id === id && 
                      item.selectedSize === selectedSize &&
                      item.selectedColor === selectedColor &&
-                     item.selectedShape === selectedShape)
+                     item.selectedShape === selectedShape &&
+                     (item._variantsKey || '') === (_variantsKey || ''))
           )
         })
       },
       
-      updateQuantity: (id, quantity, selectedSize, selectedColor, selectedShape) => {
+      updateQuantity: (id, quantity, selectedSize, selectedColor, selectedShape, _variantsKey) => {
         if (quantity < 1) return
         
         const items = get().items.map(item => {
           if (item.id === id && 
               item.selectedSize === selectedSize &&
               item.selectedColor === selectedColor &&
-              item.selectedShape === selectedShape) {
+              item.selectedShape === selectedShape &&
+              (item._variantsKey || '') === (_variantsKey || '')) {
             return { ...item, quantity }
           }
           return item

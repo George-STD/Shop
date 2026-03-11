@@ -102,6 +102,7 @@ const CheckoutPage = () => {
           selectedSize: item.selectedSize,
           selectedColor: item.selectedColor,
           selectedShape: item.selectedShape,
+          selectedVariants: item.selectedVariants,
           addons: item.addons,
           boxSelections: item.boxSelections,
         })),
@@ -375,6 +376,13 @@ const CheckoutPage = () => {
                         <div className="flex-1">
                           <p className="text-sm font-medium line-clamp-2">{item.name}</p>
                           <p className="text-sm text-gray-500">{item.price} ج.م</p>
+                          {item.selectedVariants && Object.keys(item.selectedVariants).length > 0 && (
+                            <div className="text-xs text-gray-400 mt-0.5">
+                              {Object.entries(item.selectedVariants).map(([group, value]) => (
+                                <p key={group}>{group}: {value}</p>
+                              ))}
+                            </div>
+                          )}
                           {item.boxSelections?.length > 0 && (
                             <div className="text-xs text-gray-400 mt-1">
                               {item.boxSelections.map((sel, i) => (

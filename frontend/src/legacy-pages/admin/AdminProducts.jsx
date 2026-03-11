@@ -18,11 +18,13 @@ const AdminProducts = () => {
     category: '',
     stock: '',
     sku: '',
-    images: [{ url: '', alt: '' }],
+    images: [{ url: '', alt: '', variantTags: {} }],
     hasColors: false,
     colors: [],
     hasShapes: false,
     shapes: [],
+    hasVariantGroups: false,
+    variantGroups: [],
     occasions: [],
     recipients: [],
     isActive: true,
@@ -86,11 +88,13 @@ const AdminProducts = () => {
       category: '',
       stock: '',
       sku: '',
-      images: [{ url: '', alt: '' }],
+      images: [{ url: '', alt: '', variantTags: {} }],
       hasColors: false,
       colors: [],
       hasShapes: false,
       shapes: [],
+      hasVariantGroups: false,
+      variantGroups: [],
       occasions: [],
       recipients: [],
       isActive: true,
@@ -112,11 +116,13 @@ const AdminProducts = () => {
       category: product.category?._id || product.category,
       stock: product.stock,
       sku: product.sku || '',
-      images: product.images?.length ? product.images : [{ url: '', alt: '' }],
+      images: product.images?.length ? product.images.map(img => ({ url: img.url, alt: img.alt || '', variantTags: img.variantTags || {} })) : [{ url: '', alt: '', variantTags: {} }],
       hasColors: product.colors && product.colors.length > 0,
       colors: product.colors || [],
       hasShapes: product.shapes && product.shapes.length > 0,
       shapes: product.shapes || [],
+      hasVariantGroups: product.variantGroups && product.variantGroups.length > 0,
+      variantGroups: product.variantGroups || [],
       occasions: product.occasions || [],
       recipients: product.recipients || [],
       isActive: product.isActive,
@@ -135,8 +141,15 @@ const AdminProducts = () => {
       price: Number(formData.price),
       comparePrice: formData.comparePrice ? Number(formData.comparePrice) : undefined,
       stock: Number(formData.stock),
-      images: formData.images.filter(img => img.url)
+      images: formData.images.filter(img => img.url),
+      variantGroups: formData.hasVariantGroups ? formData.variantGroups.filter(g => g.name).map(g => ({
+        ...g,
+        options: g.options.filter(o => o.name)
+      })) : []
     }
+    delete data.hasColors
+    delete data.hasShapes
+    delete data.hasVariantGroups
 
     if (editingProduct) {
       updateMutation.mutate({ id: editingProduct._id, data })
@@ -581,19 +594,156 @@ const AdminProducts = () => {
                 </div>
               </div>
 
+              {/* Images */}
               <div>
-                <label className="block text-sm font-medium mb-1">رابط الصورة</label>
-                <input
-                  type="url"
-                  value={formData.images[0]?.url || ''}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    images: [{ url: e.target.value, alt: formData.name }] 
-                  })}
-                  className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
-                  placeholder="https://..."
-                />
+                <label className="block text-sm font-medium mb-1">صور المنتج</label>
+                <div className="space-y-3">
+                  {formData.images.map((img, imgIdx) => (
+                    <div key={imgIdx} className="bg-gray-50 p-3 rounded-lg space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="url"
+                          placeholder={`رابط الصورة ${imgIdx + 1}`}
+                          value={img.url || ''}
+                          onChange={(e) => {
+                            const newImages = [...formData.images]
+                            newImages[imgIdx] = { ...newImages[imgIdx], url: e.target.value, alt: formData.name }
+                            setFormData({ ...formData, images: newImages })
+                          }}
+                          className="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 text-sm"
+                        />
+                        {img.url && <img src={img.url} alt="" className="w-10 h-10 object-cover rounded border" />}
+                        {formData.images.length > 1 && (
+                          <button type="button" onClick={() => {
+                            setFormData({ ...formData, images: formData.images.filter((_, i) => i !== imgIdx) })
+                          }} className="text-red-400 hover:text-red-600 text-sm">✕</button>
+                        )}
+                      </div>
+                      {/* Variant tags for this image */}
+                      {formData.hasVariantGroups && formData.variantGroups.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mr-2">
+                          {formData.variantGroups.filter(g => g.name).map(group => (
+                            <div key={group.name} className="flex items-center gap-1">
+                              <span className="text-xs text-gray-500">{group.name}:</span>
+                              <select
+                                value={(img.variantTags || {})[group.name] || ''}
+                                onChange={(e) => {
+                                  const newImages = [...formData.images]
+                                  const newTags = { ...(newImages[imgIdx].variantTags || {}) }
+                                  if (e.target.value) {
+                                    newTags[group.name] = e.target.value
+                                  } else {
+                                    delete newTags[group.name]
+                                  }
+                                  newImages[imgIdx] = { ...newImages[imgIdx], variantTags: newTags }
+                                  setFormData({ ...formData, images: newImages })
+                                }}
+                                className="border rounded px-2 py-0.5 text-xs bg-white"
+                              >
+                                <option value="">الكل</option>
+                                {group.options?.filter(o => o.name).map(opt => (
+                                  <option key={opt.name} value={opt.name}>{opt.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => {
+                    setFormData({ ...formData, images: [...formData.images, { url: '', alt: '', variantTags: {} }] })
+                  }} className="text-purple-600 text-sm hover:underline">+ إضافة صورة</button>
+                </div>
               </div>
+
+              {/* Variant Groups */}
+              <div className="border-t pt-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.hasVariantGroups}
+                    onChange={e => setFormData({ ...formData, hasVariantGroups: e.target.checked, variantGroups: e.target.checked ? (formData.variantGroups.length ? formData.variantGroups : [{ name: '', options: [{ name: '', thumbnail: '' }] }]) : [] })}
+                    className="rounded"
+                  />
+                  <span className="font-medium">مجموعات اختيارات (تصفية الصور حسب الاختيار)</span>
+                </label>
+              </div>
+
+              {formData.hasVariantGroups && (
+                <div className="space-y-4 border rounded-xl p-4 bg-blue-50/50">
+                  <h3 className="font-bold text-blue-700">مجموعات الاختيارات</h3>
+                  {formData.variantGroups.map((group, gIdx) => (
+                    <div key={gIdx} className="border rounded-lg p-3 bg-white space-y-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder="اسم المجموعة (مثال: شكل البوكس)"
+                          value={group.name}
+                          onChange={(e) => {
+                            const newGroups = [...formData.variantGroups]
+                            newGroups[gIdx] = { ...newGroups[gIdx], name: e.target.value }
+                            setFormData({ ...formData, variantGroups: newGroups })
+                          }}
+                          className="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button type="button" onClick={() => {
+                          setFormData({ ...formData, variantGroups: formData.variantGroups.filter((_, i) => i !== gIdx) })
+                        }} className="text-red-500 hover:text-red-700 text-sm">حذف</button>
+                      </div>
+                      <div className="space-y-2 mr-4">
+                        <p className="text-sm text-gray-600 font-medium">الخيارات:</p>
+                        {group.options.map((opt, oIdx) => (
+                          <div key={oIdx} className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              placeholder="اسم الاختيار"
+                              value={opt.name}
+                              onChange={(e) => {
+                                const newGroups = [...formData.variantGroups]
+                                const newOpts = [...newGroups[gIdx].options]
+                                newOpts[oIdx] = { ...newOpts[oIdx], name: e.target.value }
+                                newGroups[gIdx] = { ...newGroups[gIdx], options: newOpts }
+                                setFormData({ ...formData, variantGroups: newGroups })
+                              }}
+                              className="flex-1 border rounded px-2 py-1 text-sm"
+                            />
+                            <input
+                              type="url"
+                              placeholder="صورة مصغرة (اختياري)"
+                              value={opt.thumbnail || ''}
+                              onChange={(e) => {
+                                const newGroups = [...formData.variantGroups]
+                                const newOpts = [...newGroups[gIdx].options]
+                                newOpts[oIdx] = { ...newOpts[oIdx], thumbnail: e.target.value }
+                                newGroups[gIdx] = { ...newGroups[gIdx], options: newOpts }
+                                setFormData({ ...formData, variantGroups: newGroups })
+                              }}
+                              className="flex-1 border rounded px-2 py-1 text-xs"
+                            />
+                            {opt.thumbnail && <img src={opt.thumbnail} alt="" className="w-8 h-8 object-cover rounded border" />}
+                            {group.options.length > 1 && (
+                              <button type="button" onClick={() => {
+                                const newGroups = [...formData.variantGroups]
+                                newGroups[gIdx] = { ...newGroups[gIdx], options: newGroups[gIdx].options.filter((_, i) => i !== oIdx) }
+                                setFormData({ ...formData, variantGroups: newGroups })
+                              }} className="text-red-300 hover:text-red-500 text-xs">✕</button>
+                            )}
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => {
+                          const newGroups = [...formData.variantGroups]
+                          newGroups[gIdx] = { ...newGroups[gIdx], options: [...newGroups[gIdx].options, { name: '', thumbnail: '' }] }
+                          setFormData({ ...formData, variantGroups: newGroups })
+                        }} className="text-blue-600 text-sm hover:underline">+ إضافة اختيار</button>
+                      </div>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => {
+                    setFormData({ ...formData, variantGroups: [...formData.variantGroups, { name: '', options: [{ name: '', thumbnail: '' }] }] })
+                  }} className="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-lg py-2 hover:bg-blue-50">+ إضافة مجموعة جديدة</button>
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">

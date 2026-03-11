@@ -18,6 +18,10 @@ const orderItemSchema = new mongoose.Schema({
   selectedSize: String,
   selectedColor: String,
   selectedShape: String,
+  selectedVariants: {
+    type: Map,
+    of: String
+  },
   addons: [{
     name: String,
     price: Number

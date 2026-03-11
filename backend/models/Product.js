@@ -36,7 +36,11 @@ const productSchema = new mongoose.Schema({
   },
   images: [{
     url: String,
-    alt: String
+    alt: String,
+    variantTags: {
+      type: Map,
+      of: String
+    }
   }],
   category: {
     type: mongoose.Schema.Types.ObjectId,
@@ -85,6 +89,13 @@ const productSchema = new mongoose.Schema({
     name: String,
     price: Number,
     image: String
+  }],
+  variantGroups: [{
+    name: String,
+    options: [{
+      name: String,
+      thumbnail: String
+    }]
   }],
   isActive: {
     type: Boolean,

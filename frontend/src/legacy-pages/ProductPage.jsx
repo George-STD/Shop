@@ -165,6 +165,7 @@ const ProductPage = () => {
   const [selectedShape, setSelectedShape] = useState(null)
   const [selectedAddons, setSelectedAddons] = useState([])
   const [boxSelections, setBoxSelections] = useState({})
+  const [selectedVariants, setSelectedVariants] = useState({})
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'reviews' ? 'reviews' : 'description')
 
   const { addItem } = useCartStore()
@@ -208,6 +209,16 @@ const ProductPage = () => {
       return
     }
 
+    // Validate variant groups
+    if (product.variantGroups?.length > 0) {
+      for (const group of product.variantGroups) {
+        if (!selectedVariants[group.name]) {
+          toast.error(`الرجاء اختيار: ${group.name}`)
+          return
+        }
+      }
+    }
+
     // Validate box selections
     if (product.isCustomBox && product.boxSlots?.length > 0) {
       for (const slot of product.boxSlots) {
@@ -222,6 +233,7 @@ const ProductPage = () => {
       selectedSize,
       selectedColor,
       selectedShape,
+      selectedVariants: product.variantGroups?.length > 0 ? selectedVariants : undefined,
       addons: selectedAddons,
       boxSelections: product.isCustomBox ? Object.entries(boxSelections).filter(([, opt]) => opt).map(([slotLabel, opt]) => ({
         slotLabel,
@@ -309,6 +321,19 @@ const ProductPage = () => {
     ? Math.round((1 - product.price / product.oldPrice) * 100) 
     : 0
 
+  // Filter images based on selected variants
+  const filteredImages = product.images?.filter(img => {
+    const tags = img.variantTags || {}
+    if (Object.keys(tags).length === 0) return true // untagged = always show
+    return Object.entries(selectedVariants).every(([groupName, optionName]) => {
+      if (!tags[groupName]) return true // no tag for this group = matches any
+      return tags[groupName] === optionName
+    })
+  }) || []
+
+  // Use filtered images for display (fallback to all images if no filter matches)
+  const displayImages = filteredImages.length > 0 ? filteredImages : (product.images || [])
+
   return (
     <>
 
@@ -358,8 +383,8 @@ const ProductPage = () => {
                   }}
                 >
                   <img
-                    src={activeBoxImage || product.images?.[activeImageIdx]?.url}
-                    alt={activeBoxImage ? 'اختيار البوكس' : (product.images?.[activeImageIdx]?.alt || product.name)}
+                    src={activeBoxImage || displayImages[activeImageIdx]?.url}
+                    alt={activeBoxImage ? 'اختيار البوكس' : (displayImages[activeImageIdx]?.alt || product.name)}
                     className="w-full h-full object-cover"
                     draggable={false}
                   />
@@ -385,7 +410,7 @@ const ProductPage = () => {
                   <div
                     className="hidden lg:block absolute top-0 right-[calc(100%+16px)] w-[500px] h-[500px] bg-white border-2 border-gray-200 rounded-2xl shadow-2xl z-50"
                     style={{
-                      backgroundImage: `url(${activeBoxImage || product.images?.[activeImageIdx]?.url})`,
+                      backgroundImage: `url(${activeBoxImage || displayImages[activeImageIdx]?.url})`,
                       backgroundSize: '250%',
                       backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
                       backgroundRepeat: 'no-repeat',
@@ -395,13 +420,13 @@ const ProductPage = () => {
               </div>
 
               {/* Thumbnails — product images + box selections in one row */}
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {product.images?.map((image, index) => (
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                {displayImages.map((image, index) => (
                   <button
                     key={`img-${index}`}
                     onClick={() => { setActiveImageIdx(index); setActiveBoxImage(null) }}
                     onMouseEnter={() => { setActiveImageIdx(index); setActiveBoxImage(null) }}
-                    className={`flex-shrink-0 rounded-lg overflow-hidden aspect-square w-16 sm:w-20 border-2 transition-all ${
+                    className={`flex-shrink-0 rounded-lg overflow-hidden aspect-square w-14 sm:w-16 md:w-20 border-2 transition-all ${
                       !activeBoxImage && activeImageIdx === index
                         ? 'border-purple-500 shadow-md scale-105'
                         : 'border-transparent hover:border-purple-300'
@@ -421,7 +446,7 @@ const ProductPage = () => {
                       key={`box-${label}-${imgIdx}`}
                       onClick={() => setActiveBoxImage(imgUrl)}
                       onMouseEnter={() => setActiveBoxImage(imgUrl)}
-                      className={`flex-shrink-0 rounded-lg overflow-hidden w-16 sm:w-20 border-2 transition-all ${
+                      className={`flex-shrink-0 rounded-lg overflow-hidden w-14 sm:w-16 md:w-20 border-2 transition-all ${
                         activeBoxImage === imgUrl
                           ? 'border-purple-500 shadow-md scale-105'
                           : 'border-transparent hover:border-purple-300'
@@ -429,7 +454,7 @@ const ProductPage = () => {
                     >
                       <div className="aspect-square relative">
                         <img src={imgUrl} alt={opt.name} className="w-full h-full object-cover" />
-                        <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[9px] text-center py-0.5 truncate px-1">🎁 {opt.name}</span>
+                        <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[8px] sm:text-[9px] text-center py-0.5 truncate px-1">🎁 {opt.name}</span>
                       </div>
                     </button>
                   ))
@@ -441,7 +466,7 @@ const ProductPage = () => {
                       key={`shape-${shape.name}-${imgIdx}`}
                       onClick={() => setActiveBoxImage(imgUrl)}
                       onMouseEnter={() => setActiveBoxImage(imgUrl)}
-                      className={`flex-shrink-0 rounded-lg overflow-hidden w-16 sm:w-20 border-2 transition-all ${
+                      className={`flex-shrink-0 rounded-lg overflow-hidden w-14 sm:w-16 md:w-20 border-2 transition-all ${
                         activeBoxImage === imgUrl
                           ? 'border-purple-500 shadow-md scale-105'
                           : 'border-transparent hover:border-purple-300'
@@ -449,7 +474,7 @@ const ProductPage = () => {
                     >
                       <div className="aspect-square relative">
                         <img src={imgUrl} alt={shape.name} className="w-full h-full object-cover" />
-                        <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[9px] text-center py-0.5 truncate px-1">{shape.name}</span>
+                        <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[8px] sm:text-[9px] text-center py-0.5 truncate px-1">{shape.name}</span>
                       </div>
                     </button>
                   ))
@@ -458,7 +483,7 @@ const ProductPage = () => {
             </div>
 
             {/* Info */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Category & Badges */}
               <div className="flex items-center gap-3">
                 {product.category && (
@@ -508,7 +533,41 @@ const ProductPage = () => {
               </div>
 
               {/* Description */}
-              <p className="text-gray-600 leading-relaxed">{product.description}</p>
+              <p className="text-gray-600 leading-relaxed text-sm sm:text-base">{product.description}</p>
+
+              {/* Variant Groups */}
+              {product.variantGroups?.length > 0 && product.variantGroups.map(group => (
+                <div key={group.name}>
+                  <h3 className="font-medium text-gray-800 mb-3">
+                    {group.name}: {selectedVariants[group.name] && <span className="text-gray-500">{selectedVariants[group.name]}</span>}
+                  </h3>
+                  <div className="flex flex-wrap gap-2 sm:gap-3">
+                    {group.options.map(option => (
+                      <button
+                        key={option.name}
+                        onClick={() => {
+                          const newVariants = { ...selectedVariants, [group.name]: option.name }
+                          setSelectedVariants(newVariants)
+                          setActiveImageIdx(0)
+                          setActiveBoxImage(null)
+                        }}
+                        className={`rounded-xl border-2 overflow-hidden transition-all ${
+                          selectedVariants[group.name] === option.name
+                            ? 'border-purple-500 ring-2 ring-purple-200 scale-105'
+                            : 'border-gray-200 hover:border-purple-300'
+                        } ${option.thumbnail ? 'w-16 h-16 sm:w-20 sm:h-20' : 'px-4 py-2'}`}
+                        title={option.name}
+                      >
+                        {option.thumbnail ? (
+                          <img src={option.thumbnail} alt={option.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-sm font-medium text-gray-700">{option.name}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
 
               {/* Sizes */}
               {product.sizes?.length > 0 && (
@@ -581,7 +640,7 @@ const ProductPage = () => {
                       }`}
                       title="الشكل الأصلي"
                     >
-                      <img src={product.images?.[0]?.url} alt="الشكل الأصلي" className="w-full h-full object-cover" />
+                      <img src={displayImages[0]?.url || product.images?.[0]?.url} alt="الشكل الأصلي" className="w-full h-full object-cover" />
                     </button>
                     {product.shapes.map((shape) => {
                       const shapeImages = getOptImages(shape)
@@ -691,8 +750,8 @@ const ProductPage = () => {
                                   <img src={optImages[0]} alt={opt.name} className="w-full h-full object-cover" />
                                 </div>
                               ) : null}
-                              <div className="p-2 text-center">
-                                <p className="text-sm font-medium text-gray-800">{opt.name}</p>
+                              <div className="p-1.5 sm:p-2 text-center">
+                                <p className="text-xs sm:text-sm font-medium text-gray-800">{opt.name}</p>
                               </div>
                               {isSelected && (
                                 <div className="absolute top-2 left-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center z-10">

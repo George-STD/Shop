@@ -268,6 +268,13 @@ const AdminOrders = () => {
                         <p className="text-sm text-gray-500">الكمية: {item.quantity}</p>
                         {item.selectedColor && <p className="text-xs text-gray-500">اللون: {item.selectedColor}</p>}
                         {item.selectedShape && <p className="text-xs text-gray-500">الشكل: {item.selectedShape}</p>}
+                        {item.selectedVariants && Object.keys(item.selectedVariants).length > 0 && (
+                          <div className="text-xs text-blue-600 mt-0.5">
+                            {Object.entries(item.selectedVariants).map(([group, value]) => (
+                              <p key={group}>{group}: {value}</p>
+                            ))}
+                          </div>
+                        )}
                         {item.boxSelections?.length > 0 && (
                           <div className="text-xs text-purple-600 mt-1">
                             {item.boxSelections.map((sel, i) => (
