@@ -42,11 +42,10 @@ const productSchema = new mongoose.Schema({
       of: String
     }
   }],
-  category: {
+  category: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Category',
-    required: true
-  },
+    ref: 'Category'
+  }],
   subcategory: {
     type: String
   },

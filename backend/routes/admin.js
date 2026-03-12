@@ -349,7 +349,8 @@ router.post('/products', [
   logAdminAction('CREATE_PRODUCT'),
   body('name').trim().notEmpty().withMessage('اسم المنتج مطلوب'),
   body('price').isNumeric().withMessage('السعر مطلوب'),
-  body('category').isMongoId().withMessage('الفئة مطلوبة')
+  body('category').isArray({ min: 1 }).withMessage('الفئة مطلوبة'),
+  body('category.*').isMongoId().withMessage('فئة غير صالحة')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -706,7 +707,7 @@ router.delete('/categories/:id', [
 ], async (req, res) => {
   try {
     // Check if category has products
-    const productsCount = await Product.countDocuments({ category: req.params.id });
+    const productsCount = await Product.countDocuments({ category: { $in: [req.params.id] } });
     
     if (productsCount > 0) {
       return res.status(400).json({

@@ -536,7 +536,7 @@ async function seedDatabase() {
     console.log('Creating products...');
     const productsWithCategory = productsData.map(product => ({
       ...product,
-      category: categoryMap[product.categorySlug]
+      category: [categoryMap[product.categorySlug]]
     }));
 
     // Remove categorySlug from products

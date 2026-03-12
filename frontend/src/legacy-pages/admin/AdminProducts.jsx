@@ -15,7 +15,7 @@ const AdminProducts = () => {
     description: '',
     price: '',
     comparePrice: '',
-    category: '',
+    category: [],
     stock: '',
     sku: '',
     images: [{ url: '', alt: '', variantTags: {} }],
@@ -85,7 +85,7 @@ const AdminProducts = () => {
       description: '',
       price: '',
       comparePrice: '',
-      category: '',
+      category: [],
       stock: '',
       sku: '',
       images: [{ url: '', alt: '', variantTags: {} }],
@@ -113,7 +113,9 @@ const AdminProducts = () => {
       description: product.description || '',
       price: product.price,
       comparePrice: product.comparePrice || '',
-      category: product.category?._id || product.category,
+      category: Array.isArray(product.category)
+        ? product.category.map(c => c._id || c)
+        : product.category ? [product.category._id || product.category] : [],
       stock: product.stock,
       sku: product.sku || '',
       images: product.images?.length ? product.images.map(img => ({ url: img.url, alt: img.alt || '', variantTags: img.variantTags || {} })) : [{ url: '', alt: '', variantTags: {} }],
@@ -250,7 +252,7 @@ const AdminProducts = () => {
                         </div>
                       </td>
                       <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6 text-gray-600">
-                        {product.category?.name || '-'}
+                        {(Array.isArray(product.category) ? product.category.map(c => c.name).join(', ') : product.category?.name) || '-'}
                       </td>
                       <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6">
                         <span className="font-medium text-xs sm:text-sm">{formatCurrency(product.price)}</span>
@@ -569,18 +571,26 @@ const AdminProducts = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">الفئة</label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
-                    required
-                  >
-                    <option value="">اختر الفئة</option>
+                  <label className="block text-sm font-medium mb-1">الفئات</label>
+                  <div className="border rounded-lg px-3 py-2 max-h-40 overflow-y-auto space-y-1">
                     {categories?.map(cat => (
-                      <option key={cat._id} value={cat._id}>{cat.name}</option>
+                      <label key={cat._id} className="flex items-center gap-2 cursor-pointer text-sm">
+                        <input
+                          type="checkbox"
+                          checked={formData.category.includes(cat._id)}
+                          onChange={(e) => {
+                            const newCats = e.target.checked
+                              ? [...formData.category, cat._id]
+                              : formData.category.filter(id => id !== cat._id)
+                            setFormData({ ...formData, category: newCats })
+                          }}
+                          className="rounded"
+                        />
+                        {cat.name}
+                      </label>
                     ))}
-                  </select>
+                  </div>
+                  {formData.category.length === 0 && <p className="text-xs text-red-500 mt-1">اختر فئة واحدة على الأقل</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">الكمية في المخزون</label>

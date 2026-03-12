@@ -387,17 +387,17 @@ const ProductPage = () => {
               <Link to="/" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex-shrink-0">الرئيسية</Link>
               <span className="text-gray-400 flex-shrink-0">/</span>
               <Link to="/products" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex-shrink-0">المنتجات</Link>
-              {product.category && (
-                <>
-                  <span className="text-gray-400 flex-shrink-0">/</span>
+              {product.category && (Array.isArray(product.category) ? product.category : [product.category]).filter(Boolean).map((cat, i) => (
+                <span key={cat._id || i} className="flex-shrink-0 flex items-center gap-2">
+                  <span className="text-gray-400">/</span>
                   <Link 
-                    to={`/products?category=${product.category.slug}`} 
-                    className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex-shrink-0"
+                    to={`/products?category=${cat.slug}`} 
+                    className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
                   >
-                    {product.category.name}
+                    {cat.name}
                   </Link>
-                </>
-              )}
+                </span>
+              ))}
               <span className="text-gray-400 flex-shrink-0">/</span>
               <span className="text-gray-800 truncate max-w-[150px] sm:max-w-none">{product.name}</span>
             </nav>
@@ -527,15 +527,18 @@ const ProductPage = () => {
             {/* Info */}
             <div className="space-y-4 sm:space-y-6">
               {/* Category & Badges */}
-              <div className="flex items-center gap-3">
-                {product.category && (
-                  <Link 
-                    to={`/products?category=${product.category.slug}`}
-                    className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline"
-                  >
-                    {product.category.name}
-                  </Link>
-                )}
+              <div className="flex items-center gap-3 flex-wrap">
+                {product.category && (Array.isArray(product.category) ? product.category : [product.category]).filter(Boolean).map((cat, i, arr) => (
+                  <span key={cat._id || i}>
+                    <Link 
+                      to={`/products?category=${cat.slug}`}
+                      className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline"
+                    >
+                      {cat.name}
+                    </Link>
+                    {i < arr.length - 1 && <span className="text-gray-300 mx-1">·</span>}
+                  </span>
+                ))}
                 {product.isNew && <span className="badge badge-new">جديد</span>}
                 {product.isBestseller && <span className="badge badge-bestseller">الأكثر مبيعاً</span>}
               </div>

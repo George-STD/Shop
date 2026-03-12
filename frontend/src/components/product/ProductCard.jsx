@@ -93,12 +93,19 @@ const ProductCard = ({ product }) => {
       <div className="p-4">
         {/* Category */}
         {product.category && (
-          <Link 
-            to={`/products?category=${product.category.slug}`}
-            className="text-sm text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
-          >
-            {product.category.name}
-          </Link>
+          <div className="text-sm text-gray-500">
+            {(Array.isArray(product.category) ? product.category : [product.category]).filter(Boolean).map((cat, i, arr) => (
+              <span key={cat._id || i}>
+                <Link 
+                  to={`/products?category=${cat.slug}`}
+                  className="hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r from-purple-600 to-pink-600"
+                >
+                  {cat.name}
+                </Link>
+                {i < arr.length - 1 && ' · '}
+              </span>
+            ))}
+          </div>
         )}
         
         {/* Name */}

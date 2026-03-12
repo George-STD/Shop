@@ -29,11 +29,11 @@ router.get('/', async (req, res) => {
 
     // Handle category by ID or slug (sanitize to prevent NoSQL injection)
     if (category) {
-      query.category = String(category);
+      query.category = { $in: [String(category)] };
     } else if (categorySlug) {
       const categoryDoc = await Category.findOne({ slug: String(categorySlug) });
       if (categoryDoc) {
-        query.category = categoryDoc._id;
+        query.category = { $in: [categoryDoc._id] };
       }
     }
 
@@ -308,7 +308,7 @@ router.get('/:id/related', async (req, res) => {
       _id: { $ne: product._id },
       isActive: true,
       $or: [
-        { category: product.category },
+        { category: { $in: product.category } },
         { occasions: { $in: product.occasions } },
         { tags: { $in: product.tags } }
       ]
