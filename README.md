@@ -1,97 +1,144 @@
-# 🎁 هدايا - Hadaya Gift Shop
+# هدايا - Hadaya Gift Shop
 
-متجر هدايا إلكتروني متكامل مبني بـ React.js و Node.js و MongoDB
+متجر هدايا إلكتروني متكامل مبني بـ Next.js و Node.js و MongoDB
 
-![Hadaya](https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800)
+## المميزات
 
-## 📋 المميزات
+- واجهة مستخدم عربية بالكامل (RTL)
+- تصميم متجاوب لجميع الأجهزة
+- نظام تسجيل دخول وإنشاء حساب (JWT)
+- سلة تسوق متقدمة
+- نظام المفضلة (Wishlist)
+- باحث الهدايا الذكي
+- تتبع الطلبات
+- تصفية وترتيب المنتجات حسب الفئة، السعر، والمناسبة
+- نظام مراجعات المنتجات
+- لوحة تحكم للمسؤول (Admin)
+- دعم Webhooks
 
-- ✅ واجهة مستخدم عربية بالكامل (RTL)
-- ✅ تصميم متجاوب لجميع الأجهزة
-- ✅ نظام تسجيل دخول وإنشاء حساب
-- ✅ سلة تسوق متقدمة
-- ✅ نظام المفضلة (Wishlist)
-- ✅ باحث الهدايا الذكي
-- ✅ تتبع الطلبات
-- ✅ SEO محسّن لمحركات البحث
-- ✅ تصفية وترتيب المنتجات
-- ✅ نظام مراجعات المنتجات
-
-## 🛠️ التقنيات المستخدمة
+## التقنيات المستخدمة
 
 ### Frontend
-- React 18 + Vite
-- React Router DOM 6
+- Next.js 15
+- React 18
 - Tailwind CSS
 - Zustand (State Management)
-- React Query
-- React Helmet Async (SEO)
+- TanStack React Query
+- Axios
+- Swiper
+- React Hot Toast
 
 ### Backend
 - Node.js + Express.js
-- MongoDB & Mongoose
+- MongoDB + Mongoose
 - JWT Authentication
 - bcryptjs + Helmet
+- express-rate-limit + express-validator
+- Morgan + CORS
+- Svix (Webhooks)
 
-## 🚀 التشغيل السريع
+## التشغيل السريع
 
 ### المتطلبات
 - Node.js 18+
 - MongoDB (محلي أو Atlas)
 
-### 1. Backend
+### 1. تثبيت جميع الاعتماديات
 
 ```bash
-cd backend
-npm install
+npm run install:all
+```
 
-# إنشاء ملف .env
-# PORT=5000
-# MONGODB_URI=mongodb://localhost:27017/hadaya
-# JWT_SECRET=your-secret-key
+### 2. إعداد ملف البيئة للـ Backend
 
-# إضافة البيانات الوهمية
+أنشئ ملف `.env` داخل مجلد `backend/`:
+
+```env
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/hadaya
+JWT_SECRET=your-secret-key
+```
+
+### 3. إضافة البيانات التجريبية (اختياري)
+
+```bash
 npm run seed
-
-# تشغيل السيرفر
-npm run dev
 ```
 
-### 2. Frontend
+### 4. تشغيل المشروع كاملاً
 
 ```bash
-cd frontend
-npm install
 npm run dev
 ```
 
-### 3. فتح الموقع
+أو تشغيل كل جزء منفرداً:
+
+```bash
+# Backend فقط
+npm run backend
+
+# Frontend فقط
+npm run frontend
+```
+
+### 5. فتح الموقع
 
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:5000
+- Health Check: http://localhost:5000/api/health
 
----
-
-## 📁 هيكل المشروع (React Version)
+## هيكل المشروع
 
 ```
-├── backend/          # Node.js + Express API
-│   ├── models/       # Mongoose models
-│   ├── routes/       # API routes
-│   ├── seed.js       # Dummy data seeder
-│   └── server.js     # Entry point
+├── backend/
+│   ├── middleware/       # Auth & rate limiting
+│   ├── models/           # Mongoose models
+│   │   ├── Category.js
+│   │   ├── Occasion.js
+│   │   ├── Order.js
+│   │   ├── Product.js
+│   │   ├── Review.js
+│   │   └── User.js
+│   ├── routes/           # API routes
+│   │   ├── admin.js
+│   │   ├── auth.js
+│   │   ├── categories.js
+│   │   ├── occasions.js
+│   │   ├── orders.js
+│   │   ├── products.js
+│   │   ├── reviews.js
+│   │   └── webhooks.js
+│   ├── utils/
+│   ├── seed.js           # Data seeder
+│   └── server.js         # Entry point
 │
-├── frontend/         # React + Vite
+├── frontend/             # Next.js 15
 │   └── src/
+│       ├── app/          # Next.js App Router pages
 │       ├── components/
-│       ├── pages/    # 18 pages
-│       ├── services/ # API layer
-│       └── store/    # Zustand stores
+│       ├── lib/
+│       ├── services/     # API layer (Axios)
+│       └── store/        # Zustand stores
+│
+└── package.json          # Root scripts (concurrently)
 ```
 
----
+## API Endpoints
 
-## 📄 الصفحات (Pages)
+| Method | Endpoint | الوصف |
+|--------|----------|-------|
+| GET/POST | `/api/products` | المنتجات |
+| GET/POST | `/api/categories` | الفئات |
+| GET/POST | `/api/occasions` | المناسبات |
+| POST | `/api/auth/register` | إنشاء حساب |
+| POST | `/api/auth/login` | تسجيل الدخول |
+| GET/POST | `/api/orders` | الطلبات |
+| GET/POST | `/api/reviews` | المراجعات |
+| * | `/api/admin` | لوحة التحكم |
+| POST | `/api/webhooks` | Webhooks |
+| GET | `/api/health` | فحص الحالة |
+
+## الصفحات
 
 | الصفحة | الوصف |
 |--------|------|
@@ -99,141 +146,19 @@ npm run dev
 | ProductsPage | عرض المنتجات مع فلاتر |
 | ProductPage | تفاصيل المنتج والمراجعات |
 | CartPage | سلة التسوق |
-| CheckoutPage | إتمام الشراء (3 خطوات) |
-| AccountPage | الحساب/تسجيل الدخول |
+| CheckoutPage | إتمام الشراء |
+| AccountPage | الحساب / تسجيل الدخول |
 | WishlistPage | قائمة الأمنيات |
 | GiftFinderPage | باحث الهدايا الذكي |
+| TrackOrderPage | تتبع الطلب |
 | ContactPage | تواصل معنا |
 | AboutPage | من نحن |
 | FAQPage | الأسئلة الشائعة |
 | ShippingPage | سياسة الشحن |
 | ReturnsPage | الاستبدال والاسترجاع |
-| TrackOrderPage | تتبع الطلب |
 | StoresPage | فروعنا |
 | PrivacyPage | سياسة الخصوصية |
 | TermsPage | الشروط والأحكام |
-| NotFoundPage | صفحة 404 |
-
----
-
-صُنع بـ ❤️ في مصر
-- 🔒 سياسة الخصوصية
-- 📋 الشروط والأحكام
-- 🚫 صفحة 404
-
-### الوظائف
-- 🔍 بحث متقدم في المنتجات
-- 🏷️ فلترة حسب الفئة، السعر، المناسبة
-- 🛒 إدارة سلة التسوق (إضافة/حذف/تعديل)
-- ❤️ إدارة قائمة الأمنيات
-- 💳 خيارات دفع متعددة
-- 📦 حساب تكلفة الشحن
-- 🎁 خيارات التغليف والإهداء
-- 📱 تصميم متجاوب
-
-## 🛠️ التقنيات المستخدمة
-
-- **HTML5** - هيكلة الصفحات
-- **CSS3** - التنسيق والتصميم
-  - CSS Variables للثيم
-  - Flexbox & Grid للتخطيط
-  - Media Queries للتجاوب
-- **JavaScript (ES6+)** - التفاعلية
-  - LocalStorage للتخزين
-  - DOM Manipulation
-  - Event Handling
-- **Font Awesome** - الأيقونات
-- **Google Fonts (Cairo)** - الخطوط العربية
-
-## 📁 هيكل الملفات
-
-```
-Gift shop/
-├── index.html              # الصفحة الرئيسية
-├── products.html           # صفحة المنتجات
-├── product.html            # صفحة تفاصيل المنتج
-├── cart.html               # سلة التسوق
-├── checkout.html           # صفحة الدفع
-├── account.html            # حساب المستخدم
-├── wishlist.html           # قائمة الأمنيات
-├── gift-finder.html        # مساعد اختيار الهدية
-├── contact.html            # تواصل معنا
-├── about.html              # من نحن
-├── faq.html                # الأسئلة الشائعة
-├── shipping.html           # سياسة الشحن
-├── returns.html            # سياسة الإرجاع
-├── track-order.html        # تتبع الطلب
-├── stores.html             # فروعنا
-├── privacy.html            # سياسة الخصوصية
-├── terms.html              # الشروط والأحكام
-├── 404.html                # صفحة الخطأ
-├── css/
-│   ├── style.css           # الأنماط الرئيسية
-│   ├── responsive.css      # التجاوب
-│   ├── pages.css           # أنماط الصفحات المشتركة
-│   ├── products.css        # صفحة المنتجات
-│   ├── product.css         # صفحة المنتج
-│   ├── cart.css            # سلة التسوق
-│   ├── checkout.css        # صفحة الدفع
-│   ├── account.css         # حساب المستخدم
-│   └── gift-finder.css     # مساعد الهدايا
-├── js/
-│   ├── main.js             # الوظائف الرئيسية
-│   ├── products.js         # صفحة المنتجات
-│   ├── product.js          # صفحة المنتج
-│   ├── cart.js             # سلة التسوق
-│   ├── checkout.js         # صفحة الدفع
-│   ├── account.js          # حساب المستخدم
-│   ├── wishlist.js         # قائمة الأمنيات
-│   └── gift-finder.js      # مساعد الهدايا
-└── images/                 # مجلد الصور
-    └── README.md           # دليل الصور
-```
-
-## 🚀 التشغيل
-
-1. قم بتنزيل أو استنساخ المشروع
-2. افتح ملف `index.html` في المتصفح
-3. أو استخدم Live Server في VS Code
-
-```bash
-# باستخدام Live Server
-# قم بتثبيت إضافة Live Server في VS Code
-# انقر بزر الماوس الأيمن على index.html
-# اختر "Open with Live Server"
-```
-
-## 🎨 الألوان الرئيسية
-
-| اللون | الكود | الاستخدام |
-|-------|-------|-----------|
-| Rose Gold | `#B76E79` | اللون الأساسي |
-| Deep Purple | `#4A3B5C` | اللون الثانوي |
-| Gold | `#D4AF37` | لون التمييز |
-| Light Pink | `#FDF5F6` | خلفية فاتحة |
-| Cream | `#FFF9F0` | خلفية ثانوية |
-
-## 📝 ملاحظات
-
-- الموقع يستخدم صور من Unsplash كنموذج
-- يمكن استبدال الصور بصور حقيقية للمنتجات
-- البيانات محفوظة في LocalStorage (للعرض فقط)
-- للاستخدام الفعلي، يحتاج الموقع إلى Backend
-
-## 🔜 التحسينات المستقبلية
-
-- [ ] إضافة Backend (Node.js/PHP)
-- [ ] قاعدة بيانات للمنتجات والمستخدمين
-- [ ] بوابة دفع حقيقية
-- [ ] نظام إدارة المحتوى
-- [ ] تطبيق موبايل
-- [ ] إشعارات البريد الإلكتروني
-- [ ] تقييمات المستخدمين
-- [ ] نظام القسائم والخصومات
-
-## 📄 الترخيص
-
-هذا المشروع للأغراض التعليمية والتجريبية.
 
 ---
 
