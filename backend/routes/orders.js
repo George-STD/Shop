@@ -1,27 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const { protect, apiLimiter } = require('../middleware/auth');
 const { sendOrderConfirmationEmail } = require('../utils/mailer');
 
-// Optional auth helper — returns userId or null (for guest checkout)
-const getOptionalUserId = (req) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  if (!token) return null;
-  try {
-    return jwt.verify(token, process.env.JWT_SECRET).id;
-  } catch {
-    return null;
-  }
-};
-
 // @route   POST /api/orders
 // @desc    Create new order
-// @access  Public (guest checkout allowed)
-router.post('/', apiLimiter, [
+// @access  Private (requires authentication)
+router.post('/', protect, apiLimiter, [
   body('items').isArray({ min: 1 }).withMessage('يجب إضافة منتج واحد على الأقل'),
   body('shippingAddress.street').trim().notEmpty().withMessage('العنوان مطلوب'),
   body('shippingAddress.governorate').trim().notEmpty().withMessage('المحافظة مطلوبة'),
@@ -35,8 +23,9 @@ router.post('/', apiLimiter, [
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    const userId = getOptionalUserId(req);
-    
+    // User is guaranteed to exist because of protect middleware
+    const userId = req.user._id;
+
     const {
       items,
       shippingAddress,
@@ -51,8 +40,7 @@ router.post('/', apiLimiter, [
       hidePrice,
       customerNote,
       discountCode,
-      guestEmail,
-      guestPhone
+      guestEmail
     } = req.body;
 
     // Validate items
@@ -123,8 +111,6 @@ router.post('/', apiLimiter, [
     // Create order
     const order = await Order.create({
       user: userId,
-      guestEmail: guestEmail || undefined,
-      guestPhone: !userId ? guestPhone : undefined,
       items: orderItems,
       shippingAddress,
       billingAddress,
@@ -146,14 +132,9 @@ router.post('/', apiLimiter, [
       }]
     });
 
-    // Send confirmation email - always use guestEmail from form if provided
+    // Send confirmation email - use email from form or user's email
     try {
-      let emailTo = guestEmail || null;
-      if (!emailTo && userId) {
-        const User = require('../models/User');
-        const user = await User.findById(userId);
-        emailTo = user?.email;
-      }
+      const emailTo = guestEmail || req.user.email;
       if (emailTo) {
         await sendOrderConfirmationEmail(emailTo, order);
       }

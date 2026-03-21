@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { FiCheck, FiCreditCard, FiTruck } from 'react-icons/fi'
 import { useCartStore, useAuthStore } from '../store'
@@ -8,7 +8,16 @@ import toast from 'react-hot-toast'
 const CheckoutPage = () => {
   const navigate = useNavigate()
   const { items, getTotal, clearCart } = useCartStore()
-  const { isAuthenticated, user } = useAuthStore()
+  const { isAuthenticated, user, _hasHydrated } = useAuthStore()
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (_hasHydrated && !isAuthenticated) {
+      toast('يجب تسجيل الدخول أولاً لإتمام الطلب', { icon: '🔐' })
+      navigate('/account', { state: { from: '/checkout' } })
+    }
+  }, [_hasHydrated, isAuthenticated, navigate])
+
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({})
@@ -121,8 +130,7 @@ const CheckoutPage = () => {
         paymentMethod: formData.paymentMethod,
         deliveryType: formData.deliveryType,
         customerNote: formData.customerNote,
-        guestEmail: formData.email,
-        guestPhone: !isAuthenticated ? formData.phone : undefined
+        guestEmail: formData.email
       }
 
       const response = await ordersAPI.create(orderData)
@@ -130,17 +138,27 @@ const CheckoutPage = () => {
       if (response.data.success) {
         clearCart()
         toast.success('تم إنشاء الطلب بنجاح!')
-        if (isAuthenticated) {
-          navigate(`/account/orders?success=true&order=${response.data.data.orderNumber}`)
-        } else {
-          navigate(`/track-order?order=${response.data.data.orderNumber}`)
-        }
+        navigate(`/account/orders?success=true&order=${response.data.data.orderNumber}`)
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'حدث خطأ أثناء إنشاء الطلب')
     } finally {
       setLoading(false)
     }
+  }
+
+  // Show loading while checking authentication
+  if (!_hasHydrated) {
+    return (
+      <div className="container-custom py-16 text-center">
+        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full mx-auto"></div>
+      </div>
+    )
+  }
+
+  // Don't render if not authenticated (will redirect)
+  if (!isAuthenticated) {
+    return null
   }
 
   if (items.length === 0) {

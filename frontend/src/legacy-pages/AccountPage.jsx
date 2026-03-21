@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
+import { Routes, Route, Link, useLocation, Navigate, useNavigate } from 'react-router-dom'
 import { FiUser, FiPackage, FiHeart, FiMapPin, FiSettings, FiLogOut, FiArrowRight, FiMail, FiLock } from 'react-icons/fi'
 import { useAuthStore } from '../store'
 import { authAPI } from '../services/api'
@@ -11,6 +11,9 @@ const AuthForm = () => {
   const [mode, setMode] = useState('login')
   const [loading, setLoading] = useState(false)
   const { setAuth } = useAuthStore()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const redirectTo = location.state?.from || null
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', email: '', phone: '', password: '', confirmPassword: ''
   })
@@ -67,6 +70,10 @@ const AuthForm = () => {
       const res = await authAPI.login({ email: formData.email, password: formData.password })
       setAuth(res.data.data.user, res.data.data.token)
       toast.success('تم تسجيل الدخول بنجاح')
+      // Redirect to checkout if came from there
+      if (redirectTo) {
+        navigate(redirectTo)
+      }
     } catch (error) {
       const responseData = error.response?.data
       if (responseData?.data?.requiresVerification) {
@@ -114,6 +121,10 @@ const AuthForm = () => {
       const res = await authAPI.verifyEmail({ email: verifyEmail, code })
       setAuth(res.data.data.user, res.data.data.token)
       toast.success('تم تفعيل حسابك بنجاح!')
+      // Redirect to checkout if came from there
+      if (redirectTo) {
+        navigate(redirectTo)
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || 'الكود غير صحيح')
     }
