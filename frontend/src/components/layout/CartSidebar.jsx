@@ -100,22 +100,23 @@ const CartSidebar = () => {
                     {/* Quantity & Remove */}
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.selectedSize, item.selectedColor)}
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.selectedSize, item.selectedColor, item.selectedShape, item._variantsKey)}
                           className="w-7 h-7 rounded-full bg-white border border-gray-300 flex items-center justify-center hover:border-purple-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
+                          disabled={item.quantity <= 1}
                         >
                           <FiMinus size={14} />
                         </button>
                         <span className="w-8 text-center font-medium">{item.quantity}</span>
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.selectedSize, item.selectedColor)}
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.selectedSize, item.selectedColor, item.selectedShape, item._variantsKey)}
                           className="w-7 h-7 rounded-full bg-white border border-gray-300 flex items-center justify-center hover:border-purple-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
                         >
                           <FiPlus size={14} />
                         </button>
                       </div>
-                      <button 
-                        onClick={() => removeItem(item.id, item.selectedSize, item.selectedColor)}
+                      <button
+                        onClick={() => removeItem(item.id, item.selectedSize, item.selectedColor, item.selectedShape, item._variantsKey)}
                         className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
                       >
                         <FiTrash2 size={16} />
