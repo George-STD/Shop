@@ -375,6 +375,134 @@ router.put('/change-password', protect, [
   }
 });
 
+// @route   POST /api/auth/request-email-change
+// @desc    Request email change (sends verification code to current email)
+// @access  Private
+router.post('/request-email-change', protect, [
+  body('newEmail').isEmail().withMessage(MESSAGES.VALIDATION.EMAIL_INVALID)
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { newEmail } = req.body;
+    const user = await User.findById(req.user._id);
+
+    // Check if new email is same as current
+    if (user.email === newEmail.toLowerCase()) {
+      return res.status(400).json({
+        success: false,
+        message: MESSAGES.AUTH.EMAIL_CHANGE_SAME
+      });
+    }
+
+    // Check if new email is already in use
+    const existingUser = await User.findOne({ email: newEmail.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: MESSAGES.AUTH.EMAIL_CHANGE_EXISTS
+      });
+    }
+
+    // Generate verification code
+    const code = generateVerificationCode();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Save pending email and code
+    await User.findByIdAndUpdate(user._id, {
+      pendingEmail: newEmail.toLowerCase(),
+      emailChangeCode: code,
+      emailChangeExpires: expiry
+    });
+
+    // Send verification code to CURRENT email
+    try {
+      await sendVerificationEmail(user.email, code, user.firstName);
+      return res.json({
+        success: true,
+        message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_SENT
+      });
+    } catch (emailError) {
+      console.error('Email send error:', emailError);
+      return res.status(500).json({
+        success: false,
+        message: MESSAGES.AUTH.EMAIL_SEND_FAILED
+      });
+    }
+  } catch (error) {
+    console.error('Request email change error:', error);
+    sendError(res, MESSAGES.GENERAL.ERROR);
+  }
+});
+
+// @route   POST /api/auth/verify-email-change
+// @desc    Verify code and change email
+// @access  Private
+router.post('/verify-email-change', protect, [
+  body('code').notEmpty().withMessage('كود التأكيد مطلوب')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { code } = req.body;
+    const user = await User.findById(req.user._id);
+
+    // Check if there's a pending email change
+    if (!user.pendingEmail || !user.emailChangeCode) {
+      return res.status(400).json({
+        success: false,
+        message: MESSAGES.AUTH.EMAIL_CHANGE_NO_PENDING
+      });
+    }
+
+    // Check if code is expired
+    if (user.emailChangeExpires < new Date()) {
+      await User.findByIdAndUpdate(user._id, {
+        $unset: { pendingEmail: 1, emailChangeCode: 1, emailChangeExpires: 1 }
+      });
+      return res.status(400).json({
+        success: false,
+        message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_EXPIRED
+      });
+    }
+
+    // Verify code
+    if (user.emailChangeCode !== code) {
+      return res.status(400).json({
+        success: false,
+        message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_INVALID
+      });
+    }
+
+    // Change email
+    const newEmail = user.pendingEmail;
+    await User.findByIdAndUpdate(user._id, {
+      email: newEmail,
+      $unset: { pendingEmail: 1, emailChangeCode: 1, emailChangeExpires: 1 }
+    });
+
+    // Return updated user
+    const updatedUser = await User.findById(user._id)
+      .select('-password')
+      .populate('wishlist', 'name slug price images');
+
+    return res.json({
+      success: true,
+      message: MESSAGES.AUTH.EMAIL_CHANGE_SUCCESS,
+      data: { user: updatedUser }
+    });
+  } catch (error) {
+    console.error('Verify email change error:', error);
+    sendError(res, MESSAGES.GENERAL.ERROR);
+  }
+});
+
 // @route   POST /api/auth/wishlist/:productId
 // @desc    Add product to wishlist
 // @access  Private

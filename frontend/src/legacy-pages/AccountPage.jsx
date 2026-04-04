@@ -641,6 +641,12 @@ const SettingsPage = () => {
     confirmPassword: '',
   })
   
+  // Email change state
+  const [emailChangeMode, setEmailChangeMode] = useState('idle') // 'idle' | 'entering' | 'verifying'
+  const [newEmail, setNewEmail] = useState('')
+  const [emailCode, setEmailCode] = useState(['', '', '', '', '', ''])
+  const emailInputRefs = useRef([])
+  
   // Update profile data when user changes
   useEffect(() => {
     if (user) {
@@ -694,6 +700,85 @@ const SettingsPage = () => {
     } finally {
       setLoading(false)
     }
+  }
+  
+  // Email change handlers
+  const handleRequestEmailChange = async (e) => {
+    e.preventDefault()
+    if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      toast.error('أدخل بريد إلكتروني صالح')
+      return
+    }
+    
+    setLoading(true)
+    try {
+      await authAPI.requestEmailChange({ newEmail })
+      toast.success('تم إرسال كود التأكيد إلى بريدك الإلكتروني الحالي')
+      setEmailChangeMode('verifying')
+      setEmailCode(['', '', '', '', '', ''])
+      setTimeout(() => emailInputRefs.current[0]?.focus(), 100)
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'حدث خطأ')
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const handleEmailCodeChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return
+    const newCode = [...emailCode]
+    newCode[index] = value.slice(-1)
+    setEmailCode(newCode)
+    if (value && index < 5) {
+      emailInputRefs.current[index + 1]?.focus()
+    }
+  }
+  
+  const handleEmailCodeKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !emailCode[index] && index > 0) {
+      emailInputRefs.current[index - 1]?.focus()
+    }
+  }
+  
+  const handleEmailCodePaste = (e) => {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+    if (pasted.length === 6) {
+      setEmailCode(pasted.split(''))
+      emailInputRefs.current[5]?.focus()
+    }
+  }
+  
+  const handleVerifyEmailChange = async (e) => {
+    e.preventDefault()
+    const code = emailCode.join('')
+    if (code.length !== 6) {
+      toast.error('أدخل الكود المكون من 6 أرقام')
+      return
+    }
+    
+    setLoading(true)
+    try {
+      const res = await authAPI.verifyEmailChange({ code })
+      toast.success('تم تغيير البريد الإلكتروني بنجاح')
+      // Update local user state
+      if (res.data?.data?.user) {
+        setAuth(res.data.data.user, localStorage.getItem('token'))
+      }
+      setEmailChangeMode('idle')
+      setNewEmail('')
+      setEmailCode(['', '', '', '', '', ''])
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'الكود غير صحيح')
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const cancelEmailChange = () => {
+    setEmailChangeMode('idle')
+    setNewEmail('')
+    setEmailCode(['', '', '', '', '', ''])
   }
 
   const tabs = [
@@ -771,13 +856,127 @@ const SettingsPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 البريد الإلكتروني
               </label>
-              <input
-                type="email"
-                value={user?.email || ''}
-                disabled
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
-              />
-              <p className="text-xs text-gray-400 mt-1">لا يمكن تغيير البريد الإلكتروني</p>
+              
+              {emailChangeMode === 'idle' && (
+                <div className="flex gap-3">
+                  <input
+                    type="email"
+                    value={user?.email || ''}
+                    disabled
+                    className="flex-1 px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEmailChangeMode('entering')}
+                    className="px-4 py-3 border border-purple-600 text-purple-600 rounded-lg font-medium hover:bg-purple-50 transition"
+                  >
+                    تغيير
+                  </button>
+                </div>
+              )}
+              
+              {emailChangeMode === 'entering' && (
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    <input
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder="أدخل البريد الإلكتروني الجديد"
+                      className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleRequestEmailChange}
+                      disabled={loading}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50 flex items-center gap-2"
+                    >
+                      {loading ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          جاري الإرسال...
+                        </>
+                      ) : (
+                        'إرسال كود التأكيد'
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEmailChange}
+                      className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500">سيتم إرسال كود التأكيد إلى بريدك الإلكتروني الحالي ({user?.email})</p>
+                </div>
+              )}
+              
+              {emailChangeMode === 'verifying' && (
+                <div className="space-y-4">
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <p className="text-sm text-purple-700">
+                      تم إرسال كود التأكيد إلى: <strong>{user?.email}</strong>
+                    </p>
+                    <p className="text-xs text-purple-600 mt-1">البريد الجديد: {newEmail}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      أدخل كود التأكيد
+                    </label>
+                    <div className="flex justify-center gap-2" dir="ltr">
+                      {emailCode.map((digit, i) => (
+                        <input
+                          key={i}
+                          ref={el => emailInputRefs.current[i] = el}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={e => handleEmailCodeChange(i, e.target.value)}
+                          onKeyDown={e => handleEmailCodeKeyDown(i, e)}
+                          onPaste={i === 0 ? handleEmailCodePaste : undefined}
+                          className="w-12 h-12 text-center text-xl font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      type="button"
+                      onClick={handleVerifyEmailChange}
+                      disabled={loading || emailCode.join('').length !== 6}
+                      className="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50 flex items-center gap-2"
+                    >
+                      {loading ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          جاري التحقق...
+                        </>
+                      ) : (
+                        'تأكيد التغيير'
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEmailChange}
+                      className="px-6 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition"
+                    >
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div>

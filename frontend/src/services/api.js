@@ -64,6 +64,8 @@ export const authAPI = {
   getMe: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/update-profile', data),
   changePassword: (data) => api.put('/auth/change-password', data),
+  requestEmailChange: (data) => api.post('/auth/request-email-change', data),
+  verifyEmailChange: (data) => api.post('/auth/verify-email-change', data),
   addToWishlist: (productId) => api.post(`/auth/wishlist/${productId}`),
   removeFromWishlist: (productId) => api.delete(`/auth/wishlist/${productId}`),
 }

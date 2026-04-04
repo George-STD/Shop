@@ -58,6 +58,15 @@ const MESSAGES = {
     // Profile
     PROFILE_UPDATED: 'تم تحديث البيانات بنجاح',
     
+    // Email Change
+    EMAIL_CHANGE_CODE_SENT: 'تم إرسال كود التأكيد إلى بريدك الإلكتروني الحالي',
+    EMAIL_CHANGE_SUCCESS: 'تم تغيير البريد الإلكتروني بنجاح',
+    EMAIL_CHANGE_SAME: 'البريد الجديد مطابق للبريد الحالي',
+    EMAIL_CHANGE_EXISTS: 'البريد الإلكتروني الجديد مستخدم بالفعل',
+    EMAIL_CHANGE_CODE_INVALID: 'كود التأكيد غير صحيح',
+    EMAIL_CHANGE_CODE_EXPIRED: 'كود التأكيد منتهي الصلاحية. أعد المحاولة',
+    EMAIL_CHANGE_NO_PENDING: 'لا يوجد طلب تغيير بريد إلكتروني',
+    
     // Account Status
     ACCOUNT_INACTIVE: 'الحساب غير مفعل',
     ACCOUNT_DISABLED: 'تم تعطيل حسابك. تواصل مع الدعم',
