@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const Category = require('./models/Category');
 const Product = require('./models/Product');
 const User = require('./models/User');
+const Occasion = require('./models/Occasion');
 
 dotenv.config();
 
@@ -10,6 +11,24 @@ dotenv.config();
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
+
+// Occasions data
+const occasionsData = [
+  { name: 'عيد ميلاد', slug: 'birthday', icon: '🎂', color: 'from-pink-400 to-pink-600', order: 1 },
+  { name: 'زفاف', slug: 'wedding', icon: '💒', color: 'from-rose-400 to-rose-600', order: 2 },
+  { name: 'ذكرى زواج', slug: 'anniversary', icon: '💑', color: 'from-red-400 to-red-600', order: 3 },
+  { name: 'عيد الحب', slug: 'valentine', icon: '❤️', color: 'from-red-500 to-pink-500', order: 4 },
+  { name: 'عيد الأم', slug: 'mothers-day', icon: '👩', color: 'from-purple-400 to-purple-600', order: 5 },
+  { name: 'عيد الأب', slug: 'fathers-day', icon: '👨', color: 'from-blue-400 to-blue-600', order: 6 },
+  { name: 'تخرج', slug: 'graduation', icon: '🎓', color: 'from-yellow-400 to-yellow-600', order: 7 },
+  { name: 'مولود جديد', slug: 'newborn', icon: '👶', color: 'from-cyan-400 to-cyan-600', order: 8 },
+  { name: 'عيد الفطر', slug: 'eid-fitr', icon: '🌙', color: 'from-green-400 to-green-600', order: 9 },
+  { name: 'عيد الأضحى', slug: 'eid-adha', icon: '🕌', color: 'from-emerald-400 to-emerald-600', order: 10 },
+  { name: 'شكر وتقدير', slug: 'thank-you', icon: '🙏', color: 'from-amber-400 to-amber-600', order: 11 },
+  { name: 'تهنئة', slug: 'congratulations', icon: '🎉', color: 'from-orange-400 to-orange-600', order: 12 },
+  { name: 'سلامتك', slug: 'get-well', icon: '💐', color: 'from-teal-400 to-teal-600', order: 13 },
+  { name: 'رأس السنة', slug: 'new-year', icon: '🎆', color: 'from-indigo-400 to-indigo-600', order: 14 }
+];
 
 // Categories data
 const categoriesData = [
@@ -111,7 +130,7 @@ const productsData = [
     categorySlug: 'birthday-gifts',
     tags: ['بالونات', 'عيد ميلاد', 'هيليوم'],
     occasions: ['birthday'],
-    recipients: ['friend', 'child', 'anyone'],
+    recipients: ['صديق', 'أطفال', 'صديق'],
     budgetRange: '100-300',
     stock: 50,
     sku: 'BD-BAL-001',
@@ -131,7 +150,7 @@ const productsData = [
     categorySlug: 'birthday-gifts',
     tags: ['صندوق هدايا', 'كيك', 'فاخر'],
     occasions: ['birthday'],
-    recipients: ['wife', 'mother', 'friend'],
+    recipients: ['زوجة', 'أم', 'صديق'],
     budgetRange: '500-1000',
     stock: 30,
     sku: 'BD-BOX-001',
@@ -152,7 +171,7 @@ const productsData = [
     categorySlug: 'flower-bouquets',
     tags: ['ورد أحمر', 'طبيعي', 'رومانسي'],
     occasions: ['valentine', 'anniversary'],
-    recipients: ['wife', 'girlfriend'],
+    recipients: ['زوجة', 'صديقة'],
     budgetRange: '300-500',
     stock: 25,
     sku: 'FL-RED-001',
@@ -173,7 +192,7 @@ const productsData = [
     categorySlug: 'flower-bouquets',
     tags: ['ورد مشكل', 'ملون'],
     occasions: ['graduation', 'get-well', 'thank-you'],
-    recipients: ['mother', 'friend', 'colleague'],
+    recipients: ['أم', 'صديق', 'صديق'],
     budgetRange: '100-300',
     stock: 40,
     sku: 'FL-MIX-001',
@@ -190,7 +209,7 @@ const productsData = [
     categorySlug: 'flower-bouquets',
     tags: ['ورد أبيض', 'صندوق', 'فاخر'],
     occasions: ['wedding', 'anniversary'],
-    recipients: ['wife', 'girlfriend'],
+    recipients: ['زوجة', 'صديقة'],
     budgetRange: '500-1000',
     stock: 15,
     sku: 'FL-WHT-001',
@@ -210,7 +229,7 @@ const productsData = [
     categorySlug: 'chocolates-sweets',
     tags: ['شوكولاتة', 'بلجيكي', 'فاخر'],
     occasions: ['birthday', 'valentine', 'thank-you'],
-    recipients: ['wife', 'mother', 'friend', 'anyone'],
+    recipients: ['زوجة', 'أم', 'صديق', 'صديق'],
     budgetRange: '300-500',
     stock: 60,
     sku: 'CH-BEL-001',
@@ -229,7 +248,7 @@ const productsData = [
     categorySlug: 'chocolates-sweets',
     tags: ['فيريرو', 'شوكولاتة'],
     occasions: ['eid', 'birthday', 'congratulations'],
-    recipients: ['colleague', 'boss', 'anyone'],
+    recipients: ['صديق', 'صديق', 'صديق'],
     budgetRange: '100-300',
     stock: 80,
     sku: 'CH-FER-001',
@@ -247,7 +266,7 @@ const productsData = [
     categorySlug: 'chocolates-sweets',
     tags: ['جوديفا', 'شوكولاتة', 'فاخر'],
     occasions: ['wedding', 'anniversary'],
-    recipients: ['wife', 'mother'],
+    recipients: ['زوجة', 'أم'],
     budgetRange: '500-1000',
     stock: 25,
     sku: 'CH-GOD-001',
@@ -267,7 +286,7 @@ const productsData = [
     categorySlug: 'perfumes',
     tags: ['ديور', 'عطر رجالي', 'فاخر'],
     occasions: ['birthday', 'eid'],
-    recipients: ['husband', 'boyfriend', 'father'],
+    recipients: ['زوج', 'صديق', 'أب'],
     budgetRange: '500-1000',
     stock: 35,
     sku: 'PF-DIO-001',
@@ -286,7 +305,7 @@ const productsData = [
     categorySlug: 'perfumes',
     tags: ['شانيل', 'عطر نسائي', 'فاخر'],
     occasions: ['birthday', 'mothers-day', 'anniversary'],
-    recipients: ['wife', 'mother', 'girlfriend'],
+    recipients: ['زوجة', 'أم', 'صديقة'],
     budgetRange: '500-1000',
     stock: 20,
     sku: 'PF-CHA-001',
@@ -304,7 +323,7 @@ const productsData = [
     categorySlug: 'perfumes',
     tags: ['توم فورد', 'عطر', 'فاخر'],
     occasions: ['anniversary', 'birthday'],
-    recipients: ['wife', 'husband', 'anyone'],
+    recipients: ['زوجة', 'زوج', 'صديق'],
     budgetRange: 'above-1000',
     stock: 15,
     sku: 'PF-TOM-001',
@@ -324,7 +343,7 @@ const productsData = [
     categorySlug: 'watches-accessories',
     tags: ['ساعة', 'كاسيو', 'كلاسيك'],
     occasions: ['birthday', 'graduation'],
-    recipients: ['friend', 'colleague', 'anyone'],
+    recipients: ['صديق', 'صديق', 'صديق'],
     budgetRange: '100-300',
     stock: 45,
     sku: 'WT-CAS-001',
@@ -342,7 +361,7 @@ const productsData = [
     categorySlug: 'watches-accessories',
     tags: ['ساعة', 'مايكل كورس', 'نسائي'],
     occasions: ['birthday', 'graduation', 'anniversary'],
-    recipients: ['wife', 'girlfriend', 'mother'],
+    recipients: ['زوجة', 'صديقة', 'أم'],
     budgetRange: '500-1000',
     stock: 20,
     sku: 'WT-MK-001',
@@ -362,7 +381,7 @@ const productsData = [
     categorySlug: 'personalized-gifts',
     tags: ['كوب', 'مخصص', 'صورة'],
     occasions: ['birthday', 'valentine', 'thank-you'],
-    recipients: ['friend', 'colleague', 'anyone'],
+    recipients: ['صديق', 'صديق', 'صديق'],
     budgetRange: 'under-100',
     stock: 100,
     sku: 'PG-MUG-001',
@@ -380,7 +399,7 @@ const productsData = [
     categorySlug: 'personalized-gifts',
     tags: ['قلادة', 'محفور', 'ذهب'],
     occasions: ['birthday', 'mothers-day', 'valentine'],
-    recipients: ['wife', 'mother', 'girlfriend'],
+    recipients: ['زوجة', 'أم', 'صديقة'],
     budgetRange: '300-500',
     stock: 40,
     sku: 'PG-NCK-001',
@@ -400,7 +419,7 @@ const productsData = [
     categorySlug: 'baby-gifts',
     tags: ['مولود', 'سلة هدايا', 'بيبي'],
     occasions: ['newborn'],
-    recipients: ['friend', 'colleague', 'anyone'],
+    recipients: ['صديق', 'صديق', 'صديق'],
     budgetRange: '300-500',
     stock: 30,
     sku: 'BB-BSK-001',
@@ -419,7 +438,7 @@ const productsData = [
     categorySlug: 'baby-gifts',
     tags: ['ملابس', 'مولود', 'قطن'],
     occasions: ['newborn'],
-    recipients: ['friend', 'colleague'],
+    recipients: ['صديق', 'صديق'],
     budgetRange: '100-300',
     stock: 50,
     sku: 'BB-CLT-001',
@@ -438,7 +457,7 @@ const productsData = [
     categorySlug: 'kids-toys',
     tags: ['ليجو', 'ألعاب', 'بناء'],
     occasions: ['birthday', 'eid'],
-    recipients: ['child'],
+    recipients: ['أطفال'],
     budgetRange: '100-300',
     stock: 35,
     sku: 'KD-LEG-001',
@@ -456,7 +475,7 @@ const productsData = [
     categorySlug: 'kids-toys',
     tags: ['باربي', 'دمية', 'بنات'],
     occasions: ['birthday', 'eid'],
-    recipients: ['child'],
+    recipients: ['أطفال'],
     budgetRange: '100-300',
     stock: 45,
     sku: 'KD-BAR-001',
@@ -475,7 +494,7 @@ const productsData = [
     categorySlug: 'gift-cards',
     tags: ['بطاقة', 'أمازون', 'تسوق'],
     occasions: ['birthday', 'eid', 'graduation'],
-    recipients: ['anyone'],
+    recipients: ['صديق'],
     budgetRange: '300-500',
     stock: 100,
     sku: 'GC-AMZ-001',
@@ -493,7 +512,7 @@ const productsData = [
     categorySlug: 'gift-cards',
     tags: ['بطاقة', 'ستاربكس', 'قهوة'],
     occasions: ['birthday', 'thank-you'],
-    recipients: ['friend', 'colleague', 'anyone'],
+    recipients: ['صديق', 'صديق', 'صديق'],
     budgetRange: '100-300',
     stock: 150,
     sku: 'GC-SBX-001',
@@ -506,6 +525,7 @@ async function seedDatabase() {
     console.log('Clearing existing data...');
     await Category.deleteMany({});
     await Product.deleteMany({});
+    await Occasion.deleteMany({});
     await User.deleteMany({ role: 'admin' }); // Only delete admin users
 
     // Create admin user
@@ -522,6 +542,10 @@ async function seedDatabase() {
     });
     console.log(`✅ Admin user created: ${adminUser.email}`);
     console.log('   Password: Admin@123456');
+
+    console.log('Creating occasions...');
+    const occasions = await Occasion.insertMany(occasionsData);
+    console.log(`Created ${occasions.length} occasions`);
 
     console.log('Creating categories...');
     const categories = await Category.insertMany(categoriesData);
@@ -545,7 +569,19 @@ async function seedDatabase() {
     const products = await Product.insertMany(productsWithCategory);
     console.log(`Created ${products.length} products`);
 
+    console.log('');
     console.log('✅ Database seeded successfully!');
+    console.log('');
+    console.log('📊 Summary:');
+    console.log(`   - ${occasions.length} occasions`);
+    console.log(`   - ${categories.length} categories`);
+    console.log(`   - ${products.length} products`);
+    console.log(`   - 1 admin user`);
+    console.log('');
+    console.log('🔐 Admin Login:');
+    console.log('   Email: admin@foryou-gifts.com');
+    console.log('   Password: Admin@123456');
+    
     process.exit(0);
   } catch (error) {
     console.error('Error seeding database:', error);
@@ -554,3 +590,4 @@ async function seedDatabase() {
 }
 
 seedDatabase();
+
