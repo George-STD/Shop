@@ -1,8 +1,8 @@
 import CartPageClient from './CartPageClient'
+import { PAGE_METADATA } from '../../../lib/metadata'
 
 export const metadata = {
-  title: 'سلة التسوق',
-  description: 'راجع المنتجات في سلة التسوق وأتمم عملية الشراء.',
+  ...PAGE_METADATA.cart,
   robots: { index: false, follow: false },
 }
 

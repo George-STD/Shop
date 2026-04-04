@@ -6,6 +6,8 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { sendVerificationEmail, sendPasswordResetEmail, generateVerificationCode } = require('../utils/mailer');
 const { loginLimiter, verifyLimiter, registerLimiter, protect } = require('../middleware/auth');
+const { MESSAGES } = require('../constants');
+const { sendSuccess, sendError, sendNotFound, sendCreated } = require('../utils/response');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -18,11 +20,11 @@ const generateToken = (id) => {
 // @desc    Register new user (sends verification code to email)
 // @access  Public
 router.post('/register', registerLimiter, [
-  body('firstName').trim().notEmpty().withMessage('الاسم الأول مطلوب'),
-  body('lastName').trim().notEmpty().withMessage('الاسم الأخير مطلوب'),
-  body('email').isEmail().withMessage('البريد الإلكتروني غير صالح'),
-  body('phone').notEmpty().withMessage('رقم الهاتف مطلوب'),
-  body('password').isLength({ min: 6 }).withMessage('كلمة المرور يجب أن تكون 6 أحرف على الأقل')
+  body('firstName').trim().notEmpty().withMessage(MESSAGES.VALIDATION.FIRST_NAME_REQUIRED),
+  body('lastName').trim().notEmpty().withMessage(MESSAGES.VALIDATION.LAST_NAME_REQUIRED),
+  body('email').isEmail().withMessage(MESSAGES.VALIDATION.EMAIL_INVALID),
+  body('phone').notEmpty().withMessage(MESSAGES.VALIDATION.PHONE_REQUIRED),
+  body('password').isLength({ min: 6 }).withMessage(MESSAGES.VALIDATION.PASSWORD_MIN_LENGTH)
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -61,13 +63,13 @@ router.post('/register', registerLimiter, [
 
         return res.status(200).json({
           success: true,
-          message: emailSent ? 'تم إرسال كود التحقق إلى بريدك الإلكتروني' : 'تم إنشاء الحساب لكن فشل إرسال الكود. جرب إعادة الإرسال',
+          message: emailSent ? MESSAGES.AUTH.REGISTER_VERIFICATION_SENT : MESSAGES.AUTH.REGISTER_VERIFICATION_FAILED,
           data: { email, requiresVerification: true, emailSent }
         });
       }
       return res.status(400).json({
         success: false,
-        message: 'البريد الإلكتروني مسجل مسبقاً'
+        message: MESSAGES.AUTH.EMAIL_EXISTS
       });
     }
 
@@ -83,7 +85,7 @@ router.post('/register', registerLimiter, [
       password,
       isVerified: false,
       emailVerificationCode: code,
-      emailVerificationExpires: new Date(Date.now() + 10 * 60 * 1000) // 10 min
+      emailVerificationExpires: new Date(Date.now() + 10 * 60 * 1000)
     });
 
     // Send verification email
@@ -97,15 +99,12 @@ router.post('/register', registerLimiter, [
 
     res.status(201).json({
       success: true,
-      message: emailSent ? 'تم إرسال كود التحقق إلى بريدك الإلكتروني' : 'تم إنشاء الحساب لكن فشل إرسال الكود. جرب إعادة الإرسال',
+      message: emailSent ? MESSAGES.AUTH.REGISTER_VERIFICATION_SENT : MESSAGES.AUTH.REGISTER_VERIFICATION_FAILED,
       data: { email, requiresVerification: true, emailSent }
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ أثناء إنشاء الحساب'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -113,8 +112,8 @@ router.post('/register', registerLimiter, [
 // @desc    Verify email with code
 // @access  Public
 router.post('/verify-email', verifyLimiter, [
-  body('email').isEmail().withMessage('البريد الإلكتروني غير صالح'),
-  body('code').isLength({ min: 6, max: 6 }).withMessage('الكود يجب أن يكون 6 أرقام')
+  body('email').isEmail().withMessage(MESSAGES.VALIDATION.EMAIL_INVALID),
+  body('code').isLength({ min: 6, max: 6 }).withMessage(MESSAGES.VALIDATION.CODE_LENGTH)
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -126,19 +125,19 @@ router.post('/verify-email', verifyLimiter, [
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ success: false, message: 'المستخدم غير موجود' });
+      return res.status(400).json({ success: false, message: MESSAGES.AUTH.USER_NOT_FOUND });
     }
 
     if (user.isVerified) {
-      return res.status(400).json({ success: false, message: 'الحساب مفعّل بالفعل' });
+      return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_ALREADY_DONE });
     }
 
     if (user.emailVerificationCode !== code) {
-      return res.status(400).json({ success: false, message: 'الكود غير صحيح' });
+      return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
     }
 
     if (user.emailVerificationExpires < new Date()) {
-      return res.status(400).json({ success: false, message: 'الكود منتهي الصلاحية. أعد إرسال كود جديد' });
+      return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_EXPIRED });
     }
 
     // Verify user using findByIdAndUpdate to bypass pre-save hooks
@@ -151,7 +150,7 @@ router.post('/verify-email', verifyLimiter, [
 
     res.json({
       success: true,
-      message: 'تم تأكيد الحساب بنجاح',
+      message: MESSAGES.AUTH.VERIFICATION_SUCCESS,
       data: {
         user: {
           id: user._id,
@@ -166,7 +165,7 @@ router.post('/verify-email', verifyLimiter, [
     });
   } catch (error) {
     console.error('Verify email error:', error);
-    res.status(500).json({ success: false, message: 'حدث خطأ أثناء التحقق' });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -174,7 +173,7 @@ router.post('/verify-email', verifyLimiter, [
 // @desc    Resend verification code
 // @access  Public
 router.post('/resend-code', verifyLimiter, [
-  body('email').isEmail().withMessage('البريد الإلكتروني غير صالح')
+  body('email').isEmail().withMessage(MESSAGES.VALIDATION.EMAIL_INVALID)
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -186,11 +185,11 @@ router.post('/resend-code', verifyLimiter, [
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ success: false, message: 'المستخدم غير موجود' });
+      return res.status(400).json({ success: false, message: MESSAGES.AUTH.USER_NOT_FOUND });
     }
 
     if (user.isVerified) {
-      return res.status(400).json({ success: false, message: 'الحساب مفعّل بالفعل' });
+      return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_ALREADY_DONE });
     }
 
     const code = generateVerificationCode();
@@ -205,13 +204,13 @@ router.post('/resend-code', verifyLimiter, [
       await sendVerificationEmail(email, code);
     } catch (emailError) {
       console.error('Resend code email error:', emailError.message);
-      return res.status(500).json({ success: false, message: 'فشل في إرسال البريد. تأكد من إعدادات SMTP وأعد المحاولة' });
+      return res.status(500).json({ success: false, message: MESSAGES.AUTH.EMAIL_SEND_FAILED });
     }
 
-    res.json({ success: true, message: 'تم إرسال كود جديد إلى بريدك الإلكتروني' });
+    res.json({ success: true, message: MESSAGES.AUTH.VERIFICATION_CODE_SENT });
   } catch (error) {
     console.error('Resend code error:', error);
-    res.status(500).json({ success: false, message: 'حدث خطأ' });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -219,8 +218,8 @@ router.post('/resend-code', verifyLimiter, [
 // @desc    Login user
 // @access  Public
 router.post('/login', loginLimiter, [
-  body('email').isEmail().withMessage('البريد الإلكتروني غير صالح'),
-  body('password').notEmpty().withMessage('كلمة المرور مطلوبة')
+  body('email').isEmail().withMessage(MESSAGES.VALIDATION.EMAIL_INVALID),
+  body('password').notEmpty().withMessage(MESSAGES.VALIDATION.PASSWORD_REQUIRED)
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -239,14 +238,14 @@ router.post('/login', loginLimiter, [
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({
         success: false,
-        message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
+        message: MESSAGES.AUTH.LOGIN_FAILED
       });
     }
 
     if (!user.isActive) {
       return res.status(401).json({
         success: false,
-        message: 'الحساب غير مفعل'
+        message: MESSAGES.AUTH.ACCOUNT_INACTIVE
       });
     }
 
@@ -271,7 +270,7 @@ router.post('/login', loginLimiter, [
 
       return res.status(403).json({
         success: false,
-        message: emailSent ? 'يجب تأكيد بريدك الإلكتروني أولاً. تم إرسال كود جديد' : 'يجب تأكيد بريدك الإلكتروني. فشل إرسال الكود، جرب إعادة الإرسال',
+        message: emailSent ? MESSAGES.AUTH.VERIFICATION_REQUIRED_CODE_SENT : MESSAGES.AUTH.VERIFICATION_REQUIRED_CODE_FAILED,
         data: { email, requiresVerification: true, emailSent }
       });
     }
@@ -283,7 +282,7 @@ router.post('/login', loginLimiter, [
 
     res.json({
       success: true,
-      message: 'تم تسجيل الدخول بنجاح',
+      message: MESSAGES.AUTH.LOGIN_SUCCESS,
       data: {
         user: {
           id: user._id,
@@ -298,10 +297,7 @@ router.post('/login', loginLimiter, [
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ أثناء تسجيل الدخول'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -314,21 +310,12 @@ router.get('/me', protect, async (req, res) => {
       .populate('wishlist', 'name slug price images');
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'المستخدم غير موجود'
-      });
+      return sendNotFound(res, MESSAGES.AUTH.USER_NOT_FOUND);
     }
 
-    res.json({
-      success: true,
-      data: user
-    });
+    sendSuccess(res, user);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -336,9 +323,9 @@ router.get('/me', protect, async (req, res) => {
 // @desc    Update user profile
 // @access  Private
 router.put('/update-profile', protect, [
-  body('firstName').optional().trim().isLength({ min: 2, max: 50 }).withMessage('الاسم الأول يجب أن يكون بين 2 و 50 حرف'),
-  body('lastName').optional().trim().isLength({ min: 2, max: 50 }).withMessage('الاسم الأخير يجب أن يكون بين 2 و 50 حرف'),
-  body('phone').optional().trim().notEmpty().withMessage('رقم الهاتف مطلوب'),
+  body('firstName').optional().trim().isLength({ min: 2, max: 50 }).withMessage(MESSAGES.VALIDATION.FIRST_NAME_LENGTH),
+  body('lastName').optional().trim().isLength({ min: 2, max: 50 }).withMessage(MESSAGES.VALIDATION.LAST_NAME_LENGTH),
+  body('phone').optional().trim().notEmpty().withMessage(MESSAGES.VALIDATION.PHONE_REQUIRED),
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -354,16 +341,9 @@ router.put('/update-profile', protect, [
       { new: true, runValidators: true }
     );
 
-    res.json({
-      success: true,
-      message: 'تم تحديث البيانات بنجاح',
-      data: user
-    });
+    sendSuccess(res, user, MESSAGES.AUTH.PROFILE_UPDATED);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -371,8 +351,8 @@ router.put('/update-profile', protect, [
 // @desc    Change password
 // @access  Private
 router.put('/change-password', protect, [
-  body('currentPassword').notEmpty().withMessage('كلمة المرور الحالية مطلوبة'),
-  body('newPassword').isLength({ min: 6 }).withMessage('كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل')
+  body('currentPassword').notEmpty().withMessage(MESSAGES.VALIDATION.CURRENT_PASSWORD_REQUIRED),
+  body('newPassword').isLength({ min: 6 }).withMessage(MESSAGES.VALIDATION.NEW_PASSWORD_MIN_LENGTH)
 ], async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('+password');
@@ -382,22 +362,16 @@ router.put('/change-password', protect, [
     if (!(await user.comparePassword(currentPassword))) {
       return res.status(400).json({
         success: false,
-        message: 'كلمة المرور الحالية غير صحيحة'
+        message: MESSAGES.AUTH.PASSWORD_INCORRECT
       });
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 12);
     await User.findByIdAndUpdate(req.user._id, { $set: { password: hashedNewPassword } });
 
-    res.json({
-      success: true,
-      message: 'تم تغيير كلمة المرور بنجاح'
-    });
+    sendSuccess(res, null, MESSAGES.AUTH.PASSWORD_CHANGED);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -409,7 +383,7 @@ router.post('/wishlist/:productId', protect, async (req, res) => {
     if (req.user.wishlist.includes(req.params.productId)) {
       return res.status(400).json({
         success: false,
-        message: 'المنتج موجود في قائمة الأمنيات'
+        message: MESSAGES.WISHLIST.ALREADY_EXISTS
       });
     }
 
@@ -417,15 +391,9 @@ router.post('/wishlist/:productId', protect, async (req, res) => {
       $addToSet: { wishlist: req.params.productId }
     });
 
-    res.json({
-      success: true,
-      message: 'تمت الإضافة إلى قائمة الأمنيات'
-    });
+    sendSuccess(res, null, MESSAGES.WISHLIST.ADDED);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -438,15 +406,9 @@ router.delete('/wishlist/:productId', protect, async (req, res) => {
       $pull: { wishlist: req.params.productId }
     });
 
-    res.json({
-      success: true,
-      message: 'تمت الإزالة من قائمة الأمنيات'
-    });
+    sendSuccess(res, null, MESSAGES.WISHLIST.REMOVED);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -454,7 +416,7 @@ router.delete('/wishlist/:productId', protect, async (req, res) => {
 // @desc    Send password reset code to email
 // @access  Public
 router.post('/forgot-password', loginLimiter, [
-  body('email').isEmail().withMessage('البريد الإلكتروني غير صالح')
+  body('email').isEmail().withMessage(MESSAGES.VALIDATION.EMAIL_INVALID)
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -467,7 +429,7 @@ router.post('/forgot-password', loginLimiter, [
 
     // Always return success to prevent email enumeration
     if (!user) {
-      return res.json({ success: true, message: 'إذا كان البريد مسجلاً، سيتم إرسال كود إعادة التعيين' });
+      return res.json({ success: true, message: MESSAGES.AUTH.PASSWORD_RESET_GENERIC });
     }
 
     const code = generateVerificationCode();
@@ -482,13 +444,13 @@ router.post('/forgot-password', loginLimiter, [
       await sendPasswordResetEmail(email, code);
     } catch (emailError) {
       console.error('Password reset email error:', emailError.message);
-      return res.status(500).json({ success: false, message: 'فشل في إرسال البريد. أعد المحاولة لاحقاً' });
+      return res.status(500).json({ success: false, message: MESSAGES.AUTH.EMAIL_SEND_FAILED_RETRY });
     }
 
-    res.json({ success: true, message: 'تم إرسال كود إعادة التعيين إلى بريدك الإلكتروني' });
+    res.json({ success: true, message: MESSAGES.AUTH.PASSWORD_RESET_SENT });
   } catch (error) {
     console.error('Forgot password error:', error);
-    res.status(500).json({ success: false, message: 'حدث خطأ' });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -496,8 +458,8 @@ router.post('/forgot-password', loginLimiter, [
 // @desc    Verify the password reset code
 // @access  Public
 router.post('/verify-reset-code', verifyLimiter, [
-  body('email').isEmail().withMessage('البريد الإلكتروني غير صالح'),
-  body('code').isLength({ min: 6, max: 6 }).withMessage('الكود يجب أن يكون 6 أرقام')
+  body('email').isEmail().withMessage(MESSAGES.VALIDATION.EMAIL_INVALID),
+  body('code').isLength({ min: 6, max: 6 }).withMessage(MESSAGES.VALIDATION.CODE_LENGTH)
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -509,20 +471,20 @@ router.post('/verify-reset-code', verifyLimiter, [
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ success: false, message: 'المستخدم غير موجود' });
+      return res.status(400).json({ success: false, message: MESSAGES.AUTH.USER_NOT_FOUND });
     }
 
     if (user.resetPasswordToken !== code) {
-      return res.status(400).json({ success: false, message: 'الكود غير صحيح' });
+      return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
     }
 
     if (user.resetPasswordExpires < new Date()) {
-      return res.status(400).json({ success: false, message: 'الكود منتهي الصلاحية. أعد المحاولة' });
+      return res.status(400).json({ success: false, message: MESSAGES.AUTH.CODE_EXPIRED });
     }
 
-    res.json({ success: true, message: 'الكود صحيح' });
+    res.json({ success: true, message: MESSAGES.AUTH.CODE_VALID });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'حدث خطأ' });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -530,9 +492,9 @@ router.post('/verify-reset-code', verifyLimiter, [
 // @desc    Reset password with verified code
 // @access  Public
 router.post('/reset-password', verifyLimiter, [
-  body('email').isEmail().withMessage('البريد الإلكتروني غير صالح'),
-  body('code').isLength({ min: 6, max: 6 }).withMessage('الكود غير صالح'),
-  body('newPassword').isLength({ min: 6 }).withMessage('كلمة المرور يجب أن تكون 6 أحرف على الأقل')
+  body('email').isEmail().withMessage(MESSAGES.VALIDATION.EMAIL_INVALID),
+  body('code').isLength({ min: 6, max: 6 }).withMessage(MESSAGES.VALIDATION.CODE_INVALID),
+  body('newPassword').isLength({ min: 6 }).withMessage(MESSAGES.VALIDATION.PASSWORD_MIN_LENGTH)
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -544,15 +506,15 @@ router.post('/reset-password', verifyLimiter, [
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
-      return res.status(400).json({ success: false, message: 'المستخدم غير موجود' });
+      return res.status(400).json({ success: false, message: MESSAGES.AUTH.USER_NOT_FOUND });
     }
 
     if (user.resetPasswordToken !== code) {
-      return res.status(400).json({ success: false, message: 'الكود غير صحيح' });
+      return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
     }
 
     if (user.resetPasswordExpires < new Date()) {
-      return res.status(400).json({ success: false, message: 'الكود منتهي الصلاحية' });
+      return res.status(400).json({ success: false, message: MESSAGES.AUTH.CODE_EXPIRED });
     }
 
     // Hash password manually since we're bypassing pre-save hook
@@ -562,10 +524,10 @@ router.post('/reset-password', verifyLimiter, [
       $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 }
     });
 
-    res.json({ success: true, message: 'تم تغيير كلمة المرور بنجاح. يمكنك تسجيل الدخول الآن' });
+    res.json({ success: true, message: MESSAGES.AUTH.PASSWORD_LOGIN_PROMPT });
   } catch (error) {
     console.error('Reset password error:', error);
-    res.status(500).json({ success: false, message: 'حدث خطأ' });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 

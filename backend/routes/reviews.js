@@ -6,6 +6,8 @@ const { body, validationResult } = require('express-validator');
 const Review = require('../models/Review');
 const Order = require('../models/Order');
 const { protect, apiLimiter } = require('../middleware/auth');
+const { MESSAGES, CONFIG } = require('../constants');
+const { sendSuccess, sendError, sendNotFound, sendForbidden, sendCreated, sendPaginated } = require('../utils/response');
 
 // Optional auth helper — returns userId or null (for guest reviews)
 const getOptionalUserId = (req) => {
@@ -23,7 +25,7 @@ const getOptionalUserId = (req) => {
 // @access  Public
 router.get('/product/:productId', async (req, res) => {
   try {
-    const { page = 1, limit = 10, sort = 'newest' } = req.query;
+    const { page = 1, limit = CONFIG.LIMITS.REVIEWS_PER_PAGE, sort = 'newest' } = req.query;
 
     let sortOption = { createdAt: -1 };
     if (sort === 'oldest') sortOption = { createdAt: 1 };
@@ -49,7 +51,6 @@ router.get('/product/:productId', async (req, res) => {
     const ratingStats = await Review.aggregate([
       { 
         $match: { 
-          // تم إضافة كلمة new هنا لإصلاح الخطأ
           product: new mongoose.Types.ObjectId(req.params.productId),
           isApproved: true 
         } 
@@ -79,10 +80,7 @@ router.get('/product/:productId', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching reviews:', error);
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -90,26 +88,23 @@ router.get('/product/:productId', async (req, res) => {
 // @desc    Create a review
 // @access  Private
 router.post('/', apiLimiter, [
-  // تم تغيير productId إلى product ليتوافق مع ما ترسله واجهة الـ React
-  body('product').notEmpty().withMessage('معرف المنتج مطلوب'),
-  body('rating').isInt({ min: 1, max: 5 }).withMessage('التقييم يجب أن يكون بين 1 و 5'),
-  body('comment').trim().isLength({ min: 10 }).withMessage('التعليق يجب أن يكون 10 أحرف على الأقل'),
-  body('guestName').optional().trim().notEmpty().withMessage('اسم الضيف مطلوب'),
-  body('guestEmail').optional().isEmail().withMessage('بريد إلكتروني صحيح مطلوب')
+  body('product').notEmpty().withMessage(MESSAGES.REVIEWS.PRODUCT_REQUIRED),
+  body('rating').isInt({ min: 1, max: 5 }).withMessage(MESSAGES.REVIEWS.RATING_INVALID),
+  body('comment').trim().isLength({ min: 10 }).withMessage(MESSAGES.REVIEWS.COMMENT_TOO_SHORT),
+  body('guestName').optional().trim().notEmpty().withMessage(MESSAGES.REVIEWS.GUEST_NAME_REQUIRED),
+  body('guestEmail').optional().isEmail().withMessage(MESSAGES.REVIEWS.GUEST_EMAIL_INVALID)
 ], async (req, res) => {
   try {
     const userId = getOptionalUserId(req);
-    // تم استخراج product بدلاً من productId
     const { product, rating, title, comment, pros, cons, images, orderId, guestName, guestEmail } = req.body;
     
-    // إنشاء متغير productId ليتوافق مع باقي الكود القديم
     const productId = product;
 
     // If not logged in, require guestName and guestEmail
     if (!userId && (!guestName || !guestEmail)) {
       return res.status(400).json({
         success: false,
-        message: 'يجب إدخال الاسم والبريد الإلكتروني للزائر'
+        message: MESSAGES.REVIEWS.GUEST_INFO_REQUIRED
       });
     }
 
@@ -132,7 +127,7 @@ router.post('/', apiLimiter, [
     if (existingReview) {
       return res.status(400).json({
         success: false,
-        message: 'لقد قمت بتقييم هذا المنتج مسبقاً'
+        message: MESSAGES.REVIEWS.ALREADY_REVIEWED
       });
     }
 
@@ -162,22 +157,15 @@ router.post('/', apiLimiter, [
       cons,
       images,
       isVerifiedPurchase,
-      isApproved: true // Auto-approve for now
+      isApproved: true
     });
 
     if (userId) await review.populate('user', 'firstName lastName avatar');
 
-    res.status(201).json({
-      success: true,
-      message: 'تم إضافة التقييم بنجاح',
-      data: review
-    });
+    sendCreated(res, review, MESSAGES.REVIEWS.CREATED);
   } catch (error) {
     console.error('Error creating review:', error);
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -189,17 +177,11 @@ router.put('/:id', protect, async (req, res) => {
     const review = await Review.findById(req.params.id);
 
     if (!review) {
-      return res.status(404).json({
-        success: false,
-        message: 'التقييم غير موجود'
-      });
+      return sendNotFound(res, MESSAGES.REVIEWS.NOT_FOUND);
     }
 
     if (review.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'غير مصرح'
-      });
+      return sendForbidden(res, MESSAGES.AUTH.FORBIDDEN);
     }
 
     const { rating, title, comment, pros, cons } = req.body;
@@ -213,16 +195,9 @@ router.put('/:id', protect, async (req, res) => {
 
     await review.save();
 
-    res.json({
-      success: true,
-      message: 'تم تحديث التقييم',
-      data: review
-    });
+    sendSuccess(res, review, MESSAGES.REVIEWS.UPDATED);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -234,31 +209,18 @@ router.delete('/:id', protect, async (req, res) => {
     const review = await Review.findById(req.params.id);
 
     if (!review) {
-      return res.status(404).json({
-        success: false,
-        message: 'التقييم غير موجود'
-      });
+      return sendNotFound(res, MESSAGES.REVIEWS.NOT_FOUND);
     }
 
     if (review.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'غير مصرح'
-      });
+      return sendForbidden(res, MESSAGES.AUTH.FORBIDDEN);
     }
 
-    // تم التحديث من remove إلى deleteOne لأن remove غير مدعومة في الإصدارات الحديثة
     await review.deleteOne();
 
-    res.json({
-      success: true,
-      message: 'تم حذف التقييم'
-    });
+    sendSuccess(res, null, MESSAGES.REVIEWS.DELETED);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -270,10 +232,7 @@ router.post('/:id/helpful', protect, async (req, res) => {
     const review = await Review.findById(req.params.id);
 
     if (!review) {
-      return res.status(404).json({
-        success: false,
-        message: 'التقييم غير موجود'
-      });
+      return sendNotFound(res, MESSAGES.REVIEWS.NOT_FOUND);
     }
 
     const userId = req.user._id.toString();
@@ -293,15 +252,9 @@ router.post('/:id/helpful', protect, async (req, res) => {
 
     await review.save();
 
-    res.json({
-      success: true,
-      data: { helpful: review.helpful.count }
-    });
+    sendSuccess(res, { helpful: review.helpful.count });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 

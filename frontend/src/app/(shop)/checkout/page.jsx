@@ -1,8 +1,8 @@
 import CheckoutPageClient from './CheckoutPageClient'
+import { PAGE_METADATA } from '../../../lib/metadata'
 
 export const metadata = {
-  title: 'إتمام الطلب',
-  description: 'أتمم طلبك بأمان من متجر فور يو للهدايا.',
+  ...PAGE_METADATA.checkout,
   robots: { index: false, follow: false },
 }
 

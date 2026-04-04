@@ -5,22 +5,24 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const { protect, apiLimiter } = require('../middleware/auth');
 const { sendOrderConfirmationEmail } = require('../utils/mailer');
+const { CONFIG, MESSAGES } = require('../constants');
+const { sendSuccess, sendError, sendCreated, sendNotFound, sendForbidden, sendBadRequest, sendPaginated } = require('../utils/response');
 
 // @route   POST /api/orders
 // @desc    Create new order
 // @access  Private (requires authentication)
 router.post('/', protect, apiLimiter, [
-  body('items').isArray({ min: 1 }).withMessage('يجب إضافة منتج واحد على الأقل'),
-  body('shippingAddress.street').trim().notEmpty().withMessage('العنوان مطلوب'),
-  body('shippingAddress.governorate').trim().notEmpty().withMessage('المحافظة مطلوبة'),
-  body('shippingAddress.phone').trim().notEmpty().withMessage('رقم الهاتف مطلوب'),
-  body('paymentMethod').isIn(['cod', 'instapay']).withMessage('طريقة الدفع غير صالحة'),
-  body('guestEmail').optional().isEmail().withMessage('البريد الإلكتروني غير صالح'),
+  body('items').isArray({ min: 1 }).withMessage(MESSAGES.ORDERS.ITEMS_REQUIRED),
+  body('shippingAddress.street').trim().notEmpty().withMessage(MESSAGES.ORDERS.ADDRESS_REQUIRED),
+  body('shippingAddress.governorate').trim().notEmpty().withMessage(MESSAGES.ORDERS.GOVERNORATE_REQUIRED),
+  body('shippingAddress.phone').trim().notEmpty().withMessage(MESSAGES.ORDERS.PHONE_REQUIRED),
+  body('paymentMethod').isIn(CONFIG.PAYMENT_METHODS).withMessage(MESSAGES.ORDERS.PAYMENT_INVALID),
+  body('guestEmail').optional().isEmail().withMessage(MESSAGES.VALIDATION.EMAIL_INVALID),
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, errors: errors.array() });
+      return sendBadRequest(res, MESSAGES.GENERAL.VALIDATION_ERROR, errors.array());
     }
 
     // User is guaranteed to exist because of protect middleware
@@ -45,10 +47,7 @@ router.post('/', protect, apiLimiter, [
 
     // Validate items
     if (!items || items.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'لا يوجد منتجات في الطلب'
-      });
+      return sendBadRequest(res, MESSAGES.ORDERS.NO_ITEMS);
     }
 
     // Calculate totals and validate products
@@ -59,17 +58,11 @@ router.post('/', protect, apiLimiter, [
       const product = await Product.findById(item.productId);
       
       if (!product) {
-        return res.status(400).json({
-          success: false,
-          message: `المنتج غير موجود: ${item.productId}`
-        });
+        return sendBadRequest(res, `${MESSAGES.ORDERS.PRODUCT_NOT_FOUND_TEMPLATE}: ${item.productId}`);
       }
 
       if (product.stock < item.quantity) {
-        return res.status(400).json({
-          success: false,
-          message: `الكمية غير متوفرة للمنتج: ${product.name}`
-        });
+        return sendBadRequest(res, `${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${product.name}`);
       }
 
       let itemSubtotal = product.price * item.quantity;
@@ -94,15 +87,14 @@ router.post('/', protect, apiLimiter, [
         selectedVariants: item.selectedVariants,
         addons: item.addons,
         boxSelections: item.boxSelections,
-        giftWrap: item.giftWrap,
         subtotal: itemSubtotal
       });
 
       subtotal += itemSubtotal;
     }
 
-    // Calculate shipping - flat rate 60 EGP
-    const shippingCost = 60;
+    // Calculate shipping from config
+    const shippingCost = CONFIG.BUSINESS.SHIPPING_COST_EGP;
 
     // Calculate total
     const total = subtotal + shippingCost;
@@ -127,8 +119,8 @@ router.post('/', protect, apiLimiter, [
       hidePrice,
       customerNote,
       statusHistory: [{
-        status: 'pending',
-        note: 'تم استلام الطلب'
+        status: CONFIG.ORDER_STATUS.PENDING,
+        note: MESSAGES.ORDERS.RECEIVED
       }]
     });
 
@@ -149,17 +141,10 @@ router.post('/', protect, apiLimiter, [
       });
     }
 
-    res.status(201).json({
-      success: true,
-      message: 'تم إنشاء الطلب بنجاح',
-      data: order
-    });
+    return sendCreated(res, { data: order, message: MESSAGES.ORDERS.CREATED });
   } catch (error) {
     console.error('Order creation error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ أثناء إنشاء الطلب'
-    });
+    return sendError(res, { message: MESSAGES.ORDERS.CREATE_ERROR });
   }
 });
 
@@ -168,11 +153,10 @@ router.post('/', protect, apiLimiter, [
 // @access  Private
 router.get('/', protect, async (req, res) => {
   try {
-    const { page = 1, limit = 10, status } = req.query;
+    const { page = 1, limit = CONFIG.PAGINATION.ORDERS_LIMIT, status } = req.query;
     
     const query = { user: req.user._id };
-    const allowedStatuses = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
-    if (status && allowedStatuses.includes(String(status))) {
+    if (status && CONFIG.ORDER_STATUSES.includes(String(status))) {
       query.status = String(status);
     }
 
@@ -183,20 +167,9 @@ router.get('/', protect, async (req, res) => {
 
     const total = await Order.countDocuments(query);
 
-    res.json({
-      success: true,
-      data: orders,
-      pagination: {
-        current: Number(page),
-        pages: Math.ceil(total / limit),
-        total
-      }
-    });
+    return sendPaginated(res, { data: orders, page, limit, total });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    return sendError(res, { message: MESSAGES.ORDERS.GENERIC_ERROR });
   }
 });
 
@@ -209,29 +182,17 @@ router.get('/:id', protect, async (req, res) => {
       .populate('items.product', 'name slug images');
 
     if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'الطلب غير موجود'
-      });
+      return sendNotFound(res, MESSAGES.ORDERS.NOT_FOUND);
     }
 
     // Check if user owns this order
     if (order.user && order.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'غير مصرح'
-      });
+      return sendForbidden(res, MESSAGES.ORDERS.UNAUTHORIZED);
     }
 
-    res.json({
-      success: true,
-      data: order
-    });
+    return sendSuccess(res, { data: order });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    return sendError(res, { message: MESSAGES.ORDERS.GENERIC_ERROR });
   }
 });
 
@@ -241,25 +202,16 @@ router.get('/:id', protect, async (req, res) => {
 router.get('/track/:orderNumber', async (req, res) => {
   try {
     const param = req.params.orderNumber;
-    const query = param.match(/^[0-9a-fA-F]{24}$/) ? { _id: param } : { orderNumber: param };
+    const query = CONFIG.PATTERNS.MONGODB_ID.test(param) ? { _id: param } : { orderNumber: param };
     const order = await Order.findOne(query).select('orderNumber status statusHistory items.name items.quantity items.image items.price shippingAddress.firstName shippingAddress.lastName shippingAddress.governorate shippingAddress.city shippingAddress.street shippingAddress.phone estimatedDelivery deliveredAt createdAt total subtotal shippingCost');
 
     if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'الطلب غير موجود'
-      });
+      return sendNotFound(res, MESSAGES.ORDERS.NOT_FOUND);
     }
 
-    res.json({
-      success: true,
-      data: order
-    });
+    return sendSuccess(res, { data: order });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    return sendError(res, { message: MESSAGES.ORDERS.GENERIC_ERROR });
   }
 });
 
@@ -271,33 +223,24 @@ router.put('/:id/cancel', protect, async (req, res) => {
     const order = await Order.findById(req.params.id);
 
     if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'الطلب غير موجود'
-      });
+      return sendNotFound(res, MESSAGES.ORDERS.NOT_FOUND);
     }
 
     if (order.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'غير مصرح'
-      });
+      return sendForbidden(res, MESSAGES.ORDERS.UNAUTHORIZED);
     }
 
     // Can only cancel pending or confirmed orders
-    if (!['pending', 'confirmed'].includes(order.status)) {
-      return res.status(400).json({
-        success: false,
-        message: 'لا يمكن إلغاء هذا الطلب'
-      });
+    if (!CONFIG.CANCELLABLE_STATUSES.includes(order.status)) {
+      return sendBadRequest(res, MESSAGES.ORDERS.CANNOT_CANCEL);
     }
 
-    order.status = 'cancelled';
+    order.status = CONFIG.ORDER_STATUS.CANCELLED;
     order.cancellationReason = req.body.reason;
     order.cancelledAt = new Date();
     order.statusHistory.push({
-      status: 'cancelled',
-      note: req.body.reason || 'تم الإلغاء بواسطة العميل'
+      status: CONFIG.ORDER_STATUS.CANCELLED,
+      note: req.body.reason || MESSAGES.ORDERS.CANCELLED_BY_CUSTOMER
     });
 
     await order.save();
@@ -309,16 +252,9 @@ router.put('/:id/cancel', protect, async (req, res) => {
       });
     }
 
-    res.json({
-      success: true,
-      message: 'تم إلغاء الطلب بنجاح',
-      data: order
-    });
+    return sendSuccess(res, { data: order, message: MESSAGES.ORDERS.CANCELLED });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    return sendError(res, { message: MESSAGES.ORDERS.GENERIC_ERROR });
   }
 });
 

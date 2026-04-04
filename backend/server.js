@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 require('dotenv').config();
 
+const { CONFIG, MESSAGES } = require('./constants');
 
 const app = express();
 // Allow Express to trust proxy (for correct IP detection behind Render)
@@ -13,9 +14,9 @@ app.set('trust proxy', 1);
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: ["https://www.foryo.me"],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
+  origin: CONFIG.CORS.ALLOWED_ORIGINS,
+  methods: CONFIG.CORS.METHODS,
+  credentials: CONFIG.CORS.CREDENTIALS
 }));
 app.use(morgan('dev'));
 
@@ -48,18 +49,18 @@ app.use('/api/admin', require('./routes/admin'));
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'For You Gift Shop API is running' });
+  res.json({ status: 'ok', message: MESSAGES.HEALTH.OK });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'حدث خطأ في الخادم' });
+  res.status(500).json({ success: false, message: MESSAGES.GENERAL.SERVER_ERROR });
 });
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ message: 'المسار غير موجود' });
+  res.status(404).json({ success: false, message: MESSAGES.GENERAL.NOT_FOUND });
 });
 
 const PORT = process.env.PORT || 5000;

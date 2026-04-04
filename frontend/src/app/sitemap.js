@@ -1,11 +1,12 @@
-const API_URL = 'https://shop-gx97.onrender.com/api'
+import { API_BASE_URL, QUERY_DEFAULTS } from '../constants'
+import { SITE_CONFIG } from '../constants/config'
 
 // Generate sitemap dynamically on each request, not at build time
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600 // Cache for 1 hour
 
 export default async function sitemap() {
-  const baseUrl = 'https://foryo.me'
+  const baseUrl = SITE_CONFIG.SITE_URL
 
   // Static pages
   const staticPages = [
@@ -27,7 +28,7 @@ export default async function sitemap() {
   try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000)
-    const res = await fetch(`${API_URL}/products?limit=1000`, { signal: controller.signal })
+    const res = await fetch(`${API_BASE_URL}/products?limit=1000`, { signal: controller.signal })
     clearTimeout(timeoutId)
     if (res.ok) {
       const data = await res.json()
@@ -48,7 +49,7 @@ export default async function sitemap() {
   try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000)
-    const res = await fetch(`${API_URL}/categories`, { signal: controller.signal })
+    const res = await fetch(`${API_BASE_URL}/categories`, { signal: controller.signal })
     clearTimeout(timeoutId)
     if (res.ok) {
       const data = await res.json()
@@ -69,7 +70,7 @@ export default async function sitemap() {
   try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000)
-    const res = await fetch(`${API_URL}/occasions`, { signal: controller.signal })
+    const res = await fetch(`${API_BASE_URL}/occasions`, { signal: controller.signal })
     clearTimeout(timeoutId)
     if (res.ok) {
       const data = await res.json()

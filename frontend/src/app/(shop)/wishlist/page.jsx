@@ -1,8 +1,8 @@
 import WishlistPageClient from './WishlistPageClient'
+import { PAGE_METADATA } from '../../../lib/metadata'
 
 export const metadata = {
-  title: 'قائمة الأمنيات',
-  description: 'قائمة الهدايا المفضلة لديك في فور يو.',
+  ...PAGE_METADATA.wishlist,
   robots: { index: false, follow: false },
 }
 

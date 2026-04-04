@@ -1,36 +1,25 @@
 import '../index.css'
 import Providers from './providers'
 import JsonLd from './JsonLd'
+import { SITE_CONFIG, SEO_KEYWORDS } from '../constants'
 
-const SITE_URL = 'https://foryo.me'
-const SITE_NAME = 'For You - فور يو'
-const SITE_DESCRIPTION = 'فور يو (For You) - متجر الهدايا الأول في مصر | تشكيلة واسعة من هدايا أعياد الميلاد، الزواج، التخرج وجميع المناسبات. شحن سريع وتغليف مجاني لكل أنحاء مصر.'
-const OG_IMAGE = `${SITE_URL}/images/logo.jpeg`
+const SITE_URL = SITE_CONFIG.SITE_URL
+const SITE_NAME = SITE_CONFIG.SITE_NAME
+const SITE_DESCRIPTION = SITE_CONFIG.DEFAULT_DESCRIPTION
+const OG_IMAGE = `${SITE_URL}${SITE_CONFIG.OG_IMAGE}`
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'For You | فور يو - متجر الهدايا الأول في مصر | هدايا لجميع المناسبات',
-    template: '%s | For You - فور يو',
+    default: SITE_CONFIG.DEFAULT_TITLE,
+    template: `%s | ${SITE_CONFIG.SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
-  keywords: [
-    'foryo', 'for you', 'foryou', 'for you gift shop', 'foryo giftshop',
-    'foryo gifts', 'foryou gifts', 'foryo egypt', 'foryou egypt',
-    'foryo.me', 'for you gifts egypt', 'for you هدايا',
-    'فور يو', 'فوريو', 'فور يو هدايا', 'فور يو للهدايا', 'متجر فور يو',
-    'for you store', 'foryo store', 'foryou store',
-    'هدايا', 'متجر هدايا', 'هدايا اون لاين', 'شراء هدايا', 'هدايا مصر',
-    'هدايا عيد ميلاد', 'هدايا زواج', 'هدايا تخرج', 'هدايا خطوبة',
-    'هدايا مواليد', 'هدايا رجالي', 'هدايا حريمي', 'هدايا اطفال',
-    'gift shop egypt', 'gifts egypt', 'online gift shop egypt',
-    'هدايا فالنتاين', 'هدايا عيد الام', 'تغليف هدايا', 'توصيل هدايا',
-    'هدايا اونلاين مصر', 'أفضل متجر هدايا',
-  ],
-  authors: [{ name: 'For You - فور يو' }],
-  creator: 'For You',
-  publisher: 'For You',
-  applicationName: 'For You - فور يو',
+  keywords: SEO_KEYWORDS,
+  authors: [{ name: SITE_CONFIG.SITE_NAME }],
+  creator: SITE_CONFIG.SITE_NAME_EN,
+  publisher: SITE_CONFIG.SITE_NAME_EN,
+  applicationName: SITE_CONFIG.SITE_NAME,
   generator: 'Next.js',
   referrer: 'origin-when-cross-origin',
   formatDetection: {
@@ -43,24 +32,24 @@ export const metadata = {
   },
   openGraph: {
     type: 'website',
-    locale: 'ar_EG',
+    locale: SITE_CONFIG.LOCALE,
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: 'For You | فور يو - متجر الهدايا الأول في مصر',
+    title: `${SITE_CONFIG.SITE_NAME_EN} | ${SITE_CONFIG.SITE_NAME_AR} - ${SITE_CONFIG.SITE_TAGLINE}`,
     description: SITE_DESCRIPTION,
     images: [
       {
         url: OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: 'For You - فور يو | متجر الهدايا الأول في مصر',
+        alt: `${SITE_CONFIG.SITE_NAME} | ${SITE_CONFIG.SITE_TAGLINE}`,
         type: 'image/jpeg',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'For You | فور يو - متجر الهدايا الأول في مصر',
+    title: `${SITE_CONFIG.SITE_NAME_EN} | ${SITE_CONFIG.SITE_NAME_AR} - ${SITE_CONFIG.SITE_TAGLINE}`,
     description: SITE_DESCRIPTION,
     images: [OG_IMAGE],
     creator: '@foryou._.21',
@@ -83,8 +72,8 @@ export const metadata = {
   },
   category: 'shopping',
   icons: {
-    icon: '/images/logo.jpeg',
-    apple: '/images/logo.jpeg',
+    icon: SITE_CONFIG.LOGO_URL,
+    apple: SITE_CONFIG.LOGO_URL,
   },
 }
 
@@ -92,7 +81,7 @@ export const viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#a855f7',
+  themeColor: SITE_CONFIG.THEME_COLOR,
 }
 
 export default function RootLayout({ children }) {

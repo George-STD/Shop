@@ -1,20 +1,34 @@
+import { SITE_CONFIG, SOCIAL_LINKS } from '../constants'
+
 export default function JsonLd() {
+  const siteUrl = SITE_CONFIG.SITE_URL
+  const logoUrl = `${siteUrl}${SITE_CONFIG.LOGO_URL}`
+
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Store',
-    '@id': 'https://foryo.me/#organization',
-    name: 'For You - فور يو',
-    alternateName: ['فور يو للهدايا', 'ForYo', 'ForYou', 'For You Gift Shop', 'فور يو', 'فوريو', 'متجر فور يو'],
-    url: 'https://foryo.me',
+    '@id': `${siteUrl}/#organization`,
+    name: SITE_CONFIG.SITE_NAME,
+    alternateName: [
+      SITE_CONFIG.SITE_NAME_AR,
+      SITE_CONFIG.SITE_NAME_EN,
+      'ForYo',
+      'ForYou',
+      'For You Gift Shop',
+      'فور يو',
+      'فوريو',
+      'متجر فور يو',
+      'فور يو للهدايا',
+    ],
+    url: siteUrl,
     logo: {
       '@type': 'ImageObject',
-      url: 'https://foryo.me/images/logo.jpeg',
+      url: logoUrl,
       width: 512,
       height: 512,
     },
-    image: 'https://foryo.me/images/logo.jpeg',
-    description:
-      'فور يو (For You) - متجر الهدايا الأول في مصر. تشكيلة واسعة من هدايا أعياد الميلاد، الزواج، التخرج وجميع المناسبات. شحن سريع وتغليف مجاني.',
+    image: logoUrl,
+    description: SITE_CONFIG.DEFAULT_DESCRIPTION,
     address: {
       '@type': 'PostalAddress',
       addressCountry: 'EG',
@@ -45,27 +59,32 @@ export default function JsonLd() {
         { '@type': 'OfferCatalog', name: 'هدايا مواليد' },
       ],
     },
-    sameAs: [
-      'https://www.facebook.com/share/1BzYfakvLp/?mibextid=wwXIfr',
-      'https://www.instagram.com/foryou._.21',
-      'https://www.youtube.com/@foryou-l1k',
-    ],
+    sameAs: Object.values(SOCIAL_LINKS),
   }
 
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    '@id': 'https://foryo.me/#website',
-    name: 'For You - فور يو',
-    alternateName: ['ForYo', 'ForYou', 'For You Gift Shop', 'فور يو', 'فوريو', 'فور يو للهدايا'],
-    url: 'https://foryo.me',
-    publisher: { '@id': 'https://foryo.me/#organization' },
+    '@id': `${siteUrl}/#website`,
+    name: SITE_CONFIG.SITE_NAME,
+    alternateName: [
+      SITE_CONFIG.SITE_NAME_EN,
+      SITE_CONFIG.SITE_NAME_AR,
+      'ForYo',
+      'ForYou',
+      'For You Gift Shop',
+      'فور يو',
+      'فوريو',
+      'فور يو للهدايا',
+    ],
+    url: siteUrl,
+    publisher: { '@id': `${siteUrl}/#organization` },
     inLanguage: 'ar',
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: 'https://foryo.me/products?search={search_term_string}',
+        urlTemplate: `${siteUrl}/products?search={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },

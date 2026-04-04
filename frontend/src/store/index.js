@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { BUSINESS_CONFIG, STORAGE_KEYS } from '../constants'
 
 // Cart Store
 export const useCartStore = create(
@@ -38,8 +39,7 @@ export const useCartStore = create(
               selectedVariants: options.selectedVariants,
               _variantsKey: variantsKey,
               addons: options.addons || [],
-              boxSelections: options.boxSelections || [],
-              giftWrap: options.giftWrap || { enabled: false }
+              boxSelections: options.boxSelections || []
             }]
           })
         }
@@ -81,9 +81,6 @@ export const useCartStore = create(
           if (item.addons) {
             itemTotal += item.addons.reduce((sum, addon) => sum + addon.price, 0)
           }
-          if (item.giftWrap?.enabled) {
-            itemTotal += 25 // Gift wrap price
-          }
           return total + itemTotal
         }, 0)
       },
@@ -93,7 +90,7 @@ export const useCartStore = create(
       }
     }),
     {
-      name: 'cart-storage'
+      name: STORAGE_KEYS.CART
     }
   )
 )
@@ -112,12 +109,12 @@ export const useAuthStore = create(
       },
 
       setAuth: (user, token) => {
-        localStorage.setItem('token', token)
+        localStorage.setItem(STORAGE_KEYS.TOKEN, token)
         set({ user, token, isAuthenticated: true })
       },
       
       logout: () => {
-        localStorage.removeItem('token')
+        localStorage.removeItem(STORAGE_KEYS.TOKEN)
         set({ user: null, token: null, isAuthenticated: false })
       },
       
@@ -130,7 +127,7 @@ export const useAuthStore = create(
       }
     }),
     {
-      name: 'auth-storage',
+      name: STORAGE_KEYS.AUTH,
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true)
       }
@@ -174,7 +171,7 @@ export const useWishlistStore = create(
       clearWishlist: () => set({ items: [] })
     }),
     {
-      name: 'wishlist-storage'
+      name: STORAGE_KEYS.WISHLIST
     }
   )
 )

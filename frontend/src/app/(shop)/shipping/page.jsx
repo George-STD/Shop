@@ -1,15 +1,7 @@
 import ShippingPageClient from './ShippingPageClient'
+import { PAGE_METADATA } from '../../../lib/metadata'
 
-export const metadata = {
-  title: 'الشحن والتوصيل',
-  description: 'معلومات عن خدمات الشحن والتوصيل في فور يو (For You). شحن لجميع محافظات مصر بسعر موحد 60 جنيه مع إمكانية تتبع الطلب.',
-  alternates: { canonical: 'https://foryo.me/shipping' },
-  openGraph: {
-    title: 'الشحن والتوصيل | For You - فور يو',
-    description: 'شحن لجميع محافظات مصر بسعر موحد 60 جنيه.',
-    url: 'https://foryo.me/shipping',
-  },
-}
+export const metadata = PAGE_METADATA.shipping
 
 export default function Page() {
   return <ShippingPageClient />

@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Category = require('../models/Category');
+const { MESSAGES } = require('../constants');
+const { sendSuccess, sendError, sendNotFound } = require('../utils/response');
 
 // @route   GET /api/categories
 // @desc    Get all categories
@@ -11,16 +13,10 @@ router.get('/', async (req, res) => {
       .populate('parent', 'name slug')
       .sort({ order: 1 });
 
-    res.json({
-      success: true,
-      data: categories
-    });
+    sendSuccess(res, categories);
   } catch (error) {
     console.error('Error fetching categories:', error);
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ أثناء جلب الفئات'
-    });
+    sendError(res, MESSAGES.CATEGORIES.FETCH_ERROR);
   }
 });
 
@@ -49,15 +45,9 @@ router.get('/tree', async (req, res) => {
 
     const tree = buildTree(categories);
 
-    res.json({
-      success: true,
-      data: tree
-    });
+    sendSuccess(res, tree);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -71,15 +61,9 @@ router.get('/main', async (req, res) => {
       parent: null 
     }).sort({ order: 1 });
 
-    res.json({
-      success: true,
-      data: categories
-    });
+    sendSuccess(res, categories);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -94,10 +78,7 @@ router.get('/slug/:slug', async (req, res) => {
     }).populate('parent', 'name slug');
 
     if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: 'الفئة غير موجودة'
-      });
+      return sendNotFound(res, MESSAGES.CATEGORIES.NOT_FOUND);
     }
 
     // Get subcategories
@@ -106,18 +87,12 @@ router.get('/slug/:slug', async (req, res) => {
       isActive: true 
     });
 
-    res.json({
-      success: true,
-      data: {
-        ...category.toObject(),
-        subcategories
-      }
+    sendSuccess(res, {
+      ...category.toObject(),
+      subcategories
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -130,21 +105,12 @@ router.get('/:id', async (req, res) => {
       .populate('parent', 'name slug');
 
     if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: 'الفئة غير موجودة'
-      });
+      return sendNotFound(res, MESSAGES.CATEGORIES.NOT_FOUND);
     }
 
-    res.json({
-      success: true,
-      data: category
-    });
+    sendSuccess(res, category);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 
@@ -158,15 +124,9 @@ router.get('/:id/subcategories', async (req, res) => {
       isActive: true 
     }).sort({ order: 1 });
 
-    res.json({
-      success: true,
-      data: subcategories
-    });
+    sendSuccess(res, subcategories);
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
 

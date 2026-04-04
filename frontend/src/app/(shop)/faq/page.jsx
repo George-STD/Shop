@@ -1,12 +1,7 @@
 import FAQPageClient from './FAQPageClient'
+import { PAGE_METADATA } from '../../../lib/metadata'
 
-export const metadata = {
-  title: 'الأسئلة الشائعة',
-  description: 'إجابات على الأسئلة الشائعة حول الطلبات والشحن والدفع والإرجاع وتغليف الهدايا في فور يو (For You) - متجر الهدايا الأول في مصر.',
-  alternates: {
-    canonical: 'https://foryo.me/faq',
-  },
-}
+export const metadata = PAGE_METADATA.faq
 
 const faqItems = [
   { q: 'كيف يمكنني تقديم طلب؟', a: 'يمكنك تقديم طلب بسهولة من خلال إضافة المنتجات إلى سلة التسوق، ثم إكمال عملية الشراء بإدخال معلومات الشحن والدفع. ستتلقى تأكيداً بالبريد الإلكتروني فور إتمام الطلب.' },

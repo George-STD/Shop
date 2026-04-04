@@ -1,12 +1,14 @@
+import { SITE_CONFIG, ROUTES } from '../constants'
+
 export default function robots() {
   return {
     rules: [
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin', '/admin/', '/account', '/account/', '/checkout', '/cart'],
+        disallow: [ROUTES.ADMIN, `${ROUTES.ADMIN}/`, ROUTES.ACCOUNT, `${ROUTES.ACCOUNT}/`, ROUTES.CHECKOUT, ROUTES.CART],
       },
     ],
-    sitemap: 'https://foryo.me/sitemap.xml',
+    sitemap: `${SITE_CONFIG.SITE_URL}/sitemap.xml`,
   }
 }

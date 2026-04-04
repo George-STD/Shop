@@ -31,11 +31,6 @@ const orderItemSchema = new mongoose.Schema({
     chosenOption: String,
     image: String
   }],
-  giftWrap: {
-    enabled: { type: Boolean, default: false },
-    message: String,
-    style: String
-  },
   subtotal: Number
 });
 

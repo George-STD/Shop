@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
+const { CONFIG, MESSAGES } = require('../constants');
 
 // =====================================================
 // PROTECT MIDDLEWARE - Verify JWT Token
@@ -17,7 +18,7 @@ const protect = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'غير مصرح لك بالوصول. يرجى تسجيل الدخول'
+        message: MESSAGES.AUTH.LOGIN_REQUIRED
       });
     }
 
@@ -31,7 +32,7 @@ const protect = async (req, res, next) => {
       if (!user) {
         return res.status(401).json({
           success: false,
-          message: 'المستخدم غير موجود'
+          message: MESSAGES.AUTH.USER_NOT_FOUND
         });
       }
 
@@ -39,7 +40,7 @@ const protect = async (req, res, next) => {
       if (!user.isActive) {
         return res.status(401).json({
           success: false,
-          message: 'تم تعطيل حسابك. تواصل مع الدعم'
+          message: MESSAGES.AUTH.ACCOUNT_DISABLED
         });
       }
 
@@ -49,14 +50,14 @@ const protect = async (req, res, next) => {
     } catch (error) {
       return res.status(401).json({
         success: false,
-        message: 'جلسة غير صالحة. يرجى تسجيل الدخول مرة أخرى'
+        message: MESSAGES.AUTH.SESSION_INVALID
       });
     }
   } catch (error) {
     console.error('Auth middleware error:', error);
     res.status(500).json({
       success: false,
-      message: 'خطأ في التحقق من الهوية'
+      message: MESSAGES.AUTH.AUTH_ERROR
     });
   }
 };
@@ -68,17 +69,17 @@ const admin = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({
       success: false,
-      message: 'غير مصرح لك بالوصول'
+      message: MESSAGES.GENERAL.UNAUTHORIZED
     });
   }
 
-  if (req.user.role !== 'admin') {
+  if (req.user.role !== CONFIG.USER_ROLE.ADMIN) {
     // Log unauthorized admin access attempt
     console.warn(`⚠️ Unauthorized admin access attempt by user: ${req.user._id} (${req.user.email})`);
     
     return res.status(403).json({
       success: false,
-      message: 'ليس لديك صلاحية للوصول إلى هذه الصفحة'
+      message: MESSAGES.ADMIN.UNAUTHORIZED
     });
   }
 
@@ -91,11 +92,11 @@ const admin = (req, res, next) => {
 
 // General API rate limiter
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  windowMs: CONFIG.RATE_LIMIT.API.WINDOW_MS,
+  max: CONFIG.RATE_LIMIT.API.MAX_REQUESTS,
   message: {
     success: false,
-    message: 'عدد كبير جداً من الطلبات. حاول مرة أخرى بعد 15 دقيقة'
+    message: MESSAGES.RATE_LIMIT.API
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -103,11 +104,11 @@ const apiLimiter = rateLimit({
 
 // Strict rate limiter for admin routes
 const adminLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // Limit each IP to 50 requests per windowMs
+  windowMs: CONFIG.RATE_LIMIT.ADMIN.WINDOW_MS,
+  max: CONFIG.RATE_LIMIT.ADMIN.MAX_REQUESTS,
   message: {
     success: false,
-    message: 'عدد كبير جداً من الطلبات. حاول مرة أخرى لاحقاً'
+    message: MESSAGES.RATE_LIMIT.ADMIN
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -115,11 +116,11 @@ const adminLimiter = rateLimit({
 
 // Very strict rate limiter for login attempts
 const loginLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // Limit each IP to 5 login attempts per hour
+  windowMs: CONFIG.RATE_LIMIT.LOGIN.WINDOW_MS,
+  max: CONFIG.RATE_LIMIT.LOGIN.MAX_REQUESTS,
   message: {
     success: false,
-    message: 'عدد محاولات تسجيل الدخول تجاوز الحد المسموح. حاول بعد ساعة'
+    message: MESSAGES.RATE_LIMIT.LOGIN
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -128,11 +129,11 @@ const loginLimiter = rateLimit({
 
 // Rate limiter for verification code attempts (brute-force protection)
 const verifyLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts per 15 minutes
+  windowMs: CONFIG.RATE_LIMIT.VERIFY.WINDOW_MS,
+  max: CONFIG.RATE_LIMIT.VERIFY.MAX_REQUESTS,
   message: {
     success: false,
-    message: 'عدد كبير جداً من المحاولات. حاول مرة أخرى بعد 15 دقيقة'
+    message: MESSAGES.RATE_LIMIT.VERIFY
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -140,11 +141,11 @@ const verifyLimiter = rateLimit({
 
 // Rate limiter for registration (prevent mass account creation)
 const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // 5 registrations per IP per hour
+  windowMs: CONFIG.RATE_LIMIT.REGISTER.WINDOW_MS,
+  max: CONFIG.RATE_LIMIT.REGISTER.MAX_REQUESTS,
   message: {
     success: false,
-    message: 'عدد كبير جداً من عمليات التسجيل. حاول مرة أخرى لاحقاً'
+    message: MESSAGES.RATE_LIMIT.REGISTER
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -157,13 +158,10 @@ const validateObjectId = (paramName = 'id') => {
   return (req, res, next) => {
     const id = req.params[paramName];
     
-    // MongoDB ObjectId regex pattern
-    const objectIdPattern = /^[0-9a-fA-F]{24}$/;
-    
-    if (!objectIdPattern.test(id)) {
+    if (!CONFIG.PATTERNS.MONGODB_ID.test(id)) {
       return res.status(400).json({
         success: false,
-        message: 'معرف غير صالح'
+        message: MESSAGES.GENERAL.INVALID_ID
       });
     }
     

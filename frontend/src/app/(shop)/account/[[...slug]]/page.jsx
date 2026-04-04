@@ -1,8 +1,8 @@
 import AccountPageClient from './AccountPageClient'
+import { PAGE_METADATA } from '../../../../lib/metadata'
 
 export const metadata = {
-  title: 'حسابي',
-  description: 'إدارة حسابك في فور يو - متجر الهدايا.',
+  ...PAGE_METADATA.account,
   robots: { index: false, follow: false },
 }
 

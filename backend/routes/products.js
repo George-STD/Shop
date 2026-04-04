@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 const Category = require('../models/Category');
+const { CONFIG, MESSAGES } = require('../constants');
+const { sendSuccess, sendError, sendNotFound, sendPaginated } = require('../utils/response');
 
 // @route   GET /api/products
 // @desc    Get all products with filters
@@ -17,8 +19,8 @@ router.get('/', async (req, res) => {
       maxPrice,
       sort,
       search,
-      page = 1,
-      limit = 12,
+      page = CONFIG.PAGINATION.DEFAULT_PAGE,
+      limit = CONFIG.PAGINATION.PRODUCTS_LIMIT,
       featured,
       bestseller,
       newArrivals
@@ -88,22 +90,10 @@ router.get('/', async (req, res) => {
 
     const total = await Product.countDocuments(query);
 
-    res.json({
-      success: true,
-      data: products,
-      pagination: {
-        current: Number(page),
-        pages: Math.ceil(total / Number(limit)),
-        total,
-        limit: Number(limit)
-      }
-    });
+    return sendPaginated(res, { data: products, page, limit: Number(limit), total });
   } catch (error) {
     console.error('Error fetching products:', error);
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ أثناء جلب المنتجات'
-    });
+    return sendError(res, { message: MESSAGES.PRODUCTS.FETCH_ERROR });
   }
 });
 
@@ -112,21 +102,15 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/featured', async (req, res) => {
   try {
-    const { limit = 8 } = req.query;
+    const { limit = CONFIG.LIMITS.FEATURED_PRODUCTS } = req.query;
     
     const products = await Product.find({ isActive: true, isFeatured: true })
       .populate('category', 'name slug')
       .limit(Number(limit));
 
-    res.json({
-      success: true,
-      data: products
-    });
+    return sendSuccess(res, { data: products });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ أثناء جلب المنتجات المميزة'
-    });
+    return sendError(res, { message: MESSAGES.PRODUCTS.FEATURED_ERROR });
   }
 });
 
@@ -135,22 +119,16 @@ router.get('/featured', async (req, res) => {
 // @access  Public
 router.get('/bestsellers', async (req, res) => {
   try {
-    const { limit = 8 } = req.query;
+    const { limit = CONFIG.LIMITS.BESTSELLER_PRODUCTS } = req.query;
     
     const products = await Product.find({ isActive: true, isBestseller: true })
       .populate('category', 'name slug')
       .sort({ salesCount: -1 })
       .limit(Number(limit));
 
-    res.json({
-      success: true,
-      data: products
-    });
+    return sendSuccess(res, { data: products });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    return sendError(res, { message: MESSAGES.PRODUCTS.GENERIC_ERROR });
   }
 });
 
@@ -159,22 +137,16 @@ router.get('/bestsellers', async (req, res) => {
 // @access  Public
 router.get('/new', async (req, res) => {
   try {
-    const { limit = 8 } = req.query;
+    const { limit = CONFIG.LIMITS.NEW_ARRIVALS } = req.query;
     
     const products = await Product.find({ isActive: true })
       .populate('category', 'name slug')
       .sort({ createdAt: -1 })
       .limit(Number(limit));
 
-    res.json({
-      success: true,
-      data: products
-    });
+    return sendSuccess(res, { data: products });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    return sendError(res, { message: MESSAGES.PRODUCTS.GENERIC_ERROR });
   }
 });
 
@@ -183,7 +155,7 @@ router.get('/new', async (req, res) => {
 // @access  Public
 router.get('/by-occasion/:occasion', async (req, res) => {
   try {
-    const { limit = 12 } = req.query;
+    const { limit = CONFIG.LIMITS.BY_OCCASION } = req.query;
     
     const products = await Product.find({ 
       isActive: true, 
@@ -192,15 +164,9 @@ router.get('/by-occasion/:occasion', async (req, res) => {
       .populate('category', 'name slug')
       .limit(Number(limit));
 
-    res.json({
-      success: true,
-      data: products
-    });
+    return sendSuccess(res, { data: products });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    return sendError(res, { message: MESSAGES.PRODUCTS.GENERIC_ERROR });
   }
 });
 
@@ -209,7 +175,7 @@ router.get('/by-occasion/:occasion', async (req, res) => {
 // @access  Public
 router.get('/by-recipient/:recipient', async (req, res) => {
   try {
-    const { limit = 12 } = req.query;
+    const { limit = CONFIG.LIMITS.BY_RECIPIENT } = req.query;
     
     const products = await Product.find({ 
       isActive: true, 
@@ -218,15 +184,9 @@ router.get('/by-recipient/:recipient', async (req, res) => {
       .populate('category', 'name slug')
       .limit(Number(limit));
 
-    res.json({
-      success: true,
-      data: products
-    });
+    return sendSuccess(res, { data: products });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    return sendError(res, { message: MESSAGES.PRODUCTS.GENERIC_ERROR });
   }
 });
 
@@ -241,25 +201,16 @@ router.get('/slug/:slug', async (req, res) => {
     }).populate('category', 'name slug');
 
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'المنتج غير موجود'
-      });
+      return sendNotFound(res, MESSAGES.PRODUCTS.NOT_FOUND);
     }
 
     // Increment views
     product.views += 1;
     await product.save();
 
-    res.json({
-      success: true,
-      data: product
-    });
+    return sendSuccess(res, { data: product });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    return sendError(res, { message: MESSAGES.PRODUCTS.GENERIC_ERROR });
   }
 });
 
@@ -272,21 +223,12 @@ router.get('/:id', async (req, res) => {
       .populate('category', 'name slug');
 
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'المنتج غير موجود'
-      });
+      return sendNotFound(res, MESSAGES.PRODUCTS.NOT_FOUND);
     }
 
-    res.json({
-      success: true,
-      data: product
-    });
+    return sendSuccess(res, { data: product });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    return sendError(res, { message: MESSAGES.PRODUCTS.GENERIC_ERROR });
   }
 });
 
@@ -298,10 +240,7 @@ router.get('/:id/related', async (req, res) => {
     const product = await Product.findById(req.params.id);
     
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'المنتج غير موجود'
-      });
+      return sendNotFound(res, MESSAGES.PRODUCTS.NOT_FOUND);
     }
 
     const related = await Product.find({
@@ -313,18 +252,12 @@ router.get('/:id/related', async (req, res) => {
         { tags: { $in: product.tags } }
       ]
     })
-      .limit(4)
+      .limit(CONFIG.LIMITS.RELATED_PRODUCTS)
       .populate('category', 'name slug');
 
-    res.json({
-      success: true,
-      data: related
-    });
+    return sendSuccess(res, { data: related });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ'
-    });
+    return sendError(res, { message: MESSAGES.PRODUCTS.GENERIC_ERROR });
   }
 });
 

@@ -1,9 +1,8 @@
 import axios from 'axios'
-
-const API_URL = 'https://shop-gx97.onrender.com/api'
+import { API_BASE_URL, QUERY_DEFAULTS, ROUTES } from '../constants'
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -24,7 +23,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
-      window.location.href = '/account'
+      window.location.href = ROUTES.ACCOUNT
     }
     return Promise.reject(error)
   }
@@ -33,14 +32,14 @@ api.interceptors.response.use(
 // Products API
 export const productsAPI = {
   getAll: (params) => api.get('/products', { params }),
-  getFeatured: (limit = 8) => api.get('/products/featured', { params: { limit } }),
-  getBestsellers: (limit = 8) => api.get('/products/bestsellers', { params: { limit } }),
-  getNew: (limit = 8) => api.get('/products/new', { params: { limit } }),
+  getFeatured: (limit = QUERY_DEFAULTS.FEATURED_LIMIT) => api.get('/products/featured', { params: { limit } }),
+  getBestsellers: (limit = QUERY_DEFAULTS.BESTSELLERS_LIMIT) => api.get('/products/bestsellers', { params: { limit } }),
+  getNew: (limit = QUERY_DEFAULTS.NEW_ARRIVALS_LIMIT) => api.get('/products/new', { params: { limit } }),
   getBySlug: (slug) => api.get(`/products/slug/${slug}`),
   getById: (id) => api.get(`/products/${id}`),
   getRelated: (id) => api.get(`/products/${id}/related`),
-  getByOccasion: (occasion, limit = 12) => api.get(`/products/by-occasion/${occasion}`, { params: { limit } }),
-  getByRecipient: (recipient, limit = 12) => api.get(`/products/by-recipient/${recipient}`, { params: { limit } }),
+  getByOccasion: (occasion, limit = QUERY_DEFAULTS.BY_OCCASION_LIMIT) => api.get(`/products/by-occasion/${occasion}`, { params: { limit } }),
+  getByRecipient: (recipient, limit = QUERY_DEFAULTS.BY_RECIPIENT_LIMIT) => api.get(`/products/by-recipient/${recipient}`, { params: { limit } }),
 }
 
 // Categories API

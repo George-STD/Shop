@@ -1,10 +1,7 @@
 import PrivacyPageClient from './PrivacyPageClient'
+import { PAGE_METADATA } from '../../../lib/metadata'
 
-export const metadata = {
-  title: 'سياسة الخصوصية',
-  description: 'سياسة الخصوصية وحماية البيانات في متجر فور يو (For You) للهدايا. تعرف على كيفية حماية بياناتك.',
-  alternates: { canonical: 'https://foryo.me/privacy' },
-}
+export const metadata = PAGE_METADATA.privacy
 
 export default function Page() {
   return <PrivacyPageClient />

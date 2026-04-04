@@ -1,8 +1,8 @@
 import TrackOrderPageClient from './TrackOrderPageClient'
+import { PAGE_METADATA } from '../../../lib/metadata'
 
 export const metadata = {
-  title: 'تتبع الطلب',
-  description: 'تتبع حالة طلبك من متجر فور يو للهدايا.',
+  ...PAGE_METADATA.trackOrder,
   robots: { index: false, follow: false },
 }
 

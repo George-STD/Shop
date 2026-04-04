@@ -1,10 +1,7 @@
 import TermsPageClient from './TermsPageClient'
+import { PAGE_METADATA } from '../../../lib/metadata'
 
-export const metadata = {
-  title: 'الشروط والأحكام',
-  description: 'الشروط والأحكام الخاصة باستخدام متجر فور يو (For You) للهدايا. تعرف على حقوقك والتزاماتك.',
-  alternates: { canonical: 'https://foryo.me/terms' },
-}
+export const metadata = PAGE_METADATA.terms
 
 export default function Page() {
   return <TermsPageClient />
