@@ -195,7 +195,7 @@ router.put('/:id', protect, async (req, res) => {
 
     await review.save();
 
-    sendSuccess(res, review, MESSAGES.REVIEWS.UPDATED);
+    sendSuccess(res, { data: review, message: MESSAGES.REVIEWS.UPDATED });
   } catch (error) {
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
@@ -218,7 +218,7 @@ router.delete('/:id', protect, async (req, res) => {
 
     await review.deleteOne();
 
-    sendSuccess(res, null, MESSAGES.REVIEWS.DELETED);
+    sendSuccess(res, { message: MESSAGES.REVIEWS.DELETED });
   } catch (error) {
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
@@ -252,7 +252,7 @@ router.post('/:id/helpful', protect, async (req, res) => {
 
     await review.save();
 
-    sendSuccess(res, { helpful: review.helpful.count });
+    sendSuccess(res, { data: { helpful: review.helpful.count } });
   } catch (error) {
     sendError(res, MESSAGES.GENERAL.ERROR);
   }

@@ -313,7 +313,7 @@ router.get('/me', protect, async (req, res) => {
       return sendNotFound(res, MESSAGES.AUTH.USER_NOT_FOUND);
     }
 
-    sendSuccess(res, user);
+    sendSuccess(res, { data: user });
   } catch (error) {
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
@@ -341,7 +341,7 @@ router.put('/update-profile', protect, [
       { new: true, runValidators: true }
     );
 
-    sendSuccess(res, user, MESSAGES.AUTH.PROFILE_UPDATED);
+    sendSuccess(res, { data: user, message: MESSAGES.AUTH.PROFILE_UPDATED });
   } catch (error) {
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
@@ -369,7 +369,7 @@ router.put('/change-password', protect, [
     const hashedNewPassword = await bcrypt.hash(newPassword, 12);
     await User.findByIdAndUpdate(req.user._id, { $set: { password: hashedNewPassword } });
 
-    sendSuccess(res, null, MESSAGES.AUTH.PASSWORD_CHANGED);
+    sendSuccess(res, { message: MESSAGES.AUTH.PASSWORD_CHANGED });
   } catch (error) {
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
@@ -391,7 +391,7 @@ router.post('/wishlist/:productId', protect, async (req, res) => {
       $addToSet: { wishlist: req.params.productId }
     });
 
-    sendSuccess(res, null, MESSAGES.WISHLIST.ADDED);
+    sendSuccess(res, { message: MESSAGES.WISHLIST.ADDED });
   } catch (error) {
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
@@ -406,7 +406,7 @@ router.delete('/wishlist/:productId', protect, async (req, res) => {
       $pull: { wishlist: req.params.productId }
     });
 
-    sendSuccess(res, null, MESSAGES.WISHLIST.REMOVED);
+    sendSuccess(res, { message: MESSAGES.WISHLIST.REMOVED });
   } catch (error) {
     sendError(res, MESSAGES.GENERAL.ERROR);
   }

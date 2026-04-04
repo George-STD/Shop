@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
     const occasions = await Occasion.find({ isActive: true })
       .sort({ order: 1, createdAt: 1 });
 
-    sendSuccess(res, occasions);
+    sendSuccess(res, { data: occasions });
   } catch (error) {
     console.error('Error fetching occasions:', error);
     sendError(res, MESSAGES.OCCASIONS.FETCH_ERROR);

@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
       .populate('parent', 'name slug')
       .sort({ order: 1 });
 
-    sendSuccess(res, categories);
+    sendSuccess(res, { data: categories });
   } catch (error) {
     console.error('Error fetching categories:', error);
     sendError(res, MESSAGES.CATEGORIES.FETCH_ERROR);
@@ -45,7 +45,7 @@ router.get('/tree', async (req, res) => {
 
     const tree = buildTree(categories);
 
-    sendSuccess(res, tree);
+    sendSuccess(res, { data: tree });
   } catch (error) {
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
@@ -61,7 +61,7 @@ router.get('/main', async (req, res) => {
       parent: null 
     }).sort({ order: 1 });
 
-    sendSuccess(res, categories);
+    sendSuccess(res, { data: categories });
   } catch (error) {
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
@@ -87,10 +87,10 @@ router.get('/slug/:slug', async (req, res) => {
       isActive: true 
     });
 
-    sendSuccess(res, {
+    sendSuccess(res, { data: {
       ...category.toObject(),
       subcategories
-    });
+    }});
   } catch (error) {
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
@@ -108,7 +108,7 @@ router.get('/:id', async (req, res) => {
       return sendNotFound(res, MESSAGES.CATEGORIES.NOT_FOUND);
     }
 
-    sendSuccess(res, category);
+    sendSuccess(res, { data: category });
   } catch (error) {
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
@@ -124,7 +124,7 @@ router.get('/:id/subcategories', async (req, res) => {
       isActive: true 
     }).sort({ order: 1 });
 
-    sendSuccess(res, subcategories);
+    sendSuccess(res, { data: subcategories });
   } catch (error) {
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
