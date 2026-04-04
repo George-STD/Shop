@@ -622,12 +622,326 @@ const AddressesPage = () => (
   </div>
 )
 
-const SettingsPage = () => (
-  <div>
-    <h1 className="text-2xl font-bold mb-6">الإعدادات</h1>
-    <p className="text-gray-500">إعدادات الحساب</p>
-  </div>
-)
+const SettingsPage = () => {
+  const { user, setAuth } = useAuthStore()
+  const [activeTab, setActiveTab] = useState('profile')
+  const [loading, setLoading] = useState(false)
+  
+  // Profile form state
+  const [profileData, setProfileData] = useState({
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    phone: user?.phone || '',
+  })
+  
+  // Password form state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  })
+  
+  // Update profile data when user changes
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        phone: user.phone || '',
+      })
+    }
+  }, [user])
+  
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const res = await authAPI.updateProfile(profileData)
+      // Update local user state
+      const updatedUser = { ...user, ...profileData }
+      setAuth(updatedUser, localStorage.getItem('token'))
+      toast.success('تم تحديث البيانات بنجاح')
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'حدث خطأ في تحديث البيانات')
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const handlePasswordChange = async (e) => {
+    e.preventDefault()
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('كلمتا المرور غير متطابقتين')
+      return
+    }
+    
+    if (passwordData.newPassword.length < 6) {
+      toast.error('كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل')
+      return
+    }
+    
+    setLoading(true)
+    try {
+      await authAPI.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      })
+      toast.success('تم تغيير كلمة المرور بنجاح')
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'كلمة المرور الحالية غير صحيحة')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const tabs = [
+    { id: 'profile', label: 'الملف الشخصي', icon: FiUser },
+    { id: 'security', label: 'الأمان', icon: FiLock },
+  ]
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">الإعدادات</h1>
+      
+      {/* Tabs */}
+      <div className="flex gap-2 mb-8 border-b">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === tab.id
+                ? 'border-purple-600 text-purple-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <tab.icon className="text-lg" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Profile Tab */}
+      {activeTab === 'profile' && (
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <div className="flex items-center gap-4 mb-8 pb-6 border-b">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-2xl font-bold">
+              {user?.firstName?.[0]}{user?.lastName?.[0]}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">{user?.firstName} {user?.lastName}</h2>
+              <p className="text-gray-500">{user?.email}</p>
+              <span className="inline-block mt-1 px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                حساب مُفعّل
+              </span>
+            </div>
+          </div>
+          
+          <form onSubmit={handleProfileUpdate} className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  الاسم الأول
+                </label>
+                <input
+                  type="text"
+                  value={profileData.firstName}
+                  onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  الاسم الأخير
+                </label>
+                <input
+                  type="text"
+                  value={profileData.lastName}
+                  onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                البريد الإلكتروني
+              </label>
+              <input
+                type="email"
+                value={user?.email || ''}
+                disabled
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
+              />
+              <p className="text-xs text-gray-400 mt-1">لا يمكن تغيير البريد الإلكتروني</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                رقم الهاتف
+              </label>
+              <input
+                type="tel"
+                value={profileData.phone}
+                onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                dir="ltr"
+                placeholder="+20 1XX XXX XXXX"
+              />
+            </div>
+            
+            <div className="flex justify-end pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    جاري الحفظ...
+                  </>
+                ) : (
+                  'حفظ التغييرات'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Security Tab */}
+      {activeTab === 'security' && (
+        <div className="space-y-6">
+          {/* Change Password */}
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                <FiLock className="text-purple-600 text-xl" />
+              </div>
+              <div>
+                <h3 className="font-bold">تغيير كلمة المرور</h3>
+                <p className="text-sm text-gray-500">قم بتحديث كلمة المرور الخاصة بك للحفاظ على أمان حسابك</p>
+              </div>
+            </div>
+            
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  كلمة المرور الحالية
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                  required
+                />
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    كلمة المرور الجديدة
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    تأكيد كلمة المرور الجديدة
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                    required
+                    minLength={6}
+                  />
+                </div>
+              </div>
+              
+              <p className="text-xs text-gray-400">
+                كلمة المرور يجب أن تكون 6 أحرف على الأقل
+              </p>
+              
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-8 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      جاري التغيير...
+                    </>
+                  ) : (
+                    'تغيير كلمة المرور'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+          
+          {/* Account Info */}
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                <FiMail className="text-blue-600 text-xl" />
+              </div>
+              <div>
+                <h3 className="font-bold">معلومات الحساب</h3>
+                <p className="text-sm text-gray-500">معلومات تسجيل الدخول الخاصة بك</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-3 border-b">
+                <div>
+                  <p className="text-sm text-gray-500">البريد الإلكتروني</p>
+                  <p className="font-medium">{user?.email}</p>
+                </div>
+                <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full">مُفعّل</span>
+              </div>
+              
+              <div className="flex justify-between items-center py-3 border-b">
+                <div>
+                  <p className="text-sm text-gray-500">تاريخ التسجيل</p>
+                  <p className="font-medium">{user?.createdAt ? new Date(user.createdAt).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }) : 'غير متوفر'}</p>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center py-3">
+                <div>
+                  <p className="text-sm text-gray-500">نوع الحساب</p>
+                  <p className="font-medium">{user?.role === 'admin' ? 'مدير' : 'عميل'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 // Main Account Page
 const AccountPage = () => {
