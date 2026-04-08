@@ -348,7 +348,9 @@ router.delete('/users/:id', [
 router.post('/products', [
   logAdminAction('CREATE_PRODUCT'),
   body('name').trim().notEmpty().withMessage('اسم المنتج مطلوب'),
+  body('description').trim().notEmpty().withMessage('وصف المنتج مطلوب'),
   body('price').isNumeric().withMessage('السعر مطلوب'),
+  body('stock').optional().isNumeric().withMessage('الكمية يجب أن تكون رقم'),
   body('category').isArray({ min: 1 }).withMessage('الفئة مطلوبة'),
   body('category.*').isMongoId().withMessage('فئة غير صالحة')
 ], async (req, res) => {
@@ -364,10 +366,17 @@ router.post('/products', [
     // Generate slug from name
     const slug = req.body.name
       .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^\w\-]+/g, '')
-      .replace(/\-\-+/g, '-')
-      + '-' + Date.now();
+      .trim()
+      .replace(/\s+/g, '-')           // Replace spaces with -
+      .replace(/[\u0600-\u06FF]/g, '') // Remove Arabic characters
+      .replace(/[^\w\-]+/g, '')        // Remove all non-word chars except -
+      .replace(/\-\-+/g, '-')          // Replace multiple - with single -
+      .replace(/^-+/, '')              // Trim - from start
+      .replace(/-+$/, '')              // Trim - from end
+      || 'product'                     // Fallback if empty
+      
+    // Add timestamp to make it unique
+    const uniqueSlug = slug + '-' + Date.now();
 
       // Auto-generate SKU if not provided
       let sku = req.body.sku;
@@ -378,7 +387,7 @@ router.post('/products', [
 
       const product = await Product.create({
         ...req.body,
-        slug,
+        slug: uniqueSlug,
         sku
       });
 
@@ -389,9 +398,15 @@ router.post('/products', [
     });
   } catch (error) {
     console.error('Create product error:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    if (error.errors) {
+      console.error('Validation errors:', JSON.stringify(error.errors, null, 2));
+    }
     res.status(500).json({
       success: false,
-      message: 'حدث خطأ أثناء إنشاء المنتج'
+      message: 'حدث خطأ أثناء إنشاء المنتج',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
