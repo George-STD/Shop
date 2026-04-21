@@ -13,7 +13,18 @@ const ProductCard = ({ product }) => {
   
   const handleAddToCart = (e) => {
     e.preventDefault()
-    addItem(product, 1)
+    const result = addItem(product, 1)
+
+    if (!result?.success) {
+      toast.error('الكمية غير متاحة حالياً')
+      return
+    }
+
+    if (result.capped && result.maxStock !== null) {
+      toast.success(`تمت إضافة المتاح فقط (الحد الأقصى ${result.maxStock})`)
+      return
+    }
+
     toast.success('تمت الإضافة إلى السلة')
   }
   
@@ -83,6 +94,7 @@ const ProductCard = ({ product }) => {
             onClick={handleAddToCart}
             className="quick-action-btn"
             title="أضف للسلة"
+            disabled={Number(product.stock) === 0}
           >
             <FiShoppingBag />
           </button>
@@ -149,9 +161,10 @@ const ProductCard = ({ product }) => {
         {/* Add to Cart Button - Mobile */}
         <button 
           onClick={handleAddToCart}
-          className="w-full mt-4 bg-gray-100 text-gray-800 py-2 rounded-lg font-medium hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 hover:text-white transition-colors md:hidden"
+          disabled={Number(product.stock) === 0}
+          className="w-full mt-4 bg-gray-100 text-gray-800 py-2 rounded-lg font-medium hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed md:hidden"
         >
-          أضف للسلة
+          {Number(product.stock) === 0 ? 'نفذت الكمية' : 'أضف للسلة'}
         </button>
       </div>
     </div>

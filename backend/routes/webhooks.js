@@ -3,6 +3,23 @@ const router = express.Router();
 const { Webhook } = require('svix');
 const ReceivedEmail = require('../models/ReceivedEmail');
 
+const htmlToPlainText = (html = '') => {
+  return String(html)
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+};
+
 // POST /api/webhooks/resend — Resend inbound email webhook
 router.post('/resend', express.raw({ type: 'application/json' }), async (req, res) => {
   try {
@@ -37,26 +54,33 @@ router.post('/resend', express.raw({ type: 'application/json' }), async (req, re
     const { from, to, subject, html, text } = event.data;
 
     // Only accept emails sent to support@foryo.me
-    const recipients = Array.isArray(to) ? to : [to];
+    const recipients = (Array.isArray(to) ? to : [to])
+      .map((addr) => String(addr || '').toLowerCase())
+      .filter(Boolean);
+
     const isForSupport = recipients.some(
-      (addr) => addr.toLowerCase().includes('support@foryo.me')
+      (addr) => addr.includes('support@foryo.me')
     );
+
     if (!isForSupport) {
       return res.status(200).json({ received: true, ignored: true });
     }
+
+    const plainText = String(text || '').trim() || htmlToPlainText(html || '');
 
     await ReceivedEmail.create({
       from: Array.isArray(from) ? from.join(', ') : from,
       to: Array.isArray(to) ? to.join(', ') : to,
       subject: subject || '(بدون عنوان)',
-      html: html || '',
-      text: text || '',
+      // Keep HTML empty to avoid rendering untrusted rich content in admin views.
+      html: '',
+      text: plainText,
     });
 
     res.status(200).json({ received: true });
   } catch (error) {
     console.error('Webhook error:', error);
-    res.status(200).json({ received: true });
+    res.status(500).json({ error: 'Failed to process webhook' });
   }
 });
 

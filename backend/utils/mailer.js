@@ -62,7 +62,7 @@ async function sendOrderConfirmationEmail(to, order) {
       </div>
       <div style="padding: 32px 24px;">
         <h2 style="color: #1f2937; margin-top: 0;">شكرًا لطلبك! 🎁</h2>
-        <p style="color: #6b7280;">رقم الطلب: <b>${order._id}</b></p>
+        <p style="color: #6b7280;">رقم الطلب: <b>${order.orderNumber || order._id}</b></p>
         <p style="color: #6b7280;">المجموع: <b>${order.total} ج.م</b></p>
         <p style="color: #6b7280;">سنقوم بمعالجة طلبك قريبًا.</p>
       </div>

@@ -2,6 +2,12 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { BUSINESS_CONFIG, STORAGE_KEYS } from '../constants'
 
+const parseStock = (value) => {
+  const stock = Number(value)
+  if (!Number.isFinite(stock)) return null
+  return Math.max(0, Math.floor(stock))
+}
+
 // Cart Store
 export const useCartStore = create(
   persist(
@@ -10,6 +16,14 @@ export const useCartStore = create(
       
       addItem: (product, quantity = 1, options = {}) => {
         const items = get().items
+        const requestedQuantity = Math.max(1, Math.floor(Number(quantity) || 1))
+        const stockLimit = parseStock(product?.stock)
+        const maxAllowed = stockLimit ?? Number.MAX_SAFE_INTEGER
+
+        if (stockLimit === 0) {
+          return { success: false, reason: 'out_of_stock', maxStock: 0 }
+        }
+
         const variantsKey = options.selectedVariants ? JSON.stringify(options.selectedVariants) : ''
         const existingIndex = items.findIndex(
           item => item.id === product._id && 
@@ -21,9 +35,28 @@ export const useCartStore = create(
         
         if (existingIndex > -1) {
           const newItems = [...items]
-          newItems[existingIndex].quantity += quantity
+          const currentQuantity = newItems[existingIndex].quantity
+          const nextQuantity = Math.min(currentQuantity + requestedQuantity, maxAllowed)
+
+          if (nextQuantity === currentQuantity) {
+            return { success: false, reason: 'stock_limit_reached', maxStock: stockLimit }
+          }
+
+          newItems[existingIndex].quantity = nextQuantity
+          if (stockLimit !== null) {
+            newItems[existingIndex].stock = stockLimit
+          }
+
           set({ items: newItems })
+          return {
+            success: true,
+            quantity: nextQuantity,
+            capped: nextQuantity < currentQuantity + requestedQuantity,
+            maxStock: stockLimit,
+          }
         } else {
+          const finalQuantity = Math.min(requestedQuantity, maxAllowed)
+
           set({
             items: [...items, {
               id: product._id,
@@ -32,7 +65,8 @@ export const useCartStore = create(
               price: product.price,
               oldPrice: product.oldPrice,
               image: product.images[0]?.url,
-              quantity,
+              quantity: finalQuantity,
+              stock: stockLimit,
               selectedSize: options.selectedSize,
               selectedColor: options.selectedColor,
               selectedShape: options.selectedShape,
@@ -42,6 +76,13 @@ export const useCartStore = create(
               boxSelections: options.boxSelections || []
             }]
           })
+
+          return {
+            success: true,
+            quantity: finalQuantity,
+            capped: finalQuantity < requestedQuantity,
+            maxStock: stockLimit,
+          }
         }
       },
       
@@ -58,7 +99,9 @@ export const useCartStore = create(
       },
       
       updateQuantity: (id, quantity, selectedSize, selectedColor, selectedShape, _variantsKey) => {
-        if (quantity < 1) return
+        const requestedQuantity = Math.max(1, Math.floor(Number(quantity) || 1))
+        let result = { success: false, reason: 'not_found' }
+        let changed = false
         
         const items = get().items.map(item => {
           if (item.id === id && 
@@ -66,11 +109,32 @@ export const useCartStore = create(
               item.selectedColor === selectedColor &&
               item.selectedShape === selectedShape &&
               (item._variantsKey || '') === (_variantsKey || '')) {
-            return { ...item, quantity }
+            const stockLimit = parseStock(item.stock)
+            const maxAllowed = stockLimit ?? Number.MAX_SAFE_INTEGER
+            const nextQuantity = Math.min(requestedQuantity, maxAllowed)
+
+            result = {
+              success: true,
+              quantity: nextQuantity,
+              capped: nextQuantity < requestedQuantity,
+              maxStock: stockLimit,
+            }
+
+            if (nextQuantity === item.quantity) {
+              return item
+            }
+
+            changed = true
+            return { ...item, quantity: nextQuantity }
           }
           return item
         })
-        set({ items })
+
+        if (changed) {
+          set({ items })
+        }
+
+        return result
       },
       
       clearCart: () => set({ items: [] }),
@@ -154,7 +218,8 @@ export const useWishlistStore = create(
               slug: product.slug,
               price: product.price,
               oldPrice: product.oldPrice,
-              image: product.images[0]?.url
+              image: product.images[0]?.url,
+              stock: parseStock(product.stock)
             }]
           })
         }

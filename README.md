@@ -59,13 +59,7 @@ MONGODB_URI=mongodb://localhost:27017/hadaya
 JWT_SECRET=your-secret-key
 ```
 
-### 3. إضافة البيانات التجريبية (اختياري)
-
-```bash
-npm run seed
-```
-
-### 4. تشغيل المشروع كاملاً
+### 3. تشغيل المشروع كاملاً
 
 ```bash
 npm run dev
@@ -81,7 +75,7 @@ npm run backend
 npm run frontend
 ```
 
-### 5. فتح الموقع
+### 4. فتح الموقع
 
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:5000
@@ -109,7 +103,6 @@ npm run frontend
 │   │   ├── reviews.js
 │   │   └── webhooks.js
 │   ├── utils/
-│   ├── seed.js           # Data seeder
 │   └── server.js         # Entry point
 │
 ├── frontend/             # Next.js 15

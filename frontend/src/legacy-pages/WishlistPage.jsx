@@ -1,6 +1,7 @@
 import { Link, Navigate } from 'react-router-dom'
 import { FiHeart, FiTrash2, FiShoppingCart } from 'react-icons/fi'
 import { useWishlistStore, useCartStore, useAuthStore } from '../store'
+import toast from 'react-hot-toast'
 
 const WishlistPage = () => {
   const { items, removeItem, clearWishlist } = useWishlistStore()
@@ -18,9 +19,22 @@ const WishlistPage = () => {
       slug: product.slug,
       price: product.price,
       oldPrice: product.oldPrice,
+      stock: product.stock,
       images: [{ url: product.image }]
     }
-    addItem(cartProduct)
+    const result = addItem(cartProduct)
+
+    if (!result?.success) {
+      toast.error('الكمية غير متاحة حالياً')
+      return
+    }
+
+    if (result.capped && result.maxStock !== null) {
+      toast.success(`تمت إضافة المتاح فقط (الحد الأقصى ${result.maxStock})`)
+    } else {
+      toast.success('تمت الإضافة إلى السلة')
+    }
+
     removeItem(product.id)
   }
 

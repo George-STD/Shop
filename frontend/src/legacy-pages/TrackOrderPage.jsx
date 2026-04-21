@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FiSearch, FiPackage, FiTruck, FiCheckCircle, FiMapPin } from 'react-icons/fi'
+import { FiSearch, FiPackage, FiTruck, FiCheckCircle } from 'react-icons/fi'
 import { useSearchParams } from 'react-router-dom'
 import { ordersAPI } from '../services/api'
 
@@ -204,19 +204,6 @@ const TrackOrderPage = () => {
                 </div>
               )}
 
-              {/* Delivery Address */}
-              <div className="bg-white rounded-2xl p-6">
-                <h3 className="font-bold mb-4 flex items-center gap-2">
-                  <FiMapPin className="text-purple-600" />
-                  عنوان التوصيل
-                </h3>
-                <div className="text-gray-600">
-                  <p className="font-medium text-gray-800">{order.shippingAddress?.firstName} {order.shippingAddress?.lastName}</p>
-                  <p>{order.shippingAddress?.street}</p>
-                  <p>{order.shippingAddress?.governorate}{order.shippingAddress?.city ? ` - ${order.shippingAddress.city}` : ''}</p>
-                  <p dir="ltr" className="text-left">{order.shippingAddress?.phone}</p>
-                </div>
-              </div>
             </div>
           )}
 

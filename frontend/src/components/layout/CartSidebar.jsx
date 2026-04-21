@@ -1,10 +1,26 @@
 ﻿import { Link } from 'react-router-dom'
 import { FiX, FiTrash2, FiPlus, FiMinus } from 'react-icons/fi'
 import { useUIStore, useCartStore } from '../../store'
+import toast from 'react-hot-toast'
 
 const CartSidebar = () => {
   const { closeCart } = useUIStore()
   const { items, removeItem, updateQuantity, getTotal } = useCartStore()
+
+  const increaseQuantity = (item) => {
+    const result = updateQuantity(
+      item.id,
+      item.quantity + 1,
+      item.selectedSize,
+      item.selectedColor,
+      item.selectedShape,
+      item._variantsKey
+    )
+
+    if (result?.capped && result.maxStock !== null) {
+      toast.error(`الحد الأقصى المتاح هو ${result.maxStock}`)
+    }
+  }
   
   const total = getTotal()
   const shippingCost = 60
@@ -109,8 +125,9 @@ const CartSidebar = () => {
                         </button>
                         <span className="w-8 text-center font-medium">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.selectedSize, item.selectedColor, item.selectedShape, item._variantsKey)}
+                          onClick={() => increaseQuantity(item)}
                           className="w-7 h-7 rounded-full bg-white border border-gray-300 flex items-center justify-center hover:border-purple-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
+                          disabled={Number.isFinite(Number(item.stock)) && item.quantity >= Number(item.stock)}
                         >
                           <FiPlus size={14} />
                         </button>

@@ -3,6 +3,10 @@
  * Ensures consistent response format across all endpoints
  */
 
+const isObject = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const hasAnyKey = (obj, keys) => keys.some((key) => Object.prototype.hasOwnProperty.call(obj, key));
+
 /**
  * Send a success response
  * @param {Object} res - Express response object
@@ -12,7 +16,20 @@
  * @param {number} options.statusCode - HTTP status code (default: 200)
  * @param {Object} options.pagination - Pagination info (optional)
  */
-const sendSuccess = (res, { data, message, statusCode = 200, pagination } = {}) => {
+const sendSuccess = (res, optionsOrData = {}, legacyMessage, legacyStatusCode) => {
+  let data;
+  let message;
+  let statusCode = 200;
+  let pagination;
+
+  if (isObject(optionsOrData) && hasAnyKey(optionsOrData, ['data', 'message', 'statusCode', 'pagination'])) {
+    ({ data, message, statusCode = 200, pagination } = optionsOrData);
+  } else {
+    data = optionsOrData;
+    message = legacyMessage;
+    statusCode = legacyStatusCode ?? 200;
+  }
+
   const response = {
     success: true,
   };
@@ -41,7 +58,30 @@ const sendSuccess = (res, { data, message, statusCode = 200, pagination } = {}) 
  * @param {Array} options.errors - Validation errors array (optional)
  * @param {Object} options.data - Additional data (optional)
  */
-const sendError = (res, { message, statusCode = 500, errors, data } = {}) => {
+const sendError = (res, optionsOrMessage = {}, legacyStatusCode, legacyErrors) => {
+  let message;
+  let statusCode = 500;
+  let errors;
+  let data;
+
+  if (typeof optionsOrMessage === 'string') {
+    message = optionsOrMessage;
+    statusCode = legacyStatusCode ?? 500;
+    errors = legacyErrors;
+  } else if (isObject(optionsOrMessage) && hasAnyKey(optionsOrMessage, ['message', 'statusCode', 'errors', 'data'])) {
+    ({ message, statusCode = 500, errors, data } = optionsOrMessage);
+    if (legacyStatusCode !== undefined && optionsOrMessage.statusCode === undefined) {
+      statusCode = legacyStatusCode;
+    }
+    if (legacyErrors !== undefined && optionsOrMessage.errors === undefined) {
+      errors = legacyErrors;
+    }
+  } else {
+    message = undefined;
+    statusCode = legacyStatusCode ?? 500;
+    errors = legacyErrors;
+  }
+
   const response = {
     success: false,
     message: message || 'حدث خطأ في الخادم',
@@ -109,8 +149,16 @@ const sendServerError = (res, message = 'حدث خطأ في الخادم') => {
  * @param {Object} res - Express response object
  * @param {Object} options - Response options
  */
-const sendCreated = (res, { data, message } = {}) => {
-  return sendSuccess(res, { data, message, statusCode: 201 });
+const sendCreated = (res, optionsOrData = {}, legacyMessage) => {
+  if (isObject(optionsOrData) && hasAnyKey(optionsOrData, ['data', 'message'])) {
+    return sendSuccess(res, { ...optionsOrData, statusCode: 201 });
+  }
+
+  return sendSuccess(res, {
+    data: optionsOrData,
+    message: legacyMessage,
+    statusCode: 201,
+  });
 };
 
 /**

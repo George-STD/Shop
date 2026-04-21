@@ -245,7 +245,7 @@ const ProductPage = () => {
       }
     }
 
-    addItem(product, quantity, {
+    const result = addItem(product, quantity, {
       selectedSize,
       selectedColor,
       selectedShape,
@@ -257,6 +257,17 @@ const ProductPage = () => {
         image: getOptImages(opt)[0] || ''
       })) : undefined
     })
+
+    if (!result?.success) {
+      toast.error('الكمية غير متاحة حالياً')
+      return
+    }
+
+    if (result.capped && result.maxStock !== null) {
+      toast.success(`تمت إضافة المتاح فقط (الحد الأقصى ${result.maxStock})`)
+      return
+    }
+
     toast.success('تمت الإضافة إلى السلة')
   }
 
@@ -442,7 +453,7 @@ const ProductPage = () => {
                       }}
                     />
                   )}
-                  <div className="absolute bottom-3 left-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-gray-600 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity lg:flex hidden">
+                  <div className="absolute bottom-3 left-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-gray-600 items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity hidden lg:flex">
                     <FiZoomIn className="w-3 h-3" />
                     مرر الماوس للتكبير
                   </div>
@@ -845,8 +856,16 @@ const ProductPage = () => {
                   </button>
                   <span className="px-4 font-medium">{quantity}</span>
                   <button
-                    onClick={() => setQuantity(quantity + 1)}
+                    onClick={() => {
+                      const maxStock = Number(product.stock)
+                      if (Number.isFinite(maxStock)) {
+                        setQuantity(Math.min(quantity + 1, Math.max(1, maxStock)))
+                        return
+                      }
+                      setQuantity(quantity + 1)
+                    }}
                     className="p-3 hover:bg-gray-100"
+                    disabled={Number.isFinite(Number(product.stock)) && quantity >= Number(product.stock)}
                   >
                     <FiPlus />
                   </button>
@@ -861,6 +880,10 @@ const ProductPage = () => {
                   {product.stock === 0 ? 'نفذت الكمية' : `أضف للسلة - ${calculateTotal()} ج.م`}
                 </button>
               </div>
+
+              {Number.isFinite(Number(product.stock)) && (
+                <p className="text-sm text-gray-500">المتاح حالياً: {Math.max(0, Number(product.stock))} قطعة</p>
+              )}
 
               {/* Actions */}
               <div className="flex items-center gap-4 pt-4 border-t">

@@ -136,6 +136,8 @@ const MESSAGES = {
     GOVERNORATE_REQUIRED: 'المحافظة مطلوبة',
     PHONE_REQUIRED: 'رقم الهاتف مطلوب',
     PAYMENT_INVALID: 'طريقة الدفع غير صالحة',
+    INVALID_QUANTITY: 'الكمية يجب أن تكون رقمًا صحيحًا أكبر من صفر',
+    EMAIL_MISMATCH: 'البريد الإلكتروني للطلب يجب أن يطابق بريد حسابك',
     
     // Stock
     PRODUCT_NOT_FOUND_TEMPLATE: 'المنتج غير موجود',
@@ -160,9 +162,11 @@ const MESSAGES = {
     PRODUCT_REQUIRED: 'معرف المنتج مطلوب',
     RATING_INVALID: 'التقييم يجب أن يكون بين 1 و 5',
     COMMENT_TOO_SHORT: 'التعليق يجب أن يكون 10 أحرف على الأقل',
+    COMMENT_TOO_LONG: 'التعليق يجب ألا يتجاوز 1000 حرف',
     GUEST_NAME_REQUIRED: 'اسم الضيف مطلوب',
     GUEST_EMAIL_INVALID: 'بريد إلكتروني صحيح مطلوب',
     GUEST_INFO_REQUIRED: 'يجب إدخال الاسم والبريد الإلكتروني للزائر',
+    PRODUCT_NOT_FOUND: 'المنتج غير موجود',
   },
 
   // =====================================================

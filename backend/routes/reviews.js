@@ -5,9 +5,10 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const Review = require('../models/Review');
 const Order = require('../models/Order');
+const Product = require('../models/Product');
 const { protect, apiLimiter } = require('../middleware/auth');
 const { MESSAGES, CONFIG } = require('../constants');
-const { sendSuccess, sendError, sendNotFound, sendForbidden, sendCreated, sendPaginated } = require('../utils/response');
+const { sendSuccess, sendError, sendNotFound, sendForbidden, sendBadRequest, sendCreated } = require('../utils/response');
 
 // Optional auth helper — returns userId or null (for guest reviews)
 const getOptionalUserId = (req) => {
@@ -25,7 +26,16 @@ const getOptionalUserId = (req) => {
 // @access  Public
 router.get('/product/:productId', async (req, res) => {
   try {
-    const { page = 1, limit = CONFIG.LIMITS.REVIEWS_PER_PAGE, sort = 'newest' } = req.query;
+    if (!mongoose.Types.ObjectId.isValid(req.params.productId)) {
+      return sendBadRequest(res, MESSAGES.GENERAL.INVALID_ID);
+    }
+
+    const { page = 1, limit = CONFIG.PAGINATION.REVIEWS_LIMIT, sort = 'newest' } = req.query;
+    const pageNumber = Math.max(1, Number(page) || 1);
+    const limitNumber = Math.min(
+      CONFIG.PAGINATION.MAX_LIMIT,
+      Math.max(1, Number(limit) || CONFIG.PAGINATION.REVIEWS_LIMIT)
+    );
 
     let sortOption = { createdAt: -1 };
     if (sort === 'oldest') sortOption = { createdAt: 1 };
@@ -39,8 +49,8 @@ router.get('/product/:productId', async (req, res) => {
     })
       .populate('user', 'firstName lastName avatar')
       .sort(sortOption)
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
+      .skip((pageNumber - 1) * limitNumber)
+      .limit(limitNumber);
 
     const total = await Review.countDocuments({ 
       product: req.params.productId,
@@ -73,8 +83,8 @@ router.get('/product/:productId', async (req, res) => {
       data: reviews,
       ratingDistribution: distribution,
       pagination: {
-        current: Number(page),
-        pages: Math.ceil(total / limit),
+        current: pageNumber,
+        pages: Math.ceil(total / limitNumber),
         total
       }
     });
@@ -88,32 +98,36 @@ router.get('/product/:productId', async (req, res) => {
 // @desc    Create a review
 // @access  Private
 router.post('/', apiLimiter, [
-  body('product').notEmpty().withMessage(MESSAGES.REVIEWS.PRODUCT_REQUIRED),
-  body('rating').isInt({ min: 1, max: 5 }).withMessage(MESSAGES.REVIEWS.RATING_INVALID),
-  body('comment').trim().isLength({ min: 10 }).withMessage(MESSAGES.REVIEWS.COMMENT_TOO_SHORT),
-  body('guestName').optional().trim().notEmpty().withMessage(MESSAGES.REVIEWS.GUEST_NAME_REQUIRED),
-  body('guestEmail').optional().isEmail().withMessage(MESSAGES.REVIEWS.GUEST_EMAIL_INVALID)
+  body('product').isMongoId().withMessage(MESSAGES.REVIEWS.PRODUCT_REQUIRED),
+  body('rating').toInt().isInt({ min: 1, max: 5 }).withMessage(MESSAGES.REVIEWS.RATING_INVALID),
+  body('comment')
+    .trim()
+    .isLength({ min: 10 })
+    .withMessage(MESSAGES.REVIEWS.COMMENT_TOO_SHORT)
+    .isLength({ max: 1000 })
+    .withMessage(MESSAGES.REVIEWS.COMMENT_TOO_LONG),
+  body('guestName').optional({ checkFalsy: true }).trim().notEmpty().withMessage(MESSAGES.REVIEWS.GUEST_NAME_REQUIRED),
+  body('guestEmail').optional({ checkFalsy: true }).isEmail().withMessage(MESSAGES.REVIEWS.GUEST_EMAIL_INVALID)
 ], async (req, res) => {
   try {
     const userId = getOptionalUserId(req);
     const { product, rating, title, comment, pros, cons, images, orderId, guestName, guestEmail } = req.body;
-    
-    const productId = product;
+    const productId = String(product);
+    const normalizedGuestEmail = guestEmail ? String(guestEmail).toLowerCase().trim() : undefined;
 
     // If not logged in, require guestName and guestEmail
     if (!userId && (!guestName || !guestEmail)) {
-      return res.status(400).json({
-        success: false,
-        message: MESSAGES.REVIEWS.GUEST_INFO_REQUIRED
-      });
+      return sendBadRequest(res, MESSAGES.REVIEWS.GUEST_INFO_REQUIRED);
     }
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        errors: errors.array()
-      });
+      return sendBadRequest(res, MESSAGES.GENERAL.VALIDATION_ERROR, errors.array());
+    }
+
+    const existingProduct = await Product.findById(productId).select('_id');
+    if (!existingProduct) {
+      return sendNotFound(res, MESSAGES.REVIEWS.PRODUCT_NOT_FOUND);
     }
 
     // Check for duplicate review by user or guest
@@ -121,37 +135,31 @@ router.post('/', apiLimiter, [
     if (userId) {
       existingReview = await Review.findOne({ product: productId, user: userId });
     } else {
-      existingReview = await Review.findOne({ product: productId, guestEmail });
+      existingReview = await Review.findOne({ product: productId, guestEmail: normalizedGuestEmail });
     }
-    
+
     if (existingReview) {
-      return res.status(400).json({
-        success: false,
-        message: MESSAGES.REVIEWS.ALREADY_REVIEWED
-      });
+      return sendBadRequest(res, MESSAGES.REVIEWS.ALREADY_REVIEWED);
     }
 
     // Check if this is a verified purchase (only for logged in)
     let isVerifiedPurchase = false;
     if (userId) {
-      const userOrders = await Order.find({
+      isVerifiedPurchase = Boolean(await Order.exists({
         user: userId,
         status: 'delivered',
         'items.product': productId
-      });
-      if (userOrders.length > 0) {
-        isVerifiedPurchase = true;
-      }
+      }));
     }
 
     const review = await Review.create({
       product: productId,
       user: userId || undefined,
-      guestName: !userId ? guestName : undefined,
-      guestEmail: !userId ? guestEmail : undefined,
+      guestName: !userId ? String(guestName).trim() : undefined,
+      guestEmail: !userId ? normalizedGuestEmail : undefined,
       order: orderId,
       rating,
-      title,
+      title: title ? String(title).trim() : undefined,
       comment,
       pros,
       cons,
@@ -162,10 +170,14 @@ router.post('/', apiLimiter, [
 
     if (userId) await review.populate('user', 'firstName lastName avatar');
 
-    sendCreated(res, review, MESSAGES.REVIEWS.CREATED);
+    return sendCreated(res, { data: review, message: MESSAGES.REVIEWS.CREATED });
   } catch (error) {
+    if (error?.code === 11000) {
+      return sendBadRequest(res, MESSAGES.REVIEWS.ALREADY_REVIEWED);
+    }
+
     console.error('Error creating review:', error);
-    sendError(res, MESSAGES.GENERAL.ERROR);
+    return sendError(res, { message: MESSAGES.GENERAL.ERROR });
   }
 });
 
@@ -180,7 +192,7 @@ router.put('/:id', protect, async (req, res) => {
       return sendNotFound(res, MESSAGES.REVIEWS.NOT_FOUND);
     }
 
-    if (review.user.toString() !== req.user._id.toString()) {
+    if (!review.user || review.user.toString() !== req.user._id.toString()) {
       return sendForbidden(res, MESSAGES.AUTH.FORBIDDEN);
     }
 
@@ -195,9 +207,9 @@ router.put('/:id', protect, async (req, res) => {
 
     await review.save();
 
-    sendSuccess(res, { data: review, message: MESSAGES.REVIEWS.UPDATED });
+    return sendSuccess(res, { data: review, message: MESSAGES.REVIEWS.UPDATED });
   } catch (error) {
-    sendError(res, MESSAGES.GENERAL.ERROR);
+    return sendError(res, { message: MESSAGES.GENERAL.ERROR });
   }
 });
 
@@ -212,15 +224,15 @@ router.delete('/:id', protect, async (req, res) => {
       return sendNotFound(res, MESSAGES.REVIEWS.NOT_FOUND);
     }
 
-    if (review.user.toString() !== req.user._id.toString()) {
+    if (!review.user || review.user.toString() !== req.user._id.toString()) {
       return sendForbidden(res, MESSAGES.AUTH.FORBIDDEN);
     }
 
     await review.deleteOne();
 
-    sendSuccess(res, { message: MESSAGES.REVIEWS.DELETED });
+    return sendSuccess(res, { message: MESSAGES.REVIEWS.DELETED });
   } catch (error) {
-    sendError(res, MESSAGES.GENERAL.ERROR);
+    return sendError(res, { message: MESSAGES.GENERAL.ERROR });
   }
 });
 
@@ -236,9 +248,10 @@ router.post('/:id/helpful', protect, async (req, res) => {
     }
 
     const userId = req.user._id.toString();
+    const alreadyMarkedHelpful = review.helpful.users.some((id) => id.toString() === userId);
 
     // Check if user already marked as helpful
-    if (review.helpful.users.includes(req.user._id)) {
+    if (alreadyMarkedHelpful) {
       // Remove helpful
       review.helpful.users = review.helpful.users.filter(
         id => id.toString() !== userId
@@ -252,9 +265,9 @@ router.post('/:id/helpful', protect, async (req, res) => {
 
     await review.save();
 
-    sendSuccess(res, { data: { helpful: review.helpful.count } });
+    return sendSuccess(res, { data: { helpful: review.helpful.count } });
   } catch (error) {
-    sendError(res, MESSAGES.GENERAL.ERROR);
+    return sendError(res, { message: MESSAGES.GENERAL.ERROR });
   }
 });
 

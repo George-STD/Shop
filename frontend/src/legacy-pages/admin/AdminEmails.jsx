@@ -1,7 +1,23 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { FiMail, FiTrash2, FiEye, FiX, FiChevronRight, FiChevronLeft } from 'react-icons/fi'
+import { FiMail, FiTrash2, FiEye, FiChevronRight, FiChevronLeft } from 'react-icons/fi'
 import { adminAPI } from '../../services/api'
+
+const htmlToPlainText = (html = '') => {
+  return String(html)
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
 
 const AdminEmails = () => {
   const queryClient = useQueryClient()
@@ -78,16 +94,9 @@ const AdminEmails = () => {
             
             <hr />
 
-            {selectedEmail.html ? (
-              <div
-                className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: selectedEmail.html }}
-              />
-            ) : (
-              <pre className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">
-                {selectedEmail.text || 'لا يوجد محتوى'}
-              </pre>
-            )}
+            <pre className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">
+              {selectedEmail.text || htmlToPlainText(selectedEmail.html || '') || 'لا يوجد محتوى'}
+            </pre>
           </div>
         </div>
       </div>
