@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { FiSearch, FiEye, FiCheck, FiX, FiTruck, FiPackage } from 'react-icons/fi'
@@ -71,17 +71,17 @@ const AdminOrders = () => {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm">
-        <div className="flex flex-wrap gap-4">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           {/* Search */}
-          <div className="relative min-w-[200px] flex-1">
+          <div className="relative flex-1">
             <FiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="بحث برقم الطلب..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pr-10 pl-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+              className="w-full pr-10 pl-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
             />
           </div>
 
@@ -89,7 +89,7 @@ const AdminOrders = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+            className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 text-sm"
           >
             <option value="">جميع الحالات</option>
             {statusOptions.map(status => (
@@ -108,44 +108,44 @@ const AdminOrders = () => {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">رقم الطلب</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">العميل</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">المبلغ</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">الحالة</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">التاريخ</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">الإجراءات</th>
+                    <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">رقم الطلب</th>
+                    <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">العميل</th>
+                    <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">المبلغ</th>
+                    <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">الحالة</th>
+                    <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600 hidden md:table-cell">التاريخ</th>
+                    <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {data?.data?.map((order) => (
                     <tr key={order._id} className="hover:bg-gray-50">
-                      <td className="py-4 px-6 font-medium">
+                      <td className="py-3 px-3 sm:px-6 font-medium text-xs sm:text-sm">
                         #{order.orderNumber}
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-3 px-3 sm:px-6">
                         <div>
-                          <p className="font-medium">{order.user?.firstName} {order.user?.lastName}</p>
-                          <p className="text-sm text-gray-500">{order.user?.email}</p>
+                          <p className="font-medium text-xs sm:text-sm">{order.user?.firstName} {order.user?.lastName}</p>
+                          <p className="text-xs text-gray-500 hidden sm:block">{order.user?.email}</p>
                         </div>
                       </td>
-                      <td className="py-4 px-6 font-medium">
+                      <td className="py-3 px-3 sm:px-6 font-medium text-xs sm:text-sm whitespace-nowrap">
                         {formatCurrency(order.total)}
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-3 px-3 sm:px-6">
                         <select
                           value={order.status}
                           onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                          className={`px-3 py-1 rounded-full text-sm border-0 cursor-pointer ${statusColors[order.status]}`}
+                          className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm border-0 cursor-pointer ${statusColors[order.status]}`}
                         >
                           {statusOptions.map(status => (
                             <option key={status} value={status}>{statusLabels[status]}</option>
                           ))}
                         </select>
                       </td>
-                      <td className="py-4 px-6 text-gray-600">
+                      <td className="py-3 px-3 sm:px-6 text-gray-600 text-xs sm:text-sm hidden md:table-cell">
                         {new Date(order.createdAt).toLocaleDateString('ar-EG', {
                           year: 'numeric',
                           month: 'short',
@@ -154,7 +154,7 @@ const AdminOrders = () => {
                           minute: '2-digit'
                         })}
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-3 px-3 sm:px-6">
                         <button
                           onClick={() => setSelectedOrder(order)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
@@ -171,25 +171,25 @@ const AdminOrders = () => {
 
             {/* Pagination */}
             {data?.pagination && (
-              <div className="p-4 border-t flex items-center justify-between">
-                <p className="text-gray-600">
+              <div className="p-3 sm:p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-2">
+                <p className="text-gray-600 text-xs sm:text-sm">
                   عرض {data.data.length} من {data.pagination.total} طلب
                 </p>
-                <div className="flex gap-2">
+                <div className="flex gap-1 sm:gap-2">
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="px-4 py-2 border rounded-lg disabled:opacity-50"
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 border rounded-lg disabled:opacity-50 text-xs sm:text-sm"
                   >
                     السابق
                   </button>
-                  <span className="px-4 py-2">
+                  <span className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm">
                     صفحة {page} من {data.pagination.pages}
                   </span>
                   <button
                     onClick={() => setPage(p => Math.min(data.pagination.pages, p + 1))}
                     disabled={page >= data.pagination.pages}
-                    className="px-4 py-2 border rounded-lg disabled:opacity-50"
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 border rounded-lg disabled:opacity-50 text-xs sm:text-sm"
                   >
                     التالي
                   </button>
@@ -202,10 +202,10 @@ const AdminOrders = () => {
 
       {/* Order Details Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b sticky top-0 bg-white flex items-center justify-between">
-              <h2 className="text-xl font-bold">تفاصيل الطلب #{selectedOrder.orderNumber}</h2>
+            <div className="p-4 sm:p-6 border-b sticky top-0 bg-white flex items-center justify-between z-10">
+              <h2 className="text-base sm:text-xl font-bold">تفاصيل الطلب #{selectedOrder.orderNumber}</h2>
               <button
                 onClick={() => setSelectedOrder(null)}
                 className="p-2 hover:bg-gray-100 rounded-lg"
@@ -214,18 +214,18 @@ const AdminOrders = () => {
               </button>
             </div>
             
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {/* Order Summary */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <p className="text-sm text-gray-500">الحالة</p>
-                  <span className={`inline-block mt-1 px-3 py-1 rounded-full text-sm ${statusColors[selectedOrder.status]}`}>
+                  <p className="text-xs sm:text-sm text-gray-500">الحالة</p>
+                  <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs sm:text-sm ${statusColors[selectedOrder.status]}`}>
                     {statusLabels[selectedOrder.status]}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">تاريخ الطلب</p>
-                  <p className="font-medium mt-1">
+                  <p className="text-xs sm:text-sm text-gray-500">تاريخ الطلب</p>
+                  <p className="font-medium mt-1 text-sm">
                     {new Date(selectedOrder.createdAt).toLocaleDateString('ar-EG')}
                   </p>
                 </div>
