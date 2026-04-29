@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FiSearch, FiUser, FiHeart, FiShoppingBag, FiMenu, FiX, FiSettings } from 'react-icons/fi'
 import { useCartStore, useWishlistStore, useAuthStore, useUIStore } from '../../store'
@@ -9,6 +9,7 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchVisible, setIsSearchVisible] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const scrolledRef = useRef(false)
   
   const { getItemsCount } = useCartStore()
   const { items: wishlistItems } = useWishlistStore()
@@ -19,10 +20,18 @@ const Header = () => {
   const wishlistCount = wishlistItems.length
   const isAdmin = user?.role === 'admin'
 
-  // Scroll detection for header shrink
+  // Scroll detection with hysteresis to prevent vibration
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 60)
+      const y = window.scrollY
+      // Use different thresholds for collapse vs expand to avoid feedback loop
+      if (!scrolledRef.current && y > 100) {
+        scrolledRef.current = true
+        setIsScrolled(true)
+      } else if (scrolledRef.current && y < 20) {
+        scrolledRef.current = false
+        setIsScrolled(false)
+      }
     }
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
