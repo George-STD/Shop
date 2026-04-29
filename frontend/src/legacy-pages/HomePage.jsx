@@ -49,11 +49,21 @@ const HomePage = () => {
     { icon: '↩️', title: 'إرجاع سهل', description: 'خلال 14 يوم' },
   ]
 
+  const ProductSkeleton = () => (
+    <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
+      <div className="skeleton h-52 sm:h-64 rounded-none"></div>
+      <div className="p-4 space-y-3">
+        <div className="skeleton h-3 w-16"></div>
+        <div className="skeleton h-4 w-3/4"></div>
+        <div className="skeleton h-5 w-1/3"></div>
+      </div>
+    </div>
+  )
+
   return (
     <>
-
       {/* Hero Section */}
-      <section className="hero-gradient">
+      <section className="hero-gradient relative">
         <Swiper
           modules={[Autoplay, Pagination, Navigation]}
           spaceBetween={0}
@@ -61,25 +71,29 @@ const HomePage = () => {
           autoplay={{ delay: 5000, disableOnInteraction: false }}
           pagination={{ clickable: true }}
           navigation
-          className="h-[350px] sm:h-[450px] md:h-[600px]"
+          className="h-[350px] sm:h-[450px] md:h-[550px]"
         >
           <SwiperSlide>
-            <div className="h-full flex items-center">
+            <div className="h-full flex items-center relative z-10">
               <div className="container-custom">
-                <div className="max-w-2xl animate-fadeInUp">
-                  <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-4 sm:mb-6 leading-tight">
-                    اجعل كل مناسبة 
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"> لحظة لا تُنسى</span>
+                <div className="max-w-2xl">
+                  <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full text-sm text-purple-700 font-medium mb-6 animate-fadeInUp">
+                    <span>✨</span>
+                    <span>أجمل الهدايا لأحبائك</span>
+                  </div>
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-5 leading-tight animate-fadeInUp">
+                    اجعل كل مناسبة {' '}
+                    <span className="text-gradient">لحظة لا تُنسى</span>
                   </h1>
-                  <p className="text-base sm:text-xl text-gray-600 mb-6 sm:mb-8">
+                  <p className="text-base sm:text-lg text-gray-600 mb-8 animate-fadeInUp leading-relaxed max-w-lg">
                     اكتشف تشكيلة واسعة من الهدايا المميزة لجميع المناسبات مع توصيل سريع لباب بيتك
                   </p>
-                  <div className="flex flex-wrap gap-3 sm:gap-4">
-                    <Link to="/products" className="btn-primary text-sm sm:text-lg px-6 sm:px-8">
-                      تسوق الآن
+                  <div className="flex flex-wrap gap-3 sm:gap-4 animate-fadeInUp">
+                    <Link to="/products" className="btn-primary text-sm sm:text-base px-6 sm:px-8">
+                      تسوق الآن ←
                     </Link>
-                    <Link to="/gift-finder" className="btn-outline text-sm sm:text-lg px-6 sm:px-8">
-                      اعثر على الهدية المثالية
+                    <Link to="/gift-finder" className="btn-secondary text-sm sm:text-base px-6 sm:px-8">
+                      🎯 اعثر على الهدية المثالية
                     </Link>
                   </div>
                 </div>
@@ -87,18 +101,22 @@ const HomePage = () => {
             </div>
           </SwiperSlide>
           <SwiperSlide>
-            <div className="h-full flex items-center bg-gradient-to-r from-purple-50 via-fuchsia-50 to-pink-50">
+            <div className="h-full flex items-center bg-gradient-to-br from-purple-50 via-fuchsia-50 to-pink-50 relative z-10">
               <div className="container-custom">
-                <div className="max-w-2xl animate-fadeInUp">
-                  <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-4 sm:mb-6">
-                    خصومات تصل إلى 
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"> 50%</span>
+                <div className="max-w-2xl">
+                  <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 rounded-full text-sm text-white font-bold mb-6 animate-fadeInUp shadow-lg shadow-amber-500/25">
+                    <span>🔥</span>
+                    <span>عروض حصرية</span>
+                  </div>
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-5 animate-fadeInUp">
+                    خصومات تصل إلى {' '}
+                    <span className="text-gradient">50%</span>
                   </h2>
-                  <p className="text-base sm:text-xl text-gray-600 mb-6 sm:mb-8">
+                  <p className="text-base sm:text-lg text-gray-600 mb-8 animate-fadeInUp leading-relaxed max-w-lg">
                     استمتع بأفضل العروض على الهدايا المميزة. عرض لفترة محدودة!
                   </p>
-                  <Link to="/products?sort=discount" className="btn-gold text-sm sm:text-lg px-6 sm:px-8">
-                    تسوق العروض
+                  <Link to="/products?sort=discount" className="btn-gold text-sm sm:text-base px-6 sm:px-8 animate-fadeInUp">
+                    تسوق العروض ←
                   </Link>
                 </div>
               </div>
@@ -108,9 +126,9 @@ const HomePage = () => {
       </section>
 
       {/* Features */}
-      <section className="py-8 bg-white border-b">
+      <section className="py-6 sm:py-8 bg-white border-b border-gray-100">
         <div className="container-custom">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
             {features.map((feature, index) => (
               <FeatureCard key={index} {...feature} />
             ))}
@@ -119,92 +137,105 @@ const HomePage = () => {
       </section>
 
       {/* Shop by Occasion */}
-      <section className="py-16">
-        <div className="container-custom">
-          <h2 className="section-title">تسوق حسب المناسبة</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {occasions?.map((occasion) => (
-              <OccasionCard key={occasion._id} {...occasion} />
-            ))}
+      {occasions?.length > 0 && (
+        <section className="py-14 sm:py-20">
+          <div className="container-custom">
+            <h2 className="section-title">تسوق حسب المناسبة</h2>
+            <p className="section-subtitle">اختر المناسبة ونحن نوفرلك أفضل الهدايا</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+              {occasions?.map((occasion) => (
+                <OccasionCard key={occasion._id} {...occasion} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Featured Products */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-14 sm:py-20 bg-gradient-to-b from-gray-50 to-white">
         <div className="container-custom">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-gray-800">منتجات مميزة</h2>
-            <Link to="/products?featured=true" className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline">
-              عرض الكل ←
+          <div className="flex items-end justify-between mb-10">
+            <div>
+              <span className="inline-flex items-center gap-1.5 text-purple-600 font-medium text-sm mb-2">
+                <span className="w-8 h-[2px] bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></span>
+                منتجات مختارة
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">منتجات مميزة</h2>
+            </div>
+            <Link to="/products?featured=true" className="hidden sm:inline-flex items-center gap-1 text-purple-600 hover:text-purple-700 font-medium text-sm hover:gap-2 transition-all">
+              عرض الكل
+              <span>←</span>
             </Link>
           </div>
           
           {loadingFeatured ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="card p-4">
-                  <div className="skeleton h-48 mb-4"></div>
-                  <div className="skeleton h-4 mb-2"></div>
-                  <div className="skeleton h-4 w-2/3"></div>
-                </div>
+                <ProductSkeleton key={i} />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {featuredProducts?.map((product) => (
                 <ProductCard key={product._id} product={product} />
               ))}
             </div>
           )}
+          
+          <Link to="/products?featured=true" className="sm:hidden flex items-center justify-center gap-1 text-purple-600 font-medium text-sm mt-6 hover:gap-2 transition-all">
+            عرض جميع المنتجات المميزة ←
+          </Link>
         </div>
       </section>
 
       {/* Categories */}
-      <section className="py-16">
-        <div className="container-custom">
-          <h2 className="section-title">تصفح حسب الفئة</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {categories?.slice(0, 10).map((category) => (
-              <CategoryCard key={category._id} category={category} />
-            ))}
+      {categories?.length > 0 && (
+        <section className="py-14 sm:py-20">
+          <div className="container-custom">
+            <h2 className="section-title">تصفح حسب الفئة</h2>
+            <p className="section-subtitle">اختر من بين مجموعتنا الواسعة من التصنيفات</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+              {categories?.slice(0, 10).map((category) => (
+                <CategoryCard key={category._id} category={category} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Bestsellers */}
-      <section className="py-16 bg-gradient-to-r from-gold-50 to-gold-100">
+      <section className="py-14 sm:py-20 bg-gradient-to-b from-amber-50/50 to-white">
         <div className="container-custom">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-end justify-between mb-10">
             <div>
-              <span className="text-gold-600 font-medium">⭐ الأكثر مبيعاً</span>
-              <h2 className="text-3xl font-bold text-gray-800 mt-2">منتجات يحبها عملاؤنا</h2>
+              <span className="inline-flex items-center gap-1.5 text-amber-600 font-medium text-sm mb-2">
+                <span className="w-8 h-[2px] bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"></span>
+                ⭐ الأكثر مبيعاً
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">منتجات يحبها عملاؤنا</h2>
             </div>
-            <Link to="/products?bestseller=true" className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline">
-              عرض الكل ←
+            <Link to="/products?bestseller=true" className="hidden sm:inline-flex items-center gap-1 text-amber-600 hover:text-amber-700 font-medium text-sm hover:gap-2 transition-all">
+              عرض الكل
+              <span>←</span>
             </Link>
           </div>
           
           {loadingBestsellers ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="card p-4">
-                  <div className="skeleton h-48 mb-4"></div>
-                  <div className="skeleton h-4 mb-2"></div>
-                  <div className="skeleton h-4 w-2/3"></div>
-                </div>
+                <ProductSkeleton key={i} />
               ))}
             </div>
           ) : (
             <Swiper
               modules={[Autoplay]}
-              spaceBetween={24}
+              spaceBetween={16}
               slidesPerView={2}
               autoplay={{ delay: 4000 }}
               breakpoints={{
-                640: { slidesPerView: 2 },
-                768: { slidesPerView: 3 },
-                1024: { slidesPerView: 4 },
+                640: { slidesPerView: 2, spaceBetween: 20 },
+                768: { slidesPerView: 3, spaceBetween: 24 },
+                1024: { slidesPerView: 4, spaceBetween: 24 },
               }}
             >
               {bestsellers?.map((product) => (
@@ -218,38 +249,38 @@ const HomePage = () => {
       </section>
 
       {/* New Arrivals */}
-      <section className="py-16">
+      <section className="py-14 sm:py-20">
         <div className="container-custom">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-end justify-between mb-10">
             <div>
-              <span className="text-green-600 font-medium">✨ وصل حديثاً</span>
-              <h2 className="text-3xl font-bold text-gray-800 mt-2">أحدث المنتجات</h2>
+              <span className="inline-flex items-center gap-1.5 text-emerald-600 font-medium text-sm mb-2">
+                <span className="w-8 h-[2px] bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"></span>
+                ✨ وصل حديثاً
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">أحدث المنتجات</h2>
             </div>
-            <Link to="/products?new=true" className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline">
-              عرض الكل ←
+            <Link to="/products?new=true" className="hidden sm:inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-medium text-sm hover:gap-2 transition-all">
+              عرض الكل
+              <span>←</span>
             </Link>
           </div>
           
           {loadingNew ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="card p-4">
-                  <div className="skeleton h-48 mb-4"></div>
-                  <div className="skeleton h-4 mb-2"></div>
-                  <div className="skeleton h-4 w-2/3"></div>
-                </div>
+                <ProductSkeleton key={i} />
               ))}
             </div>
           ) : (
             <Swiper
               modules={[Autoplay]}
-              spaceBetween={24}
+              spaceBetween={16}
               slidesPerView={2}
               autoplay={{ delay: 4000 }}
               breakpoints={{
-                640: { slidesPerView: 2 },
-                768: { slidesPerView: 3 },
-                1024: { slidesPerView: 4 },
+                640: { slidesPerView: 2, spaceBetween: 20 },
+                768: { slidesPerView: 3, spaceBetween: 24 },
+                1024: { slidesPerView: 4, spaceBetween: 24 },
               }}
             >
               {newArrivals?.map((product) => (
@@ -263,20 +294,33 @@ const HomePage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white">
-        <div className="container-custom text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+      <section className="py-16 sm:py-24 relative overflow-hidden">
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-fuchsia-600 to-pink-600"></div>
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 right-10 text-white text-8xl animate-float">🎁</div>
+          <div className="absolute bottom-10 left-10 text-white text-6xl animate-float" style={{ animationDelay: '1s' }}>🎀</div>
+          <div className="absolute top-1/2 left-1/3 text-white text-5xl animate-float" style={{ animationDelay: '2s' }}>✨</div>
+        </div>
+        
+        <div className="container-custom text-center relative z-10">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-5 py-2 rounded-full text-sm text-white/90 font-medium mb-6 border border-white/20">
+            <span>🎯</span>
+            <span>مساعد الهدايا الذكي</span>
+          </div>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-white">
             لا تعرف ماذا تختار؟
           </h2>
-          <p className="text-xl text-purple-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg text-purple-100 mb-10 max-w-2xl mx-auto leading-relaxed">
             استخدم أداة البحث عن الهدايا للعثور على الهدية المثالية حسب المناسبة والميزانية والشخص
           </p>
           <Link 
             to="/gift-finder" 
-            className="inline-flex items-center gap-2 bg-white text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-4 rounded-full text-lg font-bold hover:bg-gray-100 transition-colors"
+            className="inline-flex items-center gap-2 bg-white text-purple-700 px-8 py-4 rounded-2xl text-lg font-bold hover:bg-purple-50 transition-all duration-300 hover:shadow-2xl hover:shadow-white/20 hover:-translate-y-1 active:translate-y-0"
           >
             <span>🎯</span>
             ابدأ البحث الآن
+            <span className="mr-1">←</span>
           </Link>
         </div>
       </section>
