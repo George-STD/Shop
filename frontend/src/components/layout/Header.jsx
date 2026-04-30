@@ -24,8 +24,9 @@ const Header = () => {
   useEffect(() => {
     const handleScroll = () => {
       const y = window.scrollY
-      // Use different thresholds for collapse vs expand to avoid feedback loop
-      if (!scrolledRef.current && y > 100) {
+      // Use a large gap between thresholds to account for the header's height reduction (~160px).
+      // When the header shrinks, scroll anchoring shifts scrollY down by ~160px.
+      if (!scrolledRef.current && y > 250) {
         scrolledRef.current = true
         setIsScrolled(true)
       } else if (scrolledRef.current && y < 20) {
