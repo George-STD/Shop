@@ -1,5 +1,6 @@
 import ProductPageClient from './ProductPageClient'
 import ProductJsonLd from './ProductJsonLd'
+import { notFound } from 'next/navigation'
 import { SITE_CONFIG } from '../../../../constants'
 
 const API_URL = 'https://shop-gx97.onrender.com/api'
@@ -54,6 +55,15 @@ export async function generateMetadata({ params }) {
 
 export default async function Page({ params }) {
   const { slug } = await params
+  const res = await fetch(`${API_URL}/products/slug/${slug}`, { next: { revalidate: 3600 } })
+
+  if (res.status === 404) {
+    notFound()
+  }
+  if (!res.ok) {
+    throw new Error(`Failed to fetch product metadata for slug: ${slug}`)
+  }
+
   return (
     <>
       <ProductJsonLd slug={slug} />

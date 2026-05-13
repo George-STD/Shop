@@ -1,4 +1,4 @@
-import { API_BASE_URL, QUERY_DEFAULTS } from '../constants'
+import { API_BASE_URL } from '../constants'
 import { SITE_CONFIG } from '../constants/config'
 
 // Generate sitemap dynamically on each request, not at build time
@@ -44,47 +44,7 @@ export default async function sitemap() {
     console.error('Sitemap: Error fetching products:', error.message)
   }
 
-  // Dynamic category pages
-  let categoryPages = []
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000)
-    const res = await fetch(`${API_BASE_URL}/categories`, { signal: controller.signal })
-    clearTimeout(timeoutId)
-    if (res.ok) {
-      const data = await res.json()
-      const categories = data.data || []
-      categoryPages = categories.map((category) => ({
-        url: `${baseUrl}/products?category=${category.slug}`,
-        lastModified: new Date(category.updatedAt || category.createdAt),
-        changeFrequency: 'weekly',
-        priority: 0.7,
-      }))
-    }
-  } catch (error) {
-    console.error('Sitemap: Error fetching categories:', error.message)
-  }
-
-  // Dynamic occasion pages
-  let occasionPages = []
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000)
-    const res = await fetch(`${API_BASE_URL}/occasions`, { signal: controller.signal })
-    clearTimeout(timeoutId)
-    if (res.ok) {
-      const data = await res.json()
-      const occasions = data.data || []
-      occasionPages = occasions.map((occasion) => ({
-        url: `${baseUrl}/products?occasion=${occasion._id}`,
-        lastModified: new Date(occasion.updatedAt || occasion.createdAt),
-        changeFrequency: 'weekly',
-        priority: 0.7,
-      }))
-    }
-  } catch (error) {
-    console.error('Sitemap: Error fetching occasions:', error.message)
-  }
-
-  return [...staticPages, ...productPages, ...categoryPages, ...occasionPages]
+  // Keep sitemap focused on canonical URLs only.
+  // Filtered query URLs (e.g. /products?category=...) are intentionally excluded.
+  return [...staticPages, ...productPages]
 }
