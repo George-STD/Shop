@@ -18,7 +18,7 @@ export const API_URL = getApiUrl();
 // Site Information
 export const SITE_CONFIG = {
   // URLs
-  SITE_URL: 'https://foryo.me',
+  SITE_URL: 'https://www.foryo.me',
   API_URL: API_URL,
   
   // Site Identity

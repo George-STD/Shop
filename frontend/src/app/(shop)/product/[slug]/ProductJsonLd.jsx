@@ -1,4 +1,7 @@
+import { SITE_CONFIG } from '../../../../constants'
+
 const API_URL = 'https://shop-gx97.onrender.com/api'
+const SITE_URL = SITE_CONFIG.SITE_URL
 
 export default async function ProductJsonLd({ slug }) {
   try {
@@ -14,14 +17,14 @@ export default async function ProductJsonLd({ slug }) {
       description: product.description?.replace(/<[^>]+>/g, '').substring(0, 300) || '',
       image: product.images?.map(img => img.url) || [],
       sku: product._id,
-      url: `https://foryo.me/product/${slug}`,
+      url: `${SITE_URL}/product/${slug}`,
       brand: {
         '@type': 'Brand',
         name: 'For You - فور يو',
       },
       offers: {
         '@type': 'Offer',
-        url: `https://foryo.me/product/${slug}`,
+        url: `${SITE_URL}/product/${slug}`,
         priceCurrency: 'EGP',
         price: product.salePrice || product.price,
         availability: product.stock > 0
@@ -53,19 +56,19 @@ export default async function ProductJsonLd({ slug }) {
           '@type': 'ListItem',
           position: 1,
           name: 'الرئيسية',
-          item: 'https://foryo.me',
+          item: SITE_URL,
         },
         {
           '@type': 'ListItem',
           position: 2,
           name: 'المنتجات',
-          item: 'https://foryo.me/products',
+          item: `${SITE_URL}/products`,
         },
         {
           '@type': 'ListItem',
           position: 3,
           name: product.name,
-          item: `https://foryo.me/product/${slug}`,
+          item: `${SITE_URL}/product/${slug}`,
         },
       ],
     }

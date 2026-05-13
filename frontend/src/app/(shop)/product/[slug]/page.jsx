@@ -1,7 +1,9 @@
 import ProductPageClient from './ProductPageClient'
 import ProductJsonLd from './ProductJsonLd'
+import { SITE_CONFIG } from '../../../../constants'
 
 const API_URL = 'https://shop-gx97.onrender.com/api'
+const SITE_URL = SITE_CONFIG.SITE_URL
 
 export async function generateMetadata({ params }) {
   const { slug } = await params
@@ -15,19 +17,19 @@ export async function generateMetadata({ params }) {
     const description = product.description
       ? product.description.replace(/<[^>]+>/g, '').substring(0, 160)
       : `اشترِ ${product.name} من فور يو - متجر الهدايا الأول في مصر`
-    const image = product.images?.[0]?.url || 'https://foryo.me/images/og-image.jpg'
+    const image = product.images?.[0]?.url || `${SITE_URL}/images/og-image.jpg`
     const price = product.salePrice || product.price
 
     return {
       title,
       description,
       alternates: {
-        canonical: `https://foryo.me/product/${slug}`,
+        canonical: `${SITE_URL}/product/${slug}`,
       },
       openGraph: {
         title: `${product.name} | For You - فور يو`,
         description,
-        url: `https://foryo.me/product/${slug}`,
+        url: `${SITE_URL}/product/${slug}`,
         type: 'website',
         images: [{ url: image, width: 800, height: 800, alt: product.name }],
       },

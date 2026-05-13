@@ -31,6 +31,16 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'foryo.me' }],
+        destination: 'https://www.foryo.me/:path*',
+        permanent: true,
+      },
+    ]
+  },
   async headers() {
     return [
       {
