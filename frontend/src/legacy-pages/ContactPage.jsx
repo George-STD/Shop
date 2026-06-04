@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { FiPhone, FiMail, FiMapPin, FiClock, FiSend, FiMessageCircle } from 'react-icons/fi'
-import { FaWhatsapp, FaInstagram, FaFacebookF, FaYoutube } from 'react-icons/fa'
+import { FiMail, FiMapPin, FiClock, FiSend, FiMessageCircle } from 'react-icons/fi'
+import { FaInstagram, FaFacebookF, FaYoutube } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
-    name: '', email: '', phone: '', subject: '', message: ''
+    name: '', email: '', subject: '', message: ''
   })
   const [loading, setLoading] = useState(false)
 
@@ -15,13 +15,11 @@ const ContactPage = () => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
     toast.success('تم إرسال رسالتك بنجاح! سنتواصل معك قريباً')
-    setFormData({ name: '', email: '', phone: '', subject: '', message: '' })
+    setFormData({ name: '', email: '', subject: '', message: '' })
     setLoading(false)
   }
 
   const contactInfo = [
-    { icon: FiPhone, title: 'اتصل بنا', value: '+20 12 86153004', link: 'tel:+201286153004' },
-    { icon: FaWhatsapp, title: 'واتساب', value: '+20 12 86153004', link: 'https://wa.me/201286153004' },
     { icon: FiMail, title: 'البريد الإلكتروني', value: 'support@foryo.me', link: 'mailto:support@foryo.me' },
     { icon: FiClock, title: 'ساعات العمل', value: 'متاحين على مدار الساعة', link: null },
   ]
@@ -149,33 +147,21 @@ const ContactPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-gray-700 font-medium mb-2">رقم الهاتف</label>
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                        className="input-field"
-                        placeholder="+20 1X XXXX XXXX"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-700 font-medium mb-2">الموضوع *</label>
-                      <select
-                        required
-                        value={formData.subject}
-                        onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                        className="input-field"
-                      >
-                        <option value="">اختر الموضوع</option>
-                        <option value="inquiry">استفسار عام</option>
-                        <option value="order">استفسار عن طلب</option>
-                        <option value="complaint">شكوى</option>
-                        <option value="suggestion">اقتراح</option>
-                        <option value="corporate">طلبات الشركات</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">الموضوع *</label>
+                    <select
+                      required
+                      value={formData.subject}
+                      onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                      className="input-field"
+                    >
+                      <option value="">اختر الموضوع</option>
+                      <option value="inquiry">استفسار عام</option>
+                      <option value="order">استفسار عن طلب</option>
+                      <option value="complaint">شكوى</option>
+                      <option value="suggestion">اقتراح</option>
+                      <option value="corporate">طلبات الشركات</option>
+                    </select>
                   </div>
 
                   <div>

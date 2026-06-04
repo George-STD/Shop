@@ -57,11 +57,7 @@ export const BUSINESS_CONFIG = {
   FREE_SHIPPING_THRESHOLD: 500,
   
   // Contact Information
-  PHONE: '+20 12 86153004',
-  PHONE_RAW: '+201286153004',
   EMAIL: 'support@foryo.me',
-  WHATSAPP_LINK: 'https://wa.me/201286153004',
-  INSTAPAY: '01286153004',
   
   // Address
   ADDRESS: {

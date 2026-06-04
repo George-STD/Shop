@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { FiX, FiUser, FiMapPin, FiPhone, FiSettings, FiChevronLeft } from 'react-icons/fi'
+import { FiX, FiUser, FiMapPin, FiMail, FiSettings, FiChevronLeft } from 'react-icons/fi'
 import { useUIStore, useAuthStore } from '../../store'
 import { occasionsAPI } from '../../services/api'
 
@@ -179,9 +179,9 @@ const MobileMenu = () => {
         {/* Contact Info */}
         <div className="p-4 bg-gray-50 border-t border-gray-100">
           <div className="space-y-3 text-gray-500 text-sm">
-            <a href="tel:+201286153004" className="flex items-center gap-3 hover:text-purple-600 transition-colors">
-              <FiPhone className="text-purple-400" size={16} />
-              <span dir="ltr">+20 12 86153004</span>
+            <a href="mailto:support@foryo.me" className="flex items-center gap-3 hover:text-purple-600 transition-colors">
+              <FiMail className="text-purple-400" size={16} />
+              <span>support@foryo.me</span>
             </a>
             <div className="flex items-start gap-3">
               <FiMapPin className="text-purple-400 mt-0.5" size={16} />

@@ -316,12 +316,9 @@ const CheckoutPage = () => {
                       <div className="mt-6 p-4 bg-gray-50 rounded-xl flex flex-col gap-2">
                         <div className="flex items-center gap-2">
                           <img src="/images/payments/instapay.svg" alt="InstaPay" className="h-5 w-5" />
-                          <span className="font-medium">Instapay: 01286153004</span>
+                          <span className="font-medium">سيتم إرسال تفاصيل الدفع عبر البريد الإلكتروني بعد تأكيد الطلب.</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <img src="/images/whatsapp.png" alt="WhatsApp" className="h-5 w-5" />
-                          <a href="https://wa.me/201286153004" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline">تواصل عبر واتساب</a>
-                        </div>
+                        <p className="text-sm text-gray-500">لو محتاج أي تعديل على الطلب، استخدم نموذج التواصل داخل الموقع.</p>
                       </div>
                     )}
                     {/* Notes */}

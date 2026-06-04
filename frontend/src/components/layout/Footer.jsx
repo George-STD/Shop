@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FiFacebook, FiInstagram, FiYoutube, FiMail, FiPhone, FiMapPin, FiHeart } from 'react-icons/fi'
+import { FiFacebook, FiInstagram, FiYoutube, FiMail, FiMapPin, FiMessageCircle, FiHeart } from 'react-icons/fi'
 
 const Footer = () => {
   const currentYear = new Date().getFullYear()
@@ -123,27 +123,15 @@ const Footer = () => {
               </li>
               <li className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <FiPhone className="text-pink-400" size={14} />
-                </div>
-                <span dir="ltr" className="text-sm">+20 12 86153004</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <img src="/images/payments/instapay.svg" alt="InstaPay" className="h-4 w-4" />
-                </div>
-                <span dir="ltr" className="text-sm">Instapay: 01286153004</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <img src="/images/whatsapp.png" alt="WhatsApp" className="h-4 w-4" />
-                </div>
-                <a href="https://wa.me/201286153004" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors text-sm">تواصل واتساب</a>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
                   <FiMail className="text-pink-400" size={14} />
                 </div>
-                <span className="text-sm">support@foryo.me</span>
+                <a href="mailto:support@foryo.me" className="hover:text-white transition-colors text-sm">support@foryo.me</a>
+              </li>
+              <li className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FiMessageCircle className="text-pink-400" size={14} />
+                </div>
+                <Link to="/contact" className="hover:text-white transition-colors text-sm">نموذج التواصل</Link>
               </li>
             </ul>
           </div>

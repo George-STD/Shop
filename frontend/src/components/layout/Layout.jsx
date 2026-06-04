@@ -3,6 +3,7 @@ import Header from './Header'
 import Footer from './Footer'
 import MobileMenu from './MobileMenu'
 import CartSidebar from './CartSidebar'
+import ContactFab from './ContactFab'
 import { useUIStore } from '../../store'
 
 const Layout = ({ children }) => {
@@ -17,6 +18,8 @@ const Layout = ({ children }) => {
       </main>
       
       <Footer />
+
+      <ContactFab />
       
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && <MobileMenu />}

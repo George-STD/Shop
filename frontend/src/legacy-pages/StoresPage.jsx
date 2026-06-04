@@ -1,5 +1,5 @@
 import { FiGlobe, FiTruck, FiShield, FiClock, FiPackage, FiHeart } from 'react-icons/fi'
-import { FaWhatsapp, FaInstagram, FaFacebookF, FaYoutube } from 'react-icons/fa'
+import { FaInstagram, FaFacebookF, FaYoutube } from 'react-icons/fa'
 import Link from 'next/link'
 
 const features = [
@@ -103,15 +103,13 @@ const StoresPage = () => {
               </a>
             ))}
           </div>
-          <a
-            href="https://wa.me/201286153004"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-medium transition-colors"
+          <Link
+            href="/contact"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-full font-medium transition-colors"
           >
-            <FaWhatsapp className="text-xl" />
-            تواصل معنا على واتساب
-          </a>
+            💬
+            تواصل معنا
+          </Link>
         </div>
 
         {/* CTA */}

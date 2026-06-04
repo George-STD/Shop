@@ -82,7 +82,6 @@ export const STRINGS = {
     COPYRIGHT: '© {year} For You Gift Shop. جميع الحقوق محفوظة.',
     ABOUT_TEXT: 'متجرك الأول للهدايا في مصر. نقدم لك أفضل تشكيلة من الهدايا لجميع المناسبات مع توصيل سريع لباب بيتك.',
     LOCATION: 'موقعنا',
-    WHATSAPP: 'تواصل واتساب',
     FOLLOW_US: 'تابعنا',
   },
 
