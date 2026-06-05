@@ -1,0 +1,24 @@
+name: Copilot Setup Steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Clear explicit Claude model overrides
+        run: |
+          echo "ANTHROPIC_MODEL=" >> "$GITHUB_ENV"
+          echo "ANTHROPIC_DEFAULT_OPUS_MODEL=" >> "$GITHUB_ENV"
+          echo "ANTHROPIC_DEFAULT_SONNET_MODEL=" >> "$GITHUB_ENV"
+          echo "CLAUDE_CODE_MODEL=" >> "$GITHUB_ENV"
+          echo "CLAUDE_CODE_SUBAGENT_MODEL=" >> "$GITHUB_ENV"
