@@ -2,8 +2,10 @@
  * API Constants and Endpoints for For You Gift Shop
  */
 
+import { API_URL } from './config';
+
 // API Base URL - configurable via environment variable
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://shop-gx97.onrender.com/api';
+export const API_BASE_URL = API_URL;
 
 // API Endpoints
 export const ENDPOINTS = {

@@ -173,12 +173,16 @@ export const useAuthStore = create(
       },
 
       setAuth: (user, token) => {
-        localStorage.setItem(STORAGE_KEYS.TOKEN, token)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEYS.TOKEN, token)
+        }
         set({ user, token, isAuthenticated: true })
       },
       
       logout: () => {
-        localStorage.removeItem(STORAGE_KEYS.TOKEN)
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(STORAGE_KEYS.TOKEN)
+        }
         set({ user: null, token: null, isAuthenticated: false })
       },
       

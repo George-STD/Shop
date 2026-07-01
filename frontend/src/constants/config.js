@@ -3,14 +3,16 @@
  * Centralized configuration for easy maintenance
  */
 
+export const DEFAULT_API_URL = 'https://shop-gx97.onrender.com/api';
+
 // Environment-based API URL
 const getApiUrl = () => {
   if (typeof window !== 'undefined') {
     // Client-side
-    return process.env.NEXT_PUBLIC_API_URL || 'https://shop-gx97.onrender.com/api';
+    return process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
   }
   // Server-side
-  return process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://shop-gx97.onrender.com/api';
+  return process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
 };
 
 export const API_URL = getApiUrl();

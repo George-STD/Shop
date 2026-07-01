@@ -1,6 +1,5 @@
-import { SITE_CONFIG } from '../../../../constants'
+import { API_URL, SITE_CONFIG } from '../../../../constants'
 
-const API_URL = 'https://shop-gx97.onrender.com/api'
 const SITE_URL = SITE_CONFIG.SITE_URL
 
 export default async function ProductJsonLd({ slug }) {
