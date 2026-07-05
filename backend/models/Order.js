@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const orderItemSchema = new mongoose.Schema({
   product: {
@@ -36,7 +37,8 @@ const orderItemSchema = new mongoose.Schema({
 
 const orderSchema = new mongoose.Schema({
   orderNumber: {
-    type: String
+    type: String,
+    unique: true
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -174,13 +176,14 @@ orderSchema.pre('save', async function(next) {
     const date = new Date();
     const year = date.getFullYear().toString().slice(-2);
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    const random = crypto.randomInt(100000, 999999).toString();
     this.orderNumber = `HD${year}${month}${random}`;
   }
   next();
 });
 
 // Indexes
+orderSchema.index({ orderNumber: 1 });
 orderSchema.index({ user: 1, createdAt: -1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });

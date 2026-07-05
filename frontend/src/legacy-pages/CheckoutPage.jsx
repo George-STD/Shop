@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { FiCheck, FiCreditCard, FiTruck } from 'react-icons/fi'
 import { useCartStore, useAuthStore } from '../store'
 import { ordersAPI } from '../services/api'
+import { BUSINESS_CONFIG } from '../constants'
 import toast from 'react-hot-toast'
 
 const CheckoutPage = () => {
@@ -40,7 +41,7 @@ const CheckoutPage = () => {
   })
 
   const subtotal = getTotal()
-  const shippingCost = 60
+  const shippingCost = BUSINESS_CONFIG.SHIPPING_COST
   const total = subtotal + shippingCost
 
   const governorates = [

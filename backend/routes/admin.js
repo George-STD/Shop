@@ -419,9 +419,22 @@ router.put('/products/:id', [
   logAdminAction('UPDATE_PRODUCT')
 ], async (req, res) => {
   try {
+    // Whitelist allowed fields to prevent manipulation of protected fields (salesCount, rating, views, etc.)
+    const allowedProductFields = [
+      'name', 'slug', 'description', 'shortDescription', 'price', 'oldPrice', 'discount',
+      'images', 'category', 'subcategory', 'tags', 'occasions', 'recipients', 'budgetRange',
+      'stock', 'sku', 'sizes', 'colors', 'shapes', 'addons', 'variantGroups',
+      'isActive', 'isFeatured', 'isNewArrival', 'isBestseller',
+      'isCustomBox', 'boxSlots', 'seo'
+    ];
+    const updates = {};
+    allowedProductFields.forEach(field => {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    });
+
     const product = await Product.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updates,
       { new: true, runValidators: true }
     );
 
@@ -686,9 +699,18 @@ router.put('/categories/:id', [
   logAdminAction('UPDATE_CATEGORY')
 ], async (req, res) => {
   try {
+    // Whitelist allowed fields to prevent manipulation of protected fields (productsCount, etc.)
+    const allowedCategoryFields = [
+      'name', 'slug', 'description', 'image', 'icon', 'parent', 'order', 'isActive', 'seo'
+    ];
+    const updates = {};
+    allowedCategoryFields.forEach(field => {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    });
+
     const category = await Category.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updates,
       { new: true, runValidators: true }
     );
 

@@ -120,10 +120,11 @@ async function sendPasswordResetEmail(to, code) {
 }
 
 /**
- * Generate a 6-digit verification code
+ * Generate a 6-digit verification code (cryptographically secure)
  */
 function generateVerificationCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  const crypto = require('crypto');
+  return crypto.randomInt(100000, 999999).toString();
 }
 
 /**
