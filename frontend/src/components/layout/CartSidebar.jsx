@@ -15,7 +15,8 @@ const CartSidebar = () => {
       item.selectedSize,
       item.selectedColor,
       item.selectedShape,
-      item._variantsKey
+      item._variantsKey,
+      item.boxId
     )
 
     if (result?.capped && result.maxStock !== null) {
@@ -138,7 +139,7 @@ const CartSidebar = () => {
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-0">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.selectedSize, item.selectedColor, item.selectedShape, item._variantsKey)}
+                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.selectedSize, item.selectedColor, item.selectedShape, item._variantsKey, item.boxId)}
                           className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:border-purple-300 hover:bg-purple-50 transition-colors"
                           disabled={item.quantity <= 1}
                         >
