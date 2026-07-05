@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi'
 import { useCartStore } from '../store'
+import { BUSINESS_CONFIG } from '../constants'
 import toast from 'react-hot-toast'
 
 const CartPage = () => {
@@ -22,7 +23,7 @@ const CartPage = () => {
   }
   
   const subtotal = getTotal()
-  const shippingCost = 60
+  const shippingCost = BUSINESS_CONFIG.SHIPPING_COST
   const total = subtotal + shippingCost
 
   if (items.length === 0) {

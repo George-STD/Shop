@@ -55,8 +55,7 @@ export const BUSINESS_CONFIG = {
   CURRENCY_POSITION: 'after', // 'before' or 'after'
   
   // Shipping
-  SHIPPING_COST: 60,
-  FREE_SHIPPING_THRESHOLD: 500,
+  SHIPPING_COST: 95,
   
   // Contact Information
   EMAIL: 'support@foryo.me',

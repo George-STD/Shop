@@ -170,8 +170,6 @@ export const STRINGS = {
     CONTINUE_SHOPPING: 'متابعة التسوق',
     REMOVE: 'حذف',
     UPDATE_CART: 'تحديث السلة',
-    FREE_SHIPPING: 'شحن مجاني',
-    FREE_SHIPPING_AT: 'شحن مجاني للطلبات فوق {amount}',
   },
 
   // =====================================================

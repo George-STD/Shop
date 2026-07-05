@@ -1,10 +1,12 @@
 import { FiTruck, FiClock, FiMapPin, FiPackage, FiGift, FiCheckCircle } from 'react-icons/fi'
 
+import { BUSINESS_CONFIG } from '../constants'
+
 const ShippingPage = () => {
   const shippingOptions = [
     {
       title: 'التوصيل',
-      price: '60 ج.م',
+      price: `${BUSINESS_CONFIG.SHIPPING_COST} ج.م`,
       time: '2-5 أيام عمل',
       description: 'توصيل إلى جميع محافظات مصر بسعر موحد'
     },
@@ -42,7 +44,7 @@ const ShippingPage = () => {
                   <FiTruck className="text-3xl text-purple-600" />
                 </div>
                 <h3 className="text-xl font-bold mb-2">سعر الشحن الموحد</h3>
-                <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">60 ج.م</span>
+                <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">{BUSINESS_CONFIG.SHIPPING_COST} ج.م</span>
                 <div className="flex items-center justify-center gap-2 text-gray-600 mt-4 mb-2">
                   <FiClock />
                   <span>2-5 أيام عمل</span>

@@ -69,8 +69,7 @@ const CONFIG = {
   // BUSINESS RULES
   // =====================================================
   BUSINESS: {
-    SHIPPING_COST_EGP: Number(process.env.SHIPPING_COST) || 60,
-    FREE_SHIPPING_THRESHOLD_EGP: Number(process.env.FREE_SHIPPING_THRESHOLD) || 500,
+    SHIPPING_COST_EGP: Number(process.env.SHIPPING_COST) || 95,
     CURRENCY: 'EGP',
     CURRENCY_SYMBOL: 'ج.م',
   },
