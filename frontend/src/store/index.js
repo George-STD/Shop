@@ -8,6 +8,13 @@ const parseStock = (value) => {
   return Math.max(0, Math.floor(stock))
 }
 
+const clearStoredAuthSession = () => {
+  if (typeof window === 'undefined') return
+
+  localStorage.removeItem(STORAGE_KEYS.TOKEN)
+  localStorage.removeItem(STORAGE_KEYS.AUTH)
+}
+
 // Cart Store
 export const useCartStore = create(
   persist(
@@ -180,9 +187,7 @@ export const useAuthStore = create(
       },
       
       logout: () => {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem(STORAGE_KEYS.TOKEN)
-        }
+        clearStoredAuthSession()
         set({ user: null, token: null, isAuthenticated: false })
       },
       
