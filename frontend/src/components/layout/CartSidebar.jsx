@@ -126,9 +126,13 @@ const CartSidebar = () => {
                     {/* Price */}
                     <div className="flex items-center gap-2 mt-1">
                       <span className="font-bold text-gray-900 text-sm">
-                        {formatPrice(item.price)} ج.م
+                        {formatPrice(item.boxId ? item.price * (1 - BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE / 100) : item.price)} ج.م
                       </span>
-                      {item.oldPrice && (
+                      {item.boxId ? (
+                        <span className="text-xs text-gray-400 line-through">
+                          {formatPrice(item.price)} ج.م
+                        </span>
+                      ) : item.oldPrice && (
                         <span className="text-xs text-gray-400 line-through">
                           {formatPrice(item.oldPrice)}
                         </span>

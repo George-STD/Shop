@@ -237,6 +237,16 @@ const Header = () => {
             ))}
             <li role="none">
               <Link 
+                to="/build-a-box" 
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-pink-50 to-rose-50 rounded-full text-pink-700 font-medium hover:from-pink-100 hover:to-rose-100 transition-all focus:outline-none focus:ring-2 focus:ring-pink-500 rounded"
+                role="menuitem"
+              >
+                <span aria-hidden="true">🎁</span>
+                صمم بوكس
+              </Link>
+            </li>
+            <li role="none">
+              <Link 
                 to="/gift-finder" 
                 className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-purple-50 to-pink-50 rounded-full text-purple-700 font-medium hover:from-purple-100 hover:to-pink-100 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 rounded"
                 role="menuitem"

@@ -136,20 +136,44 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Shop by Occasion */}
-      {occasions?.length > 0 && (
-        <section className="py-14 sm:py-20">
-          <div className="container-custom">
-            <h2 className="section-title">تسوق حسب المناسبة</h2>
-            <p className="section-subtitle">اختر المناسبة ونحن نوفرلك أفضل الهدايا</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-              {occasions?.map((occasion) => (
-                <OccasionCard key={occasion._id} {...occasion} />
-              ))}
+      {/* Build a Box Banner */}
+      <section className="py-12 sm:py-16 bg-gradient-to-r from-fuchsia-50 to-pink-50">
+        <div className="container-custom">
+          <div className="bg-white rounded-3xl p-8 sm:p-12 shadow-xl border border-pink-100 relative overflow-hidden">
+            {/* Decorative background elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-purple-400 to-indigo-500 rounded-full blur-3xl opacity-20 translate-y-1/2 -translate-x-1/2"></div>
+            
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex-1 text-center md:text-right">
+                <div className="inline-flex items-center gap-2 bg-pink-100 text-pink-700 px-4 py-2 rounded-full text-sm font-bold mb-4">
+                  <span>🎁</span>
+                  جديد ومميز
+                </div>
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+                  صمم بوكس هديتك بنفسك!
+                </h2>
+                <p className="text-gray-600 text-lg mb-8 max-w-xl mx-auto md:mx-0">
+                  اختر منتجاتك المفضلة وسنقوم بتجميعها وتغليفها في بوكس هدايا أنيق، <span className="font-bold text-purple-600">واستمتع بخصم 25% على جميع المنتجات داخل البوكس!</span>
+                </p>
+                <Link to="/build-a-box" className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-2xl text-lg font-bold hover:shadow-lg hover:shadow-pink-500/30 hover:-translate-y-1 transition-all duration-300">
+                  ابدأ تصميم البوكس
+                  <span className="text-xl">←</span>
+                </Link>
+              </div>
+              
+              <div className="w-full md:w-1/3 flex justify-center">
+                <div className="relative w-48 h-48 sm:w-64 sm:h-64 animate-float">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl rotate-6"></div>
+                  <div className="absolute inset-0 bg-white rounded-3xl shadow-lg border border-gray-100 flex items-center justify-center -rotate-3 transition-transform hover:rotate-0 duration-300">
+                    <span className="text-8xl">🎁</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* Featured Products */}
       <section className="py-14 sm:py-20 bg-gradient-to-b from-gray-50 to-white">
@@ -292,6 +316,26 @@ const HomePage = () => {
           )}
         </div>
       </section>
+
+      {/* Shop by Occasion */}
+      {occasions?.length > 0 && (
+        <section className="py-14 sm:py-20 bg-gray-50">
+          <div className="container-custom">
+            <div className="flex flex-col items-center mb-10 text-center">
+              <span className="inline-flex items-center gap-1.5 text-indigo-600 font-medium text-sm mb-2">
+                <span className="w-8 h-[2px] bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full"></span>
+                مناسباتك السعيدة
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">تسوق حسب المناسبة</h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+              {occasions?.map((occasion) => (
+                <OccasionCard key={occasion._id} {...occasion} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* CTA Section */}
       <section className="py-16 sm:py-24 relative overflow-hidden">

@@ -4,7 +4,6 @@ import Footer from './Footer'
 import MobileMenu from './MobileMenu'
 import CartSidebar from './CartSidebar'
 import ContactFab from './ContactFab'
-import BuildBoxFloatingWidget from './BuildBoxFloatingWidget'
 import { useUIStore } from '../../store'
 
 const Layout = ({ children }) => {
@@ -21,7 +20,6 @@ const Layout = ({ children }) => {
       <Footer />
 
       <ContactFab />
-      <BuildBoxFloatingWidget />
       
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && <MobileMenu />}

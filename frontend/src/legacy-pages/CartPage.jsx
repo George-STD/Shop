@@ -134,9 +134,13 @@ const CartPage = () => {
                       
                       <div className="text-left">
                         <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                          {item.price * item.quantity} ج.م
+                          {(item.boxId ? item.price * (1 - BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE / 100) : item.price) * item.quantity} ج.م
                         </span>
-                        {item.oldPrice && (
+                        {item.boxId ? (
+                          <span className="text-sm text-gray-400 line-through mr-2">
+                            {item.price * item.quantity} ج.م
+                          </span>
+                        ) : item.oldPrice && (
                           <span className="text-sm text-gray-400 line-through mr-2">
                             {item.oldPrice * item.quantity} ج.م
                           </span>

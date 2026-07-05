@@ -74,6 +74,8 @@ const CONFIG = {
     CURRENCY_SYMBOL: 'ج.م',
     BOX_MIN_ITEMS: 2,
     BOX_MAX_ITEMS: 7,
+    BOX_DISCOUNT_PERCENTAGE: 25,
+    BOX_BASE_PRICE_EGP: 50,
   },
 
   // =====================================================

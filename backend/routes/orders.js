@@ -88,6 +88,7 @@ router.post('/', protect, apiLimiter, [
       // Calculate totals and validate products atomically
       let subtotal = 0;
       const orderItems = [];
+      const boxGroups = new Set();
       const uniqueProductIds = [...new Set(items.map((item) => String(item.productId)))];
       const products = await Product.find({ _id: { $in: uniqueProductIds } }).session(session);
       const productMap = new Map(products.map((product) => [product._id.toString(), product]));
@@ -129,14 +130,20 @@ router.post('/', protect, apiLimiter, [
           });
         }
 
-        const itemSubtotal = product.price * quantity + addonsTotal;
+        let finalPrice = product.price;
+        if (item.boxId) {
+          boxGroups.add(item.boxId);
+          finalPrice = product.price * (1 - CONFIG.BUSINESS.BOX_DISCOUNT_PERCENTAGE / 100);
+        }
+
+        const itemSubtotal = finalPrice * quantity + addonsTotal;
 
         orderItems.push({
           product: product._id,
           name: product.name,
           slug: product.slug,
           image: product.images[0]?.url,
-          price: product.price,
+          price: finalPrice,
           quantity,
           selectedSize: item.selectedSize,
           selectedColor: item.selectedColor,
@@ -150,6 +157,10 @@ router.post('/', protect, apiLimiter, [
 
         subtotal += itemSubtotal;
       }
+
+      // Add Box base prices
+      const totalBoxPrice = boxGroups.size * CONFIG.BUSINESS.BOX_BASE_PRICE_EGP;
+      subtotal += totalBoxPrice;
 
       // Calculate shipping from config
       const shippingCost = CONFIG.BUSINESS.SHIPPING_COST_EGP;

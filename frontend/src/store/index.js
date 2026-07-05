@@ -151,13 +151,24 @@ export const useCartStore = create(
       clearCart: () => set({ items: [] }),
       
       getTotal: () => {
-        return get().items.reduce((total, item) => {
-          let itemTotal = item.price * item.quantity
+        const boxGroups = new Set()
+        const itemsTotal = get().items.reduce((total, item) => {
+          let priceToUse = item.price
+          
+          if (item.boxId) {
+            boxGroups.add(item.boxId)
+            priceToUse = item.price * (1 - BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE / 100)
+          }
+
+          let itemTotal = priceToUse * item.quantity
           if (item.addons) {
             itemTotal += item.addons.reduce((sum, addon) => sum + addon.price, 0)
           }
           return total + itemTotal
         }, 0)
+        
+        const boxesTotal = boxGroups.size * BUSINESS_CONFIG.BOX_BASE_PRICE_EGP
+        return itemsTotal + boxesTotal
       },
       
       getItemsCount: () => {
@@ -280,7 +291,10 @@ export const useBuildBoxStore = create(
       clearBox: () => set({ items: [] }),
       
       getTotal: () => {
-        return get().items.reduce((total, item) => total + (item.price || 0), 0)
+        const itemsTotal = get().items.reduce((total, item) => {
+          return total + (item.price * (1 - BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE / 100))
+        }, 0)
+        return itemsTotal > 0 ? itemsTotal + BUSINESS_CONFIG.BOX_BASE_PRICE_EGP : 0
       }
     }),
     {

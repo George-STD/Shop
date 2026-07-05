@@ -8,7 +8,7 @@ import 'swiper/css'
 import 'swiper/css/pagination'
 import 'swiper/css/navigation'
 import { productsAPI, reviewsAPI } from '../services/api'
-import { useCartStore, useWishlistStore, useAuthStore, useBuildBoxStore } from '../store'
+import { useCartStore, useWishlistStore, useAuthStore } from '../store'
 import ProductCard from '../components/product/ProductCard'
 import toast from 'react-hot-toast'
 
@@ -167,9 +167,7 @@ const ProductPage = () => {
   const [boxSelections, setBoxSelections] = useState({})
   const [selectedVariants, setSelectedVariants] = useState({})
   
-  const addBoxItem = useBuildBoxStore(state => state.addItem)
-  const buildBoxItems = useBuildBoxStore(state => state.items)
-  const buildBoxMaxItems = useBuildBoxStore(state => state.maxItems)
+
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'reviews' ? 'reviews' : 'description')
 
   const { addItem } = useCartStore()
@@ -275,37 +273,7 @@ const ProductPage = () => {
     toast.success('تمت الإضافة إلى السلة')
   }
 
-  const handleAddToBox = () => {
-    if (buildBoxItems.length >= buildBoxMaxItems) {
-      toast.error(`وصلت للحد الأقصى للبوكس (${buildBoxMaxItems} منتجات)`)
-      return
-    }
-    if (product.stock === 0) {
-      toast.error('الكمية غير متاحة حالياً')
-      return
-    }
 
-    const result = addBoxItem({
-      id: product._id,
-      name: product.name,
-      slug: product.slug,
-      price: calculateTotal(),
-      image: mainOverrideImage || activeBoxImage || displayImages[activeImageIdx]?.url,
-      quantity: 1,
-      stock: product.stock,
-      selectedSize,
-      selectedColor,
-      selectedShape,
-      selectedVariants: product.variantGroups?.length > 0 ? selectedVariants : undefined,
-      addons: selectedAddons,
-    })
-
-    if (result.success) {
-      toast.success('تمت الإضافة للبوكس الخاص بك')
-    } else {
-      toast.error('لا يمكن إضافة المزيد للبوكس')
-    }
-  }
 
   const handleToggleWishlist = () => {
     if (!isAuthenticated) {
@@ -917,18 +885,7 @@ const ProductPage = () => {
                 </button>
               </div>
 
-              {product.canBeAddedToBox && (
-                <div className="flex gap-4">
-                  <button
-                    onClick={handleAddToBox}
-                    disabled={product.stock === 0 || buildBoxItems.length >= buildBoxMaxItems}
-                    className="w-full btn-outline border-purple-500 text-purple-600 hover:bg-purple-50 disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    <FiGift />
-                    {buildBoxItems.length >= buildBoxMaxItems ? 'البوكس مكتمل' : `أضف للبوكس (${buildBoxItems.length}/${buildBoxMaxItems})`}
-                  </button>
-                </div>
-              )}
+
 
               {Number.isFinite(Number(product.stock)) && (
                 <p className="text-sm text-gray-500">المتاح حالياً: {Math.max(0, Number(product.stock))} قطعة</p>
