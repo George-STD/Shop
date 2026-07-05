@@ -72,6 +72,8 @@ const CONFIG = {
     SHIPPING_COST_EGP: Number(process.env.SHIPPING_COST) || 95,
     CURRENCY: 'EGP',
     CURRENCY_SYMBOL: 'ج.م',
+    BOX_MIN_ITEMS: 2,
+    BOX_MAX_ITEMS: 7,
   },
 
   // =====================================================

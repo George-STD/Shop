@@ -425,7 +425,7 @@ router.put('/products/:id', [
       'images', 'category', 'subcategory', 'tags', 'occasions', 'recipients', 'budgetRange',
       'stock', 'sku', 'sizes', 'colors', 'shapes', 'addons', 'variantGroups',
       'isActive', 'isFeatured', 'isNewArrival', 'isBestseller',
-      'isCustomBox', 'boxSlots', 'seo'
+      'isCustomBox', 'boxSlots', 'seo', 'canBeAddedToBox'
     ];
     const updates = {};
     allowedProductFields.forEach(field => {

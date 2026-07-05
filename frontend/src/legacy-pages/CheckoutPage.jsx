@@ -115,6 +115,7 @@ const CheckoutPage = () => {
           selectedVariants: item.selectedVariants,
           addons: item.addons,
           boxSelections: item.boxSelections,
+          boxId: item.boxId
         })),
         shippingAddress: {
           firstName: formData.firstName,
@@ -391,6 +392,11 @@ const CheckoutPage = () => {
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium line-clamp-2">{item.name}</p>
+                          {item.boxId && (
+                            <span className="inline-block bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0.5 rounded-full mt-0.5 mb-1">
+                              📦 في البوكس
+                            </span>
+                          )}
                           <p className="text-sm text-gray-500">{item.price} ج.م</p>
                           {item.selectedVariants && Object.keys(item.selectedVariants).length > 0 && (
                             <div className="text-xs text-gray-400 mt-0.5">

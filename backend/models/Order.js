@@ -32,6 +32,7 @@ const orderItemSchema = new mongoose.Schema({
     chosenOption: String,
     image: String
   }],
+  boxId: String,
   subtotal: Number
 });
 

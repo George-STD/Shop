@@ -144,6 +144,7 @@ router.post('/', protect, apiLimiter, [
           selectedVariants: item.selectedVariants,
           addons: normalizedAddons,
           boxSelections: item.boxSelections,
+          boxId: item.boxId,
           subtotal: itemSubtotal,
         });
 
@@ -262,6 +263,7 @@ router.post('/', protect, apiLimiter, [
           selectedVariants: item.selectedVariants,
           addons: normalizedAddons,
           boxSelections: item.boxSelections,
+          boxId: item.boxId,
           subtotal: itemSubtotal,
         });
 

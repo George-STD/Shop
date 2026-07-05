@@ -57,6 +57,10 @@ export const BUSINESS_CONFIG = {
   // Shipping
   SHIPPING_COST: 95,
   
+  // Build-a-Box
+  BOX_MIN_ITEMS: 2,
+  BOX_MAX_ITEMS: 7,
+  
   // Contact Information
   EMAIL: 'support@foryo.me',
   

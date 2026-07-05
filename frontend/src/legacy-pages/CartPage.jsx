@@ -14,7 +14,8 @@ const CartPage = () => {
       item.selectedSize,
       item.selectedColor,
       item.selectedShape,
-      item._variantsKey
+      item._variantsKey,
+      item.boxId
     )
 
     if (result?.capped && result.maxStock !== null) {
@@ -71,6 +72,13 @@ const CartPage = () => {
                         >
                           {item.name}
                         </Link>
+                        {item.boxId && (
+                          <div className="mt-1">
+                            <span className="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full">
+                              📦 في البوكس
+                            </span>
+                          </div>
+                        )}
                         {(item.selectedSize || item.selectedColor) && (
                           <p className="text-sm text-gray-500 mt-1">
                             {item.selectedSize && `المقاس: ${item.selectedSize}`}
@@ -98,7 +106,7 @@ const CartPage = () => {
 
                       </div>
                       <button 
-                        onClick={() => removeItem(item.id, item.selectedSize, item.selectedColor, item.selectedShape, item._variantsKey)}
+                        onClick={() => removeItem(item.id, item.selectedSize, item.selectedColor, item.selectedShape, item._variantsKey, item.boxId)}
                         className="text-red-500 hover:bg-red-50 p-2 rounded-lg"
                       >
                         <FiTrash2 />
@@ -108,7 +116,7 @@ const CartPage = () => {
                     <div className="flex items-center justify-between mt-4">
                       <div className="flex items-center border border-gray-300 rounded-lg">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.selectedSize, item.selectedColor, item.selectedShape, item._variantsKey)}
+                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.selectedSize, item.selectedColor, item.selectedShape, item._variantsKey, item.boxId)}
                           className="p-2 hover:bg-gray-100"
                           disabled={item.quantity <= 1}
                         >

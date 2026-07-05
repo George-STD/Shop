@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { FiSearch, FiEdit2, FiTrash2, FiPlus, FiEye, FiEyeOff } from 'react-icons/fi'
 import { adminAPI, productsAPI, categoriesAPI, occasionsAPI } from '../../services/api'
@@ -30,6 +30,7 @@ const AdminProducts = () => {
     isActive: true,
     isFeatured: false,
     isBestseller: false,
+    canBeAddedToBox: false,
     isCustomBox: false,
     boxSlots: []
   })
@@ -100,6 +101,7 @@ const AdminProducts = () => {
       isActive: true,
       isFeatured: false,
       isBestseller: false,
+      canBeAddedToBox: false,
       isCustomBox: false,
       boxSlots: []
     })
@@ -130,6 +132,7 @@ const AdminProducts = () => {
       isActive: product.isActive,
       isFeatured: product.isFeatured || false,
       isBestseller: product.isBestseller || false,
+      canBeAddedToBox: product.canBeAddedToBox || false,
       isCustomBox: product.isCustomBox || false,
       boxSlots: product.boxSlots || []
     })
@@ -798,6 +801,15 @@ const AdminProducts = () => {
                     className="rounded"
                   />
                   <span>نشط</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.canBeAddedToBox}
+                    onChange={(e) => setFormData({ ...formData, canBeAddedToBox: e.target.checked })}
+                    className="rounded"
+                  />
+                  <span>قابل للوضع في بوكس (Build-a-Box)</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input

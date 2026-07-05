@@ -107,6 +107,12 @@ const CartSidebar = () => {
                       {item.name}
                     </Link>
                     
+                    {item.boxId && (
+                      <span className="inline-block bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded-full mt-1">
+                        📦 في البوكس
+                      </span>
+                    )}
+
                     {/* Options */}
                     {(item.selectedSize || item.selectedColor) && (
                       <p className="text-xs text-gray-400 mt-0.5">
@@ -148,7 +154,7 @@ const CartSidebar = () => {
                         </button>
                       </div>
                       <button
-                        onClick={() => removeItem(item.id, item.selectedSize, item.selectedColor, item.selectedShape, item._variantsKey)}
+                        onClick={() => removeItem(item.id, item.selectedSize, item.selectedColor, item.selectedShape, item._variantsKey, item.boxId)}
                         className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         <FiTrash2 size={14} />

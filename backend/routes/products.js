@@ -23,7 +23,8 @@ router.get('/', async (req, res) => {
       limit = CONFIG.PAGINATION.PRODUCTS_LIMIT,
       featured,
       bestseller,
-      newArrivals
+      newArrivals,
+      canBeAddedToBox
     } = req.query;
 
     // Build query
@@ -65,6 +66,10 @@ router.get('/', async (req, res) => {
 
     if (newArrivals === 'true') {
       query.isNewArrival = true;
+    }
+
+    if (canBeAddedToBox === 'true') {
+      query.canBeAddedToBox = true;
     }
 
     if (search) {

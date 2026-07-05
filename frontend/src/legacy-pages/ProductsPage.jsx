@@ -19,6 +19,7 @@ const ProductsPage = () => {
   const recipient = searchParams.get('recipient') || ''
   const search = searchParams.get('search') || ''
   const categorySlug = searchParams.get('category') || ''
+  const canBeAddedToBox = searchParams.get('canBeAddedToBox') || ''
 
   // Fetch category info (for display only)
   const { data: categoryInfo } = useQuery({
@@ -29,7 +30,7 @@ const ProductsPage = () => {
 
   // Fetch products - use categorySlug directly
   const { data: productsData, isLoading } = useQuery({
-    queryKey: ['products', { categorySlug, page, sort, minPrice, maxPrice, occasion, recipient, search }],
+    queryKey: ['products', { categorySlug, page, sort, minPrice, maxPrice, occasion, recipient, search, canBeAddedToBox }],
     queryFn: () => productsAPI.getAll({
       categorySlug,
       page,
@@ -38,7 +39,8 @@ const ProductsPage = () => {
       maxPrice,
       occasion,
       recipient,
-      search
+      search,
+      canBeAddedToBox: canBeAddedToBox || undefined
     }).then(res => res.data)
   });
 

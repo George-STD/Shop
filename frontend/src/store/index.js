@@ -37,7 +37,8 @@ export const useCartStore = create(
                   item.selectedSize === options.selectedSize &&
                   item.selectedColor === options.selectedColor &&
                   item.selectedShape === options.selectedShape &&
-                  (item._variantsKey || '') === variantsKey
+                  (item._variantsKey || '') === variantsKey &&
+                  (item.boxId || '') === (options.boxId || '')
         )
         
         if (existingIndex > -1) {
@@ -80,7 +81,8 @@ export const useCartStore = create(
               selectedVariants: options.selectedVariants,
               _variantsKey: variantsKey,
               addons: options.addons || [],
-              boxSelections: options.boxSelections || []
+              boxSelections: options.boxSelections || [],
+              boxId: options.boxId
             }]
           })
 
@@ -93,19 +95,20 @@ export const useCartStore = create(
         }
       },
       
-      removeItem: (id, selectedSize, selectedColor, selectedShape, _variantsKey) => {
+      removeItem: (id, selectedSize, selectedColor, selectedShape, _variantsKey, boxId) => {
         set({
           items: get().items.filter(
             item => !(item.id === id && 
                      item.selectedSize === selectedSize &&
                      item.selectedColor === selectedColor &&
                      item.selectedShape === selectedShape &&
-                     (item._variantsKey || '') === (_variantsKey || ''))
+                     (item._variantsKey || '') === (_variantsKey || '') &&
+                     (item.boxId || '') === (boxId || ''))
           )
         })
       },
       
-      updateQuantity: (id, quantity, selectedSize, selectedColor, selectedShape, _variantsKey) => {
+      updateQuantity: (id, quantity, selectedSize, selectedColor, selectedShape, _variantsKey, boxId) => {
         const requestedQuantity = Math.max(1, Math.floor(Number(quantity) || 1))
         let result = { success: false, reason: 'not_found' }
         let changed = false
@@ -115,7 +118,8 @@ export const useCartStore = create(
               item.selectedSize === selectedSize &&
               item.selectedColor === selectedColor &&
               item.selectedShape === selectedShape &&
-              (item._variantsKey || '') === (_variantsKey || '')) {
+              (item._variantsKey || '') === (_variantsKey || '') &&
+              (item.boxId || '') === (boxId || '')) {
             const stockLimit = parseStock(item.stock)
             const maxAllowed = stockLimit ?? Number.MAX_SAFE_INTEGER
             const nextQuantity = Math.min(requestedQuantity, maxAllowed)
@@ -246,6 +250,41 @@ export const useWishlistStore = create(
     }),
     {
       name: STORAGE_KEYS.WISHLIST
+    }
+  )
+)
+
+// Build Box Store
+export const useBuildBoxStore = create(
+  persist(
+    (set, get) => ({
+      items: [], // Array of products
+      maxItems: BUSINESS_CONFIG.BOX_MAX_ITEMS,
+      minItems: BUSINESS_CONFIG.BOX_MIN_ITEMS,
+      
+      addItem: (product) => {
+        const items = get().items
+        if (items.length >= get().maxItems) {
+          return { success: false, reason: 'max_limit_reached' }
+        }
+        set({ items: [...items, { ...product }] })
+        return { success: true }
+      },
+      
+      removeItem: (index) => {
+        const items = [...get().items]
+        items.splice(index, 1)
+        set({ items })
+      },
+      
+      clearBox: () => set({ items: [] }),
+      
+      getTotal: () => {
+        return get().items.reduce((total, item) => total + (item.price || 0), 0)
+      }
+    }),
+    {
+      name: 'build-box-storage'
     }
   )
 )
