@@ -312,6 +312,36 @@ const ProductPage = () => {
       setSelectedAddons([...selectedAddons, addon])
     }
   }
+  // Safe computation of images for gallery
+  const filteredImages = product?.images?.filter(img => {
+    const tags = img.variantTags || {}
+    if (Object.keys(tags).length === 0) return true // untagged = always show
+    return Object.entries(selectedVariants).every(([groupName, optionName]) => {
+      if (!tags[groupName]) return true // no tag for this group = matches any
+      return tags[groupName] === optionName
+    })
+  }) || []
+
+  // Use filtered images for display (fallback to all images if no filter matches)
+  const displayImages = filteredImages.length > 0 ? filteredImages : (product?.images || [])
+
+  // Find the group that replaces main image + get its selected thumbnail
+  const replaceGroup = product?.variantGroups?.find(g => g.replaceMainImage)
+  const replaceOption = replaceGroup && selectedVariants[replaceGroup.name]
+    ? replaceGroup.options.find(o => o.name === selectedVariants[replaceGroup.name])
+    : null
+  const mainOverrideImage = replaceOption?.thumbnail || null
+
+  // Auto-play gallery logic
+  useEffect(() => {
+    let interval;
+    if (isAutoPlaying && displayImages.length > 1 && !activeBoxImage && !mainOverrideImage) {
+      interval = setInterval(() => {
+        setActiveImageIdx((prev) => (prev + 1) % displayImages.length);
+      }, 4000); // 4 seconds
+    }
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, displayImages.length, activeBoxImage, mainOverrideImage]);
 
   const calculateTotal = () => {
     if (!product) return 0
@@ -353,36 +383,7 @@ const ProductPage = () => {
     ? Math.round((1 - product.price / product.oldPrice) * 100) 
     : 0
 
-  // Filter images based on selected variants
-  const filteredImages = product.images?.filter(img => {
-    const tags = img.variantTags || {}
-    if (Object.keys(tags).length === 0) return true // untagged = always show
-    return Object.entries(selectedVariants).every(([groupName, optionName]) => {
-      if (!tags[groupName]) return true // no tag for this group = matches any
-      return tags[groupName] === optionName
-    })
-  }) || []
 
-  // Use filtered images for display (fallback to all images if no filter matches)
-  const displayImages = filteredImages.length > 0 ? filteredImages : (product.images || [])
-
-  // Find the group that replaces main image + get its selected thumbnail
-  const replaceGroup = product.variantGroups?.find(g => g.replaceMainImage)
-  const replaceOption = replaceGroup && selectedVariants[replaceGroup.name]
-    ? replaceGroup.options.find(o => o.name === selectedVariants[replaceGroup.name])
-    : null
-  const mainOverrideImage = replaceOption?.thumbnail || null
-
-  // Auto-play gallery logic
-  useEffect(() => {
-    let interval;
-    if (isAutoPlaying && displayImages.length > 1 && !activeBoxImage && !mainOverrideImage) {
-      interval = setInterval(() => {
-        setActiveImageIdx((prev) => (prev + 1) % displayImages.length);
-      }, 4000); // 4 seconds
-    }
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, displayImages.length, activeBoxImage, mainOverrideImage]);
 
   // Cross-filter: for each group, determine which options are valid based on other groups' selections
   const getVisibleOptions = (group) => {
