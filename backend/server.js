@@ -162,6 +162,11 @@ app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/occasions', require('./routes/occasions'));
 app.use('/api/admin', require('./routes/admin'));
 
+// UptimeRobot lightweight health check (No DB/rate-limit hit)
+app.get('/health', (req, res) => {
+  res.status(200).send('Server is awake');
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   const database = getMongoStateLabel(mongoose.connection.readyState);
