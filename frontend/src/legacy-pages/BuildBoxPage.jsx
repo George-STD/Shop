@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { FiGift, FiX, FiShoppingCart, FiRefreshCw, FiTrash2, FiSearch } from 'react-icons/fi'
+import { FiGift, FiX, FiShoppingCart, FiRefreshCw, FiTrash2, FiSearch, FiPlus } from 'react-icons/fi'
 import { productsAPI } from '../services/api'
 import { useBuildBoxStore, useCartStore } from '../store'
 import { BUSINESS_CONFIG } from '../constants/config'
