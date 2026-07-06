@@ -453,9 +453,10 @@ const ProductPage = () => {
                   }}
                 >
                   <img
+                    key={mainOverrideImage || activeBoxImage || displayImages[activeImageIdx]?.url}
                     src={mainOverrideImage || activeBoxImage || displayImages[activeImageIdx]?.url}
                     alt={mainOverrideImage ? 'الاختيار المحدد' : activeBoxImage ? 'اختيار البوكس' : (displayImages[activeImageIdx]?.alt || product.name)}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover animate-fadeIn"
                     draggable={false}
                   />
                   {/* Zoom lens indicator */}
