@@ -592,8 +592,7 @@ const ProductPage = () => {
                 )}
               </div>
 
-              {/* Description */}
-              <p className="text-gray-600 leading-relaxed text-sm sm:text-base">{product.description}</p>
+
 
               {/* Variant Groups */}
               {product.variantGroups?.length > 0 && product.variantGroups.map(group => {
