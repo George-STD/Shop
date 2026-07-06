@@ -160,6 +160,8 @@ const ProductPage = () => {
   const [activeImageIdx, setActiveImageIdx] = useState(0)
   const [activeBoxImage, setActiveBoxImage] = useState(null)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  const [touchStart, setTouchStart] = useState(null)
+  const [touchEnd, setTouchEnd] = useState(null)
   const imgContainerRef = useRef(null)
   const [selectedSize, setSelectedSize] = useState(null)
   const [selectedColor, setSelectedColor] = useState(null)
@@ -343,6 +345,47 @@ const ProductPage = () => {
     return () => clearInterval(interval);
   }, [isAutoPlaying, displayImages.length, activeBoxImage, mainOverrideImage]);
 
+  // Swipe gesture handlers
+  const minSwipeDistance = 50
+
+  const handleSwipeStart = (e) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches ? e.targetTouches[0].clientX : e.clientX)
+  }
+
+  const handleSwipeMove = (e) => {
+    if (!touchStart) return;
+    if (e.targetTouches) {
+      setTouchEnd(e.targetTouches[0].clientX)
+    } else {
+      if (e.buttons !== 1) return; // Must be holding left click
+      setTouchEnd(e.clientX)
+    }
+  }
+
+  const handleSwipeEnd = () => {
+    if (!touchStart || !touchEnd) {
+      setTouchStart(null);
+      return;
+    }
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+    
+    if (isLeftSwipe || isRightSwipe) {
+      setIsAutoPlaying(false);
+      if (displayImages.length > 1 && !activeBoxImage && !mainOverrideImage) {
+        if (isLeftSwipe) {
+          setActiveImageIdx(prev => (prev + 1) % displayImages.length)
+        } else {
+          setActiveImageIdx(prev => (prev === 0 ? displayImages.length - 1 : prev - 1))
+        }
+      }
+    }
+    setTouchStart(null)
+    setTouchEnd(null)
+  }
+
   const calculateTotal = () => {
     if (!product) return 0
     let total = product.price * quantity
@@ -441,15 +484,22 @@ const ProductPage = () => {
               <div className="relative">
                 <div
                   ref={imgContainerRef}
-                  className="relative rounded-2xl overflow-hidden bg-white aspect-square cursor-crosshair group"
+                  className="relative rounded-2xl overflow-hidden bg-white aspect-square cursor-crosshair group touch-pan-y"
                   onMouseEnter={() => { setIsZooming(true); setIsAutoPlaying(false); }}
-                  onMouseLeave={() => { setIsZooming(false); setIsAutoPlaying(true); }}
+                  onMouseLeave={() => { setIsZooming(false); setIsAutoPlaying(true); handleSwipeEnd(); }}
+                  onTouchStart={handleSwipeStart}
+                  onTouchMove={handleSwipeMove}
+                  onTouchEnd={handleSwipeEnd}
+                  onMouseDown={handleSwipeStart}
+                  onMouseUp={handleSwipeEnd}
                   onMouseMove={(e) => {
                     const rect = imgContainerRef.current?.getBoundingClientRect()
-                    if (!rect) return
-                    const x = ((e.clientX - rect.left) / rect.width) * 100
-                    const y = ((e.clientY - rect.top) / rect.height) * 100
-                    setZoomPos({ x, y })
+                    if (rect) {
+                      const x = ((e.clientX - rect.left) / rect.width) * 100
+                      const y = ((e.clientY - rect.top) / rect.height) * 100
+                      setZoomPos({ x, y })
+                    }
+                    handleSwipeMove(e)
                   }}
                 >
                   <img
