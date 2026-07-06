@@ -59,7 +59,7 @@ export const BUSINESS_CONFIG = {
   
   // Build-a-Box
   BOX_MIN_ITEMS: 2,
-  BOX_MAX_ITEMS: 7,
+  BOX_MAX_ITEMS: 999,
   BOX_DISCOUNT_PERCENTAGE: 25,
   BOX_BASE_PRICE_EGP: 50,
   

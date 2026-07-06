@@ -97,7 +97,7 @@ const BuildBoxPage = () => {
           صمم بوكس هديتك
         </h1>
         <p className="text-purple-100 max-w-2xl mx-auto text-lg">
-          اختر من {minItems} إلى {maxItems} منتجات مميزة وسنقوم بتغليفها في بوكس هدايا أنيق ({BUSINESS_CONFIG.BOX_BASE_PRICE_EGP} ج.م)،
+          اختر ما شئت من المنتجات (الحد الأدنى {minItems} منتجات) وسنقوم بتغليفها في بوكس هدايا أنيق ({BUSINESS_CONFIG.BOX_BASE_PRICE_EGP} ج.م)،
           <br/>
           <span className="font-bold text-white bg-purple-800/50 px-3 py-1 rounded-lg inline-block mt-2">
             واحصل على خصم {BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE}% على جميع المنتجات داخل البوكس!
@@ -160,7 +160,7 @@ const BuildBoxPage = () => {
                       
                       <button
                         onClick={() => handleAddToBox(product)}
-                        disabled={product.stock === 0 || boxItems.length >= maxItems}
+                        disabled={product.stock === 0}
                         className="mt-auto w-full btn-outline border-purple-200 text-purple-600 hover:bg-purple-50 disabled:opacity-50 py-2 rounded-xl flex items-center justify-center gap-2"
                       >
                         <FiPlus />
@@ -182,26 +182,59 @@ const BuildBoxPage = () => {
                 </div>
                 <div>
                   <h2 className="font-bold text-xl text-gray-800">محتويات البوكس</h2>
-                  <p className="text-sm text-gray-500">{boxItems.length} من {maxItems} منتجات</p>
+                  <p className="text-sm text-gray-500">{boxItems.length} منتج داخل البوكس</p>
                 </div>
               </div>
 
-              {/* Progress */}
-              <div className="mb-6">
-                <div className="flex justify-between text-xs font-bold mb-2 text-gray-500">
-                  <span>الحد الأدنى: {minItems}</span>
-                  <span>الحد الأقصى: {maxItems}</span>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${progressPercent}%` }}
+              {/* Progress Bar Removed */}
+
+              {/* Visual Box Representation */}
+              <div className="mb-6 bg-purple-50/50 rounded-2xl p-4 flex flex-col items-center justify-center border border-purple-100/50 overflow-hidden relative">
+                <p className="text-xs font-bold text-purple-600 mb-4 bg-purple-100 px-3 py-1 rounded-full">معاينة البوكس</p>
+                <div 
+                  className="relative transition-all duration-700 ease-in-out flex items-center justify-center"
+                  style={{
+                    width: boxItems.length === 0 ? '160px' : boxItems.length <= 2 ? '200px' : boxItems.length <= 4 ? '240px' : boxItems.length <= 7 ? '280px' : '320px',
+                    height: boxItems.length === 0 ? '160px' : boxItems.length <= 2 ? '200px' : boxItems.length <= 4 ? '240px' : boxItems.length <= 7 ? '280px' : '320px',
+                  }}
+                >
+                  {/* Empty Box Image */}
+                  <img 
+                    src="/images/empty_box.png" 
+                    alt="Empty Box" 
+                    className="absolute inset-0 w-full h-full object-contain mix-blend-multiply opacity-90 drop-shadow-xl"
                   />
+                  
+                  {/* Items inside the box */}
+                  <div className="absolute inset-0 flex flex-wrap items-center justify-center content-center gap-1 p-6" style={{ zIndex: 10 }}>
+                    {boxItems.map((item, idx) => (
+                      <div 
+                        key={idx} 
+                        className="transition-all duration-500 animate-fadeInUp hover:scale-110 cursor-pointer relative group drop-shadow-lg"
+                        style={{
+                          width: boxItems.length <= 2 ? '40%' : boxItems.length <= 4 ? '35%' : boxItems.length <= 7 ? '28%' : '20%',
+                          aspectRatio: '1/1'
+                        }}
+                      >
+                        <img 
+                          src={item.image} 
+                          alt={item.name} 
+                          className="w-full h-full object-cover rounded-lg border-2 border-white/50 bg-white"
+                        />
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); removeItem(idx); }} 
+                          className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                        >
+                          <FiX size={10} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
               {/* Box Items List */}
-              <div className="space-y-3 mb-6 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-3 mb-6 max-h-[25vh] overflow-y-auto pr-2 custom-scrollbar">
                 {boxItems.length === 0 ? (
                   <div className="text-center py-10 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
                     <p className="text-gray-400 font-medium">البوكس فارغ حالياً</p>
