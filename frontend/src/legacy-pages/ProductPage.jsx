@@ -159,6 +159,7 @@ const ProductPage = () => {
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
   const [activeImageIdx, setActiveImageIdx] = useState(0)
   const [activeBoxImage, setActiveBoxImage] = useState(null)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const imgContainerRef = useRef(null)
   const [selectedSize, setSelectedSize] = useState(null)
   const [selectedColor, setSelectedColor] = useState(null)
@@ -372,6 +373,17 @@ const ProductPage = () => {
     : null
   const mainOverrideImage = replaceOption?.thumbnail || null
 
+  // Auto-play gallery logic
+  useEffect(() => {
+    let interval;
+    if (isAutoPlaying && displayImages.length > 1 && !activeBoxImage && !mainOverrideImage) {
+      interval = setInterval(() => {
+        setActiveImageIdx((prev) => (prev + 1) % displayImages.length);
+      }, 4000); // 4 seconds
+    }
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, displayImages.length, activeBoxImage, mainOverrideImage]);
+
   // Cross-filter: for each group, determine which options are valid based on other groups' selections
   const getVisibleOptions = (group) => {
     if (!product.variantGroups || product.variantGroups.length < 2) return group.options
@@ -429,8 +441,8 @@ const ProductPage = () => {
                 <div
                   ref={imgContainerRef}
                   className="relative rounded-2xl overflow-hidden bg-white aspect-square cursor-crosshair group"
-                  onMouseEnter={() => setIsZooming(true)}
-                  onMouseLeave={() => setIsZooming(false)}
+                  onMouseEnter={() => { setIsZooming(true); setIsAutoPlaying(false); }}
+                  onMouseLeave={() => { setIsZooming(false); setIsAutoPlaying(true); }}
                   onMouseMove={(e) => {
                     const rect = imgContainerRef.current?.getBoundingClientRect()
                     if (!rect) return
@@ -476,8 +488,24 @@ const ProductPage = () => {
                 )}
               </div>
 
+              {/* Pagination Dots (Mobile optimized, like Amazon) */}
+              {!activeBoxImage && !mainOverrideImage && displayImages.length > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-4 md:hidden">
+                  {displayImages.map((_, index) => (
+                    <button
+                      key={`dot-${index}`}
+                      onClick={() => { setActiveImageIdx(index); setIsAutoPlaying(false); }}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        activeImageIdx === index ? 'bg-purple-600 w-4' : 'bg-gray-300'
+                      }`}
+                      aria-label={`Go to image ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+
               {/* Thumbnails — product images + box selections in one row */}
-              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 mt-4 scrollbar-hide">
                 {displayImages.map((image, index) => (
                   <button
                     key={`img-${index}`}
