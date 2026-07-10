@@ -508,18 +508,14 @@ router.put('/products/:id', [
 });
 
 // @route   DELETE /api/admin/products/:id
-// @desc    Delete product (soft delete)
+// @desc    Delete product (hard delete)
 // @access  Private/Admin
 router.delete('/products/:id', [
   validateObjectId('id'),
   logAdminAction('DELETE_PRODUCT')
 ], async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true }
-    );
+    const product = await Product.findByIdAndDelete(req.params.id);
 
     if (!product) {
       return res.status(404).json({
