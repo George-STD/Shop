@@ -77,6 +77,12 @@ const BuildBoxPage = () => {
       return
     }
 
+    const existingCount = boxItems.filter(item => item.id === product._id).length;
+    if (existingCount >= product.stock) {
+      toast.error(`لا يمكنك إضافة المزيد، المتوفر في المخزون ${product.stock} فقط`);
+      return;
+    }
+
     addItem({
       id: product._id,
       name: product.name,
