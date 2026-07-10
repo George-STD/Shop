@@ -37,7 +37,7 @@ const AdminProducts = () => {
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['admin-products', { search, category: categoryFilter, page }],
-    queryFn: () => productsAPI.getAll({ 
+    queryFn: () => adminAPI.getProducts({ 
       search: search || undefined, 
       category: categoryFilter || undefined,
       page,

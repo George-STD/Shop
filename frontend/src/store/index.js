@@ -270,12 +270,14 @@ export const useBuildBoxStore = create(
   persist(
     (set, get) => ({
       items: [], // Array of products
-      maxItems: BUSINESS_CONFIG.BOX_MAX_ITEMS,
-      minItems: BUSINESS_CONFIG.BOX_MIN_ITEMS,
+      
+      // Getters for constants (not saved to state, just helpers)
+      get maxItems() { return BUSINESS_CONFIG.BOX_MAX_ITEMS },
+      get minItems() { return BUSINESS_CONFIG.BOX_MIN_ITEMS },
       
       addItem: (product) => {
         const items = get().items
-        if (items.length >= get().maxItems) {
+        if (items.length >= BUSINESS_CONFIG.BOX_MAX_ITEMS) {
           return { success: false, reason: 'max_limit_reached' }
         }
         set({ items: [...items, { ...product }] })

@@ -9,7 +9,9 @@ import toast from 'react-hot-toast'
 
 const BuildBoxPage = () => {
   const [searchTerm, setSearchTerm] = useState('')
-  const { items: boxItems, maxItems, minItems, addItem, removeItem, clearBox, getTotal } = useBuildBoxStore()
+  const { items: boxItems, addItem, removeItem, clearBox, getTotal } = useBuildBoxStore()
+  const maxItems = BUSINESS_CONFIG.BOX_MAX_ITEMS
+  const minItems = BUSINESS_CONFIG.BOX_MIN_ITEMS
   const { addItem: addCartItem } = useCartStore()
   const navigate = useNavigate()
 

@@ -342,6 +342,54 @@ router.delete('/users/:id', [
 // PRODUCTS MANAGEMENT
 // =====================================================
 
+// @route   GET /api/admin/products
+// @desc    Get all products (including inactive) with pagination and filters
+// @access  Private/Admin
+router.get('/products', async (req, res) => {
+  try {
+    const { search, category, page = 1, limit = 10 } = req.query;
+    const query = {};
+    
+    if (search) {
+      query.$or = [
+        { name: { $regex: escapeRegex(search), $options: 'i' } },
+        { description: { $regex: escapeRegex(search), $options: 'i' } }
+      ];
+    }
+    
+    if (category) {
+      query.category = { $in: [category] };
+    }
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const [products, total] = await Promise.all([
+      Product.find(query)
+        .populate('category', 'name slug')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum),
+      Product.countDocuments(query)
+    ]);
+
+    res.json({
+      success: true,
+      data: products,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching admin products:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+});
+
 // @route   POST /api/admin/products
 // @desc    Create new product
 // @access  Private/Admin
