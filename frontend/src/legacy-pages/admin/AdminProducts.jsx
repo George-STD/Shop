@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { FiSearch, FiEdit2, FiTrash2, FiPlus, FiEye, FiEyeOff } from 'react-icons/fi'
+import { FiSearch, FiEdit2, FiTrash2, FiPlus, FiEye, FiEyeOff, FiCamera } from 'react-icons/fi'
 import { adminAPI, productsAPI, categoriesAPI, occasionsAPI } from '../../services/api'
+import toast from 'react-hot-toast'
+import BarcodeScanner from '../../components/admin/BarcodeScanner'
 
 const AdminProducts = () => {
   const queryClient = useQueryClient()
@@ -9,6 +11,7 @@ const AdminProducts = () => {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [page, setPage] = useState(1)
   const [showModal, setShowModal] = useState(false)
+  const [showScanner, setShowScanner] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
@@ -207,13 +210,23 @@ const AdminProducts = () => {
           </select>
         </div>
 
-        <button
-          onClick={() => { resetForm(); setShowModal(true) }}
-          className="bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:from-purple-600 hover:via-fuchsia-600 hover:to-pink-600"
-        >
-          <FiPlus />
-          إضافة منتج
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowScanner(true)}
+            className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:from-blue-600 hover:to-indigo-600"
+          >
+            <FiCamera />
+            <span className="hidden sm:inline">إضافة بالـ Serial Number</span>
+          </button>
+          
+          <button
+            onClick={() => { resetForm(); setShowModal(true) }}
+            className="bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:from-purple-600 hover:via-fuchsia-600 hover:to-pink-600"
+          >
+            <FiPlus />
+            <span className="hidden sm:inline">إضافة منتج</span>
+          </button>
+        </div>
       </div>
 
       {/* Products Table */}
@@ -1002,6 +1015,48 @@ const AdminProducts = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {showScanner && (
+        <BarcodeScanner
+          onClose={() => setShowScanner(false)}
+          onScan={async (barcode) => {
+            setShowScanner(false);
+            const toastId = toast.loading('جاري البحث عن المنتج عبر الباركود...');
+            try {
+              const res = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}`);
+              const data = await res.json();
+              
+              if (data.code === 'OK' && data.items && data.items.length > 0) {
+                const item = data.items[0];
+                const approxPrice = item.offers?.[0]?.price ? Math.round(item.offers[0].price * 50) : '';
+                
+                resetForm();
+                setFormData(prev => ({
+                  ...prev,
+                  name: item.title || '',
+                  description: item.description || '',
+                  price: approxPrice,
+                  stock: 10,
+                  category: categories?.[0]?._id ? [categories[0]._id] : [],
+                  images: item.images?.[0] ? [{ url: item.images[0], alt: item.title }] : []
+                }));
+                
+                setShowModal(true);
+                toast.success('تم جلب بيانات المنتج، يرجى مراجعتها وتأكيد الإضافة', { id: toastId });
+              } else {
+                toast.error('لم يتم العثور على المنتج، يمكنك إضافته يدوياً', { id: toastId });
+                resetForm();
+                setShowModal(true);
+              }
+            } catch (error) {
+              console.error(error);
+              toast.error('حدث خطأ أثناء البحث، يمكنك إضافة المنتج يدوياً', { id: toastId });
+              resetForm();
+              setShowModal(true);
+            }
+          }}
+        />
       )}
     </div>
   )
