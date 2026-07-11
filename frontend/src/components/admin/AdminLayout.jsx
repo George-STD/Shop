@@ -74,7 +74,7 @@ const AdminLayout = ({ children }) => {
   }
 
   const menuItems = [
-    { path: '/admin', icon: FiHome, label: STRINGS.ADMIN.DASHBOARD, exact: true },
+    { path: '/admin', icon: FiHome, label: STRINGS.ADMIN.DASHBOARD.TITLE, exact: true },
     { path: '/admin/users', icon: FiUsers, label: STRINGS.ADMIN.USERS },
     { path: '/admin/products', icon: FiPackage, label: STRINGS.ADMIN.PRODUCTS },
     { path: '/admin/orders', icon: FiShoppingCart, label: STRINGS.ADMIN.ORDERS },
@@ -101,7 +101,7 @@ const AdminLayout = ({ children }) => {
         <div className="h-14 sm:h-16 flex items-center justify-between px-2 sm:px-4 border-b border-gray-700">
           {sidebarOpen && (
             <Link to="/admin" className="text-xl font-bold text-pink-400">
-              {STRINGS.ADMIN.DASHBOARD}
+              {STRINGS.ADMIN.DASHBOARD.TITLE}
             </Link>
           )}
           <button
@@ -174,7 +174,7 @@ const AdminLayout = ({ children }) => {
         }`}
       >
         <div className="h-14 sm:h-16 flex items-center justify-between px-2 sm:px-4 border-b border-gray-700">
-          <span className="text-lg sm:text-xl font-bold text-pink-400">{STRINGS.ADMIN.DASHBOARD}</span>
+          <span className="text-lg sm:text-xl font-bold text-pink-400">{STRINGS.ADMIN.DASHBOARD.TITLE}</span>
           <button
             onClick={() => setMobileMenuOpen(false)}
             className="p-1 sm:p-2 hover:bg-gray-700 rounded-lg"
@@ -233,7 +233,7 @@ const AdminLayout = ({ children }) => {
               <FiMenu className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
             <h1 className="text-base sm:text-xl font-bold text-gray-800">
-              {menuItems.find((item) => isActive(item.path, item.exact))?.label || STRINGS.ADMIN.DASHBOARD}
+              {menuItems.find((item) => isActive(item.path, item.exact))?.label || STRINGS.ADMIN.DASHBOARD.TITLE}
             </h1>
           </div>
 

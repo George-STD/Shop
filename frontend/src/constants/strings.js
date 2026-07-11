@@ -323,6 +323,7 @@ export const STRINGS = {
       HIDDEN_STATUS: 'مخفي',
     },
     DASHBOARD: {
+      TITLE: 'لوحة التحكم',
       TOP_SELLING_PRODUCTS: 'المنتجات الأكثر مبيعاً',
       SALES: 'مبيعات',
       NO_SALES: 'لا توجد مبيعات',
