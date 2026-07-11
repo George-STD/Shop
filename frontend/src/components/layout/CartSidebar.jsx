@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { FiX, FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi';
 import { useUIStore, useCartStore } from '../../store';
-import { BUSINESS_CONFIG } from '../../constants';
+import { BUSINESS_CONFIG, STRINGS } from '../../constants';
 import toast from 'react-hot-toast';
 
 const CartSidebar = () => {
