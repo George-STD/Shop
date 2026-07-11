@@ -14,6 +14,7 @@ import {
 import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { STRINGS } from '../constants';
+import { useAuthStore } from '../store';
 
 // Login/Register Component
 const AuthForm = () => {
