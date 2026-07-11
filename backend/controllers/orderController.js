@@ -46,6 +46,7 @@ const buildOrderItems = (items, productMap) => {
   let subtotal = 0;
   const orderItems = [];
   const boxGroups = new Set();
+  const boxCounts = new Map();
 
   for (const item of items) {
     const productId = String(item.productId);
@@ -71,11 +72,24 @@ const buildOrderItems = (items, productMap) => {
       normalizedAddons.push({ name: productAddon.name, price: addonPrice });
     }
 
-    // Price calculation (box discount if applicable)
+    // Price calculation
     let finalPrice = product.price;
+    
+    // Override price if size is selected
+    if (item.selectedSize && Array.isArray(product.sizes) && product.sizes.length > 0) {
+      const selectedSizeObj = product.sizes.find(s => s.name === item.selectedSize);
+      if (!selectedSizeObj) {
+        throw createClientError(`المقاس المختار غير صحيح: ${item.selectedSize}`);
+      }
+      // Use size price if valid, otherwise fallback to product base price
+      finalPrice = (selectedSizeObj.price !== undefined && selectedSizeObj.price !== null) ? Number(selectedSizeObj.price) : product.price;
+    }
+
+    // Apply box logic
     if (item.boxId) {
       boxGroups.add(item.boxId);
-      finalPrice = product.price * (1 - CONFIG.BUSINESS.BOX_DISCOUNT_PERCENTAGE / 100);
+      boxCounts.set(item.boxId, (boxCounts.get(item.boxId) || 0) + quantity);
+      finalPrice = finalPrice * (1 - CONFIG.BUSINESS.BOX_DISCOUNT_PERCENTAGE / 100);
     }
 
     const itemSubtotal = finalPrice * quantity + addonsTotal;
@@ -100,6 +114,16 @@ const buildOrderItems = (items, productMap) => {
     subtotal += itemSubtotal;
   }
 
+  // Validate box constraints
+  for (const [boxId, count] of boxCounts.entries()) {
+    if (count < CONFIG.BUSINESS.BOX_MIN_ITEMS) {
+      throw createClientError(`الصندوق يجب أن يحتوي على الأقل ${CONFIG.BUSINESS.BOX_MIN_ITEMS} منتجات`);
+    }
+    if (count > CONFIG.BUSINESS.BOX_MAX_ITEMS) {
+      throw createClientError(`الصندوق لا يمكن أن يحتوي على أكثر من ${CONFIG.BUSINESS.BOX_MAX_ITEMS} منتجات`);
+    }
+  }
+
   return { orderItems, subtotal, boxGroups };
 };
 
@@ -110,7 +134,7 @@ const buildOrderData = ({ userId, guestEmail, orderItems, subtotal, boxGroups, r
   const {
     shippingAddress, billingAddress, paymentMethod, deliveryType,
     scheduledDate, scheduledTime, isGift, giftMessage, giftRecipient,
-    hidePrice, customerNote, discountCode
+    hidePrice, customerNote
   } = req.body;
 
   const totalBoxPrice = boxGroups.size * CONFIG.BUSINESS.BOX_BASE_PRICE_EGP;
@@ -125,7 +149,6 @@ const buildOrderData = ({ userId, guestEmail, orderItems, subtotal, boxGroups, r
     shippingAddress, billingAddress, subtotal, shippingCost, total,
     paymentMethod, deliveryType, scheduledDate, scheduledTime,
     isGift, giftMessage, giftRecipient, hidePrice, customerNote,
-    discount: discountCode ? { code: discountCode } : undefined,
     statusHistory: [{ status: CONFIG.ORDER_STATUS.PENDING, note: MESSAGES.ORDERS.RECEIVED }],
   };
 };
@@ -349,14 +372,8 @@ exports.cancelOrder = async (req, res) => {
         order.statusHistory.push({ status: CONFIG.ORDER_STATUS.CANCELLED, note: req.body.reason || MESSAGES.ORDERS.CANCELLED_BY_CUSTOMER });
         await order.save();
 
-        await rollbackStock(order.items.map(i => ({ product: i.product, quantity: -i.quantity })));
-        // Restore stock (positive direction)
-        for (const item of order.items) {
-          await Product.updateOne(
-            { _id: item.product },
-            { $inc: { stock: item.quantity, salesCount: -item.quantity } }
-          );
-        }
+        // Restore stock for cancelled order items using rollbackStock
+        await rollbackStock(order.items);
         return sendSuccess(res, { data: order, message: MESSAGES.ORDERS.CANCELLED });
       } catch (fallbackError) {
         if (fallbackError?.isClientError) {
