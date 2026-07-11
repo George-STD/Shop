@@ -199,6 +199,7 @@ export const STRINGS = {
       REVIEW: 'تقييم',
     },
     ORDERS: {
+      TITLE: 'الطلبات',
       ORDER_DETAILS: 'تفاصيل الطلب',
       ORDER_DATE: 'تاريخ الطلب',
       CUSTOMER_INFO: 'معلومات العميل',
@@ -279,6 +280,7 @@ export const STRINGS = {
       SAVE: 'حفظ',
     },
     OCCASIONS: {
+      TITLE: 'المناسبات',
       EDIT_OCCASION: 'تعديل المناسبة',
       ADD_NEW_OCCASION: 'إضافة مناسبة جديدة',
       OCCASION_NAME_LABEL: 'اسم المناسبة *',
@@ -301,6 +303,7 @@ export const STRINGS = {
       INACTIVE_STATUS: 'معطّل',
     },
     EMAILS: {
+      TITLE: 'البريد الوارد',
       INBOX: 'البريد الوارد',
       MESSAGE_COUNT_SUFFIX: 'رسالة',
       NO_MESSAGES: 'لا توجد رسائل',
@@ -310,6 +313,7 @@ export const STRINGS = {
       NO_CONTENT: 'لا يوجد محتوى',
     },
     CATEGORIES: {
+      TITLE: 'الفئات',
       EDIT_CATEGORY: 'تعديل الفئة',
       ADD_NEW_CATEGORY: 'إضافة فئة جديدة',
       CATEGORY_NAME: 'اسم الفئة',

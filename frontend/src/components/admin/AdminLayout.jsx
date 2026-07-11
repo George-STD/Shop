@@ -77,11 +77,11 @@ const AdminLayout = ({ children }) => {
     { path: '/admin', icon: FiHome, label: STRINGS.ADMIN.DASHBOARD.TITLE, exact: true },
     { path: '/admin/users', icon: FiUsers, label: STRINGS.ADMIN.USERS },
     { path: '/admin/products', icon: FiPackage, label: STRINGS.ADMIN.PRODUCTS },
-    { path: '/admin/orders', icon: FiShoppingCart, label: STRINGS.ADMIN.ORDERS },
-    { path: '/admin/categories', icon: FiGrid, label: STRINGS.ADMIN.CATEGORIES },
+    { path: '/admin/orders', icon: FiShoppingCart, label: STRINGS.ADMIN.ORDERS.TITLE },
+    { path: '/admin/categories', icon: FiGrid, label: STRINGS.ADMIN.CATEGORIES.TITLE },
     { path: '/admin/reviews', icon: FiStar, label: STRINGS.ADMIN.REVIEWS },
-    { path: '/admin/occasions', icon: FiGrid, label: STRINGS.ADMIN.OCCASIONS },
-    { path: '/admin/emails', icon: FiMail, label: STRINGS.ADMIN.EMAILS },
+    { path: '/admin/occasions', icon: FiGrid, label: STRINGS.ADMIN.OCCASIONS.TITLE },
+    { path: '/admin/emails', icon: FiMail, label: STRINGS.ADMIN.EMAILS.TITLE },
   ];
 
   const isActive = (path, exact = false) => {
