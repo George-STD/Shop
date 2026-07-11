@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import BuildBoxPage from '../../../legacy-pages/BuildBoxPage'
+import BuildBoxPage from '../../../legacy-pages/BuildBoxPage';
 
 export default function BuildBoxRoute() {
-  return <BuildBoxPage />
+  return <BuildBoxPage />;
 }

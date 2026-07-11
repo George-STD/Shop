@@ -1,53 +1,40 @@
-import { Link } from 'react-router-dom'
-import { FiHome, FiSearch, FiArrowRight } from 'react-icons/fi'
+import { Link } from 'react-router-dom';
+import { FiHome, FiSearch, FiArrowRight } from 'react-icons/fi';
+import { STRINGS } from '../constants';
 
 const NotFoundPage = () => {
   return (
     <>
-
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12">
         <div className="container-custom">
           <div className="max-w-lg mx-auto text-center">
             {/* 404 Illustration */}
             <div className="text-9xl font-bold text-purple-200 mb-4">404</div>
-            
+
             <div className="text-6xl mb-6">🎁</div>
-            
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">
-              عذراً، الصفحة غير موجودة
-            </h1>
-            
+
+            <h1 className="text-3xl font-bold text-gray-800 mb-4">{STRINGS.NOT_FOUND_PAGE.TITLE}</h1>
+
             <p className="text-gray-600 text-lg mb-8">
-              يبدو أن الصفحة التي تبحث عنها قد تم نقلها أو حذفها أو أن الرابط غير صحيح.
+              {STRINGS.NOT_FOUND_PAGE.MESSAGE}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link 
-                to="/" 
-                className="btn-primary flex items-center justify-center gap-2"
-              >
+              <Link to="/" className="btn-primary flex items-center justify-center gap-2">
                 <FiHome />
-                الصفحة الرئيسية
+                {STRINGS.NOT_FOUND_PAGE.GO_HOME}
               </Link>
-              <Link 
-                to="/products" 
-                className="btn-secondary flex items-center justify-center gap-2"
-              >
+              <Link to="/products" className="btn-secondary flex items-center justify-center gap-2">
                 <FiSearch />
-                تصفح المنتجات
+                {STRINGS.NOT_FOUND_PAGE.BROWSE_PRODUCTS}
               </Link>
             </div>
 
             {/* Helpful Links */}
             <div className="mt-12 pt-8 border-t">
-              <h2 className="text-lg font-bold mb-4">روابط قد تفيدك</h2>
+              <h2 className="text-lg font-bold mb-4">{STRINGS.NOT_FOUND_PAGE.HELPFUL_LINKS_TITLE}</h2>
               <div className="flex flex-wrap justify-center gap-4">
-                {[
-                  { to: '/gift-finder', label: 'باحث الهدايا' },
-                  { to: '/products?category=bestseller', label: 'الأكثر مبيعاً' },
-                  { to: '/contact', label: 'تواصل معنا' },
-                  { to: '/faq', label: 'الأسئلة الشائعة' },
-                ].map((link) => (
+                {STRINGS.NOT_FOUND_PAGE.HELPFUL_LINKS.map((link) => (
                   <Link
                     key={link.to}
                     to={link.to}
@@ -63,7 +50,7 @@ const NotFoundPage = () => {
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default NotFoundPage
+export default NotFoundPage;

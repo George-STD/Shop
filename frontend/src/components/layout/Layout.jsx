@@ -1,33 +1,31 @@
-import { Outlet } from 'react-router-dom'
-import Header from './Header'
-import Footer from './Footer'
-import MobileMenu from './MobileMenu'
-import CartSidebar from './CartSidebar'
-import ContactFab from './ContactFab'
-import { useUIStore } from '../../store'
+import { Outlet } from 'react-router-dom';
+import Header from './Header';
+import Footer from './Footer';
+import MobileMenu from './MobileMenu';
+import CartSidebar from './CartSidebar';
+import ContactFab from './ContactFab';
+import { useUIStore } from '../../store';
 
 const Layout = ({ children }) => {
-  const { isMobileMenuOpen, isCartOpen } = useUIStore()
+  const { isMobileMenuOpen, isCartOpen } = useUIStore();
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      
-      <main className="flex-grow">
-        {children || <Outlet />}
-      </main>
-      
+
+      <main className="flex-grow">{children || <Outlet />}</main>
+
       <Footer />
 
       <ContactFab />
-      
+
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && <MobileMenu />}
-      
+
       {/* Cart Sidebar */}
       {isCartOpen && <CartSidebar />}
     </div>
-  )
-}
+  );
+};
 
-export default Layout
+export default Layout;

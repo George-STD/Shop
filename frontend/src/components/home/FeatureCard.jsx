@@ -5,11 +5,13 @@ const FeatureCard = ({ icon, title, description }) => {
         <span>{icon}</span>
       </div>
       <div>
-        <h3 className="font-bold text-gray-800 group-hover:text-purple-700 transition-colors">{title}</h3>
+        <h3 className="font-bold text-gray-800 group-hover:text-purple-700 transition-colors">
+          {title}
+        </h3>
         <p className="text-sm text-gray-500">{description}</p>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default FeatureCard
+export default FeatureCard;

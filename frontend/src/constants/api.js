@@ -11,7 +11,7 @@ export const API_BASE_URL = API_URL;
 export const ENDPOINTS = {
   // Health
   HEALTH: '/health',
-  
+
   // Auth
   AUTH: {
     REGISTER: '/auth/register',
@@ -26,7 +26,7 @@ export const ENDPOINTS = {
     CHANGE_PASSWORD: '/auth/change-password',
     WISHLIST: '/auth/wishlist', // + /:productId
   },
-  
+
   // Products
   PRODUCTS: {
     BASE: '/products',
@@ -38,7 +38,7 @@ export const ENDPOINTS = {
     BY_RECIPIENT: '/products/by-recipient', // + /:recipient
     RELATED: '/related', // /products/:id/related
   },
-  
+
   // Categories
   CATEGORIES: {
     BASE: '/categories',
@@ -47,26 +47,26 @@ export const ENDPOINTS = {
     BY_SLUG: '/categories/slug', // + /:slug
     SUBCATEGORIES: '/subcategories', // /categories/:id/subcategories
   },
-  
+
   // Orders
   ORDERS: {
     BASE: '/orders',
     TRACK: '/orders/track', // + /:orderNumber
     CANCEL: '/cancel', // /orders/:id/cancel
   },
-  
+
   // Reviews
   REVIEWS: {
     BASE: '/reviews',
     BY_PRODUCT: '/reviews/product', // + /:productId
     HELPFUL: '/helpful', // /reviews/:id/helpful
   },
-  
+
   // Occasions
   OCCASIONS: {
     BASE: '/occasions',
   },
-  
+
   // Admin
   ADMIN: {
     BASE: '/admin',

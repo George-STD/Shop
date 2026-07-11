@@ -3,7 +3,7 @@
  * Can be extended to integrate with Google Analytics, Facebook Pixel, etc.
  */
 
-import { SITE_CONFIG } from '../constants'
+import { SITE_CONFIG } from '../constants';
 
 // Event categories
 export const EVENT_CATEGORIES = {
@@ -15,44 +15,44 @@ export const EVENT_CATEGORIES = {
   SEARCH: 'search',
   WISHLIST: 'wishlist',
   ENGAGEMENT: 'engagement',
-}
+};
 
 // Event actions
 export const EVENT_ACTIONS = {
   // Product events
   VIEW_PRODUCT: 'view_product',
   VIEW_CATEGORY: 'view_category',
-  
+
   // Cart events
   ADD_TO_CART: 'add_to_cart',
   REMOVE_FROM_CART: 'remove_from_cart',
   UPDATE_CART_QUANTITY: 'update_cart_quantity',
   VIEW_CART: 'view_cart',
-  
+
   // Checkout events
   BEGIN_CHECKOUT: 'begin_checkout',
   ADD_SHIPPING_INFO: 'add_shipping_info',
   PURCHASE: 'purchase',
-  
+
   // User events
   SIGN_UP: 'sign_up',
   LOGIN: 'login',
   LOGOUT: 'logout',
-  
+
   // Search events
   SEARCH: 'search',
   FILTER: 'filter',
   SORT: 'sort',
-  
+
   // Wishlist events
   ADD_TO_WISHLIST: 'add_to_wishlist',
   REMOVE_FROM_WISHLIST: 'remove_from_wishlist',
-  
+
   // Engagement events
   SHARE: 'share',
   CONTACT: 'contact',
   CLICK_SOCIAL: 'click_social',
-}
+};
 
 /**
  * Check if analytics is enabled and available
@@ -60,10 +60,10 @@ export const EVENT_ACTIONS = {
 const isAnalyticsEnabled = () => {
   // Check for Google Analytics
   if (typeof window !== 'undefined') {
-    return typeof window.gtag === 'function' || typeof window.dataLayer !== 'undefined'
+    return typeof window.gtag === 'function' || typeof window.dataLayer !== 'undefined';
   }
-  return false
-}
+  return false;
+};
 
 /**
  * Track a custom event
@@ -74,7 +74,7 @@ const isAnalyticsEnabled = () => {
 export const trackEvent = (action, category, data = {}) => {
   // Log in development
   if (process.env.NODE_ENV === 'development') {
-    console.log('[Analytics]', { action, category, ...data })
+    console.log('[Analytics]', { action, category, ...data });
   }
 
   // Send to Google Analytics 4 if available
@@ -82,11 +82,11 @@ export const trackEvent = (action, category, data = {}) => {
     window.gtag('event', action, {
       event_category: category,
       ...data,
-    })
+    });
   }
 
   // Add other analytics providers here (Facebook Pixel, etc.)
-}
+};
 
 /**
  * Track page view
@@ -95,16 +95,16 @@ export const trackEvent = (action, category, data = {}) => {
  */
 export const trackPageView = (pagePath, pageTitle) => {
   if (process.env.NODE_ENV === 'development') {
-    console.log('[Analytics] Page View:', { pagePath, pageTitle })
+    console.log('[Analytics] Page View:', { pagePath, pageTitle });
   }
 
   if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
     window.gtag('event', 'page_view', {
       page_path: pagePath,
       page_title: pageTitle,
-    })
+    });
   }
-}
+};
 
 // ==================== E-commerce Tracking ====================
 
@@ -118,8 +118,8 @@ export const trackProductView = (product) => {
     item_category: product.category?.name || product.category,
     price: product.price,
     currency: 'EGP',
-  })
-}
+  });
+};
 
 /**
  * Track add to cart
@@ -133,8 +133,8 @@ export const trackAddToCart = (product, quantity = 1) => {
     quantity,
     currency: 'EGP',
     value: product.price * quantity,
-  })
-}
+  });
+};
 
 /**
  * Track remove from cart
@@ -146,26 +146,26 @@ export const trackRemoveFromCart = (product, quantity = 1) => {
     price: product.price,
     quantity,
     currency: 'EGP',
-  })
-}
+  });
+};
 
 /**
  * Track begin checkout
  */
 export const trackBeginCheckout = (cartItems, totalValue) => {
-  const items = cartItems.map(item => ({
+  const items = cartItems.map((item) => ({
     item_id: item._id || item.id,
     item_name: item.name,
     price: item.price,
     quantity: item.quantity,
-  }))
+  }));
 
   trackEvent(EVENT_ACTIONS.BEGIN_CHECKOUT, EVENT_CATEGORIES.CHECKOUT, {
     items,
     value: totalValue,
     currency: 'EGP',
-  })
-}
+  });
+};
 
 /**
  * Track purchase completion
@@ -176,14 +176,14 @@ export const trackPurchase = (orderId, items, totalValue, shippingCost) => {
     value: totalValue,
     currency: 'EGP',
     shipping: shippingCost,
-    items: items.map(item => ({
+    items: items.map((item) => ({
       item_id: item._id || item.id,
       item_name: item.name,
       price: item.price,
       quantity: item.quantity,
     })),
-  })
-}
+  });
+};
 
 // ==================== Search Tracking ====================
 
@@ -194,8 +194,8 @@ export const trackSearch = (searchTerm, resultsCount) => {
   trackEvent(EVENT_ACTIONS.SEARCH, EVENT_CATEGORIES.SEARCH, {
     search_term: searchTerm,
     results_count: resultsCount,
-  })
-}
+  });
+};
 
 /**
  * Track filter usage
@@ -204,8 +204,8 @@ export const trackFilter = (filterType, filterValue) => {
   trackEvent(EVENT_ACTIONS.FILTER, EVENT_CATEGORIES.SEARCH, {
     filter_type: filterType,
     filter_value: filterValue,
-  })
-}
+  });
+};
 
 // ==================== User Tracking ====================
 
@@ -215,8 +215,8 @@ export const trackFilter = (filterType, filterValue) => {
 export const trackSignUp = (method = 'email') => {
   trackEvent(EVENT_ACTIONS.SIGN_UP, EVENT_CATEGORIES.USER, {
     method,
-  })
-}
+  });
+};
 
 /**
  * Track user login
@@ -224,8 +224,8 @@ export const trackSignUp = (method = 'email') => {
 export const trackLogin = (method = 'email') => {
   trackEvent(EVENT_ACTIONS.LOGIN, EVENT_CATEGORIES.USER, {
     method,
-  })
-}
+  });
+};
 
 // ==================== Wishlist Tracking ====================
 
@@ -238,8 +238,8 @@ export const trackAddToWishlist = (product) => {
     item_name: product.name,
     price: product.price,
     currency: 'EGP',
-  })
-}
+  });
+};
 
 // ==================== Engagement Tracking ====================
 
@@ -249,8 +249,8 @@ export const trackAddToWishlist = (product) => {
 export const trackSocialClick = (platform) => {
   trackEvent(EVENT_ACTIONS.CLICK_SOCIAL, EVENT_CATEGORIES.ENGAGEMENT, {
     social_platform: platform,
-  })
-}
+  });
+};
 
 /**
  * Track share action
@@ -260,8 +260,8 @@ export const trackShare = (contentType, contentId, method) => {
     content_type: contentType,
     content_id: contentId,
     method,
-  })
-}
+  });
+};
 
 /**
  * Track contact action
@@ -269,8 +269,8 @@ export const trackShare = (contentType, contentId, method) => {
 export const trackContact = (method) => {
   trackEvent(EVENT_ACTIONS.CONTACT, EVENT_CATEGORIES.ENGAGEMENT, {
     contact_method: method,
-  })
-}
+  });
+};
 
 export default {
   trackEvent,
@@ -290,4 +290,4 @@ export default {
   trackContact,
   EVENT_CATEGORIES,
   EVENT_ACTIONS,
-}
+};

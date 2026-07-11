@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import CheckoutPage from '../../../legacy-pages/CheckoutPage'
+import CheckoutPage from '../../../legacy-pages/CheckoutPage';
 
 export default function CheckoutPageClient() {
-  return <CheckoutPage />
+  return <CheckoutPage />;
 }

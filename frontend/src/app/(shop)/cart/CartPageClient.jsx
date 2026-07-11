@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import CartPage from '../../../legacy-pages/CartPage'
+import CartPage from '../../../legacy-pages/CartPage';
 
 export default function CartPageClient() {
-  return <CartPage />
+  return <CartPage />;
 }

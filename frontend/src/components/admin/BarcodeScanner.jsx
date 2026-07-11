@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
 import { FiX } from 'react-icons/fi';
+import { STRINGS } from '../../constants';
 
 const BarcodeScanner = ({ onScan, onClose }) => {
   const [error, setError] = useState(null);
@@ -11,7 +12,7 @@ const BarcodeScanner = ({ onScan, onClose }) => {
       fps: 10,
       qrbox: { width: 250, height: 250 },
       supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-      rememberLastUsedCamera: true
+      rememberLastUsedCamera: true,
     };
 
     const scanner = new Html5QrcodeScanner('reader', scannerConfig, false);
@@ -28,7 +29,7 @@ const BarcodeScanner = ({ onScan, onClose }) => {
     );
 
     return () => {
-      scanner.clear().catch(e => console.error("Failed to clear scanner", e));
+      scanner.clear().catch((e) => console.error('Failed to clear scanner', e));
     };
   }, [onScan]);
 
@@ -41,11 +42,11 @@ const BarcodeScanner = ({ onScan, onClose }) => {
         >
           <FiX className="w-6 h-6" />
         </button>
-        <h2 className="text-xl font-bold mb-4">مسح الباركود / Serial Number</h2>
+        <h2 className="text-xl font-bold mb-4">{STRINGS.ADMIN.BARCODE_SCANNER.SCAN_BARCODE}</h2>
         <div id="reader" className="w-full overflow-hidden rounded-xl border border-gray-200"></div>
         {error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
         <p className="text-gray-500 text-sm mt-4 text-center">
-          قم بتوجيه الكاميرا نحو الباركود الخاص بالمنتج ليتم البحث عنه تلقائياً.
+          {STRINGS.ADMIN.BARCODE_SCANNER.SCAN_INSTRUCTIONS}
         </p>
       </div>
     </div>

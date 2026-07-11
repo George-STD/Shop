@@ -1,61 +1,59 @@
-﻿import { useEffect, useState } from 'react'
-import { Outlet, Link, useLocation, Navigate } from 'react-router-dom'
-import { 
-  FiHome, FiUsers, FiPackage, FiShoppingCart, FiGrid, 
-  FiStar, FiSettings, FiLogOut, FiMenu, FiX, FiChevronLeft, FiMail
-} from 'react-icons/fi'
-import { useAuthStore } from '../../store'
+import { useEffect, useState } from 'react';
+import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
+import { FiHome, FiUsers, FiPackage, FiShoppingCart, FiGrid, FiStar, FiSettings, FiLogOut, FiMenu, FiX, FiChevronLeft, FiMail } from 'react-icons/fi';
+import { useAuthStore } from '../../store';
+import { STRINGS } from '../../constants';
 
 const AdminLayout = ({ children }) => {
-  const { user, isAuthenticated, logout, updateUser, _hasHydrated } = useAuthStore()
-  const location = useLocation()
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [isVerifyingSession, setIsVerifyingSession] = useState(true)
+  const { user, isAuthenticated, logout, updateUser, _hasHydrated } = useAuthStore();
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isVerifyingSession, setIsVerifyingSession] = useState(true);
 
   useEffect(() => {
-    if (!_hasHydrated) return
+    if (!_hasHydrated) return;
 
     if (!isAuthenticated || user?.role !== 'admin') {
-      setIsVerifyingSession(false)
-      return
+      setIsVerifyingSession(false);
+      return;
     }
 
-    let isMounted = true
+    let isMounted = true;
 
     const verifyAdminSession = async () => {
-      setIsVerifyingSession(true)
+      setIsVerifyingSession(true);
 
       try {
-        const { authAPI } = await import('../../services/api')
-        const res = await authAPI.getMe()
-        const currentUser = res.data?.data
+        const { authAPI } = await import('../../services/api');
+        const res = await authAPI.getMe();
+        const currentUser = res.data?.data;
 
-        if (!isMounted) return
+        if (!isMounted) return;
 
         if (currentUser?.role !== 'admin') {
-          logout()
-          return
+          logout();
+          return;
         }
 
-        updateUser(currentUser)
+        updateUser(currentUser);
       } catch (error) {
         if (isMounted) {
-          logout()
+          logout();
         }
       } finally {
         if (isMounted) {
-          setIsVerifyingSession(false)
+          setIsVerifyingSession(false);
         }
       }
-    }
+    };
 
-    verifyAdminSession()
+    verifyAdminSession();
 
     return () => {
-      isMounted = false
-    }
-  }, [_hasHydrated, isAuthenticated, logout, updateUser, user?.role])
+      isMounted = false;
+    };
+  }, [_hasHydrated, isAuthenticated, logout, updateUser, user?.role]);
 
   // Wait for auth store to rehydrate before checking auth
   if (!_hasHydrated || isVerifyingSession) {
@@ -63,38 +61,38 @@ const AdminLayout = ({ children }) => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full"></div>
       </div>
-    )
+    );
   }
 
   // Protect admin routes - redirect if not admin
   if (!isAuthenticated) {
-    return <Navigate to="/account" state={{ from: location }} replace />
+    return <Navigate to="/account" state={{ from: location }} replace />;
   }
 
   if (user?.role !== 'admin') {
-    return <Navigate to="/" replace />
+    return <Navigate to="/" replace />;
   }
 
   const menuItems = [
-    { path: '/admin', icon: FiHome, label: 'لوحة التحكم', exact: true },
-    { path: '/admin/users', icon: FiUsers, label: 'المستخدمين' },
-    { path: '/admin/products', icon: FiPackage, label: 'المنتجات' },
-    { path: '/admin/orders', icon: FiShoppingCart, label: 'الطلبات' },
-    { path: '/admin/categories', icon: FiGrid, label: 'الفئات' },
-    { path: '/admin/reviews', icon: FiStar, label: 'التقييمات' },
-    { path: '/admin/occasions', icon: FiGrid, label: 'المناسبات' },
-    { path: '/admin/emails', icon: FiMail, label: 'البريد الوارد' },
-  ]
+    { path: '/admin', icon: FiHome, label: STRINGS.ADMIN.DASHBOARD, exact: true },
+    { path: '/admin/users', icon: FiUsers, label: STRINGS.ADMIN.USERS },
+    { path: '/admin/products', icon: FiPackage, label: STRINGS.ADMIN.PRODUCTS },
+    { path: '/admin/orders', icon: FiShoppingCart, label: STRINGS.ADMIN.ORDERS },
+    { path: '/admin/categories', icon: FiGrid, label: STRINGS.ADMIN.CATEGORIES },
+    { path: '/admin/reviews', icon: FiStar, label: STRINGS.ADMIN.REVIEWS },
+    { path: '/admin/occasions', icon: FiGrid, label: STRINGS.ADMIN.OCCASIONS },
+    { path: '/admin/emails', icon: FiMail, label: STRINGS.ADMIN.EMAILS },
+  ];
 
   const isActive = (path, exact = false) => {
-    if (exact) return location.pathname === path
-    return location.pathname.startsWith(path)
-  }
+    if (exact) return location.pathname === path;
+    return location.pathname.startsWith(path);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex" dir="rtl">
       {/* Sidebar - Desktop */}
-      <aside 
+      <aside
         className={`hidden lg:flex flex-col bg-gray-900 text-white transition-all duration-300 ${
           sidebarOpen ? 'w-64' : 'w-20'
         }`}
@@ -103,14 +101,16 @@ const AdminLayout = ({ children }) => {
         <div className="h-14 sm:h-16 flex items-center justify-between px-2 sm:px-4 border-b border-gray-700">
           {sidebarOpen && (
             <Link to="/admin" className="text-xl font-bold text-pink-400">
-              لوحة التحكم
+              {STRINGS.ADMIN.DASHBOARD}
             </Link>
           )}
-          <button 
+          <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-1 sm:p-2 hover:bg-gray-700 rounded-lg"
           >
-            <FiChevronLeft className={`transform transition-transform ${!sidebarOpen ? 'rotate-180' : ''}`} />
+            <FiChevronLeft
+              className={`transform transition-transform ${!sidebarOpen ? 'rotate-180' : ''}`}
+            />
           </button>
         </div>
 
@@ -121,8 +121,8 @@ const AdminLayout = ({ children }) => {
               key={item.path}
               to={item.path}
               className={`flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 mx-1 sm:mx-2 rounded-lg transition-colors ${
-                isActive(item.path, item.exact) 
-                  ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white' 
+                isActive(item.path, item.exact)
+                  ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white'
                   : 'text-gray-400 hover:bg-gray-800 hover:text-white'
               }`}
             >
@@ -140,8 +140,10 @@ const AdminLayout = ({ children }) => {
                 {user?.firstName?.charAt(0)}
               </div>
               <div className="flex-1">
-                <p className="font-medium text-xs sm:text-base">{user?.firstName} {user?.lastName}</p>
-                <p className="text-xs sm:text-sm text-gray-400">مدير</p>
+                <p className="font-medium text-xs sm:text-base">
+                  {user?.firstName} {user?.lastName}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-400">{STRINGS.ADMIN.ROLE_ADMIN}</p>
               </div>
             </div>
           ) : null}
@@ -152,27 +154,27 @@ const AdminLayout = ({ children }) => {
             } text-xs sm:text-base`}
           >
             <FiLogOut className="w-5 h-5" />
-            {sidebarOpen && <span>تسجيل الخروج</span>}
+            {sidebarOpen && <span>{STRINGS.ADMIN.LOGOUT}</span>}
           </button>
         </div>
       </aside>
 
       {/* Mobile Sidebar Overlay */}
       {mobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
       {/* Mobile Sidebar */}
-      <aside 
+      <aside
         className={`fixed top-0 right-0 h-full w-64 bg-gray-900 text-white z-50 transform transition-transform lg:hidden ${
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         <div className="h-14 sm:h-16 flex items-center justify-between px-2 sm:px-4 border-b border-gray-700">
-          <span className="text-lg sm:text-xl font-bold text-pink-400">لوحة التحكم</span>
+          <span className="text-lg sm:text-xl font-bold text-pink-400">{STRINGS.ADMIN.DASHBOARD}</span>
           <button
             onClick={() => setMobileMenuOpen(false)}
             className="p-1 sm:p-2 hover:bg-gray-700 rounded-lg"
@@ -188,8 +190,8 @@ const AdminLayout = ({ children }) => {
               to={item.path}
               onClick={() => setMobileMenuOpen(false)}
               className={`flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-3 mx-1 sm:mx-2 rounded-lg transition-colors ${
-                isActive(item.path, item.exact) 
-                  ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white' 
+                isActive(item.path, item.exact)
+                  ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white'
                   : 'text-gray-400 hover:bg-gray-800 hover:text-white'
               }`}
             >
@@ -206,7 +208,7 @@ const AdminLayout = ({ children }) => {
             </div>
             <div>
               <p className="font-medium text-xs sm:text-base">{user?.firstName}</p>
-              <p className="text-xs sm:text-sm text-gray-400">مدير</p>
+              <p className="text-xs sm:text-sm text-gray-400">{STRINGS.ADMIN.ROLE_ADMIN}</p>
             </div>
           </div>
           <button
@@ -214,7 +216,7 @@ const AdminLayout = ({ children }) => {
             className="flex items-center gap-2 sm:gap-3 w-full px-2 sm:px-3 py-1 sm:py-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg text-xs sm:text-base"
           >
             <FiLogOut className="w-5 h-5" />
-            <span>تسجيل الخروج</span>
+            <span>{STRINGS.ADMIN.LOGOUT}</span>
           </button>
         </div>
       </aside>
@@ -224,33 +226,31 @@ const AdminLayout = ({ children }) => {
         {/* Top Bar */}
         <header className="h-14 sm:h-16 bg-white shadow-sm flex items-center justify-between px-2 sm:px-4 lg:px-8">
           <div className="flex items-center gap-2 sm:gap-4">
-            <button 
+            <button
               onClick={() => setMobileMenuOpen(true)}
               className="lg:hidden p-1 sm:p-2 hover:bg-gray-100 rounded-lg"
             >
               <FiMenu className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
             <h1 className="text-base sm:text-xl font-bold text-gray-800">
-              {menuItems.find(item => isActive(item.path, item.exact))?.label || 'لوحة التحكم'}
+              {menuItems.find((item) => isActive(item.path, item.exact))?.label || STRINGS.ADMIN.DASHBOARD}
             </h1>
           </div>
-          
-          <Link 
-            to="/" 
+
+          <Link
+            to="/"
             className="text-xs sm:text-sm text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex items-center gap-1"
           >
-            العودة للموقع
+            {STRINGS.ADMIN.BACK_TO_SITE}
             <FiChevronLeft className="transform rotate-180 w-4 h-4 sm:w-5 sm:h-5" />
           </Link>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-2 sm:p-4 lg:p-8 overflow-auto">
-          {children || <Outlet />}
-        </main>
+        <main className="flex-1 p-2 sm:p-4 lg:p-8 overflow-auto">{children || <Outlet />}</main>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AdminLayout
+export default AdminLayout;

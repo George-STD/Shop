@@ -1,24 +1,24 @@
-import ProductPageClient from './ProductPageClient'
-import ProductJsonLd from './ProductJsonLd'
-import { notFound } from 'next/navigation'
-import { API_URL, SITE_CONFIG } from '../../../../constants'
+import ProductPageClient from './ProductPageClient';
+import ProductJsonLd from './ProductJsonLd';
+import { notFound } from 'next/navigation';
+import { API_URL, SITE_CONFIG } from '../../../../constants';
 
-const SITE_URL = SITE_CONFIG.SITE_URL
+const SITE_URL = SITE_CONFIG.SITE_URL;
 
 export async function generateMetadata({ params }) {
-  const { slug } = await params
+  const { slug } = await params;
   try {
-    const res = await fetch(`${API_URL}/products/slug/${slug}`, { next: { revalidate: 3600 } })
-    if (!res.ok) return { title: 'المنتج غير موجود' }
-    const data = await res.json()
-    const product = data.data
+    const res = await fetch(`${API_URL}/products/slug/${slug}`, { next: { revalidate: 3600 } });
+    if (!res.ok) return { title: 'المنتج غير موجود' };
+    const data = await res.json();
+    const product = data.data;
 
-    const title = product.name
+    const title = product.name;
     const description = product.description
       ? product.description.replace(/<[^>]+>/g, '').substring(0, 160)
-      : `اشترِ ${product.name} من فور يو - متجر الهدايا الأول في مصر`
-    const image = product.images?.[0]?.url || `${SITE_URL}/images/og-image.jpg`
-    const price = product.salePrice || product.price
+      : `اشترِ ${product.name} من فور يو - متجر الهدايا الأول في مصر`;
+    const image = product.images?.[0]?.url || `${SITE_URL}/images/og-image.jpg`;
+    const price = product.salePrice || product.price;
 
     return {
       title,
@@ -43,24 +43,24 @@ export async function generateMetadata({ params }) {
         'product:price:amount': String(price),
         'product:price:currency': 'EGP',
       },
-    }
+    };
   } catch (error) {
     return {
       title: 'هدايا فور يو',
       description: 'اكتشف مجموعتنا من الهدايا المميزة لجميع المناسبات.',
-    }
+    };
   }
 }
 
 export default async function Page({ params }) {
-  const { slug } = await params
-  const res = await fetch(`${API_URL}/products/slug/${slug}`, { next: { revalidate: 3600 } })
+  const { slug } = await params;
+  const res = await fetch(`${API_URL}/products/slug/${slug}`, { next: { revalidate: 3600 } });
 
   if (res.status === 404) {
-    notFound()
+    notFound();
   }
   if (!res.ok) {
-    throw new Error(`Failed to fetch product metadata for slug: ${slug}`)
+    throw new Error(`Failed to fetch product metadata for slug: ${slug}`);
   }
 
   return (
@@ -68,5 +68,5 @@ export default async function Page({ params }) {
       <ProductJsonLd slug={slug} />
       <ProductPageClient />
     </>
-  )
+  );
 }

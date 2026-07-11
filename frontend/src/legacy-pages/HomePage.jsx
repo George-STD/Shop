@@ -1,53 +1,54 @@
-import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { Swiper, SwiperSlide } from 'swiper/react'
-import { Autoplay, Pagination, Navigation } from 'swiper/modules'
-import { productsAPI, categoriesAPI, occasionsAPI } from '../services/api'
-import ProductCard from '../components/product/ProductCard'
-import CategoryCard from '../components/home/CategoryCard'
-import FeatureCard from '../components/home/FeatureCard'
-import OccasionCard from '../components/home/OccasionCard'
-import 'swiper/css'
-import 'swiper/css/pagination'
-import 'swiper/css/navigation'
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination, Navigation } from 'swiper/modules';
+import { productsAPI, categoriesAPI, occasionsAPI } from '../services/api';
+import { STRINGS } from '../constants';
+import ProductCard from '../components/product/ProductCard';
+import CategoryCard from '../components/home/CategoryCard';
+import FeatureCard from '../components/home/FeatureCard';
+import OccasionCard from '../components/home/OccasionCard';
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
 
 const HomePage = () => {
   // Fetch featured products
   const { data: featuredProducts, isLoading: loadingFeatured } = useQuery({
     queryKey: ['products', 'featured'],
-    queryFn: () => productsAPI.getFeatured(8).then(res => res.data.data)
+    queryFn: () => productsAPI.getFeatured(8).then((res) => res.data.data),
   });
 
   // Fetch bestsellers
   const { data: bestsellers, isLoading: loadingBestsellers } = useQuery({
     queryKey: ['products', 'bestsellers'],
-    queryFn: () => productsAPI.getBestsellers(8).then(res => res.data.data)
+    queryFn: () => productsAPI.getBestsellers(8).then((res) => res.data.data),
   });
 
   // Fetch new arrivals
   const { data: newArrivals, isLoading: loadingNew } = useQuery({
     queryKey: ['products', 'new'],
-    queryFn: () => productsAPI.getNew(8).then(res => res.data.data)
+    queryFn: () => productsAPI.getNew(8).then((res) => res.data.data),
   });
 
   // Fetch categories
   const { data: categories } = useQuery({
     queryKey: ['categories'],
-    queryFn: () => categoriesAPI.getAll().then(res => res.data.data)
+    queryFn: () => categoriesAPI.getAll().then((res) => res.data.data),
   });
 
   // Fetch occasions
   const { data: occasions } = useQuery({
     queryKey: ['occasions'],
-    queryFn: () => occasionsAPI.getAll().then(res => res.data.data)
+    queryFn: () => occasionsAPI.getAll().then((res) => res.data.data),
   });
 
   const features = [
-    { icon: '🚚', title: 'شحن سريع', description: 'توصيل لباب البيت' },
-    { icon: '🎁', title: 'تغليف مجاني', description: 'تغليف هدايا أنيق' },
-    { icon: '💳', title: 'دفع آمن', description: 'طرق دفع متعددة' },
-    { icon: '↩️', title: 'إرجاع سهل', description: 'خلال 14 يوم' },
-  ]
+    { icon: '🚚', title: STRINGS.FEATURES.FAST_SHIPPING, description: STRINGS.FEATURES.FAST_SHIPPING_DESC },
+    { icon: '🎁', title: STRINGS.FEATURES.FREE_WRAPPING, description: STRINGS.FEATURES.FREE_WRAPPING_DESC },
+    { icon: '💳', title: STRINGS.FEATURES.SECURE_PAYMENT, description: STRINGS.FEATURES.SECURE_PAYMENT_DESC },
+    { icon: '↩️', title: STRINGS.FEATURES.EASY_RETURNS, description: STRINGS.FEATURES.EASY_RETURNS_DESC },
+  ];
 
   const ProductSkeleton = () => (
     <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
@@ -58,7 +59,7 @@ const HomePage = () => {
         <div className="skeleton h-5 w-1/3"></div>
       </div>
     </div>
-  )
+  );
 
   return (
     <>
@@ -79,21 +80,23 @@ const HomePage = () => {
                 <div className="max-w-2xl">
                   <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full text-sm text-purple-700 font-medium mb-6 animate-fadeInUp">
                     <span>✨</span>
-                    <span>أجمل الهدايا لأحبائك</span>
+                    <span>{STRINGS.HOME.HERO_BADGE}</span>
                   </div>
                   <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-5 leading-tight animate-fadeInUp">
-                    اجعل كل مناسبة {' '}
-                    <span className="text-gradient">لحظة لا تُنسى</span>
+                    {STRINGS.HOME.HERO_TITLE} <span className="text-gradient">{STRINGS.HOME.HERO_TITLE_HIGHLIGHT}</span>
                   </h1>
                   <p className="text-base sm:text-lg text-gray-600 mb-8 animate-fadeInUp leading-relaxed max-w-lg">
-                    اكتشف تشكيلة واسعة من الهدايا المميزة لجميع المناسبات مع توصيل سريع لباب بيتك
+                    {STRINGS.HOME.HERO_SUBTITLE}
                   </p>
                   <div className="flex flex-wrap gap-3 sm:gap-4 animate-fadeInUp">
                     <Link to="/products" className="btn-primary text-sm sm:text-base px-6 sm:px-8">
-                      تسوق الآن ←
+                      {STRINGS.HOME.SHOP_NOW} ←
                     </Link>
-                    <Link to="/gift-finder" className="btn-secondary text-sm sm:text-base px-6 sm:px-8">
-                      🎯 اعثر على الهدية المثالية
+                    <Link
+                      to="/gift-finder"
+                      className="btn-secondary text-sm sm:text-base px-6 sm:px-8"
+                    >
+                      🎯 {STRINGS.HOME.FIND_GIFT}
                     </Link>
                   </div>
                 </div>
@@ -106,17 +109,19 @@ const HomePage = () => {
                 <div className="max-w-2xl">
                   <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 rounded-full text-sm text-white font-bold mb-6 animate-fadeInUp shadow-lg shadow-amber-500/25">
                     <span>🔥</span>
-                    <span>عروض حصرية</span>
+                    <span>{STRINGS.HOME.DISCOUNT_BADGE}</span>
                   </div>
                   <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-5 animate-fadeInUp">
-                    خصومات تصل إلى {' '}
-                    <span className="text-gradient">50%</span>
+                    {STRINGS.HOME.DISCOUNT_TITLE} <span className="text-gradient">{STRINGS.HOME.DISCOUNT_HIGHLIGHT}</span>
                   </h2>
                   <p className="text-base sm:text-lg text-gray-600 mb-8 animate-fadeInUp leading-relaxed max-w-lg">
-                    استمتع بأفضل العروض على الهدايا المميزة. عرض لفترة محدودة!
+                    {STRINGS.HOME.DISCOUNT_SUBTITLE}
                   </p>
-                  <Link to="/products?sort=discount" className="btn-gold text-sm sm:text-base px-6 sm:px-8 animate-fadeInUp">
-                    تسوق العروض ←
+                  <Link
+                    to="/products?sort=discount"
+                    className="btn-gold text-sm sm:text-base px-6 sm:px-8 animate-fadeInUp"
+                  >
+                    {STRINGS.HOME.SHOP_OFFERS} ←
                   </Link>
                 </div>
               </div>
@@ -143,25 +148,31 @@ const HomePage = () => {
             {/* Decorative background elements */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-purple-400 to-indigo-500 rounded-full blur-3xl opacity-20 translate-y-1/2 -translate-x-1/2"></div>
-            
+
             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="flex-1 text-center md:text-right">
                 <div className="inline-flex items-center gap-2 bg-pink-100 text-pink-700 px-4 py-2 rounded-full text-sm font-bold mb-4">
                   <span>🎁</span>
-                  جديد ومميز
+                  {STRINGS.HOME.BUILD_BOX_BADGE}
                 </div>
                 <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-                  صمم بوكس هديتك بنفسك!
+                  {STRINGS.HOME.BUILD_BOX_TITLE}
                 </h2>
                 <p className="text-gray-600 text-lg mb-8 max-w-xl mx-auto md:mx-0">
-                  اختر منتجاتك المفضلة وسنقوم بتجميعها وتغليفها في بوكس هدايا أنيق، <span className="font-bold text-purple-600">واستمتع بخصم 25% على جميع المنتجات داخل البوكس!</span>
+                  {STRINGS.HOME.BUILD_BOX_DESC1}
+                  <span className="font-bold text-purple-600">
+                    {STRINGS.HOME.BUILD_BOX_DESC2}
+                  </span>
                 </p>
-                <Link to="/build-a-box" className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-2xl text-lg font-bold hover:shadow-lg hover:shadow-pink-500/30 hover:-translate-y-1 transition-all duration-300">
-                  ابدأ تصميم البوكس
+                <Link
+                  to="/build-a-box"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-2xl text-lg font-bold hover:shadow-lg hover:shadow-pink-500/30 hover:-translate-y-1 transition-all duration-300"
+                >
+                  {STRINGS.HOME.BUILD_BOX_BTN}
                   <span className="text-xl">←</span>
                 </Link>
               </div>
-              
+
               <div className="w-full md:w-1/3 flex justify-center">
                 <div className="relative w-48 h-48 sm:w-64 sm:h-64 animate-float">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl rotate-6"></div>
@@ -182,16 +193,19 @@ const HomePage = () => {
             <div>
               <span className="inline-flex items-center gap-1.5 text-purple-600 font-medium text-sm mb-2">
                 <span className="w-8 h-[2px] bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></span>
-                منتجات مختارة
+                {STRINGS.HOME.FEATURED_SUBTITLE}
               </span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">منتجات مميزة</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{STRINGS.HOME.FEATURED_PRODUCTS}</h2>
             </div>
-            <Link to="/products?featured=true" className="hidden sm:inline-flex items-center gap-1 text-purple-600 hover:text-purple-700 font-medium text-sm hover:gap-2 transition-all">
-              عرض الكل
+            <Link
+              to="/products?featured=true"
+              className="hidden sm:inline-flex items-center gap-1 text-purple-600 hover:text-purple-700 font-medium text-sm hover:gap-2 transition-all"
+            >
+              {STRINGS.COMMON.VIEW_ALL}
               <span>←</span>
             </Link>
           </div>
-          
+
           {loadingFeatured ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {[...Array(8)].map((_, i) => (
@@ -205,9 +219,12 @@ const HomePage = () => {
               ))}
             </div>
           )}
-          
-          <Link to="/products?featured=true" className="sm:hidden flex items-center justify-center gap-1 text-purple-600 font-medium text-sm mt-6 hover:gap-2 transition-all">
-            عرض جميع المنتجات المميزة ←
+
+          <Link
+            to="/products?featured=true"
+            className="sm:hidden flex items-center justify-center gap-1 text-purple-600 font-medium text-sm mt-6 hover:gap-2 transition-all"
+          >
+            {STRINGS.HOME.FEATURED_VIEW_ALL} ←
           </Link>
         </div>
       </section>
@@ -216,8 +233,8 @@ const HomePage = () => {
       {categories?.length > 0 && (
         <section className="py-14 sm:py-20">
           <div className="container-custom">
-            <h2 className="section-title">تصفح حسب الفئة</h2>
-            <p className="section-subtitle">اختر من بين مجموعتنا الواسعة من التصنيفات</p>
+            <h2 className="section-title">{STRINGS.HOME.BROWSE_BY_CATEGORY}</h2>
+            <p className="section-subtitle">{STRINGS.HOME.CATEGORIES_SUBTITLE}</p>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
               {categories?.slice(0, 10).map((category) => (
                 <CategoryCard key={category._id} category={category} />
@@ -234,16 +251,19 @@ const HomePage = () => {
             <div>
               <span className="inline-flex items-center gap-1.5 text-amber-600 font-medium text-sm mb-2">
                 <span className="w-8 h-[2px] bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"></span>
-                ⭐ الأكثر مبيعاً
+                ⭐ {STRINGS.HOME.BESTSELLERS}
               </span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">منتجات يحبها عملاؤنا</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{STRINGS.HOME.BESTSELLERS_SUBTITLE}</h2>
             </div>
-            <Link to="/products?bestseller=true" className="hidden sm:inline-flex items-center gap-1 text-amber-600 hover:text-amber-700 font-medium text-sm hover:gap-2 transition-all">
-              عرض الكل
+            <Link
+              to="/products?bestseller=true"
+              className="hidden sm:inline-flex items-center gap-1 text-amber-600 hover:text-amber-700 font-medium text-sm hover:gap-2 transition-all"
+            >
+              {STRINGS.COMMON.VIEW_ALL}
               <span>←</span>
             </Link>
           </div>
-          
+
           {loadingBestsellers ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {[...Array(4)].map((_, i) => (
@@ -279,16 +299,19 @@ const HomePage = () => {
             <div>
               <span className="inline-flex items-center gap-1.5 text-emerald-600 font-medium text-sm mb-2">
                 <span className="w-8 h-[2px] bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"></span>
-                ✨ وصل حديثاً
+                ✨ {STRINGS.HOME.NEW_ARRIVALS}
               </span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">أحدث المنتجات</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{STRINGS.HOME.NEW_ARRIVALS_SUBTITLE}</h2>
             </div>
-            <Link to="/products?new=true" className="hidden sm:inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-medium text-sm hover:gap-2 transition-all">
-              عرض الكل
+            <Link
+              to="/products?new=true"
+              className="hidden sm:inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-medium text-sm hover:gap-2 transition-all"
+            >
+              {STRINGS.COMMON.VIEW_ALL}
               <span>←</span>
             </Link>
           </div>
-          
+
           {loadingNew ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {[...Array(4)].map((_, i) => (
@@ -324,9 +347,9 @@ const HomePage = () => {
             <div className="flex flex-col items-center mb-10 text-center">
               <span className="inline-flex items-center gap-1.5 text-indigo-600 font-medium text-sm mb-2">
                 <span className="w-8 h-[2px] bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full"></span>
-                مناسباتك السعيدة
+                {STRINGS.HOME.OCCASIONS_BADGE}
               </span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">تسوق حسب المناسبة</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{STRINGS.HOME.SHOP_BY_OCCASION}</h2>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
               {occasions?.map((occasion) => (
@@ -343,33 +366,43 @@ const HomePage = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-fuchsia-600 to-pink-600"></div>
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 right-10 text-white text-8xl animate-float">🎁</div>
-          <div className="absolute bottom-10 left-10 text-white text-6xl animate-float" style={{ animationDelay: '1s' }}>🎀</div>
-          <div className="absolute top-1/2 left-1/3 text-white text-5xl animate-float" style={{ animationDelay: '2s' }}>✨</div>
+          <div
+            className="absolute bottom-10 left-10 text-white text-6xl animate-float"
+            style={{ animationDelay: '1s' }}
+          >
+            🎀
+          </div>
+          <div
+            className="absolute top-1/2 left-1/3 text-white text-5xl animate-float"
+            style={{ animationDelay: '2s' }}
+          >
+            ✨
+          </div>
         </div>
-        
+
         <div className="container-custom text-center relative z-10">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-5 py-2 rounded-full text-sm text-white/90 font-medium mb-6 border border-white/20">
             <span>🎯</span>
-            <span>مساعد الهدايا الذكي</span>
+            <span>{STRINGS.HOME.SMART_GIFT_ASSISTANT}</span>
           </div>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-white">
-            لا تعرف ماذا تختار؟
+            {STRINGS.HOME.CTA_TITLE}
           </h2>
           <p className="text-lg text-purple-100 mb-10 max-w-2xl mx-auto leading-relaxed">
-            استخدم أداة البحث عن الهدايا للعثور على الهدية المثالية حسب المناسبة والميزانية والشخص
+            {STRINGS.HOME.CTA_SUBTITLE}
           </p>
-          <Link 
-            to="/gift-finder" 
+          <Link
+            to="/gift-finder"
             className="inline-flex items-center gap-2 bg-white text-purple-700 px-8 py-4 rounded-2xl text-lg font-bold hover:bg-purple-50 transition-all duration-300 hover:shadow-2xl hover:shadow-white/20 hover:-translate-y-1 active:translate-y-0"
           >
             <span>🎯</span>
-            ابدأ البحث الآن
+            {STRINGS.HOME.CTA_BUTTON}
             <span className="mr-1">←</span>
           </Link>
         </div>
       </section>
     </>
-  )
-}
+  );
+};
 
-export default HomePage
+export default HomePage;

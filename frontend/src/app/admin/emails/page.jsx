@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import AdminEmails from '../../../legacy-pages/admin/AdminEmails'
+import AdminEmails from '../../../legacy-pages/admin/AdminEmails';
 
 export default function Page() {
-  return <AdminEmails />
+  return <AdminEmails />;
 }

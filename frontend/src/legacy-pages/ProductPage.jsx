@@ -1,23 +1,37 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { FiHeart, FiShare2, FiMinus, FiPlus, FiCheck, FiTruck, FiRotateCcw, FiShield, FiZoomIn, FiChevronLeft, FiChevronRight, FiGift } from 'react-icons/fi'
-import { Swiper, SwiperSlide } from 'swiper/react'
-import { Autoplay, Pagination, Navigation } from 'swiper/modules'
-import 'swiper/css'
-import 'swiper/css/pagination'
-import 'swiper/css/navigation'
-import { productsAPI, reviewsAPI } from '../services/api'
-import { useCartStore, useWishlistStore, useAuthStore } from '../store'
-import ProductCard from '../components/product/ProductCard'
-import toast from 'react-hot-toast'
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  FiHeart,
+  FiShare2,
+  FiMinus,
+  FiPlus,
+  FiCheck,
+  FiTruck,
+  FiRotateCcw,
+  FiShield,
+  FiZoomIn,
+  FiChevronLeft,
+  FiChevronRight,
+  FiGift,
+} from 'react-icons/fi';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination, Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
+import { productsAPI, reviewsAPI } from '../services/api';
+import { useCartStore, useWishlistStore, useAuthStore } from '../store';
+import ProductCard from '../components/product/ProductCard';
+import toast from 'react-hot-toast';
+import { STRINGS } from '../constants';
 
 // Helper: get images array from option (backward compatible with old single image field)
 const getOptImages = (opt) => {
-  if (opt.images?.length) return opt.images.filter(Boolean)
-  if (opt.image) return [opt.image]
-  return []
-}
+  if (opt.images?.length) return opt.images.filter(Boolean);
+  if (opt.image) return [opt.image];
+  return [];
+};
 
 // تم فصل مكون إضافة التقييم ليكون مكوناً مستقلاً ونظيفاً
 const ReviewForm = ({ productId, refreshReviews }) => {
@@ -27,7 +41,7 @@ const ReviewForm = ({ productId, refreshReviews }) => {
     title: '',
     comment: '',
     guestName: '',
-    guestEmail: ''
+    guestEmail: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -44,9 +58,10 @@ const ReviewForm = ({ productId, refreshReviews }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (form.rating === 0) return setError('الرجاء اختيار التقييم');
-    if (!isAuthenticated && (!form.guestName || !form.guestEmail)) return setError('الرجاء إدخال الاسم والبريد الإلكتروني');
-    
+    if (form.rating === 0) return setError(STRINGS.PRODUCT.REVIEW_RATING_REQUIRED);
+    if (!isAuthenticated && (!form.guestName || !form.guestEmail))
+      return setError(STRINGS.PRODUCT.REVIEW_GUEST_REQUIRED);
+
     setLoading(true);
     try {
       await reviewsAPI.create({
@@ -55,7 +70,7 @@ const ReviewForm = ({ productId, refreshReviews }) => {
         title: form.title,
         comment: form.comment,
         guestName: isAuthenticated ? undefined : form.guestName,
-        guestEmail: isAuthenticated ? undefined : form.guestEmail
+        guestEmail: isAuthenticated ? undefined : form.guestEmail,
       });
       setSuccess(true);
       setForm({ rating: 0, title: '', comment: '', guestName: '', guestEmail: '' });
@@ -67,7 +82,7 @@ const ReviewForm = ({ productId, refreshReviews }) => {
       } else if (errorData?.message) {
         setError(errorData.message);
       } else {
-        setError('حدث خطأ أثناء إرسال التقييم');
+        setError(STRINGS.PRODUCT.REVIEW_ERROR);
       }
     } finally {
       setLoading(false);
@@ -77,22 +92,25 @@ const ReviewForm = ({ productId, refreshReviews }) => {
   if (success) {
     return (
       <div className="bg-green-50 text-green-700 p-4 rounded-xl mb-6 text-center shadow-sm">
-        تم إرسال تقييمك بنجاح!
+        {STRINGS.PRODUCT.REVIEW_SUCCESS}
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm border mb-8 max-w-2xl mx-auto">
-      <h3 className="font-bold text-lg mb-4 text-gray-800">أضف تقييمك</h3>
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white p-6 rounded-xl shadow-sm border mb-8 max-w-2xl mx-auto"
+    >
+      <h3 className="font-bold text-lg mb-4 text-gray-800">{STRINGS.PRODUCT.ADD_REVIEW}</h3>
       <div className="flex items-center gap-2 mb-4">
-        <span className="font-medium text-gray-700">التقييم:</span>
+        <span className="font-medium text-gray-700">{STRINGS.PRODUCT.RATING_LABEL}</span>
         <div className="flex">
           {[1, 2, 3, 4, 5].map((r) => (
-            <button 
-              type="button" 
-              key={r} 
-              onClick={() => handleRating(r)} 
+            <button
+              type="button"
+              key={r}
+              onClick={() => handleRating(r)}
               className={`text-2xl transition-colors ${r <= form.rating ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-200'}`}
             >
               ★
@@ -103,14 +121,14 @@ const ReviewForm = ({ productId, refreshReviews }) => {
       <input
         type="text"
         name="title"
-        placeholder="عنوان التقييم (اختياري)"
+        placeholder={STRINGS.PRODUCT.REVIEW_TITLE_PLACEHOLDER}
         value={form.title}
         onChange={handleChange}
         className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-3 bg-gray-50"
       />
       <textarea
         name="comment"
-        placeholder="اكتب تعليقك هنا"
+        placeholder={STRINGS.PRODUCT.REVIEW_COMMENT_PLACEHOLDER}
         value={form.comment}
         onChange={handleChange}
         className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-3 bg-gray-50 min-h-[100px]"
@@ -121,7 +139,7 @@ const ReviewForm = ({ productId, refreshReviews }) => {
           <input
             type="text"
             name="guestName"
-            placeholder="اسمك"
+            placeholder={STRINGS.PRODUCT.REVIEW_NAME_PLACEHOLDER}
             value={form.guestName}
             onChange={handleChange}
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50"
@@ -130,7 +148,7 @@ const ReviewForm = ({ productId, refreshReviews }) => {
           <input
             type="email"
             name="guestEmail"
-            placeholder="بريدك الإلكتروني"
+            placeholder={STRINGS.PRODUCT.REVIEW_EMAIL_PLACEHOLDER}
             value={form.guestEmail}
             onChange={handleChange}
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50"
@@ -139,103 +157,108 @@ const ReviewForm = ({ productId, refreshReviews }) => {
         </div>
       )}
       {error && <div className="text-red-500 text-sm mb-3 font-medium">{error}</div>}
-      <button 
-        type="submit" 
-        className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50" 
+      <button
+        type="submit"
+        className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
         disabled={loading}
       >
-        {loading ? 'جاري الإرسال...' : 'إرسال التقييم'}
+        {loading ? STRINGS.PRODUCT.SUBMITTING_REVIEW : STRINGS.PRODUCT.SUBMIT_REVIEW}
       </button>
     </form>
   );
 };
 
 const ProductPage = () => {
-  const { slug } = useParams()
-  const [searchParams] = useSearchParams()
-  const queryClient = useQueryClient()
-  const [quantity, setQuantity] = useState(1)
-  const [isZooming, setIsZooming] = useState(false)
-  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
-  const [activeImageIdx, setActiveImageIdx] = useState(0)
-  const [activeBoxImage, setActiveBoxImage] = useState(null)
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
-  const [touchStart, setTouchStart] = useState(null)
-  const [touchEnd, setTouchEnd] = useState(null)
-  const imgContainerRef = useRef(null)
-  const [selectedSize, setSelectedSize] = useState(null)
-  const [selectedColor, setSelectedColor] = useState(null)
-  const [selectedShape, setSelectedShape] = useState(null)
-  const [selectedAddons, setSelectedAddons] = useState([])
-  const [boxSelections, setBoxSelections] = useState({})
-  const [selectedVariants, setSelectedVariants] = useState({})
-  
+  const { slug } = useParams();
+  const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
+  const [quantity, setQuantity] = useState(1);
+  const [isZooming, setIsZooming] = useState(false);
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [activeBoxImage, setActiveBoxImage] = useState(null);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const imgContainerRef = useRef(null);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedShape, setSelectedShape] = useState(null);
+  const [selectedAddons, setSelectedAddons] = useState([]);
+  const [boxSelections, setBoxSelections] = useState({});
+  const [selectedVariants, setSelectedVariants] = useState({});
 
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'reviews' ? 'reviews' : 'description')
+  const [activeTab, setActiveTab] = useState(
+    searchParams.get('tab') === 'reviews' ? 'reviews' : 'description'
+  );
 
-  const { addItem } = useCartStore()
-  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlistStore()
-  const { isAuthenticated } = useAuthStore()
-  const navigate = useNavigate()
+  const { addItem } = useCartStore();
+  const {
+    addItem: addToWishlist,
+    removeItem: removeFromWishlist,
+    isInWishlist,
+  } = useWishlistStore();
+  const { isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
 
   // Fetch product
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', slug],
-    queryFn: () => productsAPI.getBySlug(slug).then(res => res.data.data)
+    queryFn: () => productsAPI.getBySlug(slug).then((res) => res.data.data),
   });
 
   // Set default variant selections when product loads
-  const defaultsAppliedRef = useRef(false)
+  const defaultsAppliedRef = useRef(false);
   useEffect(() => {
-    if (!product?.variantGroups?.length || defaultsAppliedRef.current) return
-    const defaults = {}
+    if (!product?.variantGroups?.length || defaultsAppliedRef.current) return;
+    const defaults = {};
     for (const group of product.variantGroups) {
       if (group.defaultOption) {
-        defaults[group.name] = group.defaultOption
+        defaults[group.name] = group.defaultOption;
       }
     }
     if (Object.keys(defaults).length > 0) {
-      setSelectedVariants(defaults)
-      defaultsAppliedRef.current = true
+      setSelectedVariants(defaults);
+      defaultsAppliedRef.current = true;
     }
-  }, [product])
+  }, [product]);
 
   // Fetch related products
   const { data: relatedProducts } = useQuery({
     queryKey: ['products', 'related', product?._id],
-    queryFn: () => productsAPI.getRelated(product._id).then(res => res.data.data),
-    enabled: !!product?._id
+    queryFn: () => productsAPI.getRelated(product._id).then((res) => res.data.data),
+    enabled: !!product?._id,
   });
 
   // Fetch reviews
   const { data: reviewsData } = useQuery({
     queryKey: ['reviews', product?._id],
-    queryFn: () => reviewsAPI.getByProduct(product._id).then(res => res.data),
-    enabled: !!product?._id
+    queryFn: () => reviewsAPI.getByProduct(product._id).then((res) => res.data),
+    enabled: !!product?._id,
   });
 
-  const inWishlist = product ? isInWishlist(product._id) : false
+  const inWishlist = product ? isInWishlist(product._id) : false;
 
   const handleAddToCart = () => {
     if (product.sizes?.length > 0 && !selectedSize) {
-      toast.error('الرجاء اختيار المقاس')
-      return
+      toast.error(STRINGS.PRODUCT.PLEASE_SELECT_SIZE);
+      return;
     }
     if (product.colors?.length > 0 && !selectedColor) {
-      toast.error('الرجاء اختيار اللون')
-      return
+      toast.error(STRINGS.PRODUCT.PLEASE_SELECT_COLOR);
+      return;
     }
     if (product.shapes?.length > 0 && !selectedShape) {
-      toast.error('الرجاء اختيار الشكل')
-      return
+      toast.error(STRINGS.PRODUCT.PLEASE_SELECT_SHAPE);
+      return;
     }
 
     // Validate variant groups
     if (product.variantGroups?.length > 0) {
       for (const group of product.variantGroups) {
         if (!selectedVariants[group.name]) {
-          toast.error(`الرجاء اختيار: ${group.name}`)
-          return
+          toast.error(`${STRINGS.PRODUCT.PLEASE_SELECT}${group.name}`);
+          return;
         }
       }
     }
@@ -244,8 +267,8 @@ const ProductPage = () => {
     if (product.isCustomBox && product.boxSlots?.length > 0) {
       for (const slot of product.boxSlots) {
         if (slot.required && !boxSelections[slot.slotLabel]) {
-          toast.error(`الرجاء اختيار: ${slot.slotLabel}`)
-          return
+          toast.error(`${STRINGS.PRODUCT.PLEASE_SELECT}${slot.slotLabel}`);
+          return;
         }
       }
     }
@@ -256,83 +279,87 @@ const ProductPage = () => {
       selectedShape,
       selectedVariants: product.variantGroups?.length > 0 ? selectedVariants : undefined,
       addons: selectedAddons,
-      boxSelections: product.isCustomBox ? Object.entries(boxSelections).filter(([, opt]) => opt).map(([slotLabel, opt]) => ({
-        slotLabel,
-        chosenOption: opt.name,
-        image: getOptImages(opt)[0] || ''
-      })) : undefined
-    })
+      boxSelections: product.isCustomBox
+        ? Object.entries(boxSelections)
+            .filter(([, opt]) => opt)
+            .map(([slotLabel, opt]) => ({
+              slotLabel,
+              chosenOption: opt.name,
+              image: getOptImages(opt)[0] || '',
+            }))
+        : undefined,
+    });
 
     if (!result?.success) {
-      toast.error('الكمية غير متاحة حالياً')
-      return
+      toast.error(STRINGS.PRODUCT.OUT_OF_STOCK_QTY);
+      return;
     }
 
     if (result.capped && result.maxStock !== null) {
-      toast.success(`تمت إضافة المتاح فقط (الحد الأقصى ${result.maxStock})`)
-      return
+      toast.success(`${STRINGS.PRODUCT.ADDED_MAX_STOCK}${result.maxStock})`);
+      return;
     }
 
-    toast.success('تمت الإضافة إلى السلة')
-  }
-
-
+    toast.success(STRINGS.PRODUCT.ADDED_TO_CART);
+  };
 
   const handleToggleWishlist = () => {
     if (!isAuthenticated) {
-      toast.error('سجل دخول أولاً لإضافة منتجات لقائمة الأمنيات')
-      navigate('/account')
-      return
+      toast.error(STRINGS.PRODUCT.LOGIN_TO_ADD_WISHLIST);
+      navigate('/account');
+      return;
     }
     if (inWishlist) {
-      removeFromWishlist(product._id)
-      toast.success('تمت الإزالة من قائمة الأمنيات')
+      removeFromWishlist(product._id);
+      toast.success(STRINGS.PRODUCT.REMOVED_FROM_WISHLIST);
     } else {
-      addToWishlist(product)
-      toast.success('تمت الإضافة إلى قائمة الأمنيات')
+      addToWishlist(product);
+      toast.success(STRINGS.PRODUCT.ADDED_TO_WISHLIST);
     }
-  }
+  };
 
   const handleShare = async () => {
     if (navigator.share) {
       await navigator.share({
         title: product.name,
         text: product.description,
-        url: window.location.href
-      })
+        url: window.location.href,
+      });
     } else {
-      navigator.clipboard.writeText(window.location.href)
-      toast.success('تم نسخ الرابط')
+      navigator.clipboard.writeText(window.location.href);
+      toast.success(STRINGS.PRODUCT.LINK_COPIED);
     }
-  }
+  };
 
   const toggleAddon = (addon) => {
-    const exists = selectedAddons.find(a => a.name === addon.name)
+    const exists = selectedAddons.find((a) => a.name === addon.name);
     if (exists) {
-      setSelectedAddons(selectedAddons.filter(a => a.name !== addon.name))
+      setSelectedAddons(selectedAddons.filter((a) => a.name !== addon.name));
     } else {
-      setSelectedAddons([...selectedAddons, addon])
+      setSelectedAddons([...selectedAddons, addon]);
     }
-  }
+  };
   // Safe computation of images for gallery
-  const filteredImages = product?.images?.filter(img => {
-    const tags = img.variantTags || {}
-    if (Object.keys(tags).length === 0) return true // untagged = always show
-    return Object.entries(selectedVariants).every(([groupName, optionName]) => {
-      if (!tags[groupName]) return true // no tag for this group = matches any
-      return tags[groupName] === optionName
-    })
-  }) || []
+  const filteredImages =
+    product?.images?.filter((img) => {
+      const tags = img.variantTags || {};
+      if (Object.keys(tags).length === 0) return true; // untagged = always show
+      return Object.entries(selectedVariants).every(([groupName, optionName]) => {
+        if (!tags[groupName]) return true; // no tag for this group = matches any
+        return tags[groupName] === optionName;
+      });
+    }) || [];
 
   // Use filtered images for display (fallback to all images if no filter matches)
-  const displayImages = filteredImages.length > 0 ? filteredImages : (product?.images || [])
+  const displayImages = filteredImages.length > 0 ? filteredImages : product?.images || [];
 
   // Find the group that replaces main image + get its selected thumbnail
-  const replaceGroup = product?.variantGroups?.find(g => g.replaceMainImage)
-  const replaceOption = replaceGroup && selectedVariants[replaceGroup.name]
-    ? replaceGroup.options.find(o => o.name === selectedVariants[replaceGroup.name])
-    : null
-  const mainOverrideImage = replaceOption?.thumbnail || null
+  const replaceGroup = product?.variantGroups?.find((g) => g.replaceMainImage);
+  const replaceOption =
+    replaceGroup && selectedVariants[replaceGroup.name]
+      ? replaceGroup.options.find((o) => o.name === selectedVariants[replaceGroup.name])
+      : null;
+  const mainOverrideImage = replaceOption?.thumbnail || null;
 
   // Auto-play gallery logic
   useEffect(() => {
@@ -346,52 +373,52 @@ const ProductPage = () => {
   }, [isAutoPlaying, displayImages.length, activeBoxImage, mainOverrideImage]);
 
   // Swipe gesture handlers
-  const minSwipeDistance = 50
+  const minSwipeDistance = 50;
 
   const handleSwipeStart = (e) => {
-    setTouchEnd(null)
-    setTouchStart(e.targetTouches ? e.targetTouches[0].clientX : e.clientX)
-  }
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches ? e.targetTouches[0].clientX : e.clientX);
+  };
 
   const handleSwipeMove = (e) => {
     if (!touchStart) return;
     if (e.targetTouches) {
-      setTouchEnd(e.targetTouches[0].clientX)
+      setTouchEnd(e.targetTouches[0].clientX);
     } else {
       if (e.buttons !== 1) return; // Must be holding left click
-      setTouchEnd(e.clientX)
+      setTouchEnd(e.clientX);
     }
-  }
+  };
 
   const handleSwipeEnd = () => {
     if (!touchStart || !touchEnd) {
       setTouchStart(null);
       return;
     }
-    const distance = touchStart - touchEnd
-    const isLeftSwipe = distance > minSwipeDistance
-    const isRightSwipe = distance < -minSwipeDistance
-    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
     if (isLeftSwipe || isRightSwipe) {
       setIsAutoPlaying(false);
       if (displayImages.length > 1 && !activeBoxImage && !mainOverrideImage) {
         if (isLeftSwipe) {
-          setActiveImageIdx(prev => (prev + 1) % displayImages.length)
+          setActiveImageIdx((prev) => (prev + 1) % displayImages.length);
         } else {
-          setActiveImageIdx(prev => (prev === 0 ? displayImages.length - 1 : prev - 1))
+          setActiveImageIdx((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1));
         }
       }
     }
-    setTouchStart(null)
-    setTouchEnd(null)
-  }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
 
   const calculateTotal = () => {
-    if (!product) return 0
-    let total = product.price * quantity
-    selectedAddons.forEach(addon => total += addon.price)
-    return total
-  }
+    if (!product) return 0;
+    let total = product.price * quantity;
+    selectedAddons.forEach((addon) => (total += addon.price));
+    return total;
+  };
 
   if (isLoading) {
     return (
@@ -407,70 +434,82 @@ const ProductPage = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!product) {
     return (
       <div className="container-custom py-16 text-center">
         <div className="text-6xl mb-4">😔</div>
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">المنتج غير موجود</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">{STRINGS.PRODUCT.PRODUCT_NOT_FOUND}</h1>
         <Link to="/products" className="btn-primary">
-          تصفح المنتجات
+          {STRINGS.PRODUCT.BROWSE_PRODUCTS}
         </Link>
       </div>
-    )
+    );
   }
 
-  const discount = product.oldPrice 
-    ? Math.round((1 - product.price / product.oldPrice) * 100) 
-    : 0
-
-
+  const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
 
   // Cross-filter: for each group, determine which options are valid based on other groups' selections
   const getVisibleOptions = (group) => {
-    if (!product.variantGroups || product.variantGroups.length < 2) return group.options
-    const otherSelections = Object.entries(selectedVariants).filter(([gName]) => gName !== group.name)
-    if (otherSelections.length === 0) return group.options
-    return group.options.filter(option => {
+    if (!product.variantGroups || product.variantGroups.length < 2) return group.options;
+    const otherSelections = Object.entries(selectedVariants).filter(
+      ([gName]) => gName !== group.name
+    );
+    if (otherSelections.length === 0) return group.options;
+    return group.options.filter((option) => {
       // Check if any product image is tagged with this option AND all other selected options
-      return product.images?.some(img => {
-        const tags = img.variantTags || {}
-        if (Object.keys(tags).length === 0) return true
-        const matchesThis = !tags[group.name] || tags[group.name] === option.name
+      return product.images?.some((img) => {
+        const tags = img.variantTags || {};
+        if (Object.keys(tags).length === 0) return true;
+        const matchesThis = !tags[group.name] || tags[group.name] === option.name;
         const matchesOthers = otherSelections.every(([gName, gVal]) => {
-          return !tags[gName] || tags[gName] === gVal
-        })
-        return matchesThis && matchesOthers
-      })
-    })
-  }
+          return !tags[gName] || tags[gName] === gVal;
+        });
+        return matchesThis && matchesOthers;
+      });
+    });
+  };
 
   return (
     <>
-
       <div className="bg-gray-50 min-h-screen">
         {/* Breadcrumb */}
         <div className="bg-white border-b">
           <div className="container-custom py-4">
             <nav className="flex items-center gap-2 text-sm overflow-x-auto whitespace-nowrap scrollbar-hide">
-              <Link to="/" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex-shrink-0">الرئيسية</Link>
+              <Link
+                to="/"
+                className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex-shrink-0"
+              >
+                {STRINGS.NAV.HOME}
+              </Link>
               <span className="text-gray-400 flex-shrink-0">/</span>
-              <Link to="/products" className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex-shrink-0">المنتجات</Link>
-              {product.category && (Array.isArray(product.category) ? product.category : [product.category]).filter(Boolean).map((cat, i) => (
-                <span key={cat._id || i} className="flex-shrink-0 flex items-center gap-2">
-                  <span className="text-gray-400">/</span>
-                  <Link 
-                    to={`/products?category=${cat.slug}`} 
-                    className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
-                  >
-                    {cat.name}
-                  </Link>
-                </span>
-              ))}
+              <Link
+                to="/products"
+                className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex-shrink-0"
+              >
+                {STRINGS.NAV.PRODUCTS}
+              </Link>
+              {product.category &&
+                (Array.isArray(product.category) ? product.category : [product.category])
+                  .filter(Boolean)
+                  .map((cat, i) => (
+                    <span key={cat._id || i} className="flex-shrink-0 flex items-center gap-2">
+                      <span className="text-gray-400">/</span>
+                      <Link
+                        to={`/products?category=${cat.slug}`}
+                        className="text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
+                      >
+                        {cat.name}
+                      </Link>
+                    </span>
+                  ))}
               <span className="text-gray-400 flex-shrink-0">/</span>
-              <span className="text-gray-800 truncate max-w-[150px] sm:max-w-none">{product.name}</span>
+              <span className="text-gray-800 truncate max-w-[150px] sm:max-w-none">
+                {product.name}
+              </span>
             </nav>
           </div>
         </div>
@@ -485,27 +524,40 @@ const ProductPage = () => {
                 <div
                   ref={imgContainerRef}
                   className="relative rounded-2xl overflow-hidden bg-white aspect-square cursor-crosshair group touch-pan-y"
-                  onMouseEnter={() => { setIsZooming(true); setIsAutoPlaying(false); }}
-                  onMouseLeave={() => { setIsZooming(false); setIsAutoPlaying(true); handleSwipeEnd(); }}
+                  onMouseEnter={() => {
+                    setIsZooming(true);
+                    setIsAutoPlaying(false);
+                  }}
+                  onMouseLeave={() => {
+                    setIsZooming(false);
+                    setIsAutoPlaying(true);
+                    handleSwipeEnd();
+                  }}
                   onTouchStart={handleSwipeStart}
                   onTouchMove={handleSwipeMove}
                   onTouchEnd={handleSwipeEnd}
                   onMouseDown={handleSwipeStart}
                   onMouseUp={handleSwipeEnd}
                   onMouseMove={(e) => {
-                    const rect = imgContainerRef.current?.getBoundingClientRect()
+                    const rect = imgContainerRef.current?.getBoundingClientRect();
                     if (rect) {
-                      const x = ((e.clientX - rect.left) / rect.width) * 100
-                      const y = ((e.clientY - rect.top) / rect.height) * 100
-                      setZoomPos({ x, y })
+                      const x = ((e.clientX - rect.left) / rect.width) * 100;
+                      const y = ((e.clientY - rect.top) / rect.height) * 100;
+                      setZoomPos({ x, y });
                     }
-                    handleSwipeMove(e)
+                    handleSwipeMove(e);
                   }}
                 >
                   <img
                     key={mainOverrideImage || activeBoxImage || displayImages[activeImageIdx]?.url}
                     src={mainOverrideImage || activeBoxImage || displayImages[activeImageIdx]?.url}
-                    alt={mainOverrideImage ? 'الاختيار المحدد' : activeBoxImage ? 'اختيار البوكس' : (displayImages[activeImageIdx]?.alt || product.name)}
+                    alt={
+                      mainOverrideImage
+                        ? STRINGS.PRODUCT.SELECTED_OPTION
+                        : activeBoxImage
+                          ? STRINGS.PRODUCT.BOX_SELECTION
+                          : displayImages[activeImageIdx]?.alt || product.name
+                    }
                     className="w-full h-full object-cover animate-fadeIn"
                     draggable={false}
                   />
@@ -523,7 +575,7 @@ const ProductPage = () => {
                   )}
                   <div className="absolute bottom-3 left-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-gray-600 items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity hidden lg:flex">
                     <FiZoomIn className="w-3 h-3" />
-                    مرر الماوس للتكبير
+                    {STRINGS.PRODUCT.HOVER_TO_ZOOM}
                   </div>
                 </div>
                 {/* Zoomed overlay — outside overflow-hidden so it's not clipped */}
@@ -546,7 +598,10 @@ const ProductPage = () => {
                   {displayImages.map((_, index) => (
                     <button
                       key={`dot-${index}`}
-                      onClick={() => { setActiveImageIdx(index); setIsAutoPlaying(false); }}
+                      onClick={() => {
+                        setActiveImageIdx(index);
+                        setIsAutoPlaying(false);
+                      }}
                       className={`w-2 h-2 rounded-full transition-all ${
                         activeImageIdx === index ? 'bg-purple-600 w-4' : 'bg-gray-300'
                       }`}
@@ -561,61 +616,81 @@ const ProductPage = () => {
                 {displayImages.map((image, index) => (
                   <button
                     key={`img-${index}`}
-                    onClick={() => { setActiveImageIdx(index); setActiveBoxImage(null) }}
-                    onMouseEnter={() => { setActiveImageIdx(index); setActiveBoxImage(null) }}
+                    onClick={() => {
+                      setActiveImageIdx(index);
+                      setActiveBoxImage(null);
+                    }}
+                    onMouseEnter={() => {
+                      setActiveImageIdx(index);
+                      setActiveBoxImage(null);
+                    }}
                     className={`flex-shrink-0 rounded-lg overflow-hidden aspect-square w-14 sm:w-16 md:w-20 border-2 transition-all ${
                       !activeBoxImage && activeImageIdx === index
                         ? 'border-purple-500 shadow-md scale-105'
                         : 'border-transparent hover:border-purple-300'
                     }`}
                   >
-                    <img 
-                      src={image.url} 
-                      alt={image.alt}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={image.url} alt={image.alt} className="w-full h-full object-cover" />
                   </button>
                 ))}
                 {/* Box selection thumbnails inline */}
-                {product.isCustomBox && Object.entries(boxSelections).filter(([, opt]) => opt && getOptImages(opt).length > 0).flatMap(([label, opt]) =>
-                  getOptImages(opt).map((imgUrl, imgIdx) => (
-                    <button
-                      key={`box-${label}-${imgIdx}`}
-                      onClick={() => setActiveBoxImage(imgUrl)}
-                      onMouseEnter={() => setActiveBoxImage(imgUrl)}
-                      className={`flex-shrink-0 rounded-lg overflow-hidden w-14 sm:w-16 md:w-20 border-2 transition-all ${
-                        activeBoxImage === imgUrl
-                          ? 'border-purple-500 shadow-md scale-105'
-                          : 'border-transparent hover:border-purple-300'
-                      }`}
-                    >
-                      <div className="aspect-square relative">
-                        <img src={imgUrl} alt={opt.name} className="w-full h-full object-cover" />
-                        <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[8px] sm:text-[9px] text-center py-0.5 truncate px-1">🎁 {opt.name}</span>
-                      </div>
-                    </button>
-                  ))
-                )}
+                {product.isCustomBox &&
+                  Object.entries(boxSelections)
+                    .filter(([, opt]) => opt && getOptImages(opt).length > 0)
+                    .flatMap(([label, opt]) =>
+                      getOptImages(opt).map((imgUrl, imgIdx) => (
+                        <button
+                          key={`box-${label}-${imgIdx}`}
+                          onClick={() => setActiveBoxImage(imgUrl)}
+                          onMouseEnter={() => setActiveBoxImage(imgUrl)}
+                          className={`flex-shrink-0 rounded-lg overflow-hidden w-14 sm:w-16 md:w-20 border-2 transition-all ${
+                            activeBoxImage === imgUrl
+                              ? 'border-purple-500 shadow-md scale-105'
+                              : 'border-transparent hover:border-purple-300'
+                          }`}
+                        >
+                          <div className="aspect-square relative">
+                            <img
+                              src={imgUrl}
+                              alt={opt.name}
+                              className="w-full h-full object-cover"
+                            />
+                            <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[8px] sm:text-[9px] text-center py-0.5 truncate px-1">
+                              🎁 {opt.name}
+                            </span>
+                          </div>
+                        </button>
+                      ))
+                    )}
                 {/* Shape images thumbnails */}
-                {selectedShape && product.shapes?.filter(s => s.name === selectedShape).flatMap(shape =>
-                  getOptImages(shape).map((imgUrl, imgIdx) => (
-                    <button
-                      key={`shape-${shape.name}-${imgIdx}`}
-                      onClick={() => setActiveBoxImage(imgUrl)}
-                      onMouseEnter={() => setActiveBoxImage(imgUrl)}
-                      className={`flex-shrink-0 rounded-lg overflow-hidden w-14 sm:w-16 md:w-20 border-2 transition-all ${
-                        activeBoxImage === imgUrl
-                          ? 'border-purple-500 shadow-md scale-105'
-                          : 'border-transparent hover:border-purple-300'
-                      }`}
-                    >
-                      <div className="aspect-square relative">
-                        <img src={imgUrl} alt={shape.name} className="w-full h-full object-cover" />
-                        <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[8px] sm:text-[9px] text-center py-0.5 truncate px-1">{shape.name}</span>
-                      </div>
-                    </button>
-                  ))
-                )}
+                {selectedShape &&
+                  product.shapes
+                    ?.filter((s) => s.name === selectedShape)
+                    .flatMap((shape) =>
+                      getOptImages(shape).map((imgUrl, imgIdx) => (
+                        <button
+                          key={`shape-${shape.name}-${imgIdx}`}
+                          onClick={() => setActiveBoxImage(imgUrl)}
+                          onMouseEnter={() => setActiveBoxImage(imgUrl)}
+                          className={`flex-shrink-0 rounded-lg overflow-hidden w-14 sm:w-16 md:w-20 border-2 transition-all ${
+                            activeBoxImage === imgUrl
+                              ? 'border-purple-500 shadow-md scale-105'
+                              : 'border-transparent hover:border-purple-300'
+                          }`}
+                        >
+                          <div className="aspect-square relative">
+                            <img
+                              src={imgUrl}
+                              alt={shape.name}
+                              className="w-full h-full object-cover"
+                            />
+                            <span className="absolute bottom-0 inset-x-0 bg-purple-500/80 text-white text-[8px] sm:text-[9px] text-center py-0.5 truncate px-1">
+                              {shape.name}
+                            </span>
+                          </div>
+                        </button>
+                      ))
+                    )}
               </div>
             </div>
 
@@ -623,36 +698,41 @@ const ProductPage = () => {
             <div className="space-y-4 sm:space-y-6">
               {/* Category & Badges */}
               <div className="flex items-center gap-3 flex-wrap">
-                {product.category && (Array.isArray(product.category) ? product.category : [product.category]).filter(Boolean).map((cat, i, arr) => (
-                  <span key={cat._id || i}>
-                    <Link 
-                      to={`/products?category=${cat.slug}`}
-                      className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline"
-                    >
-                      {cat.name}
-                    </Link>
-                    {i < arr.length - 1 && <span className="text-gray-300 mx-1">·</span>}
-                  </span>
-                ))}
-                {product.isNew && <span className="badge badge-new">جديد</span>}
-                {product.isBestseller && <span className="badge badge-bestseller">الأكثر مبيعاً</span>}
+                {product.category &&
+                  (Array.isArray(product.category) ? product.category : [product.category])
+                    .filter(Boolean)
+                    .map((cat, i, arr) => (
+                      <span key={cat._id || i}>
+                        <Link
+                          to={`/products?category=${cat.slug}`}
+                          className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline"
+                        >
+                          {cat.name}
+                        </Link>
+                        {i < arr.length - 1 && <span className="text-gray-300 mx-1">·</span>}
+                      </span>
+                    ))}
+                {product.isNew && <span className="badge badge-new">{STRINGS.PRODUCT.NEW}</span>}
+                {product.isBestseller && (
+                  <span className="badge badge-bestseller">{STRINGS.PRODUCT.BESTSELLER}</span>
+                )}
               </div>
 
               {/* Name */}
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">{product.name}</h1>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">
+                {product.name}
+              </h1>
 
               {/* Rating */}
               {product.rating?.count > 0 && (
                 <div className="flex items-center gap-2">
                   <div className="flex text-yellow-400 text-lg rating-stars">
                     {[...Array(5)].map((_, i) => (
-                      <span key={i}>
-                        {i < Math.round(product.rating.average) ? '★' : '☆'}
-                      </span>
+                      <span key={i}>{i < Math.round(product.rating.average) ? '★' : '☆'}</span>
                     ))}
                   </div>
                   <span className="text-gray-600">
-                    {product.rating.average} ({product.rating.count} تقييم)
+                    {product.rating.average} ({product.rating.count} {STRINGS.PRODUCT.REVIEW})
                   </span>
                 </div>
               )}
@@ -660,79 +740,100 @@ const ProductPage = () => {
               {/* Price */}
               <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
                 <span className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                  {product.price} ج.م
+                  {product.price} {STRINGS.PRODUCT.CURRENCY}
                 </span>
                 {product.oldPrice && (
                   <>
                     <span className="text-base sm:text-xl text-gray-400 line-through">
-                      {product.oldPrice} ج.م
+                      {product.oldPrice} {STRINGS.PRODUCT.CURRENCY}
                     </span>
-                    <span className="badge badge-sale">وفر {discount}%</span>
+                    <span className="badge badge-sale">{STRINGS.PRODUCT.SAVE_AMOUNT} {discount}%</span>
                   </>
                 )}
               </div>
 
-
-
               {/* Variant Groups */}
-              {product.variantGroups?.length > 0 && product.variantGroups.map(group => {
-                const visibleOptions = getVisibleOptions(group)
-                return (
-                <div key={group.name}>
-                  <h3 className="font-medium text-gray-800 mb-3">
-                    {group.name}: {selectedVariants[group.name] && <span className="text-gray-500">{selectedVariants[group.name]}</span>}
-                  </h3>
-                  <div className="flex flex-wrap gap-2 sm:gap-3">
-                    {visibleOptions.map(option => (
-                      <button
-                        key={option.name}
-                        onClick={() => {
-                          const newVariants = { ...selectedVariants, [group.name]: option.name }
-                          // Auto-clear other groups' selections that become invisible
-                          if (product.variantGroups?.length >= 2) {
-                            for (const otherGroup of product.variantGroups) {
-                              if (otherGroup.name === group.name || !newVariants[otherGroup.name]) continue
-                              const otherSelections = Object.entries(newVariants).filter(([gName]) => gName !== otherGroup.name)
-                              const stillVisible = otherGroup.options.some(opt => {
-                                if (opt.name !== newVariants[otherGroup.name]) return false
-                                return product.images?.some(img => {
-                                  const tags = img.variantTags || {}
-                                  if (Object.keys(tags).length === 0) return true
-                                  const matchesOpt = !tags[otherGroup.name] || tags[otherGroup.name] === opt.name
-                                  const matchesRest = otherSelections.every(([gN, gV]) => !tags[gN] || tags[gN] === gV)
-                                  return matchesOpt && matchesRest
-                                })
-                              })
-                              if (!stillVisible) delete newVariants[otherGroup.name]
-                            }
-                          }
-                          setSelectedVariants(newVariants)
-                          setActiveImageIdx(0)
-                          setActiveBoxImage(null)
-                        }}
-                        className={`rounded-xl border-2 overflow-hidden transition-all ${
-                          selectedVariants[group.name] === option.name
-                            ? 'border-purple-500 ring-2 ring-purple-200 scale-105'
-                            : 'border-gray-200 hover:border-purple-300'
-                        } ${option.thumbnail ? 'w-16 h-16 sm:w-20 sm:h-20' : 'px-4 py-2'}`}
-                        title={option.name}
-                      >
-                        {option.thumbnail ? (
-                          <img src={option.thumbnail} alt={option.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-sm font-medium text-gray-700">{option.name}</span>
+              {product.variantGroups?.length > 0 &&
+                product.variantGroups.map((group) => {
+                  const visibleOptions = getVisibleOptions(group);
+                  return (
+                    <div key={group.name}>
+                      <h3 className="font-medium text-gray-800 mb-3">
+                        {group.name}:{' '}
+                        {selectedVariants[group.name] && (
+                          <span className="text-gray-500">{selectedVariants[group.name]}</span>
                         )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                )
-              })}
+                      </h3>
+                      <div className="flex flex-wrap gap-2 sm:gap-3">
+                        {visibleOptions.map((option) => (
+                          <button
+                            key={option.name}
+                            onClick={() => {
+                              const newVariants = {
+                                ...selectedVariants,
+                                [group.name]: option.name,
+                              };
+                              // Auto-clear other groups' selections that become invisible
+                              if (product.variantGroups?.length >= 2) {
+                                for (const otherGroup of product.variantGroups) {
+                                  if (
+                                    otherGroup.name === group.name ||
+                                    !newVariants[otherGroup.name]
+                                  )
+                                    continue;
+                                  const otherSelections = Object.entries(newVariants).filter(
+                                    ([gName]) => gName !== otherGroup.name
+                                  );
+                                  const stillVisible = otherGroup.options.some((opt) => {
+                                    if (opt.name !== newVariants[otherGroup.name]) return false;
+                                    return product.images?.some((img) => {
+                                      const tags = img.variantTags || {};
+                                      if (Object.keys(tags).length === 0) return true;
+                                      const matchesOpt =
+                                        !tags[otherGroup.name] ||
+                                        tags[otherGroup.name] === opt.name;
+                                      const matchesRest = otherSelections.every(
+                                        ([gN, gV]) => !tags[gN] || tags[gN] === gV
+                                      );
+                                      return matchesOpt && matchesRest;
+                                    });
+                                  });
+                                  if (!stillVisible) delete newVariants[otherGroup.name];
+                                }
+                              }
+                              setSelectedVariants(newVariants);
+                              setActiveImageIdx(0);
+                              setActiveBoxImage(null);
+                            }}
+                            className={`rounded-xl border-2 overflow-hidden transition-all ${
+                              selectedVariants[group.name] === option.name
+                                ? 'border-purple-500 ring-2 ring-purple-200 scale-105'
+                                : 'border-gray-200 hover:border-purple-300'
+                            } ${option.thumbnail ? 'w-16 h-16 sm:w-20 sm:h-20' : 'px-4 py-2'}`}
+                            title={option.name}
+                          >
+                            {option.thumbnail ? (
+                              <img
+                                src={option.thumbnail}
+                                alt={option.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-sm font-medium text-gray-700">
+                                {option.name}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
 
               {/* Sizes */}
               {product.sizes?.length > 0 && (
                 <div>
-                  <h3 className="font-medium text-gray-800 mb-3">المقاس:</h3>
+                  <h3 className="font-medium text-gray-800 mb-3">{STRINGS.PRODUCT.SIZE}</h3>
                   <div className="flex flex-wrap gap-2">
                     {product.sizes.map((size) => (
                       <button
@@ -755,7 +856,7 @@ const ProductPage = () => {
               {product.colors?.length > 0 && (
                 <div>
                   <h3 className="font-medium text-gray-800 mb-3">
-                    اللون: {selectedColor && <span className="text-gray-500">{selectedColor}</span>}
+                    {STRINGS.PRODUCT.COLOR} {selectedColor && <span className="text-gray-500">{selectedColor}</span>}
                   </h3>
                   <div className="flex flex-wrap gap-3">
                     {product.colors.map((color) => (
@@ -771,7 +872,9 @@ const ProductPage = () => {
                         title={color.name}
                       >
                         {selectedColor === color.name && (
-                          <FiCheck className={`${color.code === '#ffffff' || color.code === '#fff' ? 'text-gray-800' : 'text-white'}`} />
+                          <FiCheck
+                            className={`${color.code === '#ffffff' || color.code === '#fff' ? 'text-gray-800' : 'text-white'}`}
+                          />
                         )}
                       </button>
                     ))}
@@ -783,33 +886,37 @@ const ProductPage = () => {
               {product.shapes?.length > 0 && (
                 <div>
                   <h3 className="font-medium text-gray-800 mb-3">
-                    الشكل: {selectedShape && <span className="text-gray-500">{selectedShape}</span>}
+                    {STRINGS.PRODUCT.SHAPE} {selectedShape && <span className="text-gray-500">{selectedShape}</span>}
                   </h3>
                   <div className="flex flex-wrap gap-3">
                     {/* Default shape = main product image */}
                     <button
                       onClick={() => {
-                        setSelectedShape(null)
-                        setActiveImageIdx(0)
-                        setActiveBoxImage(null)
+                        setSelectedShape(null);
+                        setActiveImageIdx(0);
+                        setActiveBoxImage(null);
                       }}
                       className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all ${
                         !selectedShape
                           ? 'border-purple-500 ring-2 ring-purple-200 scale-105'
                           : 'border-gray-200 hover:border-purple-300'
                       }`}
-                      title="الشكل الأصلي"
+                      title={STRINGS.PRODUCT.ORIGINAL_SHAPE}
                     >
-                      <img src={displayImages[0]?.url || product.images?.[0]?.url} alt="الشكل الأصلي" className="w-full h-full object-cover" />
+                      <img
+                        src={displayImages[0]?.url || product.images?.[0]?.url}
+                        alt={STRINGS.PRODUCT.ORIGINAL_SHAPE}
+                        className="w-full h-full object-cover"
+                      />
                     </button>
                     {product.shapes.map((shape) => {
-                      const shapeImages = getOptImages(shape)
+                      const shapeImages = getOptImages(shape);
                       return (
                         <button
                           key={shape.name}
                           onClick={() => {
-                            setSelectedShape(shape.name)
-                            if (shapeImages.length > 0) setActiveBoxImage(shapeImages[0])
+                            setSelectedShape(shape.name);
+                            if (shapeImages.length > 0) setActiveBoxImage(shapeImages[0]);
                           }}
                           className={`w-16 h-16 rounded-xl border-2 overflow-hidden transition-all ${
                             selectedShape === shape.name
@@ -819,12 +926,18 @@ const ProductPage = () => {
                           title={shape.name}
                         >
                           {shapeImages.length > 0 ? (
-                            <img src={shapeImages[0]} alt={shape.name} className="w-full h-full object-cover" />
+                            <img
+                              src={shapeImages[0]}
+                              alt={shape.name}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
-                            <span className="text-xs text-gray-600 flex items-center justify-center h-full">{shape.name}</span>
+                            <span className="text-xs text-gray-600 flex items-center justify-center h-full">
+                              {shape.name}
+                            </span>
                           )}
                         </button>
-                      )
+                      );
                     })}
                   </div>
                 </div>
@@ -833,13 +946,13 @@ const ProductPage = () => {
               {/* Addons */}
               {product.addons?.length > 0 && (
                 <div>
-                  <h3 className="font-medium text-gray-800 mb-3">إضافات:</h3>
+                  <h3 className="font-medium text-gray-800 mb-3">{STRINGS.PRODUCT.ADDONS}</h3>
                   <div className="space-y-2">
                     {product.addons.map((addon) => (
                       <label
                         key={addon.name}
                         className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
-                          selectedAddons.find(a => a.name === addon.name)
+                          selectedAddons.find((a) => a.name === addon.name)
                             ? 'border-purple-500 bg-gradient-to-r from-purple-50 to-pink-50'
                             : 'border-gray-300 hover:border-purple-500'
                         }`}
@@ -847,13 +960,15 @@ const ProductPage = () => {
                         <div className="flex items-center gap-3">
                           <input
                             type="checkbox"
-                            checked={!!selectedAddons.find(a => a.name === addon.name)}
+                            checked={!!selectedAddons.find((a) => a.name === addon.name)}
                             onChange={() => toggleAddon(addon)}
                             className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
                           />
                           <span>{addon.name}</span>
                         </div>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium">+{addon.price} ج.م</span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium">
+                          +{addon.price} {STRINGS.PRODUCT.CURRENCY}
+                        </span>
                       </label>
                     ))}
                   </div>
@@ -863,7 +978,7 @@ const ProductPage = () => {
               {/* Box Builder */}
               {product.isCustomBox && product.boxSlots?.length > 0 && (
                 <div className="space-y-6">
-                  <h3 className="text-lg font-bold text-gray-800">🎁 شكّل البوكس بتاعك</h3>
+                  <h3 className="text-lg font-bold text-gray-800">{STRINGS.PRODUCT.CUSTOMIZE_BOX}</h3>
                   {product.boxSlots.map((slot) => (
                     <div key={slot.slotLabel} className="space-y-3">
                       <h4 className="font-medium text-gray-800">
@@ -872,16 +987,18 @@ const ProductPage = () => {
                       </h4>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {slot.options.map((opt) => {
-                          const isSelected = boxSelections[slot.slotLabel]?.name === opt.name
-                          const optImages = getOptImages(opt)
+                          const isSelected = boxSelections[slot.slotLabel]?.name === opt.name;
+                          const optImages = getOptImages(opt);
                           return (
                             <button
                               key={opt.name}
                               type="button"
-                              onClick={() => setBoxSelections(prev => ({
-                                ...prev,
-                                [slot.slotLabel]: isSelected ? undefined : opt
-                              }))}
+                              onClick={() =>
+                                setBoxSelections((prev) => ({
+                                  ...prev,
+                                  [slot.slotLabel]: isSelected ? undefined : opt,
+                                }))
+                              }
                               className={`relative rounded-xl border-2 overflow-hidden transition-all ${
                                 isSelected
                                   ? 'border-purple-500 ring-2 ring-purple-200 scale-[1.02]'
@@ -900,18 +1017,28 @@ const ProductPage = () => {
                                   >
                                     {optImages.map((imgUrl, imgIdx) => (
                                       <SwiperSlide key={imgIdx}>
-                                        <img src={imgUrl} alt={opt.name} className="w-full h-full object-cover" />
+                                        <img
+                                          src={imgUrl}
+                                          alt={opt.name}
+                                          className="w-full h-full object-cover"
+                                        />
                                       </SwiperSlide>
                                     ))}
                                   </Swiper>
                                 </div>
                               ) : optImages.length === 1 ? (
                                 <div className="aspect-square">
-                                  <img src={optImages[0]} alt={opt.name} className="w-full h-full object-cover" />
+                                  <img
+                                    src={optImages[0]}
+                                    alt={opt.name}
+                                    className="w-full h-full object-cover"
+                                  />
                                 </div>
                               ) : null}
                               <div className="p-1.5 sm:p-2 text-center">
-                                <p className="text-xs sm:text-sm font-medium text-gray-800">{opt.name}</p>
+                                <p className="text-xs sm:text-sm font-medium text-gray-800">
+                                  {opt.name}
+                                </p>
                               </div>
                               {isSelected && (
                                 <div className="absolute top-2 left-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center z-10">
@@ -919,7 +1046,7 @@ const ProductPage = () => {
                                 </div>
                               )}
                             </button>
-                          )
+                          );
                         })}
                       </div>
                     </div>
@@ -940,15 +1067,17 @@ const ProductPage = () => {
                   <span className="px-4 font-medium">{quantity}</span>
                   <button
                     onClick={() => {
-                      const maxStock = Number(product.stock)
+                      const maxStock = Number(product.stock);
                       if (Number.isFinite(maxStock)) {
-                        setQuantity(Math.min(quantity + 1, Math.max(1, maxStock)))
-                        return
+                        setQuantity(Math.min(quantity + 1, Math.max(1, maxStock)));
+                        return;
                       }
-                      setQuantity(quantity + 1)
+                      setQuantity(quantity + 1);
                     }}
                     className="p-3 hover:bg-gray-100"
-                    disabled={Number.isFinite(Number(product.stock)) && quantity >= Number(product.stock)}
+                    disabled={
+                      Number.isFinite(Number(product.stock)) && quantity >= Number(product.stock)
+                    }
                   >
                     <FiPlus />
                   </button>
@@ -960,14 +1089,14 @@ const ProductPage = () => {
                   disabled={product.stock === 0}
                   className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {product.stock === 0 ? 'نفذت الكمية' : `أضف للسلة - ${calculateTotal()} ج.م`}
+                  {product.stock === 0 ? STRINGS.PRODUCT.OUT_OF_STOCK : `${STRINGS.PRODUCT.ADD_TO_CART_TOTAL}${calculateTotal()} ${STRINGS.PRODUCT.CURRENCY}`}
                 </button>
               </div>
 
-
-
               {Number.isFinite(Number(product.stock)) && (
-                <p className="text-sm text-gray-500">المتاح حالياً: {Math.max(0, Number(product.stock))} قطعة</p>
+                <p className="text-sm text-gray-500">
+                  {STRINGS.PRODUCT.AVAILABLE_NOW} {Math.max(0, Number(product.stock))} {STRINGS.PRODUCT.PIECE}
+                </p>
               )}
 
               {/* Actions */}
@@ -977,14 +1106,14 @@ const ProductPage = () => {
                   className={`flex items-center gap-2 ${inWishlist ? 'text-red-500' : 'text-gray-600'} hover:text-red-500`}
                 >
                   <FiHeart className={inWishlist ? 'fill-current' : ''} />
-                  {inWishlist ? 'في قائمة الأمنيات' : 'أضف للأمنيات'}
+                  {inWishlist ? STRINGS.PRODUCT.IN_WISHLIST : STRINGS.PRODUCT.ADD_TO_WISHLIST}
                 </button>
                 <button
                   onClick={handleShare}
                   className="flex items-center gap-2 text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
                 >
                   <FiShare2 />
-                  مشاركة
+                  {STRINGS.PRODUCT.SHARE}
                 </button>
               </div>
 
@@ -992,15 +1121,15 @@ const ProductPage = () => {
               <div className="grid grid-cols-3 gap-4 pt-6 border-t">
                 <div className="text-center">
                   <FiTruck className="mx-auto text-2xl text-purple-600 mb-2" />
-                  <span className="text-sm text-gray-600">توصيل سريع</span>
+                  <span className="text-sm text-gray-600">{STRINGS.FEATURES.FAST_SHIPPING}</span>
                 </div>
                 <div className="text-center">
                   <FiRotateCcw className="mx-auto text-2xl text-purple-600 mb-2" />
-                  <span className="text-sm text-gray-600">إرجاع خلال 14 يوم</span>
+                  <span className="text-sm text-gray-600">{STRINGS.FEATURES.EASY_RETURNS}</span>
                 </div>
                 <div className="text-center">
                   <FiShield className="mx-auto text-2xl text-purple-600 mb-2" />
-                  <span className="text-sm text-gray-600">دفع آمن</span>
+                  <span className="text-sm text-gray-600">{STRINGS.FEATURES.SECURE_PAYMENT}</span>
                 </div>
               </div>
             </div>
@@ -1019,7 +1148,9 @@ const ProductPage = () => {
                       : 'text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600'
                   }`}
                 >
-                  {tab === 'description' ? 'الوصف' : `التقييمات (${reviewsData?.pagination?.total || 0})`}
+                  {tab === 'description'
+                    ? STRINGS.PRODUCT.DESCRIPTION
+                    : `${STRINGS.PRODUCT.REVIEWS} (${reviewsData?.pagination?.total || 0})`}
                 </button>
               ))}
             </div>
@@ -1028,10 +1159,10 @@ const ProductPage = () => {
               {activeTab === 'description' ? (
                 <div className="prose prose-lg max-w-none">
                   <p className="text-gray-600 leading-relaxed">{product.description}</p>
-                  
+
                   {product.tags?.length > 0 && (
                     <div className="mt-6">
-                      <h3 className="font-bold text-gray-800 mb-3">الكلمات المفتاحية:</h3>
+                      <h3 className="font-bold text-gray-800 mb-3">{STRINGS.PRODUCT.KEYWORDS}</h3>
                       <div className="flex flex-wrap gap-2">
                         {product.tags.map((tag) => (
                           <Link
@@ -1049,9 +1180,9 @@ const ProductPage = () => {
               ) : (
                 <div>
                   {/* Review Form Component */}
-                  <ReviewForm 
-                    productId={product._id} 
-                    refreshReviews={() => queryClient.invalidateQueries(['reviews', product._id])} 
+                  <ReviewForm
+                    productId={product._id}
+                    refreshReviews={() => queryClient.invalidateQueries(['reviews', product._id])}
                   />
 
                   {reviewsData?.data?.length > 0 ? (
@@ -1061,11 +1192,13 @@ const ProductPage = () => {
                           <div className="flex items-start justify-between">
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-medium">{review.user?.firstName || review.guestName}</span>
+                                <span className="font-medium">
+                                  {review.user?.firstName || review.guestName}
+                                </span>
                                 {review.isVerifiedPurchase && (
                                   <span className="text-green-600 text-sm flex items-center gap-1">
                                     <FiCheck size={14} />
-                                    مشتري معتمد
+                                    {STRINGS.PRODUCT.VERIFIED_BUYER}
                                   </span>
                                 )}
                               </div>
@@ -1090,11 +1223,9 @@ const ProductPage = () => {
                     <div className="text-center py-12">
                       <div className="text-5xl mb-4">⭐</div>
                       <h3 className="text-lg font-medium text-gray-800 mb-2">
-                        لا توجد تقييمات بعد
+                        {STRINGS.PRODUCT.NO_REVIEWS}
                       </h3>
-                      <p className="text-gray-600">
-                        كن أول من يقيم هذا المنتج
-                      </p>
+                      <p className="text-gray-600">{STRINGS.PRODUCT.BE_FIRST_TO_REVIEW}</p>
                     </div>
                   )}
                 </div>
@@ -1105,7 +1236,7 @@ const ProductPage = () => {
           {/* Related Products */}
           {relatedProducts?.length > 0 && (
             <div className="mt-12">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">منتجات ذات صلة</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">{STRINGS.PRODUCT.RELATED_PRODUCTS}</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {relatedProducts.map((product) => (
                   <ProductCard key={product._id} product={product} />
@@ -1116,7 +1247,7 @@ const ProductPage = () => {
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default ProductPage
+export default ProductPage;

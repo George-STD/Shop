@@ -7,7 +7,15 @@ export * from './strings';
 export * from './api';
 
 // Default exports
-import SITE_CONFIG, { BUSINESS_CONFIG, PAGINATION, STORAGE_KEYS, ROUTES, SEO_KEYWORDS, SOCIAL_LINKS, API_URL } from './config';
+import SITE_CONFIG, {
+  BUSINESS_CONFIG,
+  PAGINATION,
+  STORAGE_KEYS,
+  ROUTES,
+  SEO_KEYWORDS,
+  SOCIAL_LINKS,
+  API_URL,
+} from './config';
 import STRINGS from './strings';
 import ENDPOINTS, { API_BASE_URL, HTTP_STATUS, REQUEST_DEFAULTS, QUERY_DEFAULTS } from './api';
 

@@ -1,8 +1,8 @@
-import { SITE_CONFIG, SOCIAL_LINKS } from '../constants'
+import { SITE_CONFIG, SOCIAL_LINKS } from '../constants';
 
 export default function JsonLd() {
-  const siteUrl = SITE_CONFIG.SITE_URL
-  const logoUrl = `${siteUrl}${SITE_CONFIG.LOGO_URL}`
+  const siteUrl = SITE_CONFIG.SITE_URL;
+  const logoUrl = `${siteUrl}${SITE_CONFIG.LOGO_URL}`;
 
   const organizationSchema = {
     '@context': 'https://schema.org',
@@ -60,7 +60,7 @@ export default function JsonLd() {
       ],
     },
     sameAs: Object.values(SOCIAL_LINKS),
-  }
+  };
 
   const websiteSchema = {
     '@context': 'https://schema.org',
@@ -88,7 +88,7 @@ export default function JsonLd() {
       },
       'query-input': 'required name=search_term_string',
     },
-  }
+  };
 
   return (
     <>
@@ -101,5 +101,5 @@ export default function JsonLd() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
       />
     </>
-  )
+  );
 }

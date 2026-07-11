@@ -3,10 +3,10 @@
  * Uses constants to ensure consistency across all pages
  */
 
-import { SITE_CONFIG, ROUTES } from '../constants'
+import { SITE_CONFIG, ROUTES } from '../constants';
 
-const SITE_URL = SITE_CONFIG.SITE_URL
-const SITE_NAME = SITE_CONFIG.SITE_NAME
+const SITE_URL = SITE_CONFIG.SITE_URL;
+const SITE_NAME = SITE_CONFIG.SITE_NAME;
 
 /**
  * Generate standard metadata for a page
@@ -18,8 +18,8 @@ const SITE_NAME = SITE_CONFIG.SITE_NAME
  * @param {Object} [options.extra] - Additional metadata fields
  */
 export function generateMetadata({ title, description, path, image, extra = {} }) {
-  const canonicalUrl = `${SITE_URL}${path}`
-  const ogImage = image || `${SITE_URL}${SITE_CONFIG.OG_IMAGE}`
+  const canonicalUrl = `${SITE_URL}${path}`;
+  const ogImage = image || `${SITE_URL}${SITE_CONFIG.OG_IMAGE}`;
 
   return {
     title,
@@ -42,7 +42,7 @@ export function generateMetadata({ title, description, path, image, extra = {} }
       images: [ogImage],
     },
     ...extra,
-  }
+  };
 }
 
 /**
@@ -50,11 +50,12 @@ export function generateMetadata({ title, description, path, image, extra = {} }
  * @param {Object} product - Product data
  */
 export function generateProductMetadata(product) {
-  const title = product.name
-  const description = product.description?.substring(0, 160) || 
-    `اشتري ${product.name} من فور يو - متجر الهدايا الأول في مصر. شحن سريع وتغليف مجاني.`
-  const path = `${ROUTES.PRODUCT}/${product.slug}`
-  const image = product.images?.[0] || `${SITE_URL}${SITE_CONFIG.OG_IMAGE}`
+  const title = product.name;
+  const description =
+    product.description?.substring(0, 160) ||
+    `اشتري ${product.name} من فور يو - متجر الهدايا الأول في مصر. شحن سريع وتغليف مجاني.`;
+  const path = `${ROUTES.PRODUCT}/${product.slug}`;
+  const image = product.images?.[0] || `${SITE_URL}${SITE_CONFIG.OG_IMAGE}`;
 
   return {
     title,
@@ -76,7 +77,7 @@ export function generateProductMetadata(product) {
       description,
       images: [image],
     },
-  }
+  };
 }
 
 /**
@@ -92,13 +93,15 @@ export const PAGE_METADATA = {
 
   products: generateMetadata({
     title: 'تسوق جميع الهدايا',
-    description: 'تصفح مجموعتنا الكاملة من الهدايا لجميع المناسبات. هدايا أعياد ميلاد، زواج، تخرج، خطوبة ومواليد مع شحن سريع لكل مصر.',
+    description:
+      'تصفح مجموعتنا الكاملة من الهدايا لجميع المناسبات. هدايا أعياد ميلاد، زواج، تخرج، خطوبة ومواليد مع شحن سريع لكل مصر.',
     path: ROUTES.PRODUCTS,
   }),
 
   cart: generateMetadata({
     title: 'سلة التسوق',
-    description: 'راجع منتجاتك في سلة التسوق قبل إتمام عملية الشراء. تغليف هدايا مجاني وشحن سريع لجميع أنحاء مصر.',
+    description:
+      'راجع منتجاتك في سلة التسوق قبل إتمام عملية الشراء. تغليف هدايا مجاني وشحن سريع لجميع أنحاء مصر.',
     path: ROUTES.CART,
   }),
 
@@ -116,7 +119,8 @@ export const PAGE_METADATA = {
 
   giftFinder: generateMetadata({
     title: 'اختر الهدية المثالية',
-    description: 'دع فور يو يساعدك في اختيار الهدية المناسبة. حدد المناسبة والميزانية ونوع الشخص واحصل على اقتراحات مخصصة.',
+    description:
+      'دع فور يو يساعدك في اختيار الهدية المناسبة. حدد المناسبة والميزانية ونوع الشخص واحصل على اقتراحات مخصصة.',
     path: ROUTES.GIFT_FINDER,
   }),
 
@@ -135,25 +139,29 @@ export const PAGE_METADATA = {
   // Info pages
   about: generateMetadata({
     title: 'من نحن - تعرف على فور يو',
-    description: 'تعرف على فور يو (For You) - متجر الهدايا الأول في مصر. نقدم أفضل تشكيلة هدايا لجميع المناسبات مع خدمة تغليف مجانية وتوصيل سريع.',
+    description:
+      'تعرف على فور يو (For You) - متجر الهدايا الأول في مصر. نقدم أفضل تشكيلة هدايا لجميع المناسبات مع خدمة تغليف مجانية وتوصيل سريع.',
     path: ROUTES.ABOUT,
   }),
 
   contact: generateMetadata({
     title: 'تواصل معنا',
-    description: 'تواصل مع فريق فور يو (For You) لأي استفسارات. نحن هنا لمساعدتك في اختيار الهدية المثالية عبر البريد الإلكتروني أو نموذج التواصل.',
+    description:
+      'تواصل مع فريق فور يو (For You) لأي استفسارات. نحن هنا لمساعدتك في اختيار الهدية المثالية عبر البريد الإلكتروني أو نموذج التواصل.',
     path: ROUTES.CONTACT,
   }),
 
   faq: generateMetadata({
     title: 'الأسئلة الشائعة',
-    description: 'إجابات على الأسئلة الشائعة حول الطلب، الدفع، الشحن والتوصيل في فور يو. اعرف كل شيء عن تجربة التسوق معنا.',
+    description:
+      'إجابات على الأسئلة الشائعة حول الطلب، الدفع، الشحن والتوصيل في فور يو. اعرف كل شيء عن تجربة التسوق معنا.',
     path: ROUTES.FAQ,
   }),
 
   shipping: generateMetadata({
     title: 'الشحن والتوصيل',
-    description: 'تعرف على سياسة الشحن والتوصيل في فور يو. نوصل لجميع محافظات مصر بأسرع وقت. شحن سريع وآمن.',
+    description:
+      'تعرف على سياسة الشحن والتوصيل في فور يو. نوصل لجميع محافظات مصر بأسرع وقت. شحن سريع وآمن.',
     path: ROUTES.SHIPPING,
   }),
 
@@ -180,6 +188,6 @@ export const PAGE_METADATA = {
     description: 'الشروط والأحكام لاستخدام موقع فور يو للهدايا. اقرأ قبل إتمام عملية الشراء.',
     path: ROUTES.TERMS,
   }),
-}
+};
 
-export default PAGE_METADATA
+export default PAGE_METADATA;

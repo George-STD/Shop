@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import ProductPage from '../../../../legacy-pages/ProductPage'
+import ProductPage from '../../../../legacy-pages/ProductPage';
 
 export default function ProductPageClient() {
-  return <ProductPage />
+  return <ProductPage />;
 }

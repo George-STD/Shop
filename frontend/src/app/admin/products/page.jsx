@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import AdminProducts from '../../../legacy-pages/admin/AdminProducts'
+import AdminProducts from '../../../legacy-pages/admin/AdminProducts';
 
 export default function Page() {
-  return <AdminProducts />
+  return <AdminProducts />;
 }

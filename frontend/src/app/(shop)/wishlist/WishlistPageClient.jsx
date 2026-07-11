@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import WishlistPage from '../../../legacy-pages/WishlistPage'
+import WishlistPage from '../../../legacy-pages/WishlistPage';
 
 export default function WishlistPageClient() {
-  return <WishlistPage />
+  return <WishlistPage />;
 }

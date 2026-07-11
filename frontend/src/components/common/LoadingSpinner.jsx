@@ -1,4 +1,4 @@
-import { STRINGS } from '../../constants'
+import { STRINGS } from '../../constants';
 
 /**
  * Reusable loading spinner component with multiple variants
@@ -12,10 +12,14 @@ export function LoadingSpinner({ size = 'md', className = '' }) {
     md: 'w-8 h-8',
     lg: 'w-12 h-12',
     xl: 'w-16 h-16',
-  }
+  };
 
   return (
-    <div className={`${sizeClasses[size]} ${className}`} role="status" aria-label={STRINGS.COMMON.LOADING}>
+    <div
+      className={`${sizeClasses[size]} ${className}`}
+      role="status"
+      aria-label={STRINGS.COMMON.LOADING}
+    >
       <svg
         className="animate-spin w-full h-full text-purple-600"
         xmlns="http://www.w3.org/2000/svg"
@@ -38,7 +42,7 @@ export function LoadingSpinner({ size = 'md', className = '' }) {
       </svg>
       <span className="sr-only">{STRINGS.COMMON.LOADING}</span>
     </div>
-  )
+  );
 }
 
 // Full-page loading overlay
@@ -50,7 +54,7 @@ export function LoadingOverlay({ message = STRINGS.COMMON.LOADING }) {
         <p className="text-gray-600 font-medium">{message}</p>
       </div>
     </div>
-  )
+  );
 }
 
 // Page-level loading state
@@ -62,22 +66,17 @@ export function PageLoader({ message = STRINGS.COMMON.LOADING }) {
         <p className="text-gray-600">{message}</p>
       </div>
     </div>
-  )
+  );
 }
 
 // Button loading state
 export function ButtonLoader({ size = 'sm' }) {
-  return <LoadingSpinner size={size} className="inline-block" />
+  return <LoadingSpinner size={size} className="inline-block" />;
 }
 
 // Skeleton loading placeholders
 export function Skeleton({ className = '', ...props }) {
-  return (
-    <div
-      className={`animate-pulse bg-gray-200 rounded ${className}`}
-      {...props}
-    />
-  )
+  return <div className={`animate-pulse bg-gray-200 rounded ${className}`} {...props} />;
 }
 
 // Product card skeleton
@@ -91,7 +90,7 @@ export function ProductCardSkeleton() {
         <Skeleton className="h-6 w-1/3" />
       </div>
     </div>
-  )
+  );
 }
 
 // Product grid skeleton
@@ -102,7 +101,7 @@ export function ProductGridSkeleton({ count = 8 }) {
         <ProductCardSkeleton key={i} />
       ))}
     </div>
-  )
+  );
 }
 
 // Text line skeleton
@@ -110,13 +109,10 @@ export function TextSkeleton({ lines = 3, className = '' }) {
   return (
     <div className={`space-y-2 ${className}`}>
       {Array.from({ length: lines }).map((_, i) => (
-        <Skeleton
-          key={i}
-          className={`h-4 ${i === lines - 1 ? 'w-2/3' : 'w-full'}`}
-        />
+        <Skeleton key={i} className={`h-4 ${i === lines - 1 ? 'w-2/3' : 'w-full'}`} />
       ))}
     </div>
-  )
+  );
 }
 
 // Order card skeleton
@@ -136,7 +132,7 @@ export function OrderCardSkeleton() {
         <Skeleton className="h-8 w-24 rounded-lg" />
       </div>
     </div>
-  )
+  );
 }
 
-export default LoadingSpinner
+export default LoadingSpinner;

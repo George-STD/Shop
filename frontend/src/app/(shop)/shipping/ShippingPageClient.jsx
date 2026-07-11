@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import ShippingPage from '../../../legacy-pages/ShippingPage'
+import ShippingPage from '../../../legacy-pages/ShippingPage';
 
 export default function ShippingPageClient() {
-  return <ShippingPage />
+  return <ShippingPage />;
 }

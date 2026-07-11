@@ -1,45 +1,21 @@
-import { Link } from 'react-router-dom'
-import { FiGift, FiHeart, FiTruck, FiAward, FiUsers, FiStar } from 'react-icons/fi'
+import { Link } from 'react-router-dom';
+import { FiGift, FiHeart, FiTruck, FiAward, FiUsers, FiStar } from 'react-icons/fi';
+import { STRINGS } from '../constants';
+
+const icons = [FiGift, FiHeart, FiTruck, FiAward];
 
 const AboutPage = () => {
-  const stats = [
-    { number: '+50', label: 'عميل سعيد' },
-    { number: '+10', label: 'هدية تم توصيلها' },
-    { number: '+10', label: 'منتج فريد' },
-    { number: '1', label: 'سنوات خبرة' },
-  ]
+  const stats = STRINGS.ABOUT_PAGE.STATS;
 
-  const values = [
-    {
-      icon: FiGift,
-      title: 'هدايا استثنائية',
-      description: 'نختار بعناية كل منتج لضمان جودته وتميزه'
-    },
-    {
-      icon: FiHeart,
-      title: 'شغف بالتفاصيل',
-      description: 'نهتم بأدق التفاصيل لنضمن تجربة لا تُنسى'
-    },
-    {
-      icon: FiTruck,
-      title: 'توصيل موثوق',
-      description: 'نصل إليك في الوقت المحدد مع عناية فائقة بالتغليف'
-    },
-    {
-      icon: FiAward,
-      title: 'جودة مضمونة',
-      description: 'نعمل مع أفضل العلامات التجارية المحلية والعالمية'
-    },
-  ]
+  const values = STRINGS.ABOUT_PAGE.VALUES.map((val, idx) => ({
+    ...val,
+    icon: icons[idx],
+  }));
 
-  const team = [
-    { name: 'ماريو روماني', role: 'المؤسس والرئيس التنفيذي', image: 'https://iili.io/qnah2Ev.md.jpg' },
-    { name: 'جورج أسامة', role: 'المؤسس والمسؤول التقني', image: 'https://iili.io/qnasqIs.jpg' },
-  ]
+  const team = STRINGS.ABOUT_PAGE.TEAM;
 
   return (
     <>
-
       <div className="min-h-screen">
         {/* Hero */}
         <div className="relative bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white py-20 overflow-hidden">
@@ -49,10 +25,9 @@ const AboutPage = () => {
           </div>
           <div className="container-custom relative">
             <div className="max-w-3xl">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">نحوّل اللحظات إلى ذكريات</h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-6">{STRINGS.ABOUT_PAGE.HERO_TITLE}</h1>
               <p className="text-xl opacity-90 leading-relaxed">
-                في هدايا، نؤمن بأن كل هدية تحمل رسالة حب وتقدير. نسعى لنكون الوجهة الأولى 
-                لكل من يبحث عن هدية مميزة تعبر عن مشاعره.
+                {STRINGS.ABOUT_PAGE.HERO_SUBTITLE}
               </p>
             </div>
           </div>
@@ -63,7 +38,9 @@ const AboutPage = () => {
           <div className="bg-white rounded-2xl shadow-xl p-8 grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, idx) => (
               <div key={idx} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">{stat.number}</div>
+                <div className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+                  {stat.number}
+                </div>
                 <div className="text-gray-600 mt-1">{stat.label}</div>
               </div>
             ))}
@@ -74,33 +51,25 @@ const AboutPage = () => {
         <div className="container-custom py-20">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium">قصتنا</span>
-              <h2 className="text-3xl font-bold mt-2 mb-6">رحلة بدأت بفكرة بسيطة</h2>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium">
+                {STRINGS.ABOUT_PAGE.OUR_STORY_LABEL}
+              </span>
+              <h2 className="text-3xl font-bold mt-2 mb-6">{STRINGS.ABOUT_PAGE.OUR_STORY_TITLE}</h2>
               <div className="space-y-4 text-gray-600 leading-relaxed">
-                <p>
-                  بدأت قصة هدايا (foryou) عندما لاحظ مؤسسوها، ماريو وجورج، صعوبة العثور على هدية
-                  مميزة تعبر عن مشاعرهم في مناسباتهم الخاصة. كانوا يبحثون عن شيء يتجاوز الهدايا التقليدية
-                  ويقدم تجربة فريدة من نوعها.
-                </p>
-                <p>
-                  من هنا جاءت فكرة "هدايا (foryou)" - منصة تجمع أفضل المنتجات المختارة بعناية من أجود العلامات 
-                  التجارية المحلية والعالمية، مع خدمة تغليف هدايا احترافية وتوصيل موثوق.
-                </p>
-                <p>
-                  اليوم، نفخر بخدمة عشرات العملاء في جميع أنحاء مصر، ونواصل التطور لنقدم لكم 
-                  تجربة تسوق هدايا لا مثيل لها.
-                </p>
+                <p>{STRINGS.ABOUT_PAGE.OUR_STORY_P1}</p>
+                <p>{STRINGS.ABOUT_PAGE.OUR_STORY_P2}</p>
+                <p>{STRINGS.ABOUT_PAGE.OUR_STORY_P3}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <img 
-                src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400" 
-                alt="هدايا مغلفة"
+              <img
+                src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400"
+                alt={STRINGS.ABOUT_PAGE.OUR_STORY_TITLE}
                 className="rounded-2xl shadow-lg"
               />
-              <img 
-                src="https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=400" 
-                alt="باقة هدايا"
+              <img
+                src="https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=400"
+                alt={STRINGS.ABOUT_PAGE.OUR_STORY_LABEL}
                 className="rounded-2xl shadow-lg mt-8"
               />
             </div>
@@ -111,13 +80,18 @@ const AboutPage = () => {
         <div className="bg-gray-50 py-20">
           <div className="container-custom">
             <div className="text-center max-w-2xl mx-auto mb-12">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium">قيمنا</span>
-              <h2 className="text-3xl font-bold mt-2 mb-4">ما يميزنا</h2>
-              <p className="text-gray-600">نلتزم بمعايير عالية في كل ما نقدمه</p>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium">
+                {STRINGS.ABOUT_PAGE.VALUES_LABEL}
+              </span>
+              <h2 className="text-3xl font-bold mt-2 mb-4">{STRINGS.ABOUT_PAGE.VALUES_TITLE}</h2>
+              <p className="text-gray-600">{STRINGS.ABOUT_PAGE.VALUES_DESC}</p>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {values.map((value, idx) => (
-                <div key={idx} className="bg-white rounded-2xl p-6 text-center hover:shadow-lg transition-shadow">
+                <div
+                  key={idx}
+                  className="bg-white rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
+                >
                   <div className="w-16 h-16 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <value.icon className="text-3xl text-purple-600" />
                   </div>
@@ -132,16 +106,18 @@ const AboutPage = () => {
         {/* Team */}
         <div className="container-custom py-20">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium">فريقنا</span>
-            <h2 className="text-3xl font-bold mt-2 mb-4">نخبة من المتميزين</h2>
-            <p className="text-gray-600">فريق شغوف يعمل لتقديم أفضل تجربة لكم</p>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-medium">
+              {STRINGS.ABOUT_PAGE.TEAM_LABEL}
+            </span>
+            <h2 className="text-3xl font-bold mt-2 mb-4">{STRINGS.ABOUT_PAGE.TEAM_TITLE}</h2>
+            <p className="text-gray-600">{STRINGS.ABOUT_PAGE.TEAM_DESC}</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {team.map((member, idx) => (
               <div key={idx} className="text-center group">
                 <div className="relative mb-4 overflow-hidden rounded-2xl">
-                  <img 
-                    src={member.image} 
+                  <img
+                    src={member.image}
                     alt={member.name}
                     className="w-full aspect-square object-cover group-hover:scale-110 transition-transform duration-500"
                   />
@@ -156,16 +132,16 @@ const AboutPage = () => {
         {/* CTA */}
         <div className="bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white py-16">
           <div className="container-custom text-center">
-            <h2 className="text-3xl font-bold mb-4">هل أنت مستعد لإسعاد أحبائك؟</h2>
-            <p className="text-xl opacity-90 mb-8">اكتشف مجموعتنا الواسعة من الهدايا المميزة</p>
+            <h2 className="text-3xl font-bold mb-4">{STRINGS.ABOUT_PAGE.CTA_TITLE}</h2>
+            <p className="text-xl opacity-90 mb-8">{STRINGS.ABOUT_PAGE.CTA_DESC}</p>
             <Link to="/products" className="btn-secondary inline-block">
-              تصفح المنتجات
+              {STRINGS.ABOUT_PAGE.CTA_BUTTON}
             </Link>
           </div>
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default AboutPage
+export default AboutPage;

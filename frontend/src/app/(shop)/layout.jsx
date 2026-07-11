@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import Layout from '../../components/layout/Layout'
+import Layout from '../../components/layout/Layout';
 
 export default function ShopLayout({ children }) {
-  return <Layout>{children}</Layout>
+  return <Layout>{children}</Layout>;
 }

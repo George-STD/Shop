@@ -1,44 +1,56 @@
-import { useState } from 'react'
-import { FiMail, FiMapPin, FiClock, FiSend, FiMessageCircle } from 'react-icons/fi'
-import { FaInstagram, FaFacebookF, FaYoutube } from 'react-icons/fa'
-import toast from 'react-hot-toast'
+import { useState } from 'react';
+import { FiMail, FiMapPin, FiClock, FiSend, FiMessageCircle } from 'react-icons/fi';
+import { FaInstagram, FaFacebookF, FaYoutube } from 'react-icons/fa';
+import { STRINGS } from '../constants';
+import toast from 'react-hot-toast';
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
-    name: '', email: '', subject: '', message: ''
-  })
-  const [loading, setLoading] = useState(false)
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+  });
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    toast.success('تم إرسال رسالتك بنجاح! سنتواصل معك قريباً')
-    setFormData({ name: '', email: '', subject: '', message: '' })
-    setLoading(false)
-  }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    toast.success(STRINGS.CONTACT_PAGE.SUCCESS_MESSAGE);
+    setFormData({ name: '', email: '', subject: '', message: '' });
+    setLoading(false);
+  };
 
   const contactInfo = [
-    { icon: FiMail, title: 'البريد الإلكتروني', value: 'support@foryo.me', link: 'mailto:support@foryo.me' },
-    { icon: FiClock, title: 'ساعات العمل', value: 'متاحين على مدار الساعة', link: null },
-  ]
+    {
+      icon: FiMail,
+      title: STRINGS.CONTACT_PAGE.EMAIL_LABEL,
+      value: 'support@foryo.me',
+      link: 'mailto:support@foryo.me',
+    },
+    { icon: FiClock, title: STRINGS.CONTACT_PAGE.WORKING_HOURS, value: STRINGS.CONTACT_PAGE.ALWAYS_AVAILABLE, link: null },
+  ];
 
   const socialLinks = [
     { icon: FaInstagram, name: 'Instagram', link: 'https://www.instagram.com/foryou._.21' },
-    { icon: FaFacebookF, name: 'Facebook', link: 'https://www.facebook.com/share/1BzYfakvLp/?mibextid=wwXIfr' },
+    {
+      icon: FaFacebookF,
+      name: 'Facebook',
+      link: 'https://www.facebook.com/share/1BzYfakvLp/?mibextid=wwXIfr',
+    },
     { icon: FaYoutube, name: 'YouTube', link: 'https://www.youtube.com/@foryou-l1k' },
-  ]
+  ];
 
   return (
     <>
-
       <div className="min-h-screen bg-gray-50">
         {/* Hero */}
         <div className="bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white py-16">
           <div className="container-custom text-center">
-            <h1 className="text-4xl font-bold mb-4">تواصل معنا</h1>
-            <p className="text-xl opacity-90">نحن هنا لمساعدتك في كل ما تحتاجه</p>
+            <h1 className="text-4xl font-bold mb-4">{STRINGS.CONTACT_PAGE.HERO_TITLE}</h1>
+            <p className="text-xl opacity-90">{STRINGS.CONTACT_PAGE.HERO_SUBTITLE}</p>
           </div>
         </div>
 
@@ -48,7 +60,7 @@ const ContactPage = () => {
             <div className="lg:col-span-1 space-y-6">
               {/* Contact Cards */}
               <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="text-xl font-bold mb-6">معلومات التواصل</h2>
+                <h2 className="text-xl font-bold mb-6">{STRINGS.CONTACT_PAGE.CONTACT_INFO}</h2>
                 <div className="space-y-4">
                   {contactInfo.map((item, idx) => (
                     <a
@@ -72,7 +84,7 @@ const ContactPage = () => {
 
               {/* Social Media */}
               <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="text-xl font-bold mb-4">تابعنا</h2>
+                <h2 className="text-xl font-bold mb-4">{STRINGS.CONTACT_PAGE.FOLLOW_US}</h2>
                 <div className="flex gap-3">
                   {socialLinks.map((item, idx) => (
                     <a
@@ -88,12 +100,13 @@ const ContactPage = () => {
 
               {/* Store Location */}
               <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 className="text-xl font-bold mb-4">موقعنا</h2>
+                <h2 className="text-xl font-bold mb-4">{STRINGS.CONTACT_PAGE.OUR_LOCATION}</h2>
                 <div className="flex items-start gap-3 mb-4">
                   <FiMapPin className="text-purple-600 text-xl flex-shrink-0 mt-1" />
                   <p className="text-gray-600">
-                    القاهرة، المقطم<br />
-                    شارع 9
+                    {STRINGS.CONTACT_PAGE.ADDRESS_LINE1}
+                    <br />
+                    {STRINGS.CONTACT_PAGE.ADDRESS_LINE2}
                   </p>
                 </div>
                 <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden">
@@ -116,31 +129,33 @@ const ContactPage = () => {
                 <div className="flex items-center gap-3 mb-6">
                   <FiMessageCircle className="text-3xl text-purple-600" />
                   <div>
-                    <h2 className="text-2xl font-bold">أرسل لنا رسالة</h2>
-                    <p className="text-gray-500">سنرد عليك في أقرب وقت ممكن</p>
+                    <h2 className="text-2xl font-bold">{STRINGS.CONTACT_PAGE.SEND_MESSAGE}</h2>
+                    <p className="text-gray-500">{STRINGS.CONTACT_PAGE.WILL_REPLY_SOON}</p>
                   </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-gray-700 font-medium mb-2">الاسم الكامل *</label>
+                      <label className="block text-gray-700 font-medium mb-2">{STRINGS.CONTACT_PAGE.FULL_NAME}</label>
                       <input
                         type="text"
                         required
                         value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         className="input-field"
-                        placeholder="أدخل اسمك"
+                        placeholder={STRINGS.CONTACT_PAGE.ENTER_NAME}
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-700 font-medium mb-2">البريد الإلكتروني *</label>
+                      <label className="block text-gray-700 font-medium mb-2">
+                        {STRINGS.CONTACT_PAGE.EMAIL_REQUIRED}
+                      </label>
                       <input
                         type="email"
                         required
                         value={formData.email}
-                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         className="input-field"
                         placeholder="example@email.com"
                       />
@@ -148,31 +163,31 @@ const ContactPage = () => {
                   </div>
 
                   <div>
-                    <label className="block text-gray-700 font-medium mb-2">الموضوع *</label>
+                    <label className="block text-gray-700 font-medium mb-2">{STRINGS.CONTACT_PAGE.SUBJECT}</label>
                     <select
                       required
                       value={formData.subject}
-                      onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                       className="input-field"
                     >
-                      <option value="">اختر الموضوع</option>
-                      <option value="inquiry">استفسار عام</option>
-                      <option value="order">استفسار عن طلب</option>
-                      <option value="complaint">شكوى</option>
-                      <option value="suggestion">اقتراح</option>
-                      <option value="corporate">طلبات الشركات</option>
+                      <option value="">{STRINGS.CONTACT_PAGE.SELECT_SUBJECT}</option>
+                      <option value="inquiry">{STRINGS.CONTACT_PAGE.SUBJECTS.GENERAL_INQUIRY}</option>
+                      <option value="order">{STRINGS.CONTACT_PAGE.SUBJECTS.ORDER_INQUIRY}</option>
+                      <option value="complaint">{STRINGS.CONTACT_PAGE.SUBJECTS.COMPLAINT}</option>
+                      <option value="suggestion">{STRINGS.CONTACT_PAGE.SUBJECTS.SUGGESTION}</option>
+                      <option value="corporate">{STRINGS.CONTACT_PAGE.SUBJECTS.CORPORATE_REQUESTS}</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-gray-700 font-medium mb-2">رسالتك *</label>
+                    <label className="block text-gray-700 font-medium mb-2">{STRINGS.CONTACT_PAGE.YOUR_MESSAGE}</label>
                     <textarea
                       required
                       rows={6}
                       value={formData.message}
-                      onChange={(e) => setFormData({...formData, message: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                       className="input-field resize-none"
-                      placeholder="اكتب رسالتك هنا..."
+                      placeholder={STRINGS.CONTACT_PAGE.WRITE_MESSAGE_HERE}
                     />
                   </div>
 
@@ -182,11 +197,11 @@ const ContactPage = () => {
                     className="btn-primary flex items-center justify-center gap-2 w-full md:w-auto md:px-12"
                   >
                     {loading ? (
-                      'جاري الإرسال...'
+                      STRINGS.CONTACT_PAGE.SENDING
                     ) : (
                       <>
                         <FiSend />
-                        إرسال الرسالة
+                        {STRINGS.CONTACT_PAGE.SEND_BUTTON}
                       </>
                     )}
                   </button>
@@ -199,9 +214,16 @@ const ContactPage = () => {
                   <span className="text-2xl">❓</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800">هل لديك سؤال شائع؟</h3>
+                  <h3 className="font-bold text-gray-800">{STRINGS.CONTACT_PAGE.HAVE_QUESTION}</h3>
                   <p className="text-gray-600">
-                    تحقق من <a href="/faq" className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline">الأسئلة الشائعة</a> للحصول على إجابات سريعة
+                    {STRINGS.CONTACT_PAGE.CHECK_FAQ_1}{' '}
+                    <a
+                      href="/faq"
+                      className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline"
+                    >
+                      {STRINGS.CONTACT_PAGE.CHECK_FAQ_2}
+                    </a>{' '}
+                    {STRINGS.CONTACT_PAGE.CHECK_FAQ_3}
                   </p>
                 </div>
               </div>
@@ -210,7 +232,7 @@ const ContactPage = () => {
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default ContactPage
+export default ContactPage;

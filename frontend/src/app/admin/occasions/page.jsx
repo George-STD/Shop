@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import AdminOccasions from '../../../legacy-pages/admin/AdminOccasions'
+import AdminOccasions from '../../../legacy-pages/admin/AdminOccasions';
 
 export default function Page() {
-  return <AdminOccasions />
+  return <AdminOccasions />;
 }

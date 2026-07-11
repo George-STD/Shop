@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import AdminOrders from '../../../legacy-pages/admin/AdminOrders'
+import AdminOrders from '../../../legacy-pages/admin/AdminOrders';
 
 export default function Page() {
-  return <AdminOrders />
+  return <AdminOrders />;
 }

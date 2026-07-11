@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import ReturnsPage from '../../../legacy-pages/ReturnsPage'
+import ReturnsPage from '../../../legacy-pages/ReturnsPage';
 
 export default function ReturnsPageClient() {
-  return <ReturnsPage />
+  return <ReturnsPage />;
 }

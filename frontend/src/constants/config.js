@@ -22,25 +22,26 @@ export const SITE_CONFIG = {
   // URLs
   SITE_URL: 'https://www.foryo.me',
   API_URL: API_URL,
-  
+
   // Site Identity
   SITE_NAME: 'For You - فور يو',
   SITE_NAME_EN: 'For You',
   SITE_NAME_AR: 'فور يو',
   SITE_TAGLINE: 'متجر الهدايا الأول في مصر',
-  
+
   // SEO Defaults
   DEFAULT_TITLE: 'For You | فور يو - متجر الهدايا الأول في مصر | هدايا لجميع المناسبات',
-  DEFAULT_DESCRIPTION: 'فور يو (For You) - متجر الهدايا الأول في مصر | تشكيلة واسعة من هدايا أعياد الميلاد، الزواج، التخرج وجميع المناسبات. شحن سريع وتغليف مجاني لكل أنحاء مصر.',
-  
+  DEFAULT_DESCRIPTION:
+    'فور يو (For You) - متجر الهدايا الأول في مصر | تشكيلة واسعة من هدايا أعياد الميلاد، الزواج، التخرج وجميع المناسبات. شحن سريع وتغليف مجاني لكل أنحاء مصر.',
+
   // Images
   LOGO_URL: '/images/logo.jpeg',
   OG_IMAGE: '/images/logo.jpeg',
   PLACEHOLDER_IMAGE: '/images/placeholder.jpg',
-  
+
   // Theme
   THEME_COLOR: '#a855f7',
-  
+
   // Locale
   LOCALE: 'ar_EG',
   DIRECTION: 'rtl',
@@ -53,19 +54,19 @@ export const BUSINESS_CONFIG = {
   CURRENCY: 'EGP',
   CURRENCY_SYMBOL: 'ج.م',
   CURRENCY_POSITION: 'after', // 'before' or 'after'
-  
+
   // Shipping
   SHIPPING_COST: 95,
-  
+
   // Build-a-Box
   BOX_MIN_ITEMS: 2,
   BOX_MAX_ITEMS: 100,
   BOX_DISCOUNT_PERCENTAGE: 25,
   BOX_BASE_PRICE_EGP: 50,
-  
+
   // Contact Information
   EMAIL: 'support@foryo.me',
-  
+
   // Address
   ADDRESS: {
     CITY: 'القاهرة',
@@ -73,7 +74,7 @@ export const BUSINESS_CONFIG = {
     STREET: 'شارع 9',
     FULL: 'القاهرة، المقطم، شارع 9',
   },
-  
+
   // Social Media
   SOCIAL: {
     FACEBOOK: 'https://www.facebook.com/share/1BzYfakvLp/?mibextid=wwXIfr',
@@ -81,7 +82,7 @@ export const BUSINESS_CONFIG = {
     YOUTUBE: 'https://youtube.com/@foryou-l1k?si=wL0zO2sHLypUtE-p',
     TWITTER: '@foryou._.21',
   },
-  
+
   // Working Hours
   WORKING_HOURS: 'متاحين على مدار الساعة',
 };
@@ -126,17 +127,48 @@ export const ROUTES = {
 
 // SEO Keywords
 export const SEO_KEYWORDS = [
-  'foryo', 'for you', 'foryou', 'for you gift shop', 'foryo giftshop',
-  'foryo gifts', 'foryou gifts', 'foryo egypt', 'foryou egypt',
-  'foryo.me', 'for you gifts egypt', 'for you هدايا',
-  'فور يو', 'فوريو', 'فور يو هدايا', 'فور يو للهدايا', 'متجر فور يو',
-  'for you store', 'foryo store', 'foryou store',
-  'هدايا', 'متجر هدايا', 'هدايا اون لاين', 'شراء هدايا', 'هدايا مصر',
-  'هدايا عيد ميلاد', 'هدايا زواج', 'هدايا تخرج', 'هدايا خطوبة',
-  'هدايا مواليد', 'هدايا رجالي', 'هدايا حريمي', 'هدايا اطفال',
-  'gift shop egypt', 'gifts egypt', 'online gift shop egypt',
-  'هدايا فالنتاين', 'هدايا عيد الام', 'تغليف هدايا', 'توصيل هدايا',
-  'هدايا اونلاين مصر', 'أفضل متجر هدايا',
+  'foryo',
+  'for you',
+  'foryou',
+  'for you gift shop',
+  'foryo giftshop',
+  'foryo gifts',
+  'foryou gifts',
+  'foryo egypt',
+  'foryou egypt',
+  'foryo.me',
+  'for you gifts egypt',
+  'for you هدايا',
+  'فور يو',
+  'فوريو',
+  'فور يو هدايا',
+  'فور يو للهدايا',
+  'متجر فور يو',
+  'for you store',
+  'foryo store',
+  'foryou store',
+  'هدايا',
+  'متجر هدايا',
+  'هدايا اون لاين',
+  'شراء هدايا',
+  'هدايا مصر',
+  'هدايا عيد ميلاد',
+  'هدايا زواج',
+  'هدايا تخرج',
+  'هدايا خطوبة',
+  'هدايا مواليد',
+  'هدايا رجالي',
+  'هدايا حريمي',
+  'هدايا اطفال',
+  'gift shop egypt',
+  'gifts egypt',
+  'online gift shop egypt',
+  'هدايا فالنتاين',
+  'هدايا عيد الام',
+  'تغليف هدايا',
+  'توصيل هدايا',
+  'هدايا اونلاين مصر',
+  'أفضل متجر هدايا',
 ];
 
 // Social Media Links (for structured data)

@@ -1,12 +1,12 @@
-import '../index.css'
-import Providers from './providers'
-import JsonLd from './JsonLd'
-import { SITE_CONFIG, SEO_KEYWORDS } from '../constants'
+import '../index.css';
+import Providers from './providers';
+import JsonLd from './JsonLd';
+import { SITE_CONFIG, SEO_KEYWORDS } from '../constants';
 
-const SITE_URL = SITE_CONFIG.SITE_URL
-const SITE_NAME = SITE_CONFIG.SITE_NAME
-const SITE_DESCRIPTION = SITE_CONFIG.DEFAULT_DESCRIPTION
-const OG_IMAGE = `${SITE_URL}${SITE_CONFIG.OG_IMAGE}`
+const SITE_URL = SITE_CONFIG.SITE_URL;
+const SITE_NAME = SITE_CONFIG.SITE_NAME;
+const SITE_DESCRIPTION = SITE_CONFIG.DEFAULT_DESCRIPTION;
+const OG_IMAGE = `${SITE_URL}${SITE_CONFIG.OG_IMAGE}`;
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -75,14 +75,14 @@ export const metadata = {
     icon: SITE_CONFIG.LOGO_URL,
     apple: SITE_CONFIG.LOGO_URL,
   },
-}
+};
 
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
   themeColor: SITE_CONFIG.THEME_COLOR,
-}
+};
 
 export default function RootLayout({ children }) {
   return (
@@ -100,5 +100,5 @@ export default function RootLayout({ children }) {
         <Providers>{children}</Providers>
       </body>
     </html>
-  )
+  );
 }

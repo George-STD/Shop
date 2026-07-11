@@ -1,12 +1,12 @@
-import { Link } from 'react-router-dom'
-import { FiX, FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi'
-import { useUIStore, useCartStore } from '../../store'
-import { BUSINESS_CONFIG } from '../../constants'
-import toast from 'react-hot-toast'
+import { Link } from 'react-router-dom';
+import { FiX, FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi';
+import { useUIStore, useCartStore } from '../../store';
+import { BUSINESS_CONFIG } from '../../constants';
+import toast from 'react-hot-toast';
 
 const CartSidebar = () => {
-  const { closeCart } = useUIStore()
-  const { items, removeItem, updateQuantity, getTotal } = useCartStore()
+  const { closeCart } = useUIStore();
+  const { items, removeItem, updateQuantity, getTotal } = useCartStore();
 
   const increaseQuantity = (item) => {
     const result = updateQuantity(
@@ -17,26 +17,26 @@ const CartSidebar = () => {
       item.selectedShape,
       item._variantsKey,
       item.boxId
-    )
+    );
 
     if (result?.capped && result.maxStock !== null) {
-      toast.error(`الحد الأقصى المتاح هو ${result.maxStock}`)
+      toast.error(`${STRINGS.CART.MAX_STOCK_REACHED}${result.maxStock}`);
     }
-  }
-  
-  const total = getTotal()
-  const shippingCost = BUSINESS_CONFIG.SHIPPING_COST
+  };
 
-  const formatPrice = (price) => new Intl.NumberFormat('ar-EG').format(price)
+  const total = getTotal();
+  const shippingCost = BUSINESS_CONFIG.SHIPPING_COST;
+
+  const formatPrice = (price) => new Intl.NumberFormat('ar-EG').format(price);
 
   return (
     <div className="fixed inset-0 z-50">
       {/* Overlay */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm overlay-backdrop"
         onClick={closeCart}
       />
-      
+
       {/* Cart Panel */}
       <div className="absolute top-0 left-0 h-full w-[85vw] sm:w-96 max-w-full bg-white shadow-2xl flex flex-col panel-slide-left">
         {/* Header */}
@@ -46,13 +46,11 @@ const CartSidebar = () => {
               <FiShoppingBag size={18} className="text-purple-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-800">سلة التسوق</h2>
-              {items.length > 0 && (
-                <p className="text-xs text-gray-400">{items.length} منتج</p>
-              )}
+              <h2 className="text-lg font-bold text-gray-800">{STRINGS.CART.TITLE}</h2>
+              {items.length > 0 && <p className="text-xs text-gray-400">{items.length} {STRINGS.CART.ITEM}</p>}
             </div>
           </div>
-          <button 
+          <button
             onClick={closeCart}
             className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
@@ -67,83 +65,95 @@ const CartSidebar = () => {
               <div className="w-20 h-20 bg-gradient-to-br from-purple-50 to-pink-50 rounded-full flex items-center justify-center mx-auto mb-5">
                 <span className="text-4xl">🛒</span>
               </div>
-              <h3 className="text-lg font-bold text-gray-800 mb-2">
-                السلة فارغة
-              </h3>
-              <p className="text-gray-400 mb-8 text-sm">
-                لم تضف أي منتجات بعد، ابدأ التسوق الآن!
-              </p>
-              <Link 
-                to="/products"
-                onClick={closeCart}
-                className="btn-primary inline-block text-sm"
-              >
-                تسوق الآن ←
+              <h3 className="text-lg font-bold text-gray-800 mb-2">{STRINGS.CART.EMPTY}</h3>
+              <p className="text-gray-400 mb-8 text-sm">{STRINGS.CART.EMPTY_MESSAGE}</p>
+              <Link to="/products" onClick={closeCart} className="btn-primary inline-block text-sm">
+                {STRINGS.CART.START_SHOPPING} &larr;
               </Link>
             </div>
           ) : (
             <div className="space-y-3">
               {items.map((item, index) => (
-                <div key={`${item.id}-${index}`} className="flex gap-3 bg-gray-50 p-3 rounded-2xl border border-gray-100 hover:border-purple-100 transition-colors">
+                <div
+                  key={`${item.id}-${index}`}
+                  className="flex gap-3 bg-gray-50 p-3 rounded-2xl border border-gray-100 hover:border-purple-100 transition-colors"
+                >
                   {/* Image */}
-                  <Link 
+                  <Link
                     to={`/product/${item.slug}`}
                     onClick={closeCart}
                     className="w-20 h-20 flex-shrink-0 overflow-hidden rounded-xl"
                   >
-                    <img 
-                      src={item.image || '/images/placeholder.jpg'} 
+                    <img
+                      src={item.image || '/images/placeholder.jpg'}
                       alt={item.name}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     />
                   </Link>
-                  
+
                   {/* Details */}
                   <div className="flex-1 min-w-0">
-                    <Link 
+                    <Link
                       to={`/product/${item.slug}`}
                       onClick={closeCart}
                       className="font-medium text-gray-800 hover:text-purple-700 line-clamp-2 text-sm transition-colors"
                     >
                       {item.name}
                     </Link>
-                    
+
                     {item.boxId && (
                       <span className="inline-block bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded-full mt-1">
-                        📦 في البوكس
+                        {STRINGS.CART.IN_BOX}
                       </span>
                     )}
 
                     {/* Options */}
                     {(item.selectedSize || item.selectedColor) && (
                       <p className="text-xs text-gray-400 mt-0.5">
-                        {item.selectedSize && `المقاس: ${item.selectedSize}`}
+                        {item.selectedSize && `${STRINGS.PRODUCT.SIZE} ${item.selectedSize}`}
                         {item.selectedSize && item.selectedColor && ' | '}
-                        {item.selectedColor && `اللون: ${item.selectedColor}`}
+                        {item.selectedColor && `${STRINGS.PRODUCT.COLOR} ${item.selectedColor}`}
                       </p>
                     )}
-                    
+
                     {/* Price */}
                     <div className="flex items-center gap-2 mt-1">
                       <span className="font-bold text-gray-900 text-sm">
-                        {formatPrice(item.boxId ? item.price * (1 - BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE / 100) : item.price)} ج.م
+                        {formatPrice(
+                          item.boxId
+                            ? item.price * (1 - BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE / 100)
+                            : item.price
+                        )}{' '}
+                        {STRINGS.PRODUCT.CURRENCY}
                       </span>
                       {item.boxId ? (
                         <span className="text-xs text-gray-400 line-through">
-                          {formatPrice(item.price)} ج.م
+                          {formatPrice(item.price)} {STRINGS.PRODUCT.CURRENCY}
                         </span>
-                      ) : item.oldPrice && (
-                        <span className="text-xs text-gray-400 line-through">
-                          {formatPrice(item.oldPrice)}
-                        </span>
+                      ) : (
+                        item.oldPrice && (
+                          <span className="text-xs text-gray-400 line-through">
+                            {formatPrice(item.oldPrice)}
+                          </span>
+                        )
                       )}
                     </div>
-                    
+
                     {/* Quantity & Remove */}
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-0">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.selectedSize, item.selectedColor, item.selectedShape, item._variantsKey, item.boxId)}
+                          onClick={() =>
+                            updateQuantity(
+                              item.id,
+                              item.quantity - 1,
+                              item.selectedSize,
+                              item.selectedColor,
+                              item.selectedShape,
+                              item._variantsKey,
+                              item.boxId
+                            )
+                          }
                           className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:border-purple-300 hover:bg-purple-50 transition-colors"
                           disabled={item.quantity <= 1}
                         >
@@ -153,13 +163,25 @@ const CartSidebar = () => {
                         <button
                           onClick={() => increaseQuantity(item)}
                           className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:border-purple-300 hover:bg-purple-50 transition-colors"
-                          disabled={Number.isFinite(Number(item.stock)) && item.quantity >= Number(item.stock)}
+                          disabled={
+                            Number.isFinite(Number(item.stock)) &&
+                            item.quantity >= Number(item.stock)
+                          }
                         >
                           <FiPlus size={12} />
                         </button>
                       </div>
                       <button
-                        onClick={() => removeItem(item.id, item.selectedSize, item.selectedColor, item.selectedShape, item._variantsKey, item.boxId)}
+                        onClick={() =>
+                          removeItem(
+                            item.id,
+                            item.selectedSize,
+                            item.selectedColor,
+                            item.selectedShape,
+                            item._variantsKey,
+                            item.boxId
+                          )
+                        }
                         className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         <FiTrash2 size={14} />
@@ -178,42 +200,42 @@ const CartSidebar = () => {
             {/* Subtotal */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm text-gray-500">
-                <span>المجموع الفرعي</span>
-                <span>{formatPrice(total)} ج.م</span>
+                <span>{STRINGS.CART.SUBTOTAL}</span>
+                <span>{formatPrice(total)} {STRINGS.PRODUCT.CURRENCY}</span>
               </div>
               <div className="flex justify-between text-sm text-gray-500">
-                <span>الشحن</span>
-                <span>{formatPrice(shippingCost)} ج.م</span>
+                <span>{STRINGS.CART.SHIPPING}</span>
+                <span>{formatPrice(shippingCost)} {STRINGS.PRODUCT.CURRENCY}</span>
               </div>
 
               <div className="flex justify-between text-lg font-bold pt-3 border-t border-gray-200">
-                <span>الإجمالي</span>
-                <span className="text-gradient">{formatPrice(total + shippingCost)} ج.م</span>
+                <span>{STRINGS.CART.TOTAL}</span>
+                <span className="text-gradient">{formatPrice(total + shippingCost)} {STRINGS.PRODUCT.CURRENCY}</span>
               </div>
             </div>
 
             {/* Buttons */}
             <div className="space-y-2">
-              <Link 
+              <Link
                 to="/checkout"
                 onClick={closeCart}
                 className="btn-primary w-full text-center block text-sm"
               >
-                إتمام الشراء ←
+                {STRINGS.CART.CHECKOUT} &larr;
               </Link>
-              <Link 
+              <Link
                 to="/cart"
                 onClick={closeCart}
                 className="btn-secondary w-full text-center block text-sm"
               >
-                عرض السلة
+                {STRINGS.CART.VIEW_CART}
               </Link>
             </div>
           </div>
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CartSidebar
+export default CartSidebar;

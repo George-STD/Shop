@@ -1,8 +1,8 @@
-'use client'
+'use client';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from 'react-hot-toast'
-import { useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'react-hot-toast';
+import { useState } from 'react';
 
 export default function Providers({ children }) {
   const [queryClient] = useState(
@@ -16,7 +16,7 @@ export default function Providers({ children }) {
           },
         },
       })
-  )
+  );
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -31,5 +31,5 @@ export default function Providers({ children }) {
         }}
       />
     </QueryClientProvider>
-  )
+  );
 }

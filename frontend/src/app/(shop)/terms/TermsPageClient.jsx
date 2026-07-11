@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import TermsPage from '../../../legacy-pages/TermsPage'
+import TermsPage from '../../../legacy-pages/TermsPage';
 
 export default function TermsPageClient() {
-  return <TermsPage />
+  return <TermsPage />;
 }

@@ -1,365 +1,113 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
-import { FiSearch, FiEye, FiCheck, FiX, FiTruck, FiPackage } from 'react-icons/fi'
-import { adminAPI } from '../../services/api'
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { adminAPI } from '../../services/api';
+import { STRINGS } from '../../constants';
+
+import AdminOrdersHeader from '../../components/admin/orders/AdminOrdersHeader';
+import AdminOrdersTable from '../../components/admin/orders/AdminOrdersTable';
+import OrderDetailsModal from '../../components/admin/orders/OrderDetailsModal';
+
+const statusLabels = STRINGS.ADMIN.STATUS_LABELS;
+
+const statusColors = {
+  pending: 'bg-yellow-100 text-yellow-800',
+  confirmed: 'bg-blue-100 text-blue-800',
+  processing: 'bg-purple-100 text-purple-800',
+  shipped: 'bg-indigo-100 text-indigo-800',
+  delivered: 'bg-green-100 text-green-800',
+  cancelled: 'bg-red-100 text-red-800',
+};
+
+const statusOptions = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('ar-EG', {
+    style: 'currency',
+    currency: 'EGP',
+    minimumFractionDigits: 0,
+  }).format(amount);
+};
 
 const AdminOrders = () => {
-  const queryClient = useQueryClient()
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [page, setPage] = useState(1)
-  const [selectedOrder, setSelectedOrder] = useState(null)
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-orders', { search, status: statusFilter, page }],
-    queryFn: () => adminAPI.getOrders({ 
-      search: search || undefined, 
-      status: statusFilter || undefined,
-      page,
-      limit: 20 
-    }).then(res => res.data)
+    queryFn: () =>
+      adminAPI
+        .getOrders({
+          search: search || undefined,
+          status: statusFilter || undefined,
+          page,
+          limit: 20,
+        })
+        .then((res) => res.data),
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status, trackingNumber }) => adminAPI.updateOrderStatus(id, { status, trackingNumber }),
+    mutationFn: ({ id, status, trackingNumber }) =>
+      adminAPI.updateOrderStatus(id, { status, trackingNumber }),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-orders'])
-      setSelectedOrder(null)
-    }
-  })
-
-  const statusLabels = {
-    pending: 'قيد الانتظار',
-    confirmed: 'مؤكد',
-    processing: 'قيد التجهيز',
-    shipped: 'تم الشحن',
-    delivered: 'تم التوصيل',
-    cancelled: 'ملغي'
-  }
-
-  const statusColors = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    confirmed: 'bg-blue-100 text-blue-800',
-    processing: 'bg-purple-100 text-purple-800',
-    shipped: 'bg-indigo-100 text-indigo-800',
-    delivered: 'bg-green-100 text-green-800',
-    cancelled: 'bg-red-100 text-red-800'
-  }
-
-  const statusOptions = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('ar-EG', {
-      style: 'currency',
-      currency: 'EGP',
-      minimumFractionDigits: 0
-    }).format(amount)
-  }
+      queryClient.invalidateQueries(['admin-orders']);
+      setSelectedOrder(null);
+    },
+  });
 
   const handleStatusChange = (orderId, newStatus) => {
     if (newStatus === 'shipped') {
-      const trackingNumber = window.prompt('أدخل رمز التتبع (سيتم إرساله للعميل عبر البريد الإلكتروني):')
+      const trackingNumber = window.prompt(
+        STRINGS.ADMIN.MESSAGES.ENTER_TRACKING_CODE
+      );
       if (trackingNumber !== null) {
-        statusMutation.mutate({ id: orderId, status: newStatus, trackingNumber: trackingNumber.trim() || undefined })
+        statusMutation.mutate({
+          id: orderId,
+          status: newStatus,
+          trackingNumber: trackingNumber.trim() || undefined,
+        });
       }
-    } else if (window.confirm(`هل تريد تغيير حالة الطلب إلى "${statusLabels[newStatus]}"؟`)) {
-      statusMutation.mutate({ id: orderId, status: newStatus })
+    } else if (window.confirm(STRINGS.ADMIN.MESSAGES.CONFIRM_CHANGE_STATUS(statusLabels[newStatus]))) {
+      statusMutation.mutate({ id: orderId, status: newStatus });
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-          {/* Search */}
-          <div className="relative flex-1">
-            <FiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="بحث برقم الطلب..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pr-10 pl-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
-            />
-          </div>
+      <AdminOrdersHeader
+        search={search}
+        setSearch={setSearch}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        statusOptions={statusOptions}
+        statusLabels={statusLabels}
+      />
 
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 text-sm"
-          >
-            <option value="">جميع الحالات</option>
-            {statusOptions.map(status => (
-              <option key={status} value={status}>{statusLabels[status]}</option>
-            ))}
-          </select>
-        </div>
-      </div>
+      <AdminOrdersTable
+        data={data}
+        isLoading={isLoading}
+        page={page}
+        setPage={setPage}
+        setSelectedOrder={setSelectedOrder}
+        handleStatusChange={handleStatusChange}
+        statusOptions={statusOptions}
+        statusLabels={statusLabels}
+        statusColors={statusColors}
+        formatCurrency={formatCurrency}
+      />
 
-      {/* Orders Table */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full mx-auto" />
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">رقم الطلب</th>
-                    <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">العميل</th>
-                    <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">المبلغ</th>
-                    <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">الحالة</th>
-                    <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600 hidden md:table-cell">التاريخ</th>
-                    <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">الإجراءات</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {data?.data?.map((order) => (
-                    <tr key={order._id} className="hover:bg-gray-50">
-                      <td className="py-3 px-3 sm:px-6 font-medium text-xs sm:text-sm">
-                        #{order.orderNumber}
-                      </td>
-                      <td className="py-3 px-3 sm:px-6">
-                        <div>
-                          <p className="font-medium text-xs sm:text-sm">{order.user?.firstName} {order.user?.lastName}</p>
-                          <p className="text-xs text-gray-500 hidden sm:block">{order.user?.email}</p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 sm:px-6 font-medium text-xs sm:text-sm whitespace-nowrap">
-                        {formatCurrency(order.total)}
-                      </td>
-                      <td className="py-3 px-3 sm:px-6">
-                        <select
-                          value={order.status}
-                          onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                          className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm border-0 cursor-pointer ${statusColors[order.status]}`}
-                        >
-                          {statusOptions.map(status => (
-                            <option key={status} value={status}>{statusLabels[status]}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="py-3 px-3 sm:px-6 text-gray-600 text-xs sm:text-sm hidden md:table-cell">
-                        {new Date(order.createdAt).toLocaleDateString('ar-EG', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </td>
-                      <td className="py-3 px-3 sm:px-6">
-                        <button
-                          onClick={() => setSelectedOrder(order)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                          title="عرض التفاصيل"
-                        >
-                          <FiEye className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            {data?.pagination && (
-              <div className="p-3 sm:p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-2">
-                <p className="text-gray-600 text-xs sm:text-sm">
-                  عرض {data.data.length} من {data.pagination.total} طلب
-                </p>
-                <div className="flex gap-1 sm:gap-2">
-                  <button
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    className="px-3 sm:px-4 py-1.5 sm:py-2 border rounded-lg disabled:opacity-50 text-xs sm:text-sm"
-                  >
-                    السابق
-                  </button>
-                  <span className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm">
-                    صفحة {page} من {data.pagination.pages}
-                  </span>
-                  <button
-                    onClick={() => setPage(p => Math.min(data.pagination.pages, p + 1))}
-                    disabled={page >= data.pagination.pages}
-                    className="px-3 sm:px-4 py-1.5 sm:py-2 border rounded-lg disabled:opacity-50 text-xs sm:text-sm"
-                  >
-                    التالي
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Order Details Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-4 sm:p-6 border-b sticky top-0 bg-white flex items-center justify-between z-10">
-              <h2 className="text-base sm:text-xl font-bold">تفاصيل الطلب #{selectedOrder.orderNumber}</h2>
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <FiX className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-              {/* Order Summary */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-500">الحالة</p>
-                  <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs sm:text-sm ${statusColors[selectedOrder.status]}`}>
-                    {statusLabels[selectedOrder.status]}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-500">تاريخ الطلب</p>
-                  <p className="font-medium mt-1 text-sm">
-                    {new Date(selectedOrder.createdAt).toLocaleDateString('ar-EG')}
-                  </p>
-                </div>
-              </div>
-
-              {/* Customer Info */}
-              <div className="border rounded-xl p-4">
-                <h3 className="font-bold mb-3">معلومات العميل</h3>
-                <p><strong>الاسم:</strong> {selectedOrder.user?.firstName} {selectedOrder.user?.lastName}</p>
-                <p><strong>البريد:</strong> {selectedOrder.user?.email}</p>
-                <p><strong>الهاتف:</strong> {selectedOrder.user?.phone}</p>
-              </div>
-
-              {/* Shipping Address */}
-              {selectedOrder.shippingAddress && (
-                <div className="border rounded-xl p-4">
-                  <h3 className="font-bold mb-3">عنوان التوصيل</h3>
-                  <p>{selectedOrder.shippingAddress.firstName} {selectedOrder.shippingAddress.lastName}</p>
-                  <p>{selectedOrder.shippingAddress.street}</p>
-                  <p>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.governorate}</p>
-                  <p>{selectedOrder.shippingAddress.phone}</p>
-                </div>
-              )}
-
-              {/* Order Items */}
-              <div className="border rounded-xl p-4">
-                <h3 className="font-bold mb-3">المنتجات</h3>
-                <div className="space-y-3">
-                  {selectedOrder.items?.map((item, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      {item.product?.images?.[0] && (
-                        <img 
-                          src={item.product.images[0].url} 
-                          alt={item.product.name}
-                          className="w-12 h-12 object-cover rounded-lg"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <p className="font-medium">{item.product?.name || item.name}</p>
-                        <p className="text-sm text-gray-500">الكمية: {item.quantity}</p>
-                        {item.selectedColor && <p className="text-xs text-gray-500">اللون: {item.selectedColor}</p>}
-                        {item.selectedShape && <p className="text-xs text-gray-500">الشكل: {item.selectedShape}</p>}
-                        {item.selectedVariants && Object.keys(item.selectedVariants).length > 0 && (
-                          <div className="text-xs text-blue-600 mt-0.5">
-                            {Object.entries(item.selectedVariants).map(([group, value]) => (
-                              <p key={group}>{group}: {value}</p>
-                            ))}
-                          </div>
-                        )}
-                        {item.boxSelections?.length > 0 && (
-                          <div className="text-xs text-purple-600 mt-1">
-                            {item.boxSelections.map((sel, i) => (
-                              <p key={i}>• {sel.slotLabel}: {sel.chosenOption}</p>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <p className="font-medium">{formatCurrency(item.price * item.quantity)}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Order Total */}
-              <div className="border rounded-xl p-4 bg-gray-50">
-                <div className="flex justify-between mb-2">
-                  <span>المجموع الفرعي</span>
-                  <span>{formatCurrency(selectedOrder.subtotal)}</span>
-                </div>
-                <div className="flex justify-between mb-2">
-                  <span>الشحن</span>
-                  <span>{formatCurrency(selectedOrder.shippingCost || 0)}</span>
-                </div>
-                {selectedOrder.discount > 0 && (
-                  <div className="flex justify-between mb-2 text-green-600">
-                    <span>الخصم</span>
-                    <span>-{formatCurrency(selectedOrder.discount)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                  <span>الإجمالي</span>
-                  <span>{formatCurrency(selectedOrder.total)}</span>
-                </div>
-              </div>
-
-              {/* Quick Status Actions */}
-              <div className="flex flex-wrap gap-2">
-                {selectedOrder.status === 'pending' && (
-                  <button
-                    onClick={() => handleStatusChange(selectedOrder._id, 'confirmed')}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    <FiCheck /> تأكيد الطلب
-                  </button>
-                )}
-                {selectedOrder.status === 'confirmed' && (
-                  <button
-                    onClick={() => handleStatusChange(selectedOrder._id, 'processing')}
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                  >
-                    <FiPackage /> بدء التجهيز
-                  </button>
-                )}
-                {selectedOrder.status === 'processing' && (
-                  <button
-                    onClick={() => handleStatusChange(selectedOrder._id, 'shipped')}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                  >
-                    <FiTruck /> تم الشحن
-                  </button>
-                )}
-                {selectedOrder.status === 'shipped' && (
-                  <button
-                    onClick={() => handleStatusChange(selectedOrder._id, 'delivered')}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                  >
-                    <FiCheck /> تم التوصيل
-                  </button>
-                )}
-                {!['cancelled', 'delivered'].includes(selectedOrder.status) && (
-                  <button
-                    onClick={() => handleStatusChange(selectedOrder._id, 'cancelled')}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                  >
-                    <FiX /> إلغاء الطلب
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <OrderDetailsModal
+        selectedOrder={selectedOrder}
+        setSelectedOrder={setSelectedOrder}
+        handleStatusChange={handleStatusChange}
+        statusLabels={statusLabels}
+        statusColors={statusColors}
+        formatCurrency={formatCurrency}
+      />
     </div>
-  )
-}
+  );
+};
 
-export default AdminOrders
+export default AdminOrders;

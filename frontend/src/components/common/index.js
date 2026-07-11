@@ -2,7 +2,7 @@
  * Common components index
  */
 
-export { default as ErrorBoundary } from './ErrorBoundary'
+export { default as ErrorBoundary } from './ErrorBoundary';
 export {
   default as LoadingSpinner,
   LoadingOverlay,
@@ -13,4 +13,4 @@ export {
   ProductGridSkeleton,
   TextSkeleton,
   OrderCardSkeleton,
-} from './LoadingSpinner'
+} from './LoadingSpinner';

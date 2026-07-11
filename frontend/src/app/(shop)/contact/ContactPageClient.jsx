@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import ContactPage from '../../../legacy-pages/ContactPage'
+import ContactPage from '../../../legacy-pages/ContactPage';
 
 export default function ContactPageClient() {
-  return <ContactPage />
+  return <ContactPage />;
 }

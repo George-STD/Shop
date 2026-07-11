@@ -1,8 +1,8 @@
-import ShippingPageClient from './ShippingPageClient'
-import { PAGE_METADATA } from '../../../lib/metadata'
+import ShippingPageClient from './ShippingPageClient';
+import { PAGE_METADATA } from '../../../lib/metadata';
 
-export const metadata = PAGE_METADATA.shipping
+export const metadata = PAGE_METADATA.shipping;
 
 export default function Page() {
-  return <ShippingPageClient />
+  return <ShippingPageClient />;
 }
