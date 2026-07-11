@@ -533,6 +533,7 @@ export const STRINGS = {
     SHIPPING: 'الشحن',
     TOTAL: 'الإجمالي',
     CHECKOUT: 'إتمام الشراء',
+    VIEW_CART: 'عرض السلة',
     CONTINUE_SHOPPING: 'متابعة التسوق',
     REMOVE: 'حذف',
     UPDATE_CART: 'تحديث السلة',
