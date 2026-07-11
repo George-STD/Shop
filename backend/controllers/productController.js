@@ -68,17 +68,18 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
   if (sort === 'bestselling') sortOption = { salesCount: -1 };
   if (sort === 'newest') sortOption = { createdAt: -1 };
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const finalLimit = Math.min(Number(limit) || 12, 100);
+  const skip = (Number(page) - 1) * finalLimit;
 
   const products = await Product.find(query)
     .populate('category', 'name slug')
     .sort(sortOption)
     .skip(skip)
-    .limit(Number(limit));
+    .limit(finalLimit);
 
   const total = await Product.countDocuments(query);
 
-  return sendPaginated(res, { data: products, page, limit: Number(limit), total });
+  return sendPaginated(res, { data: products, page, limit: finalLimit, total });
 }, MESSAGES.PRODUCTS.FETCH_ERROR);
 
 /**

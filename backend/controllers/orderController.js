@@ -297,13 +297,14 @@ exports.getOrders = asyncHandler(async (req, res) => {
     query.status = String(status);
   }
 
+  const finalLimit = Math.min(Number(limit) || CONFIG.PAGINATION.ORDERS_LIMIT, 100);
   const orders = await Order.find(query)
     .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .limit(Number(limit));
+    .skip((page - 1) * finalLimit)
+    .limit(finalLimit);
   const total = await Order.countDocuments(query);
 
-  return sendPaginated(res, { data: orders, page, limit, total });
+  return sendPaginated(res, { data: orders, page, limit: finalLimit, total });
 }, MESSAGES.ORDERS.GENERIC_ERROR);
 
 exports.getOrderById = asyncHandler(async (req, res) => {

@@ -13,11 +13,13 @@ const reviewSchema = new mongoose.Schema({
   },
   guestName: {
     type: String,
-    trim: true
+    trim: true,
+    maxlength: 50
   },
   guestEmail: {
     type: String,
-    trim: true
+    trim: true,
+    maxlength: 100
   },
   order: {
     type: mongoose.Schema.Types.ObjectId,
@@ -66,7 +68,7 @@ const reviewSchema = new mongoose.Schema({
     }]
   },
   reply: {
-    text: String,
+    text: { type: String, maxlength: 1000 },
     date: Date,
     by: {
       type: mongoose.Schema.Types.ObjectId,

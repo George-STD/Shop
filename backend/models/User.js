@@ -2,18 +2,18 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const addressSchema = new mongoose.Schema({
-  label: { type: String, default: 'المنزل' },
-  firstName: String,
-  lastName: String,
-  phone: String,
-  governorate: String,
-  city: String,
-  area: String,
-  street: String,
-  building: String,
-  floor: String,
-  apartment: String,
-  landmark: String,
+  label: { type: String, default: 'المنزل', maxlength: 50 },
+  firstName: { type: String, maxlength: 50 },
+  lastName: { type: String, maxlength: 50 },
+  phone: { type: String, maxlength: 20 },
+  governorate: { type: String, maxlength: 100 },
+  city: { type: String, maxlength: 100 },
+  area: { type: String, maxlength: 100 },
+  street: { type: String, maxlength: 200 },
+  building: { type: String, maxlength: 50 },
+  floor: { type: String, maxlength: 50 },
+  apartment: { type: String, maxlength: 50 },
+  landmark: { type: String, maxlength: 200 },
   isDefault: { type: Boolean, default: false }
 });
 
@@ -21,22 +21,26 @@ const userSchema = new mongoose.Schema({
   firstName: {
     type: String,
     required: [true, 'الاسم الأول مطلوب'],
-    trim: true
+    trim: true,
+    maxlength: 50
   },
   lastName: {
     type: String,
     required: [true, 'الاسم الأخير مطلوب'],
-    trim: true
+    trim: true,
+    maxlength: 50
   },
   email: {
     type: String,
     required: [true, 'البريد الإلكتروني مطلوب'],
     unique: true,
-    lowercase: true
+    lowercase: true,
+    maxlength: 100
   },
   phone: {
     type: String,
-    required: [true, 'رقم الهاتف مطلوب']
+    required: [true, 'رقم الهاتف مطلوب'],
+    maxlength: 20
   },
   password: {
     type: String,
