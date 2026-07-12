@@ -200,7 +200,7 @@ const AdminProducts = () => {
           price: data.price || '',
           stock: 10,
           sku: data.sku || barcode,
-          category: categories?.[0]?._id ? [categories[0]._id] : [],
+          category: categories ? categories.map(c => c._id) : [],
           images: data.images?.length ? data.images : [{ url: '', alt: '', variantTags: {} }],
           occasions: defaultOccasions,
           recipients: defaultRecipients,
