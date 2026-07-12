@@ -1,4 +1,5 @@
 import '../index.css';
+import Script from 'next/script';
 import Providers from './providers';
 import JsonLd from './JsonLd';
 import { SITE_CONFIG, SEO_KEYWORDS } from '../constants';
@@ -96,6 +97,11 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
+        {/* High-performance Barcode Detector Polyfill (using zxing-wasm) for blazing fast 1D barcode scanning on laptops/phones */}
+        <Script 
+          src="https://fastly.jsdelivr.net/npm/barcode-detector@3/dist/iife/polyfill.min.js" 
+          strategy="beforeInteractive" 
+        />
         <JsonLd />
         <Providers>{children}</Providers>
       </body>
