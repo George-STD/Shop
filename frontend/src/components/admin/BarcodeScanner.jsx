@@ -69,7 +69,7 @@ const BarcodeScanner = ({ onScan, onClose }) => {
             <button
               type="submit"
               disabled={!manualBarcode.trim()}
-              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white px-6 py-3.5 rounded-xl font-bold text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3.5 rounded-xl font-bold text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md active:scale-[0.98]"
             >
               <FiCheck size={20} />
               متابعة وبحث عن المنتج
