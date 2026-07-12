@@ -176,6 +176,15 @@ const AdminProducts = () => {
     setShowScanner(false);
     const toastId = toast.loading(STRINGS.ADMIN.NOTIFICATIONS.SEARCHING_BARCODE);
     try {
+      // First, try to find the product in our local database
+      const localRes = await adminAPI.getProducts({ search: barcode });
+      if (localRes.data?.data && localRes.data.data.length > 0) {
+        toast.success('تم العثور على المنتج في المتجر', { id: toastId });
+        handleEdit(localRes.data.data[0]);
+        return;
+      }
+
+      // If not found locally, try to fetch from external API
       const res = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}`);
       const data = await res.json();
 
@@ -190,6 +199,7 @@ const AdminProducts = () => {
           description: item.description || '',
           price: approxPrice,
           stock: 10,
+          sku: barcode,
           category: categories?.[0]?._id ? [categories[0]._id] : [],
           images: item.images?.[0] ? [{ url: item.images[0], alt: item.title }] : [],
         }));
@@ -199,12 +209,14 @@ const AdminProducts = () => {
       } else {
         toast.error(STRINGS.ADMIN.NOTIFICATIONS.BARCODE_NOT_FOUND, { id: toastId });
         resetForm();
+        setFormData((prev) => ({ ...prev, sku: barcode }));
         setShowModal(true);
       }
     } catch (error) {
       console.error(error);
       toast.error(STRINGS.ADMIN.NOTIFICATIONS.BARCODE_ERROR, { id: toastId });
       resetForm();
+      setFormData((prev) => ({ ...prev, sku: barcode }));
       setShowModal(true);
     }
   };

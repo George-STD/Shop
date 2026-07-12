@@ -23,7 +23,8 @@ exports.getProducts = asyncHandler(async (req, res) => {
   if (search) {
     query.$or = [
       { name: { $regex: escapeRegex(search), $options: 'i' } },
-      { description: { $regex: escapeRegex(search), $options: 'i' } }
+      { description: { $regex: escapeRegex(search), $options: 'i' } },
+      { sku: { $regex: escapeRegex(search), $options: 'i' } }
     ];
   }
   if (category) query.category = { $in: [category] };
