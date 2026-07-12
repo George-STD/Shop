@@ -5,9 +5,14 @@ import { STRINGS } from '../../constants';
 
 const BarcodeScanner = ({ onScan, onClose }) => {
   const [error, setError] = useState(null);
+  const onScanRef = useRef(onScan);
+
+  // Keep the ref up to date without re-triggering useEffect
+  useEffect(() => {
+    onScanRef.current = onScan;
+  }, [onScan]);
 
   useEffect(() => {
-    // Check if the scanner element exists
     const scannerConfig = {
       fps: 10,
       qrbox: { width: 250, height: 250 },
@@ -20,7 +25,7 @@ const BarcodeScanner = ({ onScan, onClose }) => {
     scanner.render(
       (decodedText) => {
         scanner.clear();
-        onScan(decodedText);
+        onScanRef.current(decodedText);
       },
       (err) => {
         // We can ignore frequent scanning errors unless it's a fatal camera error
@@ -31,7 +36,7 @@ const BarcodeScanner = ({ onScan, onClose }) => {
     return () => {
       scanner.clear().catch((e) => console.error('Failed to clear scanner', e));
     };
-  }, [onScan]);
+  }, []); // Empty deps — scanner initializes once
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -54,3 +59,4 @@ const BarcodeScanner = ({ onScan, onClose }) => {
 };
 
 export default BarcodeScanner;
+
