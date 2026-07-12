@@ -132,8 +132,13 @@ exports.barcodeLookup = asyncHandler(async (req, res) => {
     }
   }
 
-  // Return the result if found
+  // 6. Generate a smart description if it's missing or very short
   if (foundData) {
+    if (!foundData.data.description || foundData.data.description.length < 5) {
+      const productName = foundData.data.name || 'هذا المنتج';
+      foundData.data.description = `احصل على ${productName} الآن! يتميز بجودة عالية ويعتبر خياراً رائعاً كهدية مميزة تناسب جميع الأذواق في مختلف المناسبات.`;
+    }
+    
     return res.json({
       success: true,
       ...foundData,

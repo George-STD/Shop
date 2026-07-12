@@ -186,11 +186,53 @@ const AdminProducts = () => {
         return;
       }
 
-      // Pre-fill occasions and recipients to be all selected for new items via barcode
-      const defaultOccasions = occasionsList ? occasionsList.map(o => o.name) : [];
-      const defaultRecipients = STRINGS.ADMIN.PRODUCT_FORM.RECIPIENTS_LIST || [];
+      // Smart Defaults Logic
+      const getSmartDefaults = (name, desc) => {
+        const text = `${name || ''} ${desc || ''}`.toLowerCase();
+        let matchedOccs = new Set();
+        let matchedRecs = new Set();
+        
+        const matches = (keywords) => keywords.some(k => text.includes(k));
+
+        if (matches(['شوكولاتة', 'شيكولاتة', 'chocolate', 'حلوى', 'حلويات', 'كيك', 'cake', 'candy', 'مورو', 'moro'])) {
+          ['عيد الحب', 'عيد ميلاد', 'تخرج', 'عيد الأم'].forEach(o => matchedOccs.add(o));
+          ['زوجة', 'صديقة', 'أم', 'أطفال', 'أخت', 'صديق'].forEach(r => matchedRecs.add(r));
+        }
+        if (matches(['ورد', 'زهور', 'flower', 'rose', 'باقة'])) {
+          ['عيد الحب', 'ذكرى زواج', 'عيد الأم'].forEach(o => matchedOccs.add(o));
+          ['زوجة', 'أم', 'صديقة'].forEach(r => matchedRecs.add(r));
+        }
+        if (matches(['رجالي', 'men', 'حلاقة', 'محفظة', 'ساعة رجالي', 'عطر رجالي', 'مكينة'])) {
+          ['زوج', 'أب', 'أخ', 'صديق'].forEach(r => matchedRecs.add(r));
+          ['عيد ميلاد', 'تخرج'].forEach(o => matchedOccs.add(o));
+        }
+        if (matches(['حريمي', 'نسائي', 'women', 'مكياج', 'ميكب', 'عطر نسائي'])) {
+          ['زوجة', 'صديقة', 'أم', 'أخت'].forEach(r => matchedRecs.add(r));
+          ['عيد الحب', 'عيد ميلاد'].forEach(o => matchedOccs.add(o));
+        }
+        if (matches(['لعبة', 'ألعاب', 'دبدوب', 'toy', 'kids', 'أطفال', 'بيبي', 'baby'])) {
+          ['أطفال'].forEach(r => matchedRecs.add(r));
+          ['عيد ميلاد', 'نجاح'].forEach(o => matchedOccs.add(o));
+        }
+
+        const availableOccs = occasionsList ? occasionsList.map(o => o.name) : [];
+        const availableRecs = STRINGS.ADMIN.PRODUCT_FORM.RECIPIENTS_LIST || [];
+
+        let finalOccs = [...matchedOccs].filter(o => availableOccs.includes(o));
+        let finalRecs = [...matchedRecs].filter(r => availableRecs.includes(r));
+        let finalCats = categories ? categories.filter(c => matches([c.name.toLowerCase()])).map(c => c._id) : [];
+
+        // Fallbacks if no keywords matched
+        if (finalOccs.length === 0) finalOccs = availableOccs;
+        if (finalRecs.length === 0) finalRecs = availableRecs;
+        if (finalCats.length === 0) finalCats = categories ? categories.map(c => c._id) : [];
+
+        return { finalOccs, finalRecs, finalCats };
+      };
 
       if (success && (source === 'openfoodfacts' || source === 'upcitemdb')) {
+        const { finalOccs, finalRecs, finalCats } = getSmartDefaults(data.name, data.description);
+
         // Product found in external database — pre-fill the add form
         resetForm();
         setFormData((prev) => ({
@@ -200,10 +242,10 @@ const AdminProducts = () => {
           price: data.price || '',
           stock: 10,
           sku: data.sku || barcode,
-          category: categories ? categories.map(c => c._id) : [],
+          category: finalCats,
           images: data.images?.length ? data.images : [{ url: '', alt: '', variantTags: {} }],
-          occasions: defaultOccasions,
-          recipients: defaultRecipients,
+          occasions: finalOccs,
+          recipients: finalRecs,
         }));
         setShowModal(true);
         toast.success(STRINGS.ADMIN.NOTIFICATIONS.BARCODE_FOUND, { id: toastId });
@@ -212,25 +254,29 @@ const AdminProducts = () => {
 
       // Not found anywhere — open empty form with barcode as SKU
       toast.error(STRINGS.ADMIN.NOTIFICATIONS.BARCODE_NOT_FOUND, { id: toastId });
+      const { finalOccs: emptyOccs, finalRecs: emptyRecs, finalCats: emptyCats } = getSmartDefaults('', '');
       resetForm();
       setFormData((prev) => ({ 
         ...prev, 
         sku: barcode,
-        occasions: defaultOccasions,
-        recipients: defaultRecipients,
+        category: emptyCats,
+        occasions: emptyOccs,
+        recipients: emptyRecs,
       }));
       setShowModal(true);
     } catch (error) {
       console.error(error);
       toast.error(STRINGS.ADMIN.NOTIFICATIONS.BARCODE_ERROR, { id: toastId });
-      const defaultOccasions = occasionsList ? occasionsList.map(o => o.name) : [];
-      const defaultRecipients = STRINGS.ADMIN.PRODUCT_FORM.RECIPIENTS_LIST || [];
+      const availableOccs = occasionsList ? occasionsList.map(o => o.name) : [];
+      const availableRecs = STRINGS.ADMIN.PRODUCT_FORM.RECIPIENTS_LIST || [];
+      const allCats = categories ? categories.map(c => c._id) : [];
       resetForm();
       setFormData((prev) => ({ 
         ...prev, 
         sku: barcode,
-        occasions: defaultOccasions,
-        recipients: defaultRecipients,
+        category: allCats,
+        occasions: availableOccs,
+        recipients: availableRecs,
       }));
       setShowModal(true);
     }
