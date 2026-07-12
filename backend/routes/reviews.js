@@ -107,7 +107,9 @@ router.post('/', apiLimiter, [
     .isLength({ max: 1000 })
     .withMessage(MESSAGES.REVIEWS.COMMENT_TOO_LONG),
   body('guestName').optional({ checkFalsy: true }).trim().notEmpty().withMessage(MESSAGES.REVIEWS.GUEST_NAME_REQUIRED),
-  body('guestEmail').optional({ checkFalsy: true }).isEmail().withMessage(MESSAGES.REVIEWS.GUEST_EMAIL_INVALID)
+  body('guestEmail').optional({ checkFalsy: true }).isEmail().withMessage(MESSAGES.REVIEWS.GUEST_EMAIL_INVALID),
+  body('images').optional().isArray().withMessage('يجب أن تكون الصور في صيغة قائمة'),
+  body('images.*').optional().isURL({ protocols: ['http', 'https'], require_protocol: true }).withMessage('رابط الصورة غير صالح')
 ], async (req, res) => {
   try {
     const userId = getOptionalUserId(req);

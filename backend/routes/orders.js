@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
+const rateLimit = require('express-rate-limit');
 const { protect, apiLimiter } = require('../middleware/auth');
 const { CONFIG, MESSAGES } = require('../constants');
 const orderController = require('../controllers/orderController');
@@ -29,10 +30,19 @@ router.get('/', protect, orderController.getOrders);
 // @access  Private
 router.get('/:id', protect, orderController.getOrderById);
 
-// @route   GET /api/orders/track/:orderNumber
-// @desc    Track order by order number
-// @access  Public
-router.get('/track/:orderNumber', orderController.trackOrder);
+// Strict rate limiter for order tracking (prevent brute-force enumeration)
+const trackOrderLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: {
+    success: false,
+    message: 'تم تجاوز الحد الأقصى لمحاولات التتبع. حاول مرة أخرى لاحقاً.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.get('/track/:orderNumber', trackOrderLimiter, orderController.trackOrder);
 
 // @route   PUT /api/orders/:id/cancel
 // @desc    Cancel order

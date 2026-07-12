@@ -170,14 +170,17 @@ const validateObjectId = (paramName = 'id') => {
 };
 
 // =====================================================
-// SANITIZE INPUT - Basic XSS prevention
+// SANITIZE INPUT - XSS prevention
 // =====================================================
 const sanitizeInput = (req, res, next) => {
-  // Simple sanitization - remove HTML tags from string inputs
   const sanitize = (obj) => {
     for (let key in obj) {
       if (typeof obj[key] === 'string') {
-        obj[key] = obj[key].replace(/<[^>]*>/g, '');
+        obj[key] = obj[key]
+          .replace(/<[^>]*>/g, '')                    // Strip HTML tags
+          .replace(/javascript\s*:/gi, '')             // Strip javascript: URIs
+          .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '') // Strip inline event handlers
+          .replace(/on\w+\s*=/gi, '');                 // Strip remaining event handlers
       } else if (typeof obj[key] === 'object' && obj[key] !== null) {
         sanitize(obj[key]);
       }

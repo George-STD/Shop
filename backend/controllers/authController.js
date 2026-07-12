@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
@@ -83,7 +84,7 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
 
   if (!user) return res.status(400).json({ success: false, message: MESSAGES.AUTH.USER_NOT_FOUND });
   if (user.isVerified) return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_ALREADY_DONE });
-  if (user.emailVerificationCode !== code) return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
+  if (!user.emailVerificationCode || !crypto.timingSafeEqual(Buffer.from(user.emailVerificationCode), Buffer.from(String(code)))) return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
   if (user.emailVerificationExpires < new Date()) return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_EXPIRED });
 
   await User.findByIdAndUpdate(user._id, {
@@ -272,7 +273,7 @@ exports.verifyEmailChange = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_EXPIRED });
   }
 
-  if (user.emailChangeCode !== code) {
+  if (!user.emailChangeCode || !crypto.timingSafeEqual(Buffer.from(user.emailChangeCode), Buffer.from(String(code)))) {
     return res.status(400).json({ success: false, message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_INVALID });
   }
 
@@ -331,7 +332,7 @@ exports.verifyResetCode = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
 
   if (!user) return res.status(400).json({ success: false, message: MESSAGES.AUTH.USER_NOT_FOUND });
-  if (user.resetPasswordToken !== code) return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
+  if (!user.resetPasswordToken || !crypto.timingSafeEqual(Buffer.from(user.resetPasswordToken), Buffer.from(String(code)))) return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
   if (user.resetPasswordExpires < new Date()) return res.status(400).json({ success: false, message: MESSAGES.AUTH.CODE_EXPIRED });
 
   res.json({ success: true, message: MESSAGES.AUTH.CODE_VALID });
@@ -345,7 +346,7 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email }).select('+password');
 
   if (!user) return res.status(400).json({ success: false, message: MESSAGES.AUTH.USER_NOT_FOUND });
-  if (user.resetPasswordToken !== code) return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
+  if (!user.resetPasswordToken || !crypto.timingSafeEqual(Buffer.from(user.resetPasswordToken), Buffer.from(String(code)))) return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
   if (user.resetPasswordExpires < new Date()) return res.status(400).json({ success: false, message: MESSAGES.AUTH.CODE_EXPIRED });
 
   const hashedPassword = await bcrypt.hash(newPassword, 12);
