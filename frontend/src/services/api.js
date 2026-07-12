@@ -149,6 +149,9 @@ export const adminAPI = {
   getEmails: (params) => api.get('/admin/emails', { params }),
   getEmail: (id) => api.get(`/admin/emails/${id}`),
   deleteEmail: (id) => api.delete(`/admin/emails/${id}`),
+
+  // Barcode
+  barcodeLookup: (barcode) => api.get(`/admin/barcode/${barcode}`),
 };
 
 export default api;

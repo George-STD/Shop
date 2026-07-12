@@ -1,0 +1,105 @@
+const asyncHandler = require('../../utils/asyncHandler');
+const Product = require('../../models/Product');
+const { escapeRegex } = require('../../utils/helpers');
+
+/**
+ * Lookup a product by barcode/SKU.
+ * 1. Search local database by SKU (exact match first, then partial).
+ * 2. If not found locally, try external APIs (Open Food Facts, UPC Item DB).
+ * 3. Return whatever product info we find.
+ */
+exports.barcodeLookup = asyncHandler(async (req, res) => {
+  const { barcode } = req.params;
+
+  if (!barcode || barcode.length < 4) {
+    return res.status(400).json({ success: false, message: 'رقم الباركود غير صالح' });
+  }
+
+  // 1. Search local database first (exact SKU match)
+  let localProduct = await Product.findOne({ sku: barcode }).populate('category', 'name slug');
+  if (localProduct) {
+    return res.json({
+      success: true,
+      source: 'local',
+      data: localProduct,
+    });
+  }
+
+  // 2. Try partial SKU match
+  localProduct = await Product.findOne({
+    sku: { $regex: escapeRegex(barcode), $options: 'i' },
+  }).populate('category', 'name slug');
+  if (localProduct) {
+    return res.json({
+      success: true,
+      source: 'local',
+      data: localProduct,
+    });
+  }
+
+  // 3. Try Open Food Facts API (free, no rate limits, good coverage)
+  try {
+    const offRes = await fetch(
+      `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json?fields=code,product_name,product_name_ar,product_name_en,brands,image_front_url,image_url,categories,generic_name`
+    );
+    if (offRes.ok) {
+      const offData = await offRes.json();
+      if (offData.status === 1 && offData.product) {
+        const p = offData.product;
+        const name = p.product_name_ar || p.product_name || p.product_name_en || '';
+        const image = p.image_front_url || p.image_url || '';
+        const brand = p.brands || '';
+        const description = p.generic_name || p.categories || '';
+
+        if (name) {
+          return res.json({
+            success: true,
+            source: 'openfoodfacts',
+            data: {
+              name: brand ? `${name} - ${brand}` : name,
+              description,
+              images: image ? [{ url: image, alt: name }] : [],
+              sku: barcode,
+            },
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Open Food Facts API error:', err.message);
+  }
+
+  // 4. Try UPC Item DB as fallback
+  try {
+    const upcRes = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${encodeURIComponent(barcode)}`);
+    if (upcRes.ok) {
+      const upcData = await upcRes.json();
+      if (upcData.code === 'OK' && upcData.items && upcData.items.length > 0) {
+        const item = upcData.items[0];
+        const approxPrice = item.offers?.[0]?.price ? Math.round(item.offers[0].price * 50) : null;
+
+        return res.json({
+          success: true,
+          source: 'upcitemdb',
+          data: {
+            name: item.title || '',
+            description: item.description || '',
+            price: approxPrice,
+            images: item.images?.[0] ? [{ url: item.images[0], alt: item.title }] : [],
+            sku: barcode,
+          },
+        });
+      }
+    }
+  } catch (err) {
+    console.error('UPC Item DB API error:', err.message);
+  }
+
+  // 5. Nothing found anywhere
+  return res.json({
+    success: false,
+    source: 'none',
+    message: 'لم يتم العثور على المنتج',
+    data: { sku: barcode },
+  });
+}, 'حدث خطأ أثناء البحث عن المنتج');

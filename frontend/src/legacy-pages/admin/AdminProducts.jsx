@@ -176,42 +176,39 @@ const AdminProducts = () => {
     setShowScanner(false);
     const toastId = toast.loading(STRINGS.ADMIN.NOTIFICATIONS.SEARCHING_BARCODE);
     try {
-      // First, try to find the product in our local database
-      const localRes = await adminAPI.getProducts({ search: barcode });
-      if (localRes.data?.data && localRes.data.data.length > 0) {
+      const res = await adminAPI.barcodeLookup(barcode);
+      const { success, source, data } = res.data;
+
+      if (success && source === 'local') {
+        // Product found in our database — open edit form with all its data
         toast.success('تم العثور على المنتج في المتجر', { id: toastId });
-        handleEdit(localRes.data.data[0]);
+        handleEdit(data);
         return;
       }
 
-      // If not found locally, try to fetch from external API
-      const res = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}`);
-      const data = await res.json();
-
-      if (data.code === 'OK' && data.items && data.items.length > 0) {
-        const item = data.items[0];
-        const approxPrice = item.offers?.[0]?.price ? Math.round(item.offers[0].price * 50) : '';
-
+      if (success && (source === 'openfoodfacts' || source === 'upcitemdb')) {
+        // Product found in external database — pre-fill the add form
         resetForm();
         setFormData((prev) => ({
           ...prev,
-          name: item.title || '',
-          description: item.description || '',
-          price: approxPrice,
+          name: data.name || '',
+          description: data.description || '',
+          price: data.price || '',
           stock: 10,
-          sku: barcode,
+          sku: data.sku || barcode,
           category: categories?.[0]?._id ? [categories[0]._id] : [],
-          images: item.images?.[0] ? [{ url: item.images[0], alt: item.title }] : [],
+          images: data.images?.length ? data.images : [{ url: '', alt: '', variantTags: {} }],
         }));
-
         setShowModal(true);
         toast.success(STRINGS.ADMIN.NOTIFICATIONS.BARCODE_FOUND, { id: toastId });
-      } else {
-        toast.error(STRINGS.ADMIN.NOTIFICATIONS.BARCODE_NOT_FOUND, { id: toastId });
-        resetForm();
-        setFormData((prev) => ({ ...prev, sku: barcode }));
-        setShowModal(true);
+        return;
       }
+
+      // Not found anywhere — open empty form with barcode as SKU
+      toast.error(STRINGS.ADMIN.NOTIFICATIONS.BARCODE_NOT_FOUND, { id: toastId });
+      resetForm();
+      setFormData((prev) => ({ ...prev, sku: barcode }));
+      setShowModal(true);
     } catch (error) {
       console.error(error);
       toast.error(STRINGS.ADMIN.NOTIFICATIONS.BARCODE_ERROR, { id: toastId });

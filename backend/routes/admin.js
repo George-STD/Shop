@@ -154,4 +154,9 @@ router.get('/emails', adminController.getEmails);
 router.get('/emails/:id', validateObjectId('id'), adminController.getEmailById);
 router.delete('/emails/:id', validateObjectId('id'), adminController.deleteEmail);
 
+// =====================================================
+// BARCODE LOOKUP
+// =====================================================
+router.get('/barcode/:barcode', adminController.barcodeLookup);
+
 module.exports = router;

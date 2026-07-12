@@ -14,6 +14,7 @@ const categoriesController = require('./categoriesController');
 const reviewsController = require('./reviewsController');
 const occasionsController = require('./occasionsController');
 const emailsController = require('./emailsController');
+const barcodeController = require('./barcodeController');
 
 module.exports = {
   ...statsController,
@@ -24,4 +25,5 @@ module.exports = {
   ...reviewsController,
   ...occasionsController,
   ...emailsController,
+  ...barcodeController,
 };
