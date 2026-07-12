@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { FiX, FiRefreshCcw } from 'react-icons/fi';
+import { FiX } from 'react-icons/fi';
 import { STRINGS } from '../../constants';
 
 const BarcodeScanner = ({ onScan, onClose }) => {
   const [error, setError] = useState(null);
   const scannerRef = useRef(null);
-  const [cameras, setCameras] = useState([]);
-  const [activeCameraId, setActiveCameraId] = useState(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
-  const startScanner = async (cameraId) => {
+  const startScanner = async () => {
     try {
       setIsInitializing(true);
       setError(null);
@@ -23,58 +21,68 @@ const BarcodeScanner = ({ onScan, onClose }) => {
         scannerRef.current = new Html5Qrcode("reader");
       }
 
+      // Configuration for highest possible resolution and continuous focus
       const config = {
-        fps: 15, // Higher FPS for faster scanning
-        qrbox: { width: 250, height: 150 }, // Aspect ratio similar to standard barcodes
+        fps: 20, 
+        qrbox: { width: 280, height: 180 }, 
         aspectRatio: 1.777778, // 16:9
         videoConstraints: {
-          advanced: [{ focusMode: "continuous" }] // Attempt to force continuous auto-focus
+          facingMode: "environment", // Force back camera
+          width: { min: 640, ideal: 1920, max: 3840 }, // Ask for the highest possible resolution
+          height: { min: 480, ideal: 1080, max: 2160 },
+          advanced: [{ focusMode: "continuous" }] // Force continuous auto-focus
         }
       };
 
-      await scannerRef.current.start(
-        cameraId ? { deviceId: { exact: cameraId } } : { facingMode: "environment" },
-        config,
-        (decodedText) => {
-          // Success
-          if (scannerRef.current) {
-            scannerRef.current.stop().then(() => {
+      // Always try to start with the back camera first
+      try {
+        await scannerRef.current.start(
+          { facingMode: "environment" },
+          config,
+          (decodedText) => {
+            if (scannerRef.current) {
+              scannerRef.current.stop().then(() => {
+                onScan(decodedText);
+              }).catch(console.error);
+            } else {
               onScan(decodedText);
-            }).catch(console.error);
-          } else {
-            onScan(decodedText);
+            }
+          },
+          (errorMessage) => {
+            // Ignore frequent frame errors
           }
-        },
-        (errorMessage) => {
-          // Parse errors are very frequent as it scans frames without barcodes, so we ignore them.
-        }
-      );
+        );
+      } catch (backCameraError) {
+        console.warn('Back camera not found or failed, falling back to any available camera (laptop mode)...', backCameraError);
+        // Fallback for laptops or devices without a back camera
+        await scannerRef.current.start(
+          { facingMode: "user" },
+          config,
+          (decodedText) => {
+            if (scannerRef.current) {
+              scannerRef.current.stop().then(() => {
+                onScan(decodedText);
+              }).catch(console.error);
+            } else {
+              onScan(decodedText);
+            }
+          },
+          (errorMessage) => {
+            // Ignore frequent frame errors
+          }
+        );
+      }
       
       setIsInitializing(false);
     } catch (err) {
       console.error(err);
-      setError('تعذر الوصول للكاميرا. تأكد من إعطاء الصلاحيات.');
+      setError('تعذر الوصول للكاميرا. تأكد من إعطاء الصلاحيات وعدم استخدام الكاميرا في تطبيق آخر.');
       setIsInitializing(false);
     }
   };
 
   useEffect(() => {
-    // Get cameras and start
-    Html5Qrcode.getCameras().then(devices => {
-      if (devices && devices.length > 0) {
-        setCameras(devices);
-        // Prioritize back camera
-        const backCamera = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'));
-        const targetCameraId = backCamera ? backCamera.id : devices[0].id;
-        setActiveCameraId(targetCameraId);
-        startScanner(targetCameraId);
-      } else {
-        startScanner(); // Fallback to environment facingMode
-      }
-    }).catch(err => {
-      console.error("Error getting cameras", err);
-      startScanner(); // Fallback
-    });
+    startScanner();
 
     return () => {
       if (scannerRef.current && scannerRef.current.isScanning) {
@@ -82,16 +90,6 @@ const BarcodeScanner = ({ onScan, onClose }) => {
       }
     };
   }, []);
-
-  const switchCamera = () => {
-    if (cameras.length > 1) {
-      const currentIndex = cameras.findIndex(c => c.id === activeCameraId);
-      const nextIndex = (currentIndex + 1) % cameras.length;
-      const nextCamera = cameras[nextIndex];
-      setActiveCameraId(nextCamera.id);
-      startScanner(nextCamera.id);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center">
@@ -114,14 +112,6 @@ const BarcodeScanner = ({ onScan, onClose }) => {
       <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-50 bg-gradient-to-b from-black/80 to-transparent">
         <h2 className="text-white text-lg font-bold tracking-wide">مسح الباركود</h2>
         <div className="flex gap-4">
-          {cameras.length > 1 && (
-            <button 
-              onClick={switchCamera} 
-              className="p-3 text-white bg-white/20 hover:bg-white/30 rounded-full backdrop-blur-md transition-all active:scale-95"
-            >
-              <FiRefreshCcw size={24} />
-            </button>
-          )}
           <button 
             onClick={onClose} 
             className="p-3 text-white bg-red-500/80 hover:bg-red-500 rounded-full backdrop-blur-md transition-all active:scale-95"
