@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import toast from 'react-hot-toast';
+import { adminAPI } from '../../../services/api';
 import { STRINGS } from '../../../constants';
 
 const ProductFormModal = ({
@@ -14,6 +16,34 @@ const ProductFormModal = ({
   createMutation,
   updateMutation,
 }) => {
+  const fileInputRefs = useRef({});
+
+  const handleImageUpload = async (e, imgIdx) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const toastId = toast.loading('جاري رفع الصورة...');
+    try {
+      const uploadData = new FormData();
+      uploadData.append('image', file);
+      
+      const res = await adminAPI.uploadImage(uploadData);
+      if (res.data.success) {
+        const newImages = [...formData.images];
+        newImages[imgIdx] = {
+          ...newImages[imgIdx],
+          url: res.data.url,
+          alt: formData.name || '',
+        };
+        setFormData({ ...formData, images: newImages });
+        toast.success('تم رفع الصورة بنجاح', { id: toastId });
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error('حدث خطأ أثناء رفع الصورة', { id: toastId });
+    }
+  };
+
   if (!showModal) return null;
 
   return (
@@ -386,23 +416,39 @@ const ProductFormModal = ({
               {formData.images.map((img, imgIdx) => (
                 <div key={imgIdx} className="bg-gray-50 p-3 rounded-lg space-y-2">
                   <div className="flex items-center gap-2">
-                    <input
-                      type="url"
-                      placeholder={`${STRINGS.ADMIN.TABLE?.IMAGE_URL || 'رابط الصورة'} ${imgIdx + 1}`}
-                      value={img.url || ''}
-                      onChange={(e) => {
-                        const newImages = [...formData.images];
-                        newImages[imgIdx] = {
-                          ...newImages[imgIdx],
-                          url: e.target.value,
-                          alt: formData.name,
-                        };
-                        setFormData({ ...formData, images: newImages });
-                      }}
-                      className="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 text-sm"
-                    />
+                    <div className="flex-1 flex gap-2">
+                      <input
+                        type="url"
+                        placeholder={`${STRINGS.ADMIN.TABLE?.IMAGE_URL || 'رابط الصورة'} ${imgIdx + 1}`}
+                        value={img.url || ''}
+                        onChange={(e) => {
+                          const newImages = [...formData.images];
+                          newImages[imgIdx] = {
+                            ...newImages[imgIdx],
+                            url: e.target.value,
+                            alt: formData.name,
+                          };
+                          setFormData({ ...formData, images: newImages });
+                        }}
+                        className="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 text-sm"
+                      />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        ref={el => fileInputRefs.current[imgIdx] = el}
+                        onChange={(e) => handleImageUpload(e, imgIdx)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRefs.current[imgIdx]?.click()}
+                        className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm whitespace-nowrap transition-colors"
+                      >
+                        رفع صورة
+                      </button>
+                    </div>
                     {img.url && (
-                      <img src={img.url} alt="" className="w-10 h-10 object-cover rounded border" />
+                      <img src={img.url.startsWith('/') ? `http://localhost:5000${img.url}` : img.url} alt="" className="w-10 h-10 object-cover rounded border" />
                     )}
                     {formData.images.length > 1 && (
                       <button

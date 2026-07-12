@@ -142,6 +142,7 @@ app.use(morgan('dev'));
 
 // Webhook routes (must be before express.json() to get raw body for signature verification)
 app.use('/api/webhooks', require('./routes/webhooks'));
+app.use('/api/upload', require('./routes/upload'));
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));

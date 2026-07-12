@@ -186,6 +186,10 @@ const AdminProducts = () => {
         return;
       }
 
+      // Pre-fill occasions and recipients to be all selected for new items via barcode
+      const defaultOccasions = occasionsList ? occasionsList.map(o => o.name) : [];
+      const defaultRecipients = STRINGS.ADMIN.PRODUCT_FORM.RECIPIENTS_LIST || [];
+
       if (success && (source === 'openfoodfacts' || source === 'upcitemdb')) {
         // Product found in external database — pre-fill the add form
         resetForm();
@@ -198,6 +202,8 @@ const AdminProducts = () => {
           sku: data.sku || barcode,
           category: categories?.[0]?._id ? [categories[0]._id] : [],
           images: data.images?.length ? data.images : [{ url: '', alt: '', variantTags: {} }],
+          occasions: defaultOccasions,
+          recipients: defaultRecipients,
         }));
         setShowModal(true);
         toast.success(STRINGS.ADMIN.NOTIFICATIONS.BARCODE_FOUND, { id: toastId });
@@ -207,13 +213,25 @@ const AdminProducts = () => {
       // Not found anywhere — open empty form with barcode as SKU
       toast.error(STRINGS.ADMIN.NOTIFICATIONS.BARCODE_NOT_FOUND, { id: toastId });
       resetForm();
-      setFormData((prev) => ({ ...prev, sku: barcode }));
+      setFormData((prev) => ({ 
+        ...prev, 
+        sku: barcode,
+        occasions: defaultOccasions,
+        recipients: defaultRecipients,
+      }));
       setShowModal(true);
     } catch (error) {
       console.error(error);
       toast.error(STRINGS.ADMIN.NOTIFICATIONS.BARCODE_ERROR, { id: toastId });
+      const defaultOccasions = occasionsList ? occasionsList.map(o => o.name) : [];
+      const defaultRecipients = STRINGS.ADMIN.PRODUCT_FORM.RECIPIENTS_LIST || [];
       resetForm();
-      setFormData((prev) => ({ ...prev, sku: barcode }));
+      setFormData((prev) => ({ 
+        ...prev, 
+        sku: barcode,
+        occasions: defaultOccasions,
+        recipients: defaultRecipients,
+      }));
       setShowModal(true);
     }
   };

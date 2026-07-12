@@ -85,7 +85,7 @@ exports.barcodeLookup = asyncHandler(async (req, res) => {
             name: item.title || '',
             description: item.description || '',
             price: approxPrice,
-            images: item.images?.[0] ? [{ url: item.images[0], alt: item.title }] : [],
+            images: item.images?.length ? item.images.map(url => ({ url, alt: item.title || '' })) : [],
             sku: barcode,
           },
         });
