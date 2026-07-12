@@ -23,13 +23,15 @@ const BarcodeScanner = ({ onScan, onClose }) => {
 
       // Configuration for highest possible resolution and continuous focus
       const config = {
-        fps: 20, 
-        qrbox: { width: 280, height: 180 }, 
+        fps: 15, // 15 is optimal for balancing CPU and speed
         aspectRatio: 1.777778, // 16:9
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true // Uses Google/Apple Native barcode detector if available (100x faster)
+        },
         videoConstraints: {
           facingMode: "environment", // Force back camera
-          width: { min: 640, ideal: 1920, max: 3840 }, // Ask for the highest possible resolution
-          height: { min: 480, ideal: 1080, max: 2160 },
+          width: { min: 640, ideal: 1920 }, // High resolution
+          height: { min: 480, ideal: 1080 },
           advanced: [{ focusMode: "continuous" }] // Force continuous auto-focus
         }
       };
