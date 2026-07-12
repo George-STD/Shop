@@ -53,7 +53,7 @@ const nextConfig = {
           { key: 'Content-Security-Policy', value: contentSecurityPolicy },
           {
             key: 'Permissions-Policy',
-            value: 'accelerometer=(), camera=(), geolocation=(), microphone=(), payment=(), usb=()',
+            value: 'accelerometer=(), camera=(self), geolocation=(), microphone=(), payment=(), usb=()',
           },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'DENY' },
