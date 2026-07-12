@@ -100,7 +100,34 @@ exports.barcodeLookup = asyncHandler(async (req, res) => {
     }
   }
 
-  // 5. If we found product info but NO images, try Google Image Search
+  // 5. If still not found, search Google Web for the barcode string
+  if (!foundData) {
+    try {
+      const googleResults = await google.search(barcode, { page: 0, additional_params: { hl: 'ar' } });
+      if (googleResults.results && googleResults.results.length > 0) {
+        const firstResult = googleResults.results[0];
+        let name = firstResult.title;
+        // Clean up the title a bit
+        name = name.replace(barcode, '').replace(/\|.*/, '').replace(/-.*/, '').trim();
+        
+        if (name && name.length > 2) {
+          foundData = {
+            source: 'google',
+            data: {
+              name: name,
+              description: firstResult.description,
+              images: [], // Images will be fetched in the next step
+              sku: barcode,
+            },
+          };
+        }
+      }
+    } catch (err) {
+      console.error('Google Web Search fallback error:', err.message);
+    }
+  }
+
+  // 6. If we found product info but NO images, try Google Image Search
   if (foundData && (!foundData.data.images || foundData.data.images.length === 0)) {
     try {
       const query = foundData.data.name;
@@ -132,7 +159,7 @@ exports.barcodeLookup = asyncHandler(async (req, res) => {
     }
   }
 
-  // 6. Generate a smart description if it's missing or very short
+  // 7. Generate a smart description if it's missing or very short
   if (foundData) {
     if (!foundData.data.description || foundData.data.description.length < 5) {
       const productName = foundData.data.name || 'هذا المنتج';
@@ -145,7 +172,7 @@ exports.barcodeLookup = asyncHandler(async (req, res) => {
     });
   }
 
-  // 6. Nothing found anywhere
+  // 8. Nothing found anywhere
   return res.json({
     success: false,
     source: 'none',
