@@ -132,7 +132,9 @@ registerProcessHandlers();
 app.set('trust proxy', 1);
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors({
   origin: CONFIG.CORS.ALLOWED_ORIGINS,
   methods: CONFIG.CORS.METHODS,
