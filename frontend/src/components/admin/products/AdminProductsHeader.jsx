@@ -9,6 +9,7 @@ const AdminProductsHeader = ({
   setCategoryFilter,
   categories,
   setShowScanner,
+  setShowAiUploader,
   setShowModal,
   resetForm,
 }) => {
@@ -49,6 +50,15 @@ const AdminProductsHeader = ({
         >
           <FiCamera />
           <span className="hidden sm:inline">{STRINGS.ADMIN.ADD_BY_SERIAL}</span>
+        </button>
+
+        <button
+          onClick={() => setShowAiUploader(true)}
+          className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:from-orange-600 hover:to-red-600 shadow-md"
+          title="إضافة جماعية بالذكاء الاصطناعي"
+        >
+          <span className="hidden sm:inline">إضافة ذكية 🤖</span>
+          <span className="sm:hidden">🤖</span>
         </button>
 
         <button

@@ -59,6 +59,34 @@ exports.createProduct = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, message: 'تم إنشاء المنتج بنجاح', data: product });
 }, 'حدث خطأ أثناء إنشاء المنتج');
 
+exports.createBulkProducts = asyncHandler(async (req, res) => {
+  const productsData = req.body.products;
+  if (!Array.isArray(productsData) || productsData.length === 0) {
+    return res.status(400).json({ success: false, message: 'لم يتم توفير بيانات صالحة للمنتجات' });
+  }
+
+  const productsToCreate = productsData.map((data, index) => {
+    const slug = (data.name || 'product').toLowerCase().trim()
+      .replace(/\s+/g, '-')
+      .replace(/[\u0600-\u06FF]/g, '')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '') || 'product';
+    const uniqueSlug = slug + '-' + Date.now() + '-' + index;
+    const sku = data.sku || ('SKU-' + Date.now() + '-' + Math.floor(Math.random() * 1000) + '-' + index);
+
+    return {
+      ...data,
+      slug: uniqueSlug,
+      sku
+    };
+  });
+
+  const createdProducts = await Product.insertMany(productsToCreate);
+  res.status(201).json({ success: true, message: `تم إنشاء ${createdProducts.length} منتج بنجاح`, count: createdProducts.length });
+}, 'حدث خطأ أثناء الإنشاء الجماعي للمنتجات');
+
 exports.updateProduct = asyncHandler(async (req, res) => {
   const updates = {};
   ALLOWED_PRODUCT_FIELDS.forEach(field => {

@@ -159,6 +159,14 @@ export const adminAPI = {
       'Content-Type': 'multipart/form-data',
     },
   }),
+
+  // AI & Bulk
+  createBulkProducts: (data) => api.post('/admin/products/bulk', data),
+  aiVisionAnalyze: (formData) => api.post('/admin/ai/vision-analyze', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }),
 };
 
 export default api;

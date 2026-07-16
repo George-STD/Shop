@@ -62,6 +62,11 @@ router.post('/products', [
   body('category.*').isMongoId().withMessage('فئة غير صالحة')
 ], adminController.createProduct);
 
+router.post('/products/bulk', [
+  logAdminAction('CREATE_BULK_PRODUCTS'),
+  body('products').isArray({ min: 1 }).withMessage('يجب تقديم مصفوفة المنتجات')
+], adminController.createBulkProducts);
+
 router.put('/products/:id', [
   validateObjectId('id'),
   logAdminAction('UPDATE_PRODUCT')

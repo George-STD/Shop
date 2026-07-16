@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI, categoriesAPI, occasionsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import BarcodeScanner from '../../components/admin/BarcodeScanner';
+import BulkVisionUploader from '../../components/admin/BulkVisionUploader';
 
 // Extracted Components
 import AdminProductsHeader from '../../components/admin/products/AdminProductsHeader';
@@ -17,6 +18,7 @@ const AdminProducts = () => {
   const [page, setPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [showAiUploader, setShowAiUploader] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
 
   const initialFormState = {
@@ -291,6 +293,7 @@ const AdminProducts = () => {
         setCategoryFilter={setCategoryFilter}
         categories={categories}
         setShowScanner={setShowScanner}
+        setShowAiUploader={setShowAiUploader}
         setShowModal={setShowModal}
         resetForm={resetForm}
       />
@@ -321,6 +324,14 @@ const AdminProducts = () => {
       {showScanner && (
         <BarcodeScanner onClose={() => setShowScanner(false)} onScan={handleBarcodeScan} />
       )}
+
+      <BulkVisionUploader 
+        isOpen={showAiUploader} 
+        onClose={() => setShowAiUploader(false)} 
+        categories={categories}
+        occasionsList={occasionsList}
+        onSuccess={() => queryClient.invalidateQueries(['admin-products'])}
+      />
     </div>
   );
 };
