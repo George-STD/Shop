@@ -57,7 +57,20 @@ const ProductFormModal = ({
         <form onSubmit={handleSubmit} className="p-2 sm:p-6 space-y-3 sm:space-y-4">
           {/* Occasions (المناسبات) */}
           <div>
-            <label className="block text-sm font-medium mb-1">{STRINGS.ADMIN.PRODUCT_FORM.OCCASIONS}</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium">{STRINGS.ADMIN.PRODUCT_FORM.OCCASIONS}</label>
+              <button
+                type="button"
+                onClick={() => {
+                  const allOccasions = occasionsList?.map(o => o.name) || [];
+                  const isAllSelected = formData.occasions.length === allOccasions.length && allOccasions.length > 0;
+                  setFormData({ ...formData, occasions: isAllSelected ? [] : allOccasions });
+                }}
+                className="text-xs text-purple-600 hover:text-purple-800 font-medium"
+              >
+                {formData.occasions.length === (occasionsList?.length || 0) && occasionsList?.length > 0 ? 'إلغاء التحديد' : 'تحديد الكل'}
+              </button>
+            </div>
             <div className="flex flex-wrap gap-2">
               {occasionsList?.map((occ) => (
                 <label
@@ -92,7 +105,20 @@ const ProductFormModal = ({
 
           {/* Recipients (هدية لـ) */}
           <div>
-            <label className="block text-sm font-medium mb-1">{STRINGS.ADMIN.PRODUCT_FORM.RECIPIENTS_LABEL}</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium">{STRINGS.ADMIN.PRODUCT_FORM.RECIPIENTS_LABEL}</label>
+              <button
+                type="button"
+                onClick={() => {
+                  const allRecipients = STRINGS.ADMIN.PRODUCT_FORM.RECIPIENTS_LIST || [];
+                  const isAllSelected = formData.recipients.length === allRecipients.length && allRecipients.length > 0;
+                  setFormData({ ...formData, recipients: isAllSelected ? [] : allRecipients });
+                }}
+                className="text-xs text-purple-600 hover:text-purple-800 font-medium"
+              >
+                {formData.recipients.length === (STRINGS.ADMIN.PRODUCT_FORM.RECIPIENTS_LIST?.length || 0) && STRINGS.ADMIN.PRODUCT_FORM.RECIPIENTS_LIST?.length > 0 ? 'إلغاء التحديد' : 'تحديد الكل'}
+              </button>
+            </div>
             <div className="flex flex-wrap gap-2">
               {STRINGS.ADMIN.PRODUCT_FORM.RECIPIENTS_LIST.map(
                 (rec) => (
@@ -374,7 +400,20 @@ const ProductFormModal = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">{STRINGS.ADMIN.PRODUCT_FORM.CATEGORIES}</label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-medium">{STRINGS.ADMIN.PRODUCT_FORM.CATEGORIES}</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allCategories = categories?.map(c => c._id) || [];
+                    const isAllSelected = formData.category.length === allCategories.length && allCategories.length > 0;
+                    setFormData({ ...formData, category: isAllSelected ? [] : allCategories });
+                  }}
+                  className="text-xs text-purple-600 hover:text-purple-800 font-medium"
+                >
+                  {formData.category.length === (categories?.length || 0) && categories?.length > 0 ? 'إلغاء التحديد' : 'تحديد الكل'}
+                </button>
+              </div>
               <div className="border rounded-lg px-3 py-2 max-h-40 overflow-y-auto space-y-1">
                 {categories?.map((cat) => (
                   <label key={cat._id} className="flex items-center gap-2 cursor-pointer text-sm">
