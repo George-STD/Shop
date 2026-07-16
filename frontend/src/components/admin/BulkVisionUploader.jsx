@@ -304,15 +304,14 @@ const BulkVisionUploader = ({ isOpen, onClose, categories = [], occasionsList = 
 
                       {/* Status Badge */}
                       <div
-                        className={`absolute top-2 left-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold backdrop-blur-md shadow-sm ${
-                          item.status === 'idle'
+                        className={`absolute top-2 left-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold backdrop-blur-md shadow-sm ${item.status === 'idle'
                             ? 'bg-white/80 text-gray-600'
                             : item.status === 'processing'
                               ? 'bg-blue-500/90 text-white animate-pulse'
                               : item.status === 'success'
                                 ? 'bg-green-500/90 text-white'
                                 : 'bg-red-500/90 text-white'
-                        }`}
+                          }`}
                       >
                         {item.status === 'idle' && 'في الانتظار'}
                         {item.status === 'processing' && (
