@@ -86,9 +86,6 @@ router.post(
       return res.status(400).json({ success: false, message: 'لم يتم رفع أي صور للتحليل' });
     }
 
-    // Get uploaded image URLs for the frontend
-    const imageUrls = req.files.map((file) => `/uploads/${file.filename}`);
-
     // Prepare images for Gemini
     const imageParts = req.files.map((file) => fileToGenerativePart(file.path, file.mimetype));
 
@@ -134,6 +131,10 @@ router.post(
         generatedText = generatedText.replace(/```json\n?/g, '').replace(/```/g, '').trim();
         productData = JSON.parse(generatedText);
       }
+
+      // Get uploaded image URLs for the frontend (absolute URLs)
+      const baseUrl = req.protocol + '://' + req.get('host');
+      const imageUrls = req.files.map((file) => `${baseUrl}/uploads/${file.filename}`);
 
       // Return the generated data plus the image URLs
       res.json({

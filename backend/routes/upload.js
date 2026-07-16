@@ -48,10 +48,11 @@ router.post('/', protect, admin, upload.single('image'), (req, res) => {
     return res.status(400).json({ success: false, message: 'لم يتم رفع أي ملف' });
   }
   
-  // Return the path starting from root, so frontend can use it directly
+  // Return the full absolute URL so frontend can use it directly
+  const baseUrl = req.protocol + '://' + req.get('host');
   res.json({
     success: true,
-    url: `/uploads/${req.file.filename}`
+    url: `${baseUrl}/uploads/${req.file.filename}`
   });
 });
 

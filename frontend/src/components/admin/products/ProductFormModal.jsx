@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import toast from 'react-hot-toast';
 import { adminAPI } from '../../../services/api';
-import { STRINGS } from '../../../constants';
+import { STRINGS, API_URL } from '../../../constants';
 
 const ProductFormModal = ({
   showModal,
@@ -448,7 +448,7 @@ const ProductFormModal = ({
                       </button>
                     </div>
                     {img.url && (
-                      <img src={img.url.startsWith('/') ? `http://localhost:5000${img.url}` : img.url} alt="" className="w-10 h-10 object-cover rounded border" />
+                      <img src={img.url.startsWith('/') ? `${API_URL.replace('/api', '')}${img.url}` : img.url} alt="" className="w-10 h-10 object-cover rounded border" />
                     )}
                     {formData.images.length > 1 && (
                       <button
