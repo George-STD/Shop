@@ -111,7 +111,7 @@ router.post(
     try {
       const ai = getAiClient();
       const response = await ai.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-3.5-flash',
         contents: [prompt, ...imageParts],
         config: {
           responseMimeType: 'application/json',
