@@ -16,10 +16,15 @@ function getAiClient() {
   return _aiClient;
 }
 
+const uploadDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 // Setup multer storage (images are saved permanently in /uploads)
 const storage = multer.diskStorage({
   destination(req, file, cb) {
-    cb(null, 'uploads/');
+    cb(null, uploadDir);
   },
   filename(req, file, cb) {
     cb(null, `ai-bulk-${Date.now()}-${Math.round(Math.random() * 1000)}${path.extname(file.originalname)}`);
