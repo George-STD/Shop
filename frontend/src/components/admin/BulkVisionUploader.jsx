@@ -131,6 +131,12 @@ const BulkVisionUploader = ({ isOpen, onClose, categories = [], occasionsList = 
           errorMessage: err.response?.data?.message || 'فشل في الاتصال بالذكاء الاصطناعي',
         });
       }
+
+      // Add a small delay between requests to avoid Gemini free tier rate limits (15 RPM)
+      // Only delay if there are more items to process
+      if (idleItems.indexOf(item) < idleItems.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 4500));
+      }
     }
 
     setIsProcessing(false);

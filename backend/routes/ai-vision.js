@@ -145,9 +145,15 @@ router.post(
       });
     } catch (error) {
       console.error('Gemini Vision Error:', error.message || error);
+      
+      let message = 'حدث خطأ أثناء تحليل الصور بالذكاء الاصطناعي. تأكد من صلاحية مفتاح GEMINI_API_KEY.';
+      if (error.status === 429 || (error.message && error.message.includes('429'))) {
+        message = 'لقد تجاوزت الحد المسموح به للاستخدام المجاني (Rate Limit). يرجى الانتظار دقيقة والمحاولة مرة أخرى.';
+      }
+
       res.status(500).json({
         success: false,
-        message: 'حدث خطأ أثناء تحليل الصور بالذكاء الاصطناعي. تأكد من صلاحية مفتاح GEMINI_API_KEY.',
+        message,
       });
     }
   }, 'حدث خطأ أثناء تحليل الصور')
