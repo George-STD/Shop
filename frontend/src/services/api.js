@@ -154,10 +154,11 @@ export const adminAPI = {
   barcodeLookup: (barcode) => api.get(`/admin/barcode/${barcode}`),
 
   // Upload
-  uploadImage: (formData) => api.post('/upload', formData, {
+  uploadImage: (formData, options = {}) => api.post('/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    ...options
   }),
 
   // AI & Bulk

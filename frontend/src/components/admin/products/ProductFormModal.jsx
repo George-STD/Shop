@@ -17,6 +17,7 @@ const ProductFormModal = ({
   updateMutation,
 }) => {
   const fileInputRefs = useRef({});
+  const [uploadingImages, setUploadingImages] = React.useState([]);
 
   const handleImageUpload = async (e, imgIdx) => {
     const file = e.target.files?.[0];
@@ -48,40 +49,65 @@ const ProductFormModal = ({
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    const toastId = toast.loading(`جاري رفع ${files.length} صور...`);
+    const newUploads = files.map(file => ({
+      id: Math.random().toString(36).substring(2, 9),
+      file,
+      preview: URL.createObjectURL(file),
+      progress: 0,
+      error: false
+    }));
+
+    setUploadingImages(prev => [...prev, ...newUploads]);
+
+    const uploadedUrls = [];
     let successCount = 0;
-    try {
-      const uploadedImages = [];
-      for (const file of files) {
+
+    await Promise.all(newUploads.map(async (uploadObj) => {
+      try {
         const uploadData = new FormData();
-        uploadData.append('image', file);
-        const res = await adminAPI.uploadImage(uploadData);
+        uploadData.append('image', uploadObj.file);
+        
+        const res = await adminAPI.uploadImage(uploadData, {
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadingImages(prev => prev.map(p => 
+              p.id === uploadObj.id ? { ...p, progress: percentCompleted } : p
+            ));
+          }
+        });
+
         if (res.data.success) {
-          uploadedImages.push({
+          uploadedUrls.push({
             url: res.data.url,
             alt: formData.name || '',
             variantTags: {}
           });
           successCount++;
+          // Remove from uploading list on success
+          setUploadingImages(prev => prev.filter(p => p.id !== uploadObj.id));
         }
+      } catch (err) {
+        console.error('Upload error for image:', uploadObj.file.name, err);
+        // Mark as error
+        setUploadingImages(prev => prev.map(p => 
+          p.id === uploadObj.id ? { ...p, error: true } : p
+        ));
       }
+    }));
 
-      if (successCount > 0) {
-        // filter out any empty image placeholders to keep it clean
-        const currentImages = formData.images.filter(img => img.url !== '');
-        setFormData({ 
-          ...formData, 
-          images: [...currentImages, ...uploadedImages] 
-        });
-        toast.success(`تم رفع ${successCount} صورة بنجاح`, { id: toastId });
-      } else {
-        toast.error('لم يتم رفع أي صورة', { id: toastId });
-      }
-    } catch (err) {
-      console.error('Multiple upload error:', err);
-      toast.error('حدث خطأ أثناء رفع بعض الصور', { id: toastId });
+    if (successCount > 0) {
+      setFormData(prev => {
+        const currentImages = prev.images.filter(img => img.url !== '');
+        return {
+          ...prev,
+          images: [...currentImages, ...uploadedUrls]
+        };
+      });
+      toast.success(`تم رفع ${successCount} صورة بنجاح`);
+    } else {
+      toast.error('حدث خطأ أثناء رفع الصور، قد تكون المشكلة في إعدادات Cloudinary أو الاتصال');
     }
-    
+
     if (e.target) {
       e.target.value = '';
     }
@@ -585,6 +611,30 @@ const ProductFormModal = ({
                   )}
                 </div>
               ))}
+              {uploadingImages.length > 0 && (
+                <div className="space-y-3 mt-4 p-4 border border-dashed border-blue-200 bg-blue-50/50 rounded-lg">
+                  <h4 className="text-sm font-medium text-blue-800 mb-2">جاري الرفع ({uploadingImages.length})...</h4>
+                  {uploadingImages.map((img) => (
+                    <div key={img.id} className="flex items-center gap-3 bg-white p-2 rounded border shadow-sm">
+                      <img src={img.preview} alt="preview" className="w-10 h-10 object-cover rounded" />
+                      <div className="flex-1">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-gray-600 truncate max-w-[150px]">{img.file.name}</span>
+                          <span className={img.error ? 'text-red-500' : 'text-blue-600 font-medium'}>
+                            {img.error ? 'حدث خطأ' : `${img.progress}%`}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                          <div
+                            className={`h-1.5 rounded-full transition-all duration-300 ${img.error ? 'bg-red-500' : 'bg-blue-600'}`}
+                            style={{ width: img.error ? '100%' : `${img.progress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="flex gap-4 items-center">
                 <button
                   type="button"
