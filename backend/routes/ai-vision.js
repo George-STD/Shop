@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const cloudinary = require('../config/cloudinary');
 const { protect, admin, adminLimiter, sanitizeInput } = require('../middleware/auth');
 const asyncHandler = require('../utils/asyncHandler');
 
@@ -16,20 +16,8 @@ function getAiClient() {
   return _aiClient;
 }
 
-const uploadDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Setup multer storage (images are saved permanently in /uploads)
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename(req, file, cb) {
-    cb(null, `ai-bulk-${Date.now()}-${Math.round(Math.random() * 1000)}${path.extname(file.originalname)}`);
-  },
-});
+// Setup multer memory storage (no disk I/O needed)
+const storage = multer.memoryStorage();
 
 function checkFileType(file, cb) {
   const filetypes = /jpg|jpeg|png|webp/;
@@ -52,12 +40,12 @@ const upload = multer({
 });
 
 /**
- * Converts a local file to the inlineData format required by the GenAI SDK.
+ * Converts a memory buffer to the inlineData format required by the GenAI SDK.
  */
-function fileToGenerativePart(filePath, mimeType) {
+function fileToGenerativePart(buffer, mimeType) {
   return {
     inlineData: {
-      data: fs.readFileSync(filePath).toString('base64'),
+      data: buffer.toString('base64'),
       mimeType,
     },
   };
@@ -86,8 +74,8 @@ router.post(
       return res.status(400).json({ success: false, message: 'لم يتم رفع أي صور للتحليل' });
     }
 
-    // Prepare images for Gemini
-    const imageParts = req.files.map((file) => fileToGenerativePart(file.path, file.mimetype));
+    // Prepare images for Gemini directly from memory buffers
+    const imageParts = req.files.map((file) => fileToGenerativePart(file.buffer, file.mimetype));
 
     // NOTE: The "recipients" list MUST match the enum in models/Product.js exactly.
     const prompt = `
@@ -132,11 +120,24 @@ router.post(
         productData = JSON.parse(generatedText);
       }
 
-      // Get uploaded image URLs for the frontend (absolute URLs)
-      const baseUrl = req.protocol + '://' + req.get('host');
-      const imageUrls = req.files.map((file) => `${baseUrl}/uploads/${file.filename}`);
+      // Upload all image buffers to Cloudinary concurrently
+      const uploadPromises = req.files.map((file) => {
+        return new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: 'giftshop_ai_bulk' },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result.secure_url);
+            }
+          );
+          uploadStream.end(file.buffer);
+        });
+      });
 
-      // Return the generated data plus the image URLs
+      // Wait for all Cloudinary uploads to complete and collect their secure URLs
+      const imageUrls = await Promise.all(uploadPromises);
+
+      // Return the generated data plus the permanent Cloudinary URLs
       res.json({
         success: true,
         data: {
@@ -145,11 +146,11 @@ router.post(
         },
       });
     } catch (error) {
-      console.error('Gemini Vision Error:', error.message || error);
+      console.error('AI Vision or Cloudinary Error:', error.message || error);
       
-      let message = 'حدث خطأ أثناء تحليل الصور بالذكاء الاصطناعي. تأكد من صلاحية مفتاح GEMINI_API_KEY.';
+      let message = 'حدث خطأ أثناء تحليل أو حفظ الصور. تأكد من إعدادات API.';
       if (error.status === 429 || (error.message && error.message.includes('429'))) {
-        message = 'لقد تجاوزت الحد المسموح به للاستخدام المجاني (Rate Limit). يرجى الانتظار دقيقة والمحاولة مرة أخرى.';
+        message = 'لقد تجاوزت الحد المسموح به للاستخدام المجاني للذكاء الاصطناعي (Rate Limit). يرجى الانتظار دقيقة والمحاولة مرة أخرى.';
       }
 
       res.status(500).json({
@@ -157,7 +158,7 @@ router.post(
         message,
       });
     }
-  }, 'حدث خطأ أثناء تحليل الصور')
+  }, 'حدث خطأ أثناء تحليل أو رفع الصور')
 );
 
 module.exports = router;

@@ -2,23 +2,11 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const cloudinary = require('../config/cloudinary');
 const { protect, admin } = require('../middleware/auth');
 
-const uploadDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Setup multer storage
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename(req, file, cb) {
-    cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
-  },
-});
+// Setup multer memory storage
+const storage = multer.memoryStorage();
 
 function checkFileType(file, cb) {
   const filetypes = /jpg|jpeg|png|webp/;
@@ -47,13 +35,25 @@ router.post('/', protect, admin, upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'لم يتم رفع أي ملف' });
   }
-  
-  // Return the full absolute URL so frontend can use it directly
-  const baseUrl = req.protocol + '://' + req.get('host');
-  res.json({
-    success: true,
-    url: `${baseUrl}/uploads/${req.file.filename}`
-  });
+
+  // Upload the file buffer to Cloudinary
+  const uploadStream = cloudinary.uploader.upload_stream(
+    { folder: 'giftshop_uploads' },
+    (error, result) => {
+      if (error) {
+        console.error('Cloudinary Upload Error:', error);
+        return res.status(500).json({ success: false, message: 'حدث خطأ أثناء رفع الصورة.' });
+      }
+      
+      // Return the Cloudinary secure URL
+      res.json({
+        success: true,
+        url: result.secure_url
+      });
+    }
+  );
+
+  uploadStream.end(req.file.buffer);
 });
 
 module.exports = router;
