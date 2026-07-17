@@ -44,6 +44,49 @@ const ProductFormModal = ({
     }
   };
 
+  const handleMultipleImagesUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const toastId = toast.loading(`جاري رفع ${files.length} صور...`);
+    let successCount = 0;
+    try {
+      const uploadedImages = [];
+      for (const file of files) {
+        const uploadData = new FormData();
+        uploadData.append('image', file);
+        const res = await adminAPI.uploadImage(uploadData);
+        if (res.data.success) {
+          uploadedImages.push({
+            url: res.data.url,
+            alt: formData.name || '',
+            variantTags: {}
+          });
+          successCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        // filter out any empty image placeholders to keep it clean
+        const currentImages = formData.images.filter(img => img.url !== '');
+        setFormData({ 
+          ...formData, 
+          images: [...currentImages, ...uploadedImages] 
+        });
+        toast.success(`تم رفع ${successCount} صورة بنجاح`, { id: toastId });
+      } else {
+        toast.error('لم يتم رفع أي صورة', { id: toastId });
+      }
+    } catch (err) {
+      console.error('Multiple upload error:', err);
+      toast.error('حدث خطأ أثناء رفع بعض الصور', { id: toastId });
+    }
+    
+    if (e.target) {
+      e.target.value = '';
+    }
+  };
+
   if (!showModal) return null;
 
   return (
@@ -542,18 +585,37 @@ const ProductFormModal = ({
                   )}
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => {
-                  setFormData({
-                    ...formData,
-                    images: [...formData.images, { url: '', alt: '', variantTags: {} }],
-                  });
-                }}
-                className="text-purple-600 text-sm hover:underline"
-              >
-                {STRINGS.ADMIN.PRODUCT_FORM.ADD_IMAGE}
-              </button>
+              <div className="flex gap-4 items-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({
+                      ...formData,
+                      images: [...formData.images, { url: '', alt: '', variantTags: {} }],
+                    });
+                  }}
+                  className="text-purple-600 text-sm hover:underline"
+                >
+                  {STRINGS.ADMIN.PRODUCT_FORM.ADD_IMAGE}
+                </button>
+                <div className="relative">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={handleMultipleImagesUpload}
+                    title="اختر مجموعة من الصور لرفعها معاً"
+                  />
+                  <button
+                    type="button"
+                    className="text-blue-600 text-sm hover:underline flex items-center gap-1"
+                  >
+                    <span>رفع العديد من الصور</span>
+                    <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">متعدد</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
