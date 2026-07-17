@@ -25,7 +25,7 @@ const upload = multer({
   fileFilter: function (req, file, cb) {
     checkFileType(file, cb);
   },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit
 });
 
 // @route   POST /api/upload
@@ -35,7 +35,7 @@ router.post('/', protect, admin, (req, res, next) => {
   upload.single('image')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({ success: false, message: 'حجم الصورة كبير جداً. الحد الأقصى هو 5 ميجابايت.' });
+        return res.status(400).json({ success: false, message: 'حجم الصورة كبير جداً. الحد الأقصى هو 20 ميجابايت.' });
       }
       return res.status(400).json({ success: false, message: err.message });
     } else if (err) {
