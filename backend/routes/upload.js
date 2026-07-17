@@ -31,7 +31,19 @@ const upload = multer({
 // @route   POST /api/upload
 // @desc    Upload an image
 // @access  Private/Admin
-router.post('/', protect, admin, upload.single('image'), (req, res) => {
+router.post('/', protect, admin, (req, res, next) => {
+  upload.single('image')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ success: false, message: 'حجم الصورة كبير جداً. الحد الأقصى هو 5 ميجابايت.' });
+      }
+      return res.status(400).json({ success: false, message: err.message });
+    } else if (err) {
+      return res.status(400).json({ success: false, message: typeof err === 'string' ? err : err.message || 'حدث خطأ غير متوقع' });
+    }
+    next();
+  });
+}, (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'لم يتم رفع أي ملف' });
   }
@@ -42,7 +54,7 @@ router.post('/', protect, admin, upload.single('image'), (req, res) => {
     (error, result) => {
       if (error) {
         console.error('Cloudinary Upload Error:', error);
-        return res.status(500).json({ success: false, message: 'حدث خطأ أثناء رفع الصورة.' });
+        return res.status(500).json({ success: false, message: 'حدث خطأ في خدمات Cloudinary أثناء الرفع.' });
       }
       
       // Return the Cloudinary secure URL

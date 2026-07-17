@@ -23,26 +23,49 @@ const ProductFormModal = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const toastId = toast.loading('جاري رفع الصورة...');
+    const uploadId = Math.random().toString(36).substring(2, 9);
+    setUploadingImages(prev => [...prev, {
+      id: uploadId,
+      file,
+      preview: URL.createObjectURL(file),
+      progress: 0,
+      error: false
+    }]);
+
     try {
       const uploadData = new FormData();
       uploadData.append('image', file);
       
-      const res = await adminAPI.uploadImage(uploadData);
+      const res = await adminAPI.uploadImage(uploadData, {
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadingImages(prev => prev.map(p => 
+            p.id === uploadId ? { ...p, progress: percentCompleted } : p
+          ));
+        }
+      });
+
       if (res.data.success) {
-        const newImages = [...formData.images];
-        newImages[imgIdx] = {
-          ...newImages[imgIdx],
-          url: res.data.url,
-          alt: formData.name || '',
-        };
-        setFormData({ ...formData, images: newImages });
-        toast.success('تم رفع الصورة بنجاح', { id: toastId });
+        setUploadingImages(prev => prev.filter(p => p.id !== uploadId));
+        setFormData(prev => {
+          const newImages = [...prev.images];
+          newImages[imgIdx] = {
+            ...newImages[imgIdx],
+            url: res.data.url,
+            alt: prev.name || '',
+          };
+          return { ...prev, images: newImages };
+        });
+        toast.success('تم رفع الصورة بنجاح');
       }
     } catch (err) {
       console.error('Upload error:', err);
-      toast.error('حدث خطأ أثناء رفع الصورة', { id: toastId });
+      setUploadingImages(prev => prev.map(p => 
+        p.id === uploadId ? { ...p, error: true, errorMessage: err.response?.data?.message || 'خطأ' } : p
+      ));
+      toast.error(err.response?.data?.message || 'حدث خطأ أثناء رفع الصورة');
     }
+    if (e.target) e.target.value = '';
   };
 
   const handleMultipleImagesUpload = async (e) => {
@@ -59,10 +82,7 @@ const ProductFormModal = ({
 
     setUploadingImages(prev => [...prev, ...newUploads]);
 
-    const uploadedUrls = [];
-    let successCount = 0;
-
-    await Promise.all(newUploads.map(async (uploadObj) => {
+    const results = await Promise.all(newUploads.map(async (uploadObj) => {
       try {
         const uploadData = new FormData();
         uploadData.append('image', uploadObj.file);
@@ -77,25 +97,25 @@ const ProductFormModal = ({
         });
 
         if (res.data.success) {
-          uploadedUrls.push({
+          setUploadingImages(prev => prev.filter(p => p.id !== uploadObj.id));
+          return {
             url: res.data.url,
             alt: formData.name || '',
             variantTags: {}
-          });
-          successCount++;
-          // Remove from uploading list on success
-          setUploadingImages(prev => prev.filter(p => p.id !== uploadObj.id));
+          };
         }
       } catch (err) {
         console.error('Upload error for image:', uploadObj.file.name, err);
-        // Mark as error
         setUploadingImages(prev => prev.map(p => 
-          p.id === uploadObj.id ? { ...p, error: true } : p
+          p.id === uploadObj.id ? { ...p, error: true, errorMessage: err.response?.data?.message || 'خطأ' } : p
         ));
       }
+      return null;
     }));
 
-    if (successCount > 0) {
+    const uploadedUrls = results.filter(r => r !== null);
+
+    if (uploadedUrls.length > 0) {
       setFormData(prev => {
         const currentImages = prev.images.filter(img => img.url !== '');
         return {
@@ -103,9 +123,9 @@ const ProductFormModal = ({
           images: [...currentImages, ...uploadedUrls]
         };
       });
-      toast.success(`تم رفع ${successCount} صورة بنجاح`);
-    } else {
-      toast.error('حدث خطأ أثناء رفع الصور، قد تكون المشكلة في إعدادات Cloudinary أو الاتصال');
+      toast.success(`تم رفع ${uploadedUrls.length} صورة بنجاح`);
+    } else if (files.length > 0) {
+      toast.error('حدث خطأ أثناء رفع الصور');
     }
 
     if (e.target) {
@@ -621,7 +641,7 @@ const ProductFormModal = ({
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-gray-600 truncate max-w-[150px]">{img.file.name}</span>
                           <span className={img.error ? 'text-red-500' : 'text-blue-600 font-medium'}>
-                            {img.error ? 'حدث خطأ' : `${img.progress}%`}
+                            {img.error ? (img.errorMessage || 'حدث خطأ') : `${img.progress}%`}
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-1.5">
