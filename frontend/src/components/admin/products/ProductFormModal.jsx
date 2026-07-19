@@ -18,6 +18,67 @@ const ProductFormModal = ({
 }) => {
   const fileInputRefs = useRef({});
   const [uploadingImages, setUploadingImages] = React.useState([]);
+  const [isEnhancing, setIsEnhancing] = React.useState(false);
+
+  const handleAIEnhance = async () => {
+    const firstImageUrl = formData.images?.find(img => img.url)?.url;
+    if (!firstImageUrl) {
+      toast.error('يرجى رفع صورة واحدة على الأقل أولاً ليتمكن الذكاء الاصطناعي من تحليلها');
+      return;
+    }
+
+    setIsEnhancing(true);
+    const toastId = toast.loading('✨ جاري تحليل الصورة واقتراح المحتوى...');
+
+    const tryEnhance = async (attempt = 0) => {
+      try {
+        const res = await adminAPI.enhanceProduct(firstImageUrl, formData.name, formData.description);
+        if (res.data?.success && res.data?.data) {
+          setFormData(prev => ({
+            ...prev,
+            name: res.data.data.name || prev.name,
+            description: res.data.data.description || prev.description,
+          }));
+          toast.success('تم تحسين العنوان والوصف بنجاح! ✨', { id: toastId });
+        }
+      } catch (error) {
+        const data = error.response?.data;
+
+        // RPM exhausted — auto-retry with countdown
+        if (data?.retryAfter && attempt < 3) {
+          let remaining = data.retryAfter;
+          toast.loading(`⏳ تم تجاوز حد الطلبات... إعادة المحاولة بعد ${remaining} ثانية`, { id: toastId });
+
+          await new Promise(resolve => {
+            const interval = setInterval(() => {
+              remaining--;
+              if (remaining > 0) {
+                toast.loading(`⏳ إعادة المحاولة بعد ${remaining} ثانية...`, { id: toastId });
+              } else {
+                clearInterval(interval);
+                toast.loading('✨ جاري إعادة المحاولة...', { id: toastId });
+                resolve();
+              }
+            }, 1000);
+          });
+
+          return tryEnhance(attempt + 1);
+        }
+
+        // All daily limits exhausted — no point retrying
+        if (data?.allDailyExhausted) {
+          toast.error('تم استنفاد جميع الموديلات المتاحة لليوم. حاول مرة أخرى غداً. 📅', { id: toastId });
+          return;
+        }
+
+        // Generic error
+        toast.error(data?.message || 'فشل تحسين المحتوى بالذكاء الاصطناعي', { id: toastId });
+      }
+    };
+
+    await tryEnhance();
+    setIsEnhancing(false);
+  };
 
   const handleImageUpload = async (e, imgIdx) => {
     const file = e.target.files?.[0];
@@ -435,7 +496,17 @@ const ProductFormModal = ({
           )}
 
           <div>
-            <label className="block text-sm font-medium mb-1">{STRINGS.ADMIN.PRODUCT_FORM.PRODUCT_NAME}</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium">{STRINGS.ADMIN.PRODUCT_FORM.PRODUCT_NAME}</label>
+              <button
+                type="button"
+                onClick={handleAIEnhance}
+                disabled={isEnhancing}
+                className="text-xs flex items-center gap-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-2 py-1 rounded hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {isEnhancing ? 'جاري التحليل...' : '✨ تحسين بالذكاء الاصطناعي'}
+              </button>
+            </div>
             <input
               type="text"
               value={formData.name}

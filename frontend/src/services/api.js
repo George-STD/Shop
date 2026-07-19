@@ -162,12 +162,14 @@ export const adminAPI = {
   }),
 
   // AI & Bulk
-  createBulkProducts: (data) => api.post('/admin/products/bulk', data),
   aiVisionAnalyze: (formData) => api.post('/admin/ai/vision-analyze', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   }),
+  enhanceProduct: (imageUrl, currentName, currentDescription) =>
+    api.post('/admin/ai/enhance-product', { imageUrl, currentName, currentDescription }),
+  createBulkProducts: (data) => api.post('/admin/products/bulk', data),
 };
 
 export default api;
