@@ -24,6 +24,9 @@ function getAiClient() {
   return _aiClient;
 }
 
+const { MODEL_TIERS } = require('../utils/geminiModelManager');
+
+
 const MODELS_MAP = {
   Product,
   Category,
@@ -184,18 +187,37 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
   // Pop the last user message because we pass it directly to sendMessage
   history.pop();
 
-  const chatSession = ai.chats.create({
-    model: 'gemini-3.5-flash',
-    config: { systemInstruction, tools, temperature: 0.1 },
-    history
-  });
-
   let result;
-  try {
-    result = await chatSession.sendMessage({ message });
-  } catch (error) {
-    console.error('Agent chat error:', error);
-    return res.status(500).json({ success: false, message: 'حدث خطأ في الاتصال بالذكاء الاصطناعي.' });
+  let chatSession;
+  let currentModelIndex = 0;
+
+  // Try models with fallback
+  while (currentModelIndex < MODEL_TIERS.length) {
+    const tier = MODEL_TIERS[currentModelIndex];
+    chatSession = ai.chats.create({
+      model: tier.id,
+      config: { systemInstruction, tools, temperature: 0.1 },
+      history
+    });
+
+    try {
+      // Use Promise.race to add a 15-second timeout to the Gemini call
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Gemini API Timeout')), 15000)
+      );
+      result = await Promise.race([
+        chatSession.sendMessage({ message }),
+        timeoutPromise
+      ]);
+      break; // Success, exit fallback loop
+    } catch (error) {
+      console.error(`Agent chat error with model ${tier.id}:`, error.message);
+      currentModelIndex++;
+    }
+  }
+
+  if (!result) {
+    return res.status(500).json({ success: false, message: 'حدث خطأ في الاتصال بالذكاء الاصطناعي أو انتهى وقت الاتصال.' });
   }
 
   let functionCalls = result.functionCalls;
@@ -258,12 +280,21 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
     }
 
     try {
-      result = await chatSession.sendMessage({ message: [{ functionResponse: { name, response: toolResult } }] });
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Gemini API Timeout')), 15000)
+      );
+      result = await Promise.race([
+        chatSession.sendMessage({ message: [{ functionResponse: { name, response: toolResult } }] }),
+        timeoutPromise
+      ]);
       functionCalls = result.functionCalls;
       finalResponseText = result.text;
       iteration++;
     } catch (err) {
-      console.error('Error sending tool result:', err);
+      console.error('Error sending tool result:', err.message);
+      if (!finalResponseText && !proposedAction) {
+        finalResponseText = "عذراً، حدث خطأ في معالجة طلبك أو انتهى وقت الاتصال. يرجى المحاولة مرة أخرى.";
+      }
       break;
     }
   }
