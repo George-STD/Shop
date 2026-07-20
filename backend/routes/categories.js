@@ -9,7 +9,12 @@ const { sendSuccess, sendError, sendNotFound } = require('../utils/response');
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const categories = await Category.find({ isActive: true })
+    const query = { isActive: true };
+    if (req.query.showInBox === 'true') {
+      query.showInBox = true;
+    }
+
+    const categories = await Category.find(query)
       .populate('parent', 'name slug')
       .sort({ order: 1 });
 

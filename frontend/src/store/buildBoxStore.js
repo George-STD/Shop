@@ -33,7 +33,8 @@ export const useBuildBoxStore = create(
 
       getTotal: () => {
         const itemsTotal = get().items.reduce((total, item) => {
-          return total + item.price * (1 - BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE / 100);
+          const discountPercent = item.boxDiscount !== undefined ? item.boxDiscount : 25;
+          return total + item.price * (1 - discountPercent / 100);
         }, 0);
         return itemsTotal > 0 ? itemsTotal + BUSINESS_CONFIG.BOX_BASE_PRICE_EGP : 0;
       },

@@ -7,7 +7,7 @@ const asyncHandler = require('../../utils/asyncHandler');
 // CATEGORIES MANAGEMENT
 // =====================================================
 
-const ALLOWED_CATEGORY_FIELDS = ['name', 'slug', 'description', 'image', 'icon', 'parent', 'order', 'isActive', 'seo'];
+const ALLOWED_CATEGORY_FIELDS = ['name', 'slug', 'description', 'image', 'icon', 'parent', 'order', 'isActive', 'seo', 'showInBox'];
 
 exports.createCategory = asyncHandler(async (req, res) => {
   const errors = validationResult(req);

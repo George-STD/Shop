@@ -58,7 +58,7 @@ export const productsAPI = {
 
 // Categories API
 export const categoriesAPI = {
-  getAll: () => api.get('/categories'),
+  getAll: (params) => api.get('/categories', { params }),
   getTree: () => api.get('/categories/tree'),
   getMain: () => api.get('/categories/main'),
   getBySlug: (slug) => api.get(`/categories/slug/${slug}`),

@@ -89,7 +89,8 @@ const buildOrderItems = (items, productMap) => {
     if (item.boxId) {
       boxGroups.add(item.boxId);
       boxCounts.set(item.boxId, (boxCounts.get(item.boxId) || 0) + quantity);
-      finalPrice = finalPrice * (1 - CONFIG.BUSINESS.BOX_DISCOUNT_PERCENTAGE / 100);
+      const discountPercent = product.boxDiscount !== undefined ? product.boxDiscount : 25;
+      finalPrice = finalPrice * (1 - discountPercent / 100);
     }
 
     const itemSubtotal = finalPrice * quantity + addonsTotal;

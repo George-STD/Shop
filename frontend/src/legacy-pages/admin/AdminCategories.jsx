@@ -19,6 +19,7 @@ const AdminCategories = () => {
     icon: '',
     order: 0,
     isActive: true,
+    showInBox: false,
   });
 
   const { data: categories, isLoading } = useQuery({
@@ -63,6 +64,7 @@ const AdminCategories = () => {
       icon: '',
       order: 0,
       isActive: true,
+      showInBox: false,
     });
     setEditingCategory(null);
   };
@@ -77,6 +79,7 @@ const AdminCategories = () => {
       icon: category.icon || '',
       order: category.order || 0,
       isActive: category.isActive !== false,
+      showInBox: category.showInBox || false,
     });
     setShowModal(true);
   };

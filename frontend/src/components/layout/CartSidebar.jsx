@@ -121,7 +121,7 @@ const CartSidebar = () => {
                       <span className="font-bold text-gray-900 text-sm">
                         {formatPrice(
                           item.boxId
-                            ? item.price * (1 - BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE / 100)
+                            ? item.price * (1 - (item.boxDiscount !== undefined ? item.boxDiscount : 25) / 100)
                             : item.price
                         )}{' '}
                         {STRINGS.PRODUCT.CURRENCY}

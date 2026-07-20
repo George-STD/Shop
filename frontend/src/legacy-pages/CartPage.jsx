@@ -159,7 +159,7 @@ const CartPage = () => {
                       <div className="text-left">
                         <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
                           {(item.boxId
-                            ? item.price * (1 - BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE / 100)
+                            ? item.price * (1 - (item.boxDiscount !== undefined ? item.boxDiscount : 25) / 100)
                             : item.price) * item.quantity}{' '}
                           {STRINGS.PRODUCT.CURRENCY}
                         </span>

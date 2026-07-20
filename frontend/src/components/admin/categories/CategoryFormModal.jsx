@@ -111,15 +111,27 @@ const CategoryFormModal = ({
             </div>
           </div>
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.isActive}
-              onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              className="rounded"
-            />
-            <span>{STRINGS.ADMIN.CATEGORIES.ACTIVE_STATUS}</span>
-          </label>
+          <div className="flex gap-6">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                className="rounded"
+              />
+              <span>{STRINGS.ADMIN.CATEGORIES.ACTIVE_STATUS}</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.showInBox}
+                onChange={(e) => setFormData({ ...formData, showInBox: e.target.checked })}
+                className="rounded"
+              />
+              <span className="text-sm font-medium">يظهر في فئات تصميم بوكس</span>
+            </label>
+          </div>
 
           <div className="flex gap-4 pt-4 border-t">
             <button

@@ -994,6 +994,25 @@ const ProductFormModal = ({
             </label>
           </div>
 
+          {formData.canBeAddedToBox && (
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-100 mt-2">
+              <label className="block text-sm font-medium text-purple-800 mb-1">
+                نسبة الخصم عند الإضافة للبوكس (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={formData.boxDiscount}
+                onChange={(e) => setFormData({ ...formData, boxDiscount: Number(e.target.value) })}
+                className="w-full sm:w-1/3 border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+              />
+              <p className="text-xs text-purple-600 mt-1">
+                اتركها 25 للخصم الافتراضي، أو اجعلها 0 لإلغاء الخصم.
+              </p>
+            </div>
+          )}
+
           {/* Custom Box Toggle */}
           <div className="border-t pt-4">
             <label className="flex items-center gap-2 cursor-pointer">

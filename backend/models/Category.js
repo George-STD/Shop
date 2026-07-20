@@ -28,6 +28,10 @@ const categorySchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  showInBox: {
+    type: Boolean,
+    default: false
+  },
   productsCount: {
     type: Number,
     default: 0

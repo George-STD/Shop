@@ -10,7 +10,7 @@ import {
   FiSearch,
   FiPlus,
 } from 'react-icons/fi';
-import { productsAPI } from '../services/api';
+import { productsAPI, categoriesAPI } from '../services/api';
 import { useBuildBoxStore, useCartStore } from '../store';
 import { BUSINESS_CONFIG } from '../constants/config';
 import { STRINGS } from '../constants';
@@ -24,14 +24,26 @@ const BuildBoxPage = () => {
   const { addItem: addCartItem } = useCartStore();
   const navigate = useNavigate();
 
-  // Fetch box-eligible products
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  // Fetch box categories
+  const { data: categoriesData, isLoading: isCategoriesLoading } = useQuery({
+    queryKey: ['box-categories'],
+    queryFn: () => categoriesAPI.getAll({ showInBox: 'true' }).then((res) => res.data.data),
+  });
+
+  // Fetch box-eligible products for selected category
   const { data: productsData, isLoading } = useQuery({
-    queryKey: ['products', { canBeAddedToBox: 'true', search: searchTerm }],
+    queryKey: ['products', { canBeAddedToBox: 'true', category: selectedCategory, search: searchTerm }],
     queryFn: () =>
-      productsAPI.getAll({ canBeAddedToBox: 'true', search: searchTerm }).then((res) => res.data),
+      selectedCategory
+        ? productsAPI.getAll({ canBeAddedToBox: 'true', category: selectedCategory, search: searchTerm }).then((res) => res.data)
+        : Promise.resolve({ data: [] }),
+    enabled: !!selectedCategory,
   });
 
   const products = productsData?.data || [];
+  const categories = categoriesData || [];
 
   const formatPrice = (price) => new Intl.NumberFormat('ar-EG').format(price);
 
@@ -57,6 +69,7 @@ const BuildBoxPage = () => {
         1,
         {
           boxId: boxId,
+          boxDiscount: item.boxDiscount
         }
       );
 
@@ -104,6 +117,7 @@ const BuildBoxPage = () => {
       price: product.price,
       image: product.images[0]?.url,
       stock: product.stock,
+      boxDiscount: product.boxDiscount
     });
     toast.success(STRINGS.BUILD_BOX_PAGE.ADDED_TO_BOX);
   };
@@ -123,7 +137,7 @@ const BuildBoxPage = () => {
           ({BUSINESS_CONFIG.BOX_BASE_PRICE_EGP} {STRINGS.PRODUCT.CURRENCY}),
           <br />
           <span className="font-bold text-white bg-purple-800/50 px-3 py-1 rounded-lg inline-block mt-2">
-            {STRINGS.BUILD_BOX_PAGE.DISCOUNT_TEXT_1} {BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE}{STRINGS.BUILD_BOX_PAGE.DISCOUNT_TEXT_2}
+            استمتع بخصومات حصرية وتوفير كبير على جميع المنتجات داخل البوكس!
           </span>
         </p>
       </div>
@@ -132,6 +146,25 @@ const BuildBoxPage = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Column: Products List */}
           <div className="flex-1">
+            {/* Category Tabs */}
+            {categories.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-4 mb-2 scrollbar-hide">
+                {categories.map((cat) => (
+                  <button
+                    key={cat._id}
+                    onClick={() => setSelectedCategory(cat._id)}
+                    className={`whitespace-nowrap px-6 py-2.5 rounded-full font-medium transition-all duration-300 ${
+                      selectedCategory === cat._id
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : 'bg-white text-gray-600 border border-gray-200 hover:border-purple-300 hover:text-purple-600'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6 sticky top-24 z-10">
               <div className="relative">
                 <input
@@ -145,7 +178,7 @@ const BuildBoxPage = () => {
               </div>
             </div>
 
-            {isLoading ? (
+            {isLoading || isCategoriesLoading ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {[...Array(6)].map((_, i) => (
                   <div
@@ -153,6 +186,14 @@ const BuildBoxPage = () => {
                     className="bg-white rounded-2xl h-64 skeleton border border-gray-100"
                   ></div>
                 ))}
+              </div>
+            ) : !selectedCategory ? (
+              <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
+                <div className="text-6xl mb-6">🎁</div>
+                <h3 className="text-2xl font-bold text-purple-800 mb-3">اختر فئة لتبدأ!</h3>
+                <p className="text-gray-500 text-lg">
+                  يرجى اختيار إحدى الفئات من الشريط العلوي لاستعراض المنتجات المتاحة وإضافتها للبوكس الخاص بك بكل سهولة.
+                </p>
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
@@ -199,7 +240,7 @@ const BuildBoxPage = () => {
                         </span>
                         <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-lg">
                           {formatPrice(
-                            product.price * (1 - BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE / 100)
+                            product.price * (1 - (product.boxDiscount !== undefined ? product.boxDiscount : 25) / 100)
                           )}{' '}
                           {STRINGS.PRODUCT.CURRENCY}
                         </p>
@@ -338,7 +379,7 @@ const BuildBoxPage = () => {
                         <div className="flex items-center gap-2 mt-1">
                           <span className="font-bold text-sm text-purple-600">
                             {formatPrice(
-                              item.price * (1 - BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE / 100)
+                              item.price * (1 - (item.boxDiscount !== undefined ? item.boxDiscount : 25) / 100)
                             )}{' '}
                             {STRINGS.PRODUCT.CURRENCY}
                           </span>

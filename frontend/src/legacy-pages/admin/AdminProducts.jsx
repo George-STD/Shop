@@ -43,6 +43,7 @@ const AdminProducts = () => {
     isFeatured: false,
     isBestseller: false,
     canBeAddedToBox: false,
+    boxDiscount: 25,
     isCustomBox: false,
     boxSlots: [],
   };
@@ -163,6 +164,7 @@ const AdminProducts = () => {
       isFeatured: product.isFeatured || false,
       isBestseller: product.isBestseller || false,
       canBeAddedToBox: product.canBeAddedToBox || false,
+      boxDiscount: product.boxDiscount !== undefined ? product.boxDiscount : 25,
       isCustomBox: product.isCustomBox || false,
       boxSlots: product.boxSlots || [],
     });

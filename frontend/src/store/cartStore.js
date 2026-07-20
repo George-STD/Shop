@@ -80,6 +80,7 @@ export const useCartStore = create(
                 addons: options.addons || [],
                 boxSelections: options.boxSelections || [],
                 boxId: options.boxId,
+                boxDiscount: options.boxDiscount,
               },
             ],
           });
@@ -168,7 +169,8 @@ export const useCartStore = create(
 
           if (item.boxId) {
             boxGroups.add(item.boxId);
-            priceToUse = item.price * (1 - BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE / 100);
+            const discountPercent = item.boxDiscount !== undefined ? item.boxDiscount : 25;
+            priceToUse = item.price * (1 - discountPercent / 100);
           }
 
           let itemTotal = priceToUse * item.quantity;

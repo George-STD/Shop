@@ -135,6 +135,12 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  boxDiscount: {
+    type: Number,
+    default: 25,
+    min: 0,
+    max: 100
+  },
   salesCount: {
     type: Number,
     default: 0
