@@ -12,6 +12,8 @@ export const useWishlistStore = create(
   persist(
     (set, get) => ({
       items: [],
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       addItem: (product) => {
         const items = get().items;
@@ -45,6 +47,9 @@ export const useWishlistStore = create(
     }),
     {
       name: STORAGE_KEYS.WISHLIST,
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      }
     }
   )
 );

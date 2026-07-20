@@ -75,7 +75,8 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
     .populate('category', 'name slug')
     .sort(sortOption)
     .skip(skip)
-    .limit(finalLimit);
+    .limit(finalLimit)
+    .lean();
 
   const total = await Product.countDocuments(query);
 
@@ -89,7 +90,8 @@ exports.getFeaturedProducts = asyncHandler(async (req, res) => {
   const { limit = CONFIG.LIMITS.FEATURED_PRODUCTS } = req.query;
   const products = await Product.find({ isActive: true, isFeatured: true })
     .populate('category', 'name slug')
-    .limit(Number(limit));
+    .limit(Number(limit))
+    .lean();
   return sendSuccess(res, { data: products });
 }, MESSAGES.PRODUCTS.FEATURED_ERROR);
 
@@ -101,7 +103,8 @@ exports.getBestsellers = asyncHandler(async (req, res) => {
   const products = await Product.find({ isActive: true, isBestseller: true })
     .populate('category', 'name slug')
     .sort({ salesCount: -1 })
-    .limit(Number(limit));
+    .limit(Number(limit))
+    .lean();
   return sendSuccess(res, { data: products });
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);
 
@@ -113,7 +116,8 @@ exports.getNewArrivals = asyncHandler(async (req, res) => {
   const products = await Product.find({ isActive: true })
     .populate('category', 'name slug')
     .sort({ createdAt: -1 })
-    .limit(Number(limit));
+    .limit(Number(limit))
+    .lean();
   return sendSuccess(res, { data: products });
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);
 
@@ -127,7 +131,8 @@ exports.getProductsByOccasion = asyncHandler(async (req, res) => {
     occasions: req.params.occasion 
   })
     .populate('category', 'name slug')
-    .limit(Number(limit));
+    .limit(Number(limit))
+    .lean();
   return sendSuccess(res, { data: products });
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);
 
@@ -141,7 +146,8 @@ exports.getProductsByRecipient = asyncHandler(async (req, res) => {
     recipients: req.params.recipient 
   })
     .populate('category', 'name slug')
-    .limit(Number(limit));
+    .limit(Number(limit))
+    .lean();
   return sendSuccess(res, { data: products });
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);
 

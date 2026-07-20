@@ -116,7 +116,7 @@ const buildOrderItems = (items, productMap) => {
   }
 
   // Validate box constraints
-  for (const [boxId, count] of boxCounts.entries()) {
+  for (const count of boxCounts.values()) {
     if (count < CONFIG.BUSINESS.BOX_MIN_ITEMS) {
       throw createClientError(`الصندوق يجب أن يحتوي على الأقل ${CONFIG.BUSINESS.BOX_MIN_ITEMS} منتجات`);
     }

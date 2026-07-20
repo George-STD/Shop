@@ -16,7 +16,8 @@ router.get('/', async (req, res) => {
 
     const categories = await Category.find(query)
       .populate('parent', 'name slug')
-      .sort({ order: 1 });
+      .sort({ order: 1 })
+      .lean();
 
     sendSuccess(res, { data: categories });
   } catch (error) {
@@ -31,7 +32,8 @@ router.get('/', async (req, res) => {
 router.get('/tree', async (req, res) => {
   try {
     const categories = await Category.find({ isActive: true })
-      .sort({ order: 1 });
+      .sort({ order: 1 })
+      .lean();
 
     // Build tree structure
     const buildTree = (categories, parentId = null) => {
@@ -43,7 +45,7 @@ router.get('/tree', async (req, res) => {
           return cat.parent && cat.parent.toString() === parentId.toString();
         })
         .map(cat => ({
-          ...cat.toObject(),
+          ...cat,
           children: buildTree(categories, cat._id)
         }));
     };
@@ -52,6 +54,7 @@ router.get('/tree', async (req, res) => {
 
     sendSuccess(res, { data: tree });
   } catch (error) {
+    console.error('Error in /tree:', error);
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
@@ -64,10 +67,11 @@ router.get('/main', async (req, res) => {
     const categories = await Category.find({ 
       isActive: true,
       parent: null 
-    }).sort({ order: 1 });
+    }).sort({ order: 1 }).lean();
 
     sendSuccess(res, { data: categories });
   } catch (error) {
+    console.error('Error in /main:', error);
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
@@ -80,7 +84,7 @@ router.get('/slug/:slug', async (req, res) => {
     const category = await Category.findOne({ 
       slug: req.params.slug,
       isActive: true 
-    }).populate('parent', 'name slug');
+    }).populate('parent', 'name slug').lean();
 
     if (!category) {
       return sendNotFound(res, MESSAGES.CATEGORIES.NOT_FOUND);
@@ -90,13 +94,14 @@ router.get('/slug/:slug', async (req, res) => {
     const subcategories = await Category.find({ 
       parent: category._id,
       isActive: true 
-    });
+    }).lean();
 
     sendSuccess(res, { data: {
-      ...category.toObject(),
+      ...category,
       subcategories
     }});
   } catch (error) {
+    console.error('Error in /slug/:slug:', error);
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
@@ -107,7 +112,8 @@ router.get('/slug/:slug', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const category = await Category.findById(req.params.id)
-      .populate('parent', 'name slug');
+      .populate('parent', 'name slug')
+      .lean();
 
     if (!category) {
       return sendNotFound(res, MESSAGES.CATEGORIES.NOT_FOUND);
@@ -115,6 +121,7 @@ router.get('/:id', async (req, res) => {
 
     sendSuccess(res, { data: category });
   } catch (error) {
+    console.error('Error in /:id:', error);
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });
@@ -127,10 +134,11 @@ router.get('/:id/subcategories', async (req, res) => {
     const subcategories = await Category.find({ 
       parent: req.params.id,
       isActive: true 
-    }).sort({ order: 1 });
+    }).sort({ order: 1 }).lean();
 
     sendSuccess(res, { data: subcategories });
   } catch (error) {
+    console.error('Error in /:id/subcategories:', error);
     sendError(res, MESSAGES.GENERAL.ERROR);
   }
 });

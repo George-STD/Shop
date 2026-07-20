@@ -12,6 +12,8 @@ export const useCartStore = create(
   persist(
     (set, get) => ({
       items: [],
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       addItem: (product, quantity = 1, options = {}) => {
         const items = get().items;
@@ -190,6 +192,9 @@ export const useCartStore = create(
     }),
     {
       name: STORAGE_KEYS.CART,
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      }
     }
   )
 );

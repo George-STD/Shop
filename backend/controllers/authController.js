@@ -17,7 +17,7 @@ const generateToken = (id) => {
 
 exports.register = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+  if (!errors.isEmpty()) return sendError(res, { statusCode: 400, message: MESSAGES.GENERAL.VALIDATION_ERROR, errors: errors.array() });
 
   const { firstName, lastName, email, phone, password } = req.body;
   const existingUser = await User.findOne({ email });
@@ -43,13 +43,12 @@ exports.register = asyncHandler(async (req, res) => {
         console.error('Email send error:', emailError.message);
       }
 
-      return res.status(200).json({
-        success: true,
+      return sendSuccess(res, {
         message: emailSent ? MESSAGES.AUTH.REGISTER_VERIFICATION_SENT : MESSAGES.AUTH.REGISTER_VERIFICATION_FAILED,
         data: { email, requiresVerification: true, emailSent }
       });
     }
-    return res.status(400).json({ success: false, message: MESSAGES.AUTH.EMAIL_EXISTS });
+    return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.EMAIL_EXISTS });
   }
 
   const code = generateVerificationCode();
@@ -68,8 +67,7 @@ exports.register = asyncHandler(async (req, res) => {
     console.error('Email send error:', emailError.message);
   }
 
-  res.status(201).json({
-    success: true,
+  sendCreated(res, {
     message: emailSent ? MESSAGES.AUTH.REGISTER_VERIFICATION_SENT : MESSAGES.AUTH.REGISTER_VERIFICATION_FAILED,
     data: { email, requiresVerification: true, emailSent }
   });
@@ -77,15 +75,15 @@ exports.register = asyncHandler(async (req, res) => {
 
 exports.verifyEmail = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+  if (!errors.isEmpty()) return sendError(res, { statusCode: 400, message: MESSAGES.GENERAL.VALIDATION_ERROR, errors: errors.array() });
 
   const { email, code } = req.body;
   const user = await User.findOne({ email });
 
-  if (!user) return res.status(400).json({ success: false, message: MESSAGES.AUTH.USER_NOT_FOUND });
-  if (user.isVerified) return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_ALREADY_DONE });
-  if (!user.emailVerificationCode || !crypto.timingSafeEqual(Buffer.from(user.emailVerificationCode), Buffer.from(String(code)))) return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
-  if (user.emailVerificationExpires < new Date()) return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_EXPIRED });
+  if (!user) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.USER_NOT_FOUND });
+  if (user.isVerified) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_ALREADY_DONE });
+  if (!user.emailVerificationCode || !crypto.timingSafeEqual(Buffer.from(user.emailVerificationCode), Buffer.from(String(code)))) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
+  if (user.emailVerificationExpires < new Date()) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_EXPIRED });
 
   await User.findByIdAndUpdate(user._id, {
     $set: { isVerified: true, lastLogin: new Date() },
@@ -94,8 +92,7 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
 
   const token = generateToken(user._id);
 
-  res.json({
-    success: true,
+  sendSuccess(res, {
     message: MESSAGES.AUTH.VERIFICATION_SUCCESS,
     data: {
       user: {
@@ -109,13 +106,13 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
 
 exports.resendCode = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+  if (!errors.isEmpty()) return sendError(res, { statusCode: 400, message: MESSAGES.GENERAL.VALIDATION_ERROR, errors: errors.array() });
 
   const { email } = req.body;
   const user = await User.findOne({ email });
 
-  if (!user) return res.status(400).json({ success: false, message: MESSAGES.AUTH.USER_NOT_FOUND });
-  if (user.isVerified) return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_ALREADY_DONE });
+  if (!user) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.USER_NOT_FOUND });
+  if (user.isVerified) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_ALREADY_DONE });
 
   const code = generateVerificationCode();
   await User.findByIdAndUpdate(user._id, {
@@ -129,25 +126,25 @@ exports.resendCode = asyncHandler(async (req, res) => {
     await sendVerificationEmail(email, code);
   } catch (emailError) {
     console.error('Resend code email error:', emailError.message);
-    return res.status(500).json({ success: false, message: MESSAGES.AUTH.EMAIL_SEND_FAILED });
+    return sendError(res, { statusCode: 500, message: MESSAGES.AUTH.EMAIL_SEND_FAILED });
   }
 
-  res.json({ success: true, message: MESSAGES.AUTH.VERIFICATION_CODE_SENT });
+  sendSuccess(res, { message: MESSAGES.AUTH.VERIFICATION_CODE_SENT });
 }, MESSAGES.GENERAL.ERROR);
 
 exports.login = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+  if (!errors.isEmpty()) return sendError(res, { statusCode: 400, message: MESSAGES.GENERAL.VALIDATION_ERROR, errors: errors.array() });
 
   const { email, password } = req.body;
   const user = await User.findOne({ email }).select('+password');
   
   if (!user || !(await user.comparePassword(password))) {
-    return res.status(401).json({ success: false, message: MESSAGES.AUTH.LOGIN_FAILED });
+    return sendError(res, { statusCode: 401, message: MESSAGES.AUTH.LOGIN_FAILED });
   }
 
   if (!user.isActive) {
-    return res.status(401).json({ success: false, message: MESSAGES.AUTH.ACCOUNT_INACTIVE });
+    return sendError(res, { statusCode: 401, message: MESSAGES.AUTH.ACCOUNT_INACTIVE });
   }
 
   if (!user.isVerified) {
@@ -167,8 +164,8 @@ exports.login = asyncHandler(async (req, res) => {
       console.error('Verification email error:', emailError.message);
     }
 
-    return res.status(403).json({
-      success: false,
+    return sendError(res, {
+      statusCode: 403,
       message: emailSent ? MESSAGES.AUTH.VERIFICATION_REQUIRED_CODE_SENT : MESSAGES.AUTH.VERIFICATION_REQUIRED_CODE_FAILED,
       data: { email, requiresVerification: true, emailSent }
     });
@@ -177,8 +174,7 @@ exports.login = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(user._id, { $set: { lastLogin: new Date() } });
   const token = generateToken(user._id);
 
-  res.json({
-    success: true,
+  sendSuccess(res, {
     message: MESSAGES.AUTH.LOGIN_SUCCESS,
     data: {
       user: {
@@ -198,7 +194,7 @@ exports.getMe = asyncHandler(async (req, res) => {
 
 exports.updateProfile = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+  if (!errors.isEmpty()) return sendError(res, { statusCode: 400, message: MESSAGES.GENERAL.VALIDATION_ERROR, errors: errors.array() });
 
   const { firstName, lastName, phone } = req.body;
   const user = await User.findByIdAndUpdate(
@@ -215,7 +211,7 @@ exports.changePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
   if (!(await user.comparePassword(currentPassword))) {
-    return res.status(400).json({ success: false, message: MESSAGES.AUTH.PASSWORD_INCORRECT });
+    return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.PASSWORD_INCORRECT });
   }
 
   const hashedNewPassword = await bcrypt.hash(newPassword, 12);
@@ -225,18 +221,18 @@ exports.changePassword = asyncHandler(async (req, res) => {
 
 exports.requestEmailChange = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+  if (!errors.isEmpty()) return sendError(res, { statusCode: 400, message: MESSAGES.GENERAL.VALIDATION_ERROR, errors: errors.array() });
 
   const { newEmail } = req.body;
   const user = await User.findById(req.user._id);
 
   if (user.email === newEmail.toLowerCase()) {
-    return res.status(400).json({ success: false, message: MESSAGES.AUTH.EMAIL_CHANGE_SAME });
+    return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.EMAIL_CHANGE_SAME });
   }
 
   const existingUser = await User.findOne({ email: newEmail.toLowerCase() });
   if (existingUser) {
-    return res.status(400).json({ success: false, message: MESSAGES.AUTH.EMAIL_CHANGE_EXISTS });
+    return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.EMAIL_CHANGE_EXISTS });
   }
 
   const code = generateVerificationCode();
@@ -250,31 +246,31 @@ exports.requestEmailChange = asyncHandler(async (req, res) => {
 
   try {
     await sendVerificationEmail(user.email, code, user.firstName);
-    return res.json({ success: true, message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_SENT });
+    return sendSuccess(res, { message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_SENT });
   } catch (emailError) {
     console.error('Email send error:', emailError);
-    return res.status(500).json({ success: false, message: MESSAGES.AUTH.EMAIL_SEND_FAILED });
+    return sendError(res, { statusCode: 500, message: MESSAGES.AUTH.EMAIL_SEND_FAILED });
   }
 }, MESSAGES.GENERAL.ERROR);
 
 exports.verifyEmailChange = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+  if (!errors.isEmpty()) return sendError(res, { statusCode: 400, message: MESSAGES.GENERAL.VALIDATION_ERROR, errors: errors.array() });
 
   const { code } = req.body;
   const user = await User.findById(req.user._id);
 
   if (!user.pendingEmail || !user.emailChangeCode) {
-    return res.status(400).json({ success: false, message: MESSAGES.AUTH.EMAIL_CHANGE_NO_PENDING });
+    return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.EMAIL_CHANGE_NO_PENDING });
   }
 
   if (user.emailChangeExpires < new Date()) {
     await User.findByIdAndUpdate(user._id, { $unset: { pendingEmail: 1, emailChangeCode: 1, emailChangeExpires: 1 } });
-    return res.status(400).json({ success: false, message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_EXPIRED });
+    return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_EXPIRED });
   }
 
   if (!user.emailChangeCode || !crypto.timingSafeEqual(Buffer.from(user.emailChangeCode), Buffer.from(String(code)))) {
-    return res.status(400).json({ success: false, message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_INVALID });
+    return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_INVALID });
   }
 
   const newEmail = user.pendingEmail;
@@ -284,12 +280,12 @@ exports.verifyEmailChange = asyncHandler(async (req, res) => {
   });
 
   const updatedUser = await User.findById(user._id).select('-password').populate('wishlist', 'name slug price images');
-  return res.json({ success: true, message: MESSAGES.AUTH.EMAIL_CHANGE_SUCCESS, data: { user: updatedUser } });
+  return sendSuccess(res, { message: MESSAGES.AUTH.EMAIL_CHANGE_SUCCESS, data: { user: updatedUser } });
 }, MESSAGES.GENERAL.ERROR);
 
 exports.addToWishlist = asyncHandler(async (req, res) => {
   if (req.user.wishlist.includes(req.params.productId)) {
-    return res.status(400).json({ success: false, message: MESSAGES.WISHLIST.ALREADY_EXISTS });
+    return sendError(res, { statusCode: 400, message: MESSAGES.WISHLIST.ALREADY_EXISTS });
   }
   await User.findByIdAndUpdate(req.user._id, { $addToSet: { wishlist: req.params.productId } });
   sendSuccess(res, { message: MESSAGES.WISHLIST.ADDED });
@@ -302,12 +298,12 @@ exports.removeFromWishlist = asyncHandler(async (req, res) => {
 
 exports.forgotPassword = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+  if (!errors.isEmpty()) return sendError(res, { statusCode: 400, message: MESSAGES.GENERAL.VALIDATION_ERROR, errors: errors.array() });
 
   const { email } = req.body;
   const user = await User.findOne({ email });
 
-  if (!user) return res.json({ success: true, message: MESSAGES.AUTH.PASSWORD_RESET_GENERIC });
+  if (!user) return sendSuccess(res, { message: MESSAGES.AUTH.PASSWORD_RESET_GENERIC });
 
   const code = generateVerificationCode();
   await User.findByIdAndUpdate(user._id, {
@@ -318,36 +314,36 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     await sendPasswordResetEmail(email, code);
   } catch (emailError) {
     console.error('Password reset email error:', emailError.message);
-    return res.status(500).json({ success: false, message: MESSAGES.AUTH.EMAIL_SEND_FAILED_RETRY });
+    return sendError(res, { statusCode: 500, message: MESSAGES.AUTH.EMAIL_SEND_FAILED_RETRY });
   }
 
-  res.json({ success: true, message: MESSAGES.AUTH.PASSWORD_RESET_SENT });
+  sendSuccess(res, { message: MESSAGES.AUTH.PASSWORD_RESET_SENT });
 }, MESSAGES.GENERAL.ERROR);
 
 exports.verifyResetCode = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+  if (!errors.isEmpty()) return sendError(res, { statusCode: 400, message: MESSAGES.GENERAL.VALIDATION_ERROR, errors: errors.array() });
 
   const { email, code } = req.body;
   const user = await User.findOne({ email });
 
-  if (!user) return res.status(400).json({ success: false, message: MESSAGES.AUTH.USER_NOT_FOUND });
-  if (!user.resetPasswordToken || !crypto.timingSafeEqual(Buffer.from(user.resetPasswordToken), Buffer.from(String(code)))) return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
-  if (user.resetPasswordExpires < new Date()) return res.status(400).json({ success: false, message: MESSAGES.AUTH.CODE_EXPIRED });
+  if (!user) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.USER_NOT_FOUND });
+  if (!user.resetPasswordToken || !crypto.timingSafeEqual(Buffer.from(user.resetPasswordToken), Buffer.from(String(code)))) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
+  if (user.resetPasswordExpires < new Date()) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.CODE_EXPIRED });
 
-  res.json({ success: true, message: MESSAGES.AUTH.CODE_VALID });
+  sendSuccess(res, { message: MESSAGES.AUTH.CODE_VALID });
 }, MESSAGES.GENERAL.ERROR);
 
 exports.resetPassword = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+  if (!errors.isEmpty()) return sendError(res, { statusCode: 400, message: MESSAGES.GENERAL.VALIDATION_ERROR, errors: errors.array() });
 
   const { email, code, newPassword } = req.body;
   const user = await User.findOne({ email }).select('+password');
 
-  if (!user) return res.status(400).json({ success: false, message: MESSAGES.AUTH.USER_NOT_FOUND });
-  if (!user.resetPasswordToken || !crypto.timingSafeEqual(Buffer.from(user.resetPasswordToken), Buffer.from(String(code)))) return res.status(400).json({ success: false, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
-  if (user.resetPasswordExpires < new Date()) return res.status(400).json({ success: false, message: MESSAGES.AUTH.CODE_EXPIRED });
+  if (!user) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.USER_NOT_FOUND });
+  if (!user.resetPasswordToken || !crypto.timingSafeEqual(Buffer.from(user.resetPasswordToken), Buffer.from(String(code)))) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
+  if (user.resetPasswordExpires < new Date()) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.CODE_EXPIRED });
 
   const hashedPassword = await bcrypt.hash(newPassword, 12);
   await User.findByIdAndUpdate(user._id, {
@@ -355,5 +351,5 @@ exports.resetPassword = asyncHandler(async (req, res) => {
     $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 }
   });
 
-  res.json({ success: true, message: MESSAGES.AUTH.PASSWORD_LOGIN_PROMPT });
+  sendSuccess(res, { message: MESSAGES.AUTH.PASSWORD_LOGIN_PROMPT });
 }, MESSAGES.GENERAL.ERROR);
