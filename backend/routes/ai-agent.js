@@ -185,14 +185,14 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
   history.pop();
 
   const chatSession = ai.chats.create({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-3.5-flash',
     config: { systemInstruction, tools, temperature: 0.1 },
     history
   });
 
   let result;
   try {
-    result = await chatSession.sendMessage({ parts: [{ text: message }] });
+    result = await chatSession.sendMessage({ message });
   } catch (error) {
     console.error('Agent chat error:', error);
     return res.status(500).json({ success: false, message: 'حدث خطأ في الاتصال بالذكاء الاصطناعي.' });
@@ -258,7 +258,7 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
     }
 
     try {
-      result = await chatSession.sendMessage({ parts: [{ functionResponse: { name, response: toolResult } }] });
+      result = await chatSession.sendMessage({ message: [{ functionResponse: { name, response: toolResult } }] });
       functionCalls = result.functionCalls;
       finalResponseText = result.text;
       iteration++;
