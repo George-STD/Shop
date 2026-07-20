@@ -7,6 +7,7 @@ dist/
 build/
 db_credentials.txt
 
+
 # Sensitive files - never commit
 *.pem
 *.key
@@ -16,3 +17,7 @@ db_credentials.txt
 # Next.js
 .next/
 out/
+
+# Testing
+coverage/
+out.txt

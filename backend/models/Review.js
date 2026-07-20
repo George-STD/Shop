@@ -80,8 +80,8 @@ const reviewSchema = new mongoose.Schema({
 });
 
 // Prevent duplicate reviews from same user or guest email on same product
-reviewSchema.index({ product: 1, user: 1 }, { unique: true, partialFilterExpression: { user: { $exists: true, $ne: null } } });
-reviewSchema.index({ product: 1, guestEmail: 1 }, { unique: true, partialFilterExpression: { guestEmail: { $exists: true, $ne: null } } });
+reviewSchema.index({ product: 1, user: 1 }, { unique: true, partialFilterExpression: { user: { $type: "objectId" } } });
+reviewSchema.index({ product: 1, guestEmail: 1 }, { unique: true, partialFilterExpression: { guestEmail: { $type: "string" } } });
 reviewSchema.index({ product: 1, isApproved: 1 });
 reviewSchema.index({ createdAt: -1 });
 

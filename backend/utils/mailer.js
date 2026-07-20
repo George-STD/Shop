@@ -11,6 +11,10 @@ const BRAND_NAME = 'For You - فور يو';
  * Send email via Resend HTTP API
  */
 async function sendEmail({ to, subject, html }) {
+  if (process.env.NODE_ENV === 'test') {
+    return { id: 'test_id', message: 'Email skipped in test environment' };
+  }
+
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -32,6 +36,7 @@ async function sendEmail({ to, subject, html }) {
 
 // Verify API key on startup
 (async () => {
+  if (process.env.NODE_ENV === 'test') return;
   if (!RESEND_API_KEY) {
     console.error('❌ SMTP_PASS (Resend API key) is not set');
     return;

@@ -203,5 +203,8 @@ const startServer = async () => {
     process.exit(1);
   }
 };
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
 
-startServer();
+module.exports = app;

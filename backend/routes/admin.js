@@ -60,6 +60,7 @@ router.post('/products', [
   body('description').trim().notEmpty().withMessage('وصف المنتج مطلوب'),
   body('price').isNumeric().withMessage('السعر مطلوب'),
   body('stock').optional().isNumeric().withMessage('الكمية يجب أن تكون رقم'),
+  body('boxDiscount').optional().isNumeric().withMessage('الخصم يجب أن يكون رقماً'),
   body('category').isArray({ min: 1 }).withMessage('الفئة مطلوبة'),
   body('category.*').isMongoId().withMessage('فئة غير صالحة')
 ], adminController.createProduct);
@@ -111,7 +112,8 @@ router.put('/orders/:id/status', [
 router.post('/categories', [
   logAdminAction('CREATE_CATEGORY'),
   body('name').trim().notEmpty().withMessage('اسم الفئة مطلوب'),
-  body('slug').trim().notEmpty().withMessage('slug مطلوب')
+  body('slug').trim().notEmpty().withMessage('slug مطلوب'),
+  body('showInBox').optional().isBoolean()
 ], adminController.createCategory);
 
 router.put('/categories/:id', [
