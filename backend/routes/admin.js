@@ -14,9 +14,11 @@ router.use(adminLimiter);
 router.use(sanitizeInput);
 
 // =====================================================
-// DASHBOARD STATS
+// DASHBOARD STATS & ANALYSIS
 // =====================================================
 router.get('/stats', adminController.getStats);
+router.get('/analysis', adminController.getAnalysis);
+router.get('/logs', adminController.getLogs);
 
 // =====================================================
 // USERS MANAGEMENT

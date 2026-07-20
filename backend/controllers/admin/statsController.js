@@ -1,6 +1,7 @@
 const User = require('../../models/User');
 const Product = require('../../models/Product');
 const Order = require('../../models/Order');
+const AuditLog = require('../../models/AuditLog');
 const asyncHandler = require('../../utils/asyncHandler');
 
 // =====================================================
@@ -77,3 +78,81 @@ exports.getStats = asyncHandler(async (req, res) => {
     }
   });
 }, 'حدث خطأ أثناء جلب الإحصائيات');
+
+// =====================================================
+// DATA ANALYSIS
+// =====================================================
+exports.getAnalysis = asyncHandler(async (req, res) => {
+  // Aggregate sales by product category
+  const orders = await Order.find({ status: { $ne: 'cancelled' } })
+    .populate({
+      path: 'items.product',
+      select: 'category name',
+      populate: { path: 'category', select: 'name' }
+    });
+
+  let categorySales = {};
+  let productSales = {};
+
+  orders.forEach(order => {
+    order.items.forEach(item => {
+      const product = item.product;
+      if (product) {
+        // Categories
+        if (Array.isArray(product.category)) {
+          product.category.forEach(cat => {
+            if (cat && cat.name) {
+              categorySales[cat.name] = (categorySales[cat.name] || 0) + item.quantity;
+            }
+          });
+        } else if (product.category && product.category.name) {
+          const catName = product.category.name;
+          categorySales[catName] = (categorySales[catName] || 0) + item.quantity;
+        }
+
+        // Products
+        const prodName = product.name;
+        productSales[prodName] = (productSales[prodName] || 0) + item.quantity;
+      }
+    });
+  });
+
+  const categorySalesChart = Object.keys(categorySales).map(key => ({
+    name: key,
+    sales: categorySales[key]
+  })).sort((a, b) => b.sales - a.sales);
+
+  const productSalesChart = Object.keys(productSales).map(key => ({
+    name: key,
+    sales: productSales[key]
+  })).sort((a, b) => b.sales - a.sales).slice(0, 10); // Top 10
+
+  res.json({
+    success: true,
+    data: {
+      categorySales: categorySalesChart,
+      productSales: productSalesChart
+    }
+  });
+}, 'حدث خطأ أثناء جلب بيانات التحليل');
+
+// =====================================================
+// AUDIT LOGS
+// =====================================================
+exports.getLogs = asyncHandler(async (req, res) => {
+  const { entityType, action, limit = 50 } = req.query;
+  const query = {};
+  
+  if (entityType) query.entityType = entityType;
+  if (action) query.action = action;
+
+  const logs = await AuditLog.find(query)
+    .sort({ createdAt: -1 })
+    .limit(parseInt(limit))
+    .populate('adminId', 'firstName lastName email');
+
+  res.json({
+    success: true,
+    data: logs
+  });
+}, 'حدث خطأ أثناء جلب سجل النشاطات');

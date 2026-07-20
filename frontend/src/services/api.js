@@ -109,8 +109,10 @@ export const occasionsAPI = {
 
 // Admin API
 export const adminAPI = {
-  // Dashboard
+  // Stats & Analysis
   getStats: () => api.get('/admin/stats'),
+  getAnalysis: () => api.get('/admin/analysis'),
+  getLogs: (params) => api.get('/admin/logs', { params }),
 
   // Users
   getUsers: (params) => api.get('/admin/users', { params }),

@@ -2,6 +2,7 @@ const Product = require('../../models/Product');
 const { validationResult } = require('express-validator');
 const asyncHandler = require('../../utils/asyncHandler');
 const { escapeRegex, parsePagination, buildPaginationMeta } = require('../../utils/helpers');
+const logAudit = require('../../utils/auditLogger');
 
 // =====================================================
 // PRODUCTS MANAGEMENT (Admin)
@@ -56,6 +57,16 @@ exports.createProduct = asyncHandler(async (req, res) => {
   const sku = req.body.sku || ('SKU-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
 
   const product = await Product.create({ ...req.body, slug: uniqueSlug, sku });
+  
+  await logAudit({
+    entityType: 'Product',
+    entityId: product._id,
+    entityName: product.name,
+    action: 'CREATE',
+    adminId: req.user._id,
+    changes: req.body
+  });
+
   res.status(201).json({ success: true, message: 'تم إنشاء المنتج بنجاح', data: product });
 }, 'حدث خطأ أثناء إنشاء المنتج');
 
@@ -95,12 +106,31 @@ exports.updateProduct = asyncHandler(async (req, res) => {
 
   const product = await Product.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
   if (!product) return res.status(404).json({ success: false, message: 'المنتج غير موجود' });
+  
+  await logAudit({
+    entityType: 'Product',
+    entityId: product._id,
+    entityName: product.name,
+    action: 'UPDATE',
+    adminId: req.user._id,
+    changes: updates
+  });
+
   res.json({ success: true, message: 'تم تحديث المنتج', data: product });
 }, 'حدث خطأ أثناء تحديث المنتج');
 
 exports.deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findByIdAndDelete(req.params.id);
   if (!product) return res.status(404).json({ success: false, message: 'المنتج غير موجود' });
+  
+  await logAudit({
+    entityType: 'Product',
+    entityId: product._id,
+    entityName: product.name,
+    action: 'DELETE',
+    adminId: req.user._id,
+  });
+
   res.json({ success: true, message: 'تم حذف المنتج' });
 }, 'حدث خطأ أثناء حذف المنتج');
 
@@ -141,5 +171,14 @@ exports.bulkProductAction = asyncHandler(async (req, res) => {
   }
 
   const count = result.modifiedCount || result.deletedCount || 0;
+  
+  await logAudit({
+    entityType: 'Product',
+    entityName: 'تحديث جماعي',
+    action: 'BULK_UPDATE',
+    adminId: req.user._id,
+    changes: { action, count, productIds }
+  });
+
   res.json({ success: true, message: `تم تطبيق الإجراء بنجاح على ${count} منتج`, count });
 }, 'حدث خطأ أثناء تطبيق الإجراء الجماعي');

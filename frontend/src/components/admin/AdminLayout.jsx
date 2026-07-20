@@ -76,6 +76,7 @@ const AdminLayout = ({ children }) => {
 
   const menuItems = [
     { path: '/admin', icon: FiHome, label: STRINGS.ADMIN.DASHBOARD.TITLE, exact: true },
+    { path: '/admin/analysis', icon: require('react-icons/fi').FiBarChart2, label: 'التحليلات والتتبع' },
     { path: '/admin/users', icon: FiUsers, label: STRINGS.ADMIN.USERS },
     { path: '/admin/products', icon: FiPackage, label: STRINGS.ADMIN.PRODUCTS },
     { path: '/admin/orders', icon: FiShoppingCart, label: STRINGS.ADMIN.ORDERS.TITLE },
