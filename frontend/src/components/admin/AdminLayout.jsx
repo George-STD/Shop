@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
 import { FiHome, FiUsers, FiPackage, FiShoppingCart, FiGrid, FiStar, FiSettings, FiLogOut, FiMenu, FiX, FiChevronLeft, FiMail } from 'react-icons/fi';
 import { useAuthStore } from '../../store';
 import { STRINGS } from '../../constants';
+import AdminAIAssistant from './AdminAIAssistant';
 
 const AdminLayout = ({ children }) => {
   const { user, isAuthenticated, logout, updateUser, _hasHydrated } = useAuthStore();
@@ -249,6 +250,9 @@ const AdminLayout = ({ children }) => {
         {/* Page Content */}
         <main className="flex-1 p-2 sm:p-4 lg:p-8 overflow-auto">{children || <Outlet />}</main>
       </div>
+      
+      {/* AI Assistant */}
+      <AdminAIAssistant />
     </div>
   );
 };

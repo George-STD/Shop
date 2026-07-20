@@ -164,6 +164,7 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/occasions', require('./routes/occasions'));
 app.use('/api/admin/ai', require('./routes/ai-vision'));
+app.use('/api/admin/ai-agent', require('./routes/ai-agent'));
 app.use('/api/admin', require('./routes/admin'));
 
 // UptimeRobot lightweight health check (No DB/rate-limit hit)

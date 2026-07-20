@@ -170,6 +170,14 @@ export const adminAPI = {
   enhanceProduct: (imageUrl, currentName, currentDescription) =>
     api.post('/admin/ai/enhance-product', { imageUrl, currentName, currentDescription }),
   createBulkProducts: (data) => api.post('/admin/products/bulk', data),
+  
+  // AI Agent (Sessions)
+  agentGetSessions: () => api.get('/admin/ai-agent/sessions'),
+  agentGetSession: (id) => api.get(`/admin/ai-agent/sessions/${id}`),
+  agentCreateSession: () => api.post('/admin/ai-agent/sessions'),
+  agentChat: (sessionId, message) => api.post(`/admin/ai-agent/sessions/${sessionId}/chat`, { message }),
+  agentExecute: (data) => api.post('/admin/ai-agent/execute', data),
+  agentReject: (data) => api.post('/admin/ai-agent/reject', data),
 };
 
 export default api;
