@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { adminAPI } from '../../services/api';
-import { FiMessageSquare, FiPlus, FiX, FiCheck, FiXCircle } from 'react-icons/fi';
+import { FiMessageSquare, FiPlus, FiX, FiCheck, FiXCircle, FiTrash2 } from 'react-icons/fi';
 
 const AdminAIAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -152,6 +152,25 @@ const AdminAIAssistant = () => {
     }
   };
 
+  const handleDeleteSession = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm('هل أنت متأكد من حذف هذه المحادثة نهائياً؟')) return;
+
+    try {
+      const res = await adminAPI.agentDeleteSession(id);
+      if (res.data?.success) {
+        toast.success('تم حذف المحادثة');
+        setSessions(prev => prev.filter(s => s._id !== id));
+        if (currentSessionId === id) {
+          setCurrentSessionId(null);
+          setMessages([]);
+        }
+      }
+    } catch (err) {
+      toast.error('فشل حذف المحادثة');
+    }
+  };
+
   // UI Renderers for Previews
   const renderPreviewItem = (collectionName, item) => {
     switch (collectionName) {
@@ -225,18 +244,27 @@ const AdminAIAssistant = () => {
               <FiPlus /> محادثة جديدة
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
             {sessions.map(s => (
-              <button
+              <div
                 key={s._id}
                 onClick={() => setCurrentSessionId(s._id)}
-                className={`w-full text-right p-3 rounded-lg text-sm transition-colors flex items-center gap-2 truncate ${
+                className={`w-full text-right p-3 rounded-lg text-sm transition-colors flex items-center justify-between group cursor-pointer ${
                   currentSessionId === s._id ? 'bg-purple-100 text-purple-700 font-medium' : 'hover:bg-gray-200 text-gray-700'
                 }`}
               >
-                <FiMessageSquare className="shrink-0" />
-                <span className="truncate">{s.title}</span>
-              </button>
+                <div className="flex items-center gap-2 truncate overflow-hidden">
+                  <FiMessageSquare className="shrink-0" />
+                  <span className="truncate block">{s.title}</span>
+                </div>
+                <button
+                  onClick={(e) => handleDeleteSession(e, s._id)}
+                  className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                  title="حذف المحادثة"
+                >
+                  <FiTrash2 size={16} />
+                </button>
+              </div>
             ))}
           </div>
         </div>

@@ -149,6 +149,15 @@ router.post('/sessions', asyncHandler(async (req, res) => {
   });
   res.json({ success: true, data: session });
 }));
+// ============================================================================
+// @route   DELETE /api/admin/ai-agent/sessions/:id
+// @desc    Delete a specific chat session
+// ============================================================================
+router.delete('/sessions/:id', asyncHandler(async (req, res) => {
+  const session = await AiChatSession.findOneAndDelete({ _id: req.params.id, adminId: req.user._id });
+  if (!session) return res.status(404).json({ success: false, message: 'المحادثة غير موجودة' });
+  res.json({ success: true, message: 'تم حذف المحادثة بنجاح' });
+}));
 
 // ============================================================================
 // @route   POST /api/admin/ai-agent/sessions/:id/chat
@@ -178,11 +187,17 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
   
   // Construct Gemini history from session messages
   const history = session.messages
-    .filter(msg => msg.text) // Only pass text messages to Gemini history to avoid complex tool-call history parsing for now
-    .map(msg => ({
-      role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.text }]
-    }));
+    .filter(msg => msg.text || msg.proposedAction)
+    .map(msg => {
+      let contentText = msg.text || '';
+      if (msg.proposedAction) {
+        contentText += `\n[System Note: The model proposed an action on collection '${msg.proposedAction.collectionName}'. User is reviewing it.]`;
+      }
+      return {
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: contentText.trim() }]
+      };
+    });
     
   // Pop the last user message because we pass it directly to sendMessage
   history.pop();
@@ -201,9 +216,9 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
     });
 
     try {
-      // Use Promise.race to add a 15-second timeout to the Gemini call
+      // Use Promise.race to add a 45-second timeout to the Gemini call
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Gemini API Timeout')), 15000)
+        setTimeout(() => reject(new Error('Gemini API Timeout')), 45000)
       );
       result = await Promise.race([
         chatSession.sendMessage({ message }),

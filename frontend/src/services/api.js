@@ -178,6 +178,7 @@ export const adminAPI = {
   agentChat: (sessionId, message) => api.post(`/admin/ai-agent/sessions/${sessionId}/chat`, { message }),
   agentExecute: (data) => api.post('/admin/ai-agent/execute', data),
   agentReject: (data) => api.post('/admin/ai-agent/reject', data),
+  agentDeleteSession: (id) => api.delete(`/admin/ai-agent/sessions/${id}`),
 };
 
 export default api;
