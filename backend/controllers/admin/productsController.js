@@ -103,3 +103,43 @@ exports.deleteProduct = asyncHandler(async (req, res) => {
   if (!product) return res.status(404).json({ success: false, message: 'المنتج غير موجود' });
   res.json({ success: true, message: 'تم حذف المنتج' });
 }, 'حدث خطأ أثناء حذف المنتج');
+
+exports.bulkProductAction = asyncHandler(async (req, res) => {
+  const { productIds, action, data } = req.body;
+  
+  if (!Array.isArray(productIds) || productIds.length === 0) {
+    return res.status(400).json({ success: false, message: 'يجب تحديد منتج واحد على الأقل' });
+  }
+
+  let result;
+  const filter = { _id: { $in: productIds } };
+
+  switch (action) {
+    case 'activate':
+      result = await Product.updateMany(filter, { $set: { isActive: true } });
+      break;
+    case 'deactivate':
+      result = await Product.updateMany(filter, { $set: { isActive: false } });
+      break;
+    case 'delete':
+      result = await Product.deleteMany(filter);
+      break;
+    case 'setCategory':
+      if (!data || !data.categoryId) return res.status(400).json({ success: false, message: 'الفئة مطلوبة' });
+      result = await Product.updateMany(filter, { $set: { category: [data.categoryId] } });
+      break;
+    case 'addCategory':
+      if (!data || !data.categoryId) return res.status(400).json({ success: false, message: 'الفئة مطلوبة' });
+      result = await Product.updateMany(filter, { $addToSet: { category: data.categoryId } });
+      break;
+    case 'removeCategory':
+      if (!data || !data.categoryId) return res.status(400).json({ success: false, message: 'الفئة مطلوبة' });
+      result = await Product.updateMany(filter, { $pull: { category: data.categoryId } });
+      break;
+    default:
+      return res.status(400).json({ success: false, message: 'إجراء غير معروف' });
+  }
+
+  const count = result.modifiedCount || result.deletedCount || 0;
+  res.json({ success: true, message: `تم تطبيق الإجراء بنجاح على ${count} منتج`, count });
+}, 'حدث خطأ أثناء تطبيق الإجراء الجماعي');

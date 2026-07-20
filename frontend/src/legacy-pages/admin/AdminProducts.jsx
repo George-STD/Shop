@@ -20,6 +20,7 @@ const AdminProducts = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [showAiUploader, setShowAiUploader] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const initialFormState = {
     name: '',
@@ -96,6 +97,34 @@ const AdminProducts = () => {
     },
   });
 
+  const bulkMutation = useMutation({
+    mutationFn: (data) => adminAPI.bulkProductAction(data),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries(['admin-products']);
+      setSelectedIds([]);
+      toast.success(res.data?.message || 'تم التنفيذ بنجاح');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'فشل تنفيذ الإجراء');
+    }
+  });
+
+  const handleBulkAction = (action, categoryId = null) => {
+    if (selectedIds.length === 0) return;
+    
+    let confirmMsg = '';
+    if (action === 'delete') confirmMsg = 'هل أنت متأكد من حذف المنتجات المحددة نهائياً؟';
+    else confirmMsg = 'هل أنت متأكد من تطبيق هذا الإجراء على المنتجات المحددة؟';
+    
+    if (!window.confirm(confirmMsg)) return;
+
+    bulkMutation.mutate({
+      productIds: selectedIds,
+      action,
+      data: categoryId ? { categoryId } : undefined
+    });
+  };
+
   const resetForm = () => {
     setFormData(initialFormState);
     setEditingProduct(null);
@@ -171,6 +200,23 @@ const AdminProducts = () => {
   const handleDelete = (product) => {
     if (window.confirm(STRINGS.ADMIN.MESSAGES.CONFIRM_DELETE_PRODUCT(product.name))) {
       deleteMutation.mutate(product._id);
+    }
+  };
+
+  const handleSelectAll = (isChecked, allIds) => {
+    if (isChecked) {
+      const newSelected = [...new Set([...selectedIds, ...allIds])];
+      setSelectedIds(newSelected);
+    } else {
+      setSelectedIds(selectedIds.filter(id => !allIds.includes(id)));
+    }
+  };
+
+  const handleSelect = (id) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(item => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
     }
   };
 
@@ -298,6 +344,38 @@ const AdminProducts = () => {
         resetForm={resetForm}
       />
 
+      {selectedIds.length > 0 && (
+        <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-sm animate-fade-in-up">
+          <div className="text-purple-800 font-medium text-sm flex items-center gap-2">
+            <span className="bg-purple-200 text-purple-900 px-2 py-1 rounded-full text-xs font-bold">{selectedIds.length}</span>
+            <span>منتجات محددة</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <select 
+              className="px-3 py-2 rounded-lg border-purple-200 text-purple-800 bg-white focus:ring-purple-500 focus:border-purple-500 shadow-sm outline-none"
+              onChange={(e) => {
+                if (e.target.value) {
+                  handleBulkAction('addCategory', e.target.value);
+                  e.target.value = '';
+                }
+              }}
+            >
+              <option value="">إضافة لفئة...</option>
+              {categories?.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+            </select>
+            <button onClick={() => handleBulkAction('activate')} className="px-4 py-2 bg-white text-green-600 border border-green-200 rounded-lg hover:bg-green-50 transition-colors shadow-sm font-medium">
+              تفعيل
+            </button>
+            <button onClick={() => handleBulkAction('deactivate')} className="px-4 py-2 bg-white text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm font-medium">
+              تعطيل
+            </button>
+            <button onClick={() => handleBulkAction('delete')} className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors shadow-sm font-medium">
+              حذف
+            </button>
+          </div>
+        </div>
+      )}
+
       <AdminProductsTable
         products={products}
         isLoading={isLoading}
@@ -305,6 +383,9 @@ const AdminProducts = () => {
         setPage={setPage}
         handleEdit={handleEdit}
         handleDelete={handleDelete}
+        selectedIds={selectedIds}
+        handleSelect={handleSelect}
+        handleSelectAll={handleSelectAll}
       />
 
       <ProductFormModal

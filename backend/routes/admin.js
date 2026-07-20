@@ -67,6 +67,12 @@ router.post('/products/bulk', [
   body('products').isArray({ min: 1 }).withMessage('يجب تقديم مصفوفة المنتجات')
 ], adminController.createBulkProducts);
 
+router.post('/products/bulk-action', [
+  logAdminAction('BULK_PRODUCT_ACTION'),
+  body('productIds').isArray({ min: 1 }).withMessage('يجب تحديد منتج واحد على الأقل'),
+  body('action').isIn(['activate', 'deactivate', 'delete', 'setCategory', 'addCategory', 'removeCategory']).withMessage('إجراء غير صالح')
+], adminController.bulkProductAction);
+
 router.put('/products/:id', [
   validateObjectId('id'),
   logAdminAction('UPDATE_PRODUCT')

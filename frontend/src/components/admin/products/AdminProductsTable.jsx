@@ -2,7 +2,7 @@ import React from 'react';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
 
-const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, handleDelete }) => {
+const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, handleDelete, selectedIds, handleSelect, handleSelectAll }) => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('ar-EG', {
       style: 'currency',
@@ -19,12 +19,23 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
     );
   }
 
+  const allIds = products?.data?.map(p => p._id) || [];
+  const isAllSelected = allIds.length > 0 && allIds.every(id => selectedIds.includes(id));
+
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
       <div className="overflow-x-auto">
         <table className="w-full text-xs sm:text-sm">
           <thead className="bg-gray-50 text-xs md:text-sm">
             <tr>
+              <th className="py-2 px-2 sm:py-4 sm:px-6 w-12 text-center">
+                <input 
+                  type="checkbox" 
+                  className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4"
+                  checked={isAllSelected}
+                  onChange={(e) => handleSelectAll(e.target.checked, allIds)}
+                />
+              </th>
               <th className="text-right py-2 px-2 sm:py-4 sm:px-6 font-medium text-gray-600">
                 {STRINGS.ADMIN.TABLE.PRODUCT}
               </th>
@@ -48,6 +59,14 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
           <tbody className="divide-y">
             {products?.data?.map((product) => (
               <tr key={product._id} className="hover:bg-gray-50">
+                <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6 text-center">
+                  <input 
+                    type="checkbox" 
+                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4"
+                    checked={selectedIds.includes(product._id)}
+                    onChange={() => handleSelect(product._id)}
+                  />
+                </td>
                 <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6">
                   <div className="flex items-center gap-3">
                     {product.images?.[0] && (
