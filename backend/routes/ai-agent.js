@@ -215,7 +215,7 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
   while (currentModelIndex < MODEL_TIERS.length) {
     const tier = MODEL_TIERS[currentModelIndex];
     chatSession = ai.chats.create({
-      model: tier.id,
+      model: tier.realId || tier.id,
       config: { systemInstruction, tools, temperature: 0.1 },
       history
     });

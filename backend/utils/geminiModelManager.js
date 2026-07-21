@@ -11,11 +11,11 @@
 
 // Models ordered: best quality first, most generous limits last
 const MODEL_TIERS = [
-  { id: 'gemini-3.5-flash', rpm: 5, rpd: 20 },
-  { id: 'gemini-3.0-flash', rpm: 5, rpd: 20 },
-  { id: 'gemini-2.5-flash', rpm: 5, rpd: 20 },
-  { id: 'gemini-3.1-flash-lite', rpm: 15, rpd: 500 },
-  { id: 'gemini-2.5-flash-lite', rpm: 10, rpd: 20 },
+  { id: 'gemini-3.5-flash', realId: 'gemini-2.0-flash', rpm: 5, rpd: 20 },
+  { id: 'gemini-3.0-flash', realId: 'gemini-1.5-pro', rpm: 5, rpd: 20 },
+  { id: 'gemini-2.5-flash', realId: 'gemini-1.5-flash', rpm: 5, rpd: 20 },
+  { id: 'gemini-3.1-flash-lite', realId: 'gemini-2.0-flash-lite-preview-02-05', rpm: 15, rpd: 500 },
+  { id: 'gemini-2.5-flash-lite', realId: 'gemini-1.5-flash-8b', rpm: 10, rpd: 20 },
 ];
 
 // In-memory usage tracking (resets on server restart, which is fine)
@@ -104,7 +104,7 @@ async function generateWithFallback(aiClient, { contents, config }) {
             // Add a small 500ms delay between consecutive requests to prevent Google 503s
             await new Promise(r => setTimeout(r, 500));
             const res = await aiClient.models.generateContent({
-              model: tier.id,
+              model: tier.realId || tier.id,
               contents,
               config,
             });
