@@ -52,7 +52,12 @@ const systemInstruction = `
 تحذيرات:
 - تأكد دائماً من كتابة اسم الجدول باللغة الإنجليزية وبحرف كبير (Product, User, Order, Category).
 - في استعلام البحث (filterJson)، استخدم صيغة JSON صحيحة. للبحث النصي يمكنك استخدام $regex أو مجرد البحث بالقيمة.
-- عند اقتراح التعديل، updateJson يجب أن يحتوي على الحقول المراد تعديلها مباشرة (مثلاً {"role": "admin"} أو {"price": 150}). السيرفر سيقوم بوضعها داخل $set تلقائياً.
+- عند اقتراح التعديل، updateJson يجب أن يحتوي على أوامر MongoDB صحيحة تماماً (MongoDB Native Operators) مثل:
+  * {"$set": {"price": 150, "isActive": false}}
+  * {"$pull": {"category": "Women"}} (لحذف فئة معينة من المصفوفة)
+  * {"$push": {"category": "Men"}} (لإضافة فئة للمصفوفة)
+  * {"$inc": {"stock": -5, "price": 10}}
+- يجب أن تبدأ مفاتيح التعديل دائماً بعلامة $ لكي يفهمها السيرفر وتعمل بنجاح.
 `;
 
 const tools = [
@@ -82,7 +87,7 @@ const tools = [
       },
       {
         name: 'proposeDatabaseUpdate',
-        description: 'اقتراح تعديلات على مجموعة من المستندات. السيرفر سيقوم بعرضها للأدمن ليوافق عليها.',
+        description: 'اقتراح تعديلات على مجموعة من المستندات باستخدام أوامر MongoDB. السيرفر سيقوم بعرضها للأدمن ليوافق عليها.',
         parameters: {
           type: 'OBJECT',
           properties: {
@@ -97,7 +102,7 @@ const tools = [
             },
             updateJson: {
               type: 'STRING',
-              description: 'التعديلات المقترحة بصيغة JSON (مثال: {"price": 100, "isActive": false})'
+              description: 'التعديلات المقترحة بصيغة JSON ويجب استخدام أوامر MongoDB مثل $set, $pull, $inc (مثال: {"$set": {"price": 100}, "$pull": {"category": "Women"}})'
             },
             reasoning: { 
               type: 'STRING', 
@@ -268,12 +273,12 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
       } else if (name === 'proposeDatabaseUpdate') {
         const updates = safeParse(args.updateJson);
         
-        // Fetch previews
+        // Fetch previews with full relevant details for the new detailed table
         let selectStr = '';
-        if (args.collectionName === 'Product') selectStr = '_id name images.url isActive';
-        else if (args.collectionName === 'User') selectStr = '_id firstName lastName email role avatar';
-        else if (args.collectionName === 'Order') selectStr = '_id orderNumber status total';
-        else if (args.collectionName === 'Category') selectStr = '_id name image isActive';
+        if (args.collectionName === 'Product') selectStr = '_id name images.url isActive price stock category';
+        else if (args.collectionName === 'User') selectStr = '_id firstName lastName email role avatar isActive';
+        else if (args.collectionName === 'Order') selectStr = '_id orderNumber status total user';
+        else if (args.collectionName === 'Category') selectStr = '_id name image isActive slug';
 
         const affectedDocuments = await Model.find({ _id: { $in: args.documentIds } }).select(selectStr).lean();
         
@@ -348,10 +353,15 @@ router.post('/execute', asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'جدول غير مدعوم' });
   }
 
+  // Ensure updates is using MongoDB operators safely.
+  // If it doesn't contain any $ operator, we assume it's just raw fields and wrap it in $set for backwards compatibility
+  const hasOperator = Object.keys(updates).some(k => k.startsWith('$'));
+  const finalUpdate = hasOperator ? updates : { $set: updates };
+
   // Execute update
   const result = await Model.updateMany(
     { _id: { $in: documentIds } },
-    { $set: updates }
+    finalUpdate
   );
 
   // Mark message as executed

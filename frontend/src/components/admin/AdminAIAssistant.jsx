@@ -172,46 +172,111 @@ const AdminAIAssistant = () => {
   };
 
   // UI Renderers for Previews
-  const renderPreviewItem = (collectionName, item) => {
+  const renderPreviewTable = (collectionName, items) => {
+    if (!items || items.length === 0) return <div className="text-sm text-gray-500">لا يوجد عناصر متأثرة.</div>;
+
+    let headers = [];
+    let renderRow = null;
+
     switch (collectionName) {
       case 'Product':
-        return (
-          <div key={item._id} className="flex items-center gap-2 p-2 bg-white rounded border border-gray-100">
-            {item.images?.[0]?.url ? (
-              <img src={item.images[0].url} alt="" className="w-8 h-8 rounded object-cover" />
-            ) : (
-              <div className="w-8 h-8 rounded bg-gray-200" />
-            )}
-            <span className="text-xs font-medium text-gray-800 line-clamp-1">{item.name}</span>
-          </div>
+        headers = ['الصورة', 'اسم المنتج', 'السعر', 'المخزون', 'الفئات', 'الحالة'];
+        renderRow = (item) => (
+          <>
+            <td className="px-3 py-2 whitespace-nowrap">
+              {item.images?.[0]?.url ? (
+                <img src={item.images[0].url} alt="" className="w-8 h-8 rounded object-cover" />
+              ) : (
+                <div className="w-8 h-8 rounded bg-gray-200" />
+              )}
+            </td>
+            <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-900">{item.name}</td>
+            <td className="px-3 py-2 whitespace-nowrap">{item.price} ج.م</td>
+            <td className="px-3 py-2 whitespace-nowrap">{item.stock}</td>
+            <td className="px-3 py-2 whitespace-nowrap text-xs">{(item.category || []).join(', ')}</td>
+            <td className="px-3 py-2 whitespace-nowrap">
+              <span className={`px-2 py-1 rounded text-[10px] ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {item.isActive ? 'نشط' : 'غير نشط'}
+              </span>
+            </td>
+          </>
         );
+        break;
       case 'User':
-        return (
-          <div key={item._id} className="flex flex-col p-2 bg-white rounded border border-gray-100">
-             <span className="text-xs font-bold text-gray-800">{item.firstName} {item.lastName}</span>
-             <span className="text-[10px] text-gray-500">{item.email} • {item.role}</span>
-          </div>
+        headers = ['الاسم', 'البريد الإلكتروني', 'الدور', 'الحالة'];
+        renderRow = (item) => (
+          <>
+            <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-900">{item.firstName} {item.lastName}</td>
+            <td className="px-3 py-2 whitespace-nowrap text-gray-600">{item.email}</td>
+            <td className="px-3 py-2 whitespace-nowrap text-blue-700">{item.role}</td>
+            <td className="px-3 py-2 whitespace-nowrap">
+              <span className={`px-2 py-1 rounded text-[10px] ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {item.isActive ? 'نشط' : 'غير نشط'}
+              </span>
+            </td>
+          </>
         );
+        break;
       case 'Order':
-        return (
-          <div key={item._id} className="flex flex-col p-2 bg-white rounded border border-gray-100">
-             <span className="text-xs font-bold text-blue-700">{item.orderNumber}</span>
-             <span className="text-[10px] text-gray-500">الحالة: {item.status} • الإجمالي: {item.total} ج.م</span>
-          </div>
+        headers = ['رقم الطلب', 'الحالة', 'الإجمالي', 'العميل'];
+        renderRow = (item) => (
+          <>
+            <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-900">#{item.orderNumber}</td>
+            <td className="px-3 py-2 whitespace-nowrap">
+              <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-[10px]">{item.status}</span>
+            </td>
+            <td className="px-3 py-2 whitespace-nowrap">{item.total} ج.م</td>
+            <td className="px-3 py-2 whitespace-nowrap text-gray-600">{item.user?.name || item.user || '-'}</td>
+          </>
         );
+        break;
       case 'Category':
-        return (
-          <div key={item._id} className="flex items-center gap-2 p-2 bg-white rounded border border-gray-100">
-             <span className="text-xs font-medium text-gray-800">{item.name}</span>
-          </div>
+        headers = ['الصورة', 'اسم الفئة', 'الرابط', 'الحالة'];
+        renderRow = (item) => (
+          <>
+            <td className="px-3 py-2 whitespace-nowrap">
+              {item.image?.url ? (
+                <img src={item.image.url} alt="" className="w-8 h-8 rounded object-cover" />
+              ) : (
+                <div className="w-8 h-8 rounded bg-gray-200" />
+              )}
+            </td>
+            <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-900">{item.name}</td>
+            <td className="px-3 py-2 whitespace-nowrap text-gray-600">{item.slug}</td>
+            <td className="px-3 py-2 whitespace-nowrap">
+              <span className={`px-2 py-1 rounded text-[10px] ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {item.isActive ? 'نشط' : 'غير نشط'}
+              </span>
+            </td>
+          </>
         );
+        break;
       default:
-        return (
-          <div key={item._id} className="text-xs text-gray-700 bg-gray-50 p-1 px-2 rounded">
-            {item._id}
-          </div>
+        headers = ['المعرف (ID)'];
+        renderRow = (item) => (
+          <td className="px-3 py-2 whitespace-nowrap font-mono text-gray-600 text-xs">{item._id}</td>
         );
+        break;
     }
+
+    return (
+      <div className="overflow-x-auto max-w-full rounded-lg border border-gray-200 shadow-sm max-h-[300px] overflow-y-auto custom-scrollbar">
+        <table className="w-full text-right text-xs text-gray-700 bg-white">
+          <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0 z-10 shadow-sm">
+            <tr>
+              {headers.map((h, i) => <th key={i} className="px-3 py-2 font-bold">{h}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item, idx) => (
+              <tr key={item._id || idx} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                {renderRow(item)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
   };
 
   return (
@@ -319,9 +384,8 @@ const AdminAIAssistant = () => {
                       <p className="text-xs font-semibold text-gray-600 mb-2">
                         العناصر المتأثرة ({msg.proposedAction.preview?.length || msg.proposedAction.documentIds?.length || 0}):
                       </p>
-                      
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[150px] overflow-y-auto mb-4 pr-1 custom-scrollbar">
-                        {msg.proposedAction.preview?.map(p => renderPreviewItem(msg.proposedAction.collectionName, p))}
+                      <div className="mb-4">
+                        {renderPreviewTable(msg.proposedAction.collectionName, msg.proposedAction.preview)}
                       </div>
 
                       <div className="text-xs text-gray-700 bg-blue-50/50 p-3 rounded-xl border border-blue-200/50 mb-4 shadow-inner">
