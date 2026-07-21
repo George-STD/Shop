@@ -9,13 +9,12 @@
  * Total free-tier capacity: ~580 requests/day across all models.
  */
 
-// Models ordered: best quality first, most generous limits last
 const MODEL_TIERS = [
-  { id: 'gemini-3.5-flash', realId: 'gemini-2.0-flash', rpm: 5, rpd: 20 },
-  { id: 'gemini-3.0-flash', realId: 'gemini-1.5-pro', rpm: 5, rpd: 20 },
-  { id: 'gemini-2.5-flash', realId: 'gemini-1.5-flash', rpm: 5, rpd: 20 },
-  { id: 'gemini-3.1-flash-lite', realId: 'gemini-2.0-flash-lite-preview-02-05', rpm: 15, rpd: 500 },
-  { id: 'gemini-2.5-flash-lite', realId: 'gemini-1.5-flash-8b', rpm: 10, rpd: 20 },
+  { id: 'gemini-3.5-flash', realId: 'gemini-3.1-flash-lite', rpm: 5, rpd: 20 },
+  { id: 'gemini-3.0-flash', realId: 'gemini-3.1-flash-lite', rpm: 5, rpd: 20 },
+  { id: 'gemini-2.5-flash', realId: 'gemini-3.1-flash-lite', rpm: 5, rpd: 20 },
+  { id: 'gemini-3.1-flash-lite', realId: 'gemini-3.1-flash-lite', rpm: 15, rpd: 500 },
+  { id: 'gemini-2.5-flash-lite', realId: 'gemini-3.1-flash-lite', rpm: 10, rpd: 20 },
 ];
 
 // In-memory usage tracking (resets on server restart, which is fine)
