@@ -21,6 +21,9 @@ const MODEL_TIERS = [
 // In-memory usage tracking (resets on server restart, which is fine)
 const modelUsage = {};
 
+// Concurrency lock to prevent burst 429/503 errors from Google API
+let generateQueue = Promise.resolve();
+
 function getToday() {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 }
@@ -95,20 +98,34 @@ async function generateWithFallback(aiClient, { contents, config }) {
     }
 
     try {
-      const response = await aiClient.models.generateContent({
-        model: tier.id,
-        contents,
-        config,
+      const response = await new Promise((resolve, reject) => {
+        generateQueue = generateQueue.then(async () => {
+          try {
+            // Add a small 500ms delay between consecutive requests to prevent Google 503s
+            await new Promise(r => setTimeout(r, 500));
+            const res = await aiClient.models.generateContent({
+              model: tier.id,
+              contents,
+              config,
+            });
+            resolve(res);
+          } catch (err) {
+            reject(err);
+          }
+        }).catch(err => reject(err));
       });
 
       recordSuccess(tier.id);
       console.log(`[GeminiManager] ✅ Success with ${tier.id} (daily: ${getUsage(tier.id).dailyCount}/${tier.rpd})`);
       return { text: response.text, modelUsed: tier.id };
     } catch (error) {
+      console.log(`[GeminiManager] Error with ${tier.id}:`, error.status, error.message);
       const is429 =
         error.status === 429 ||
         (error.message && error.message.includes('429')) ||
-        (error.message && error.message.toLowerCase().includes('resource_exhausted'));
+        (error.message && error.message.toLowerCase().includes('resource_exhausted')) ||
+        (error.status === 503) || // Handle Google 503 Overloaded as a retryable 429
+        (error.status === 400 && error.message && error.message.toLowerCase().includes('quota'));
 
       // Model not found or no access → skip silently
       if (error.status === 404 || error.status === 403) {

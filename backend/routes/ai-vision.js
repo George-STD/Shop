@@ -83,8 +83,20 @@ function safeParseJSON(text) {
   try {
     return JSON.parse(text);
   } catch (_) {
-    const cleaned = text.replace(/```json\n?/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleaned);
+    try {
+      const cleaned = text.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+      return JSON.parse(cleaned);
+    } catch (e) {
+      console.error('Failed to parse AI response:', text);
+      return {
+        name: "منتج جديد",
+        description: text || "وصف مؤقت للمنتج",
+        categories: [],
+        occasions: [],
+        recipients: [],
+        price: 0
+      };
+    }
   }
 }
 
