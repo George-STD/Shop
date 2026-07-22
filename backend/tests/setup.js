@@ -15,20 +15,16 @@ beforeAll(async () => {
   });
 });
 
-// Clear DB collections between tests (actually after all tests in the file)
+// Clear DB and disconnect after all tests in the file
 afterAll(async () => {
-  if (mongoose.connection.readyState === 1) {
-    const collections = mongoose.connection.collections;
-    for (const key in collections) {
-      const collection = collections[key];
-      await collection.deleteMany({});
+  if (mongoose.connection.readyState !== 0) {
+    if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
+      try {
+        await mongoose.connection.db.dropDatabase();
+      } catch (err) {
+        // ignore if already dropped or closed
+      }
     }
+    await mongoose.disconnect();
   }
-});
-
-
-
-// Stop server and disconnect after all tests
-afterAll(async () => {
-  await mongoose.disconnect();
 });
