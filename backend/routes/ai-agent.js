@@ -41,23 +41,48 @@ const MODELS_MAP = {
 const systemInstruction = `
 أنت المساعد الذكي الخاص بمدير متجر الهدايا (Admin).
 مهمتك مساعدة المدير في تحليل البيانات واقتراح التعديلات عليها بناءً على طلبه.
-أنت تملك صلاحيات كاملة على كل الجداول: Product, User, Order, Category.
+أنت تملك صلاحيات كاملة على الجداول التالية: Product, User, Order, Category.
 ولكن لا يمكنك تنفيذ أي تعديل مباشرة، بل تقترح التعديل وينتظر موافقة الأدمن.
 
-عندما يطلب منك المدير شيئاً:
-1. إذا احتجت للبحث، استخدم أداة searchDatabase وقم بتمرير اسم الجدول واستعلام MongoDB صالح (filterJson).
-2. إذا طلب المدير استعلاماً فقط، أجب عليه نصياً وبشكل واضح.
-3. إذا طلب المدير تعديلاً، استخدم أداة proposeDatabaseUpdate لإرسال التعديل المقترح (updateJson) ليتم مراجعته.
+مخطط الحقول الحقيقية في قاعدة البيانات (Schema Fields):
+1. Product (المنتجات):
+   - canBeAddedToBox: Boolean (قابل للإضافة لبوكس الهدايا - استخدم هذا الحقل دائماً لشرط أو تعديل البوكس! لا تستخدم isBoxable أو حقول غير موجودة)
+   - boxDiscount: Number (نسبة الخصم داخل البوكس)
+   - isCustomBox: Boolean (بوكس هدايا فارغ قابل للتخصيص)
+   - name: String (اسم المنتج)
+   - price: Number (السعر الأساسي)
+   - oldPrice: Number
+   - discount: Number (نسبة الخصم)
+   - stock: Number (الكمية بالمخزون)
+   - category: Array of Category ObjectIds
+   - isActive: Boolean (نشط/مفعل)
+   - isFeatured: Boolean (مميز)
+   - isNewArrival: Boolean (وصل حديثاً)
+   - isBestseller: Boolean (الأكثر مبيعاً)
 
-تحذيرات:
-- تأكد دائماً من كتابة اسم الجدول باللغة الإنجليزية وبحرف كبير (Product, User, Order, Category).
-- في استعلام البحث (filterJson)، استخدم صيغة JSON صحيحة. للبحث النصي يمكنك استخدام $regex أو مجرد البحث بالقيمة.
-- عند اقتراح التعديل، updateJson يجب أن يحتوي على أوامر MongoDB صحيحة تماماً (MongoDB Native Operators) مثل:
-  * {"$set": {"price": 150, "isActive": false}}
-  * {"$pull": {"category": "Women"}} (لحذف فئة معينة من المصفوفة)
-  * {"$push": {"category": "Men"}} (لإضافة فئة للمصفوفة)
-  * {"$inc": {"stock": -5, "price": 10}}
-- يجب أن تبدأ مفاتيح التعديل دائماً بعلامة $ لكي يفهمها السيرفر وتعمل بنجاح.
+2. User (المستخدمين):
+   - firstName, lastName, email, role ('user' | 'admin'), isActive
+
+3. Order (الطلبات):
+   - orderNumber, status ('pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'), total, isPaid
+
+4. Category (الفئات):
+   - name, slug, isActive, showInBox
+
+قواعد صارمة ومهمة جداً للعمليات:
+1. عند طلب الأدمن تعديل مستندات (مثال: جعل منتجات قابلة للوضع في بوكس):
+   - يجب أن تجلب الـ _id الحقيقي المكون من 24 خانة (MongoDB ObjectID Hex String) لكل مستند عبر أداة searchDatabase أولاً!
+   - ممنوع منعاً باتاً استخدام أرقام تسلسلية ("1", "2", "3") أو أسماء المنتجات كـ documentIds في أداة proposeDatabaseUpdate.
+   - إذا كنت قد قمت بالبحث سابقاً ولم تحفظ الـ ObjectIDs، قم بالبحث مجدداً باستخدام searchDatabase للحصول على الـ _id الخاصة بتلك المنتجات ثم استدعِ proposeDatabaseUpdate.
+
+2. صيغة التعديلات (updateJson):
+   - يجب استخدام أوامر MongoDB مثل:
+     * {"$set": {"canBeAddedToBox": true}} (وليس isBoxable أو قيم نصية)
+     * {"$set": {"price": 150, "isActive": false}}
+     * {"$pull": {"category": "CATEGORY_ID"}}
+     * {"$push": {"category": "CATEGORY_ID"}}
+     * {"$inc": {"stock": 10}}
+   - التأكد من أنواع البيانات: الـ Booleans تكون true أو false بدون علامات تنصيص، والأرقام تكون Numbers بدون علامات تنصيص.
 `;
 
 const tools = [
@@ -65,7 +90,7 @@ const tools = [
     functionDeclarations: [
       {
         name: 'searchDatabase',
-        description: 'البحث في قاعدة البيانات واسترجاع المستندات التي تتطابق مع الشروط.',
+        description: 'البحث في قاعدة البيانات واسترجاع المستندات التي تتطابق مع الشروط بما فيها الـ _id الحقيقي.',
         parameters: {
           type: 'OBJECT',
           properties: {
@@ -75,7 +100,7 @@ const tools = [
             },
             filterJson: { 
               type: 'STRING', 
-              description: 'استعلام البحث بصيغة JSON (مثال: {"role": "user"} أو {"name": {"$regex": "شوكولاتة"}}). اتركها {} لجلب الكل.' 
+              description: 'استعلام البحث بصيغة JSON (مثال: {"canBeAddedToBox": false} أو {"name": {"$regex": "شوكولاتة"}}). اتركها {} لجلب الكل.' 
             },
             limit: { 
               type: 'INTEGER', 
@@ -87,7 +112,7 @@ const tools = [
       },
       {
         name: 'proposeDatabaseUpdate',
-        description: 'اقتراح تعديلات على مجموعة من المستندات باستخدام أوامر MongoDB. السيرفر سيقوم بعرضها للأدمن ليوافق عليها.',
+        description: 'اقتراح تعديلات على مجموعة من المستندات. يجب أن تحتوي documentIds على الـ _id الحقيقية (24 hex characters) المسترجعة من searchDatabase.',
         parameters: {
           type: 'OBJECT',
           properties: {
@@ -98,11 +123,11 @@ const tools = [
             documentIds: {
               type: 'ARRAY',
               items: { type: 'STRING' },
-              description: 'قائمة بـ IDs المستندات المراد تعديلها'
+              description: 'قائمة بـ MongoDB ObjectIDs الحقيقية المسترجعة من searchDatabase (مثال: ["65f...", "65a..."]). لا تستخدم أرقام مثل ["1", "2"].'
             },
             updateJson: {
               type: 'STRING',
-              description: 'التعديلات المقترحة بصيغة JSON ويجب استخدام أوامر MongoDB مثل $set, $pull, $inc (مثال: {"$set": {"price": 100}, "$pull": {"category": "Women"}})'
+              description: 'التعديلات المقترحة بصيغة JSON ويجب استخدام أوامر MongoDB مثل $set, $pull, $inc (مثال: {"$set": {"canBeAddedToBox": true}})'
             },
             reasoning: { 
               type: 'STRING', 
@@ -149,10 +174,10 @@ router.get('/sessions/:id', asyncHandler(async (req, res) => {
 router.post('/sessions', asyncHandler(async (req, res) => {
   const session = await AiChatSession.create({
     adminId: req.user._id,
-    title: 'محادثة جديدة',
+    title: req.body.title || 'محادثة جديدة',
     messages: []
   });
-  res.json({ success: true, data: session });
+  res.status(201).json({ success: true, data: session });
 }));
 // ============================================================================
 // @route   DELETE /api/admin/ai-agent/sessions/:id
@@ -166,7 +191,7 @@ router.delete('/sessions/:id', asyncHandler(async (req, res) => {
 
 // ============================================================================
 // @route   POST /api/admin/ai-agent/sessions/:id/chat
-// @desc    Send a message to a session
+// @desc    Send a message to AI Agent
 // ============================================================================
 router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
   const { message } = req.body;
@@ -196,7 +221,7 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
     .map(msg => {
       let contentText = msg.text || '';
       if (msg.proposedAction) {
-        contentText += `\n[System Note: The model proposed an action on collection '${msg.proposedAction.collectionName}'. User is reviewing it.]`;
+        contentText += `\n[System Note: The model proposed an action on collection '${msg.proposedAction.collectionName}' for documentIds [${msg.proposedAction.documentIds.join(', ')}]. User is reviewing it.]`;
       }
       return {
         role: msg.role === 'user' ? 'user' : 'model',
@@ -244,9 +269,9 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
   let finalResponseText = result.text;
   let proposedAction = null;
 
-  // Tool loop (max 3 iterations)
+  // Tool loop (max 4 iterations)
   let iteration = 0;
-  while (functionCalls && functionCalls.length > 0 && iteration < 3) {
+  while (functionCalls && functionCalls.length > 0 && iteration < 4) {
     const toolCall = functionCalls[0];
     const name = toolCall.name;
     const args = toolCall.args;
@@ -262,36 +287,45 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
         
         // Dynamic selection based on collection
         let selectStr = '';
-        if (args.collectionName === 'Product') selectStr = '_id name price isActive category';
+        if (args.collectionName === 'Product') selectStr = '_id name price stock isActive canBeAddedToBox isCustomBox boxDiscount category';
         else if (args.collectionName === 'User') selectStr = '_id firstName lastName email role isActive';
         else if (args.collectionName === 'Order') selectStr = '_id orderNumber status total user';
-        else if (args.collectionName === 'Category') selectStr = '_id name slug isActive';
+        else if (args.collectionName === 'Category') selectStr = '_id name slug isActive showInBox';
 
         const data = await Model.find(filter).select(selectStr).limit(limit).lean();
         toolResult = { data };
+        iteration++;
 
       } else if (name === 'proposeDatabaseUpdate') {
         const updates = safeParse(args.updateJson);
         
-        // Fetch previews with full relevant details for the new detailed table
+        // Fetch previews with full relevant details for the detailed table
         let selectStr = '';
-        if (args.collectionName === 'Product') selectStr = '_id name images.url isActive price stock category';
+        if (args.collectionName === 'Product') selectStr = '_id name images.url isActive price stock category canBeAddedToBox';
         else if (args.collectionName === 'User') selectStr = '_id firstName lastName email role avatar isActive';
         else if (args.collectionName === 'Order') selectStr = '_id orderNumber status total user';
         else if (args.collectionName === 'Category') selectStr = '_id name image isActive slug';
 
         const affectedDocuments = await Model.find({ _id: { $in: args.documentIds } }).select(selectStr).lean();
         
-        proposedAction = {
-          collectionName: args.collectionName,
-          documentIds: args.documentIds,
-          updates,
-          reasoning: args.reasoning,
-          preview: affectedDocuments
-        };
-        
-        toolResult = { status: 'PROPOSAL_RECEIVED', message: 'User is reviewing the proposal. Stop execution.' };
-        break;
+        if (!affectedDocuments || affectedDocuments.length === 0) {
+          toolResult = {
+            error: `INVALID_DOCUMENT_IDS: None of the documentIds provided [${args.documentIds.slice(0, 5).join(', ')}...] were found in ${args.collectionName}. You MUST call 'searchDatabase' first to retrieve the real 24-character hexadecimal MongoDB '_id's before proposing updates. Do NOT use numbers ('1', '2') or names as documentIds.`
+          };
+          iteration++;
+        } else {
+          const validIds = affectedDocuments.map(doc => doc._id.toString());
+          proposedAction = {
+            collectionName: args.collectionName,
+            documentIds: validIds,
+            updates,
+            reasoning: args.reasoning,
+            preview: affectedDocuments
+          };
+          
+          toolResult = { status: 'PROPOSAL_RECEIVED', message: 'User is reviewing the proposal. Stop execution.' };
+          break;
+        }
       } else {
         toolResult = { error: 'Unknown tool' };
       }
