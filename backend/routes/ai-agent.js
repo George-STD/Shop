@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const { GoogleGenAI } = require('@google/genai');
 
 const { protect, admin, adminLimiter } = require('../middleware/auth');
@@ -26,12 +27,30 @@ function getAiClient() {
 
 const { MODEL_TIERS } = require('../utils/geminiModelManager');
 
-
 const MODELS_MAP = {
   Product,
   Category,
   User,
   Order
+};
+
+// Helper to recursively convert valid 24-hex string IDs into mongoose.Types.ObjectId
+const castObjectIds = (obj) => {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(castObjectIds);
+  
+  const result = {};
+  for (const key of Object.keys(obj)) {
+    const val = obj[key];
+    if (typeof val === 'string' && mongoose.Types.ObjectId.isValid(val) && val.length === 24) {
+      result[key] = new mongoose.Types.ObjectId(val);
+    } else if (typeof val === 'object' && val !== null) {
+      result[key] = castObjectIds(val);
+    } else {
+      result[key] = val;
+    }
+  }
+  return result;
 };
 
 // ============================================================================
@@ -54,7 +73,7 @@ const systemInstruction = `
    - oldPrice: Number
    - discount: Number (نسبة الخصم)
    - stock: Number (الكمية بالمخزون)
-   - category: Array of Category ObjectIds
+   - category: Array of Category ObjectIds (مصفوفة من المعرفات الحقيقية للفئات)
    - isActive: Boolean (نشط/مفعل)
    - isFeatured: Boolean (مميز)
    - isNewArrival: Boolean (وصل حديثاً)
@@ -67,22 +86,27 @@ const systemInstruction = `
    - orderNumber, status ('pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'), total, isPaid
 
 4. Category (الفئات):
-   - name, slug, isActive, showInBox
+   - _id, name, slug, isActive, showInBox
 
 قواعد صارمة ومهمة جداً للعمليات:
-1. عند طلب الأدمن تعديل مستندات (مثال: جعل منتجات قابلة للوضع في بوكس):
-   - يجب أن تجلب الـ _id الحقيقي المكون من 24 خانة (MongoDB ObjectID Hex String) لكل مستند عبر أداة searchDatabase أولاً!
-   - ممنوع منعاً باتاً استخدام أرقام تسلسلية ("1", "2", "3") أو أسماء المنتجات كـ documentIds في أداة proposeDatabaseUpdate.
-   - إذا كنت قد قمت بالبحث سابقاً ولم تحفظ الـ ObjectIDs، قم بالبحث مجدداً باستخدام searchDatabase للحصول على الـ _id الخاصة بتلك المنتجات ثم استدعِ proposeDatabaseUpdate.
+1. عند التعامل مع فئات المنتجات (category في Product):
+   - حقل category في المنتجات يحوي _id الفئة المكون من 24 حرفاً (Category ObjectId).
+   - إذا طلب الأدمن حذف فئة معينة (مثال: حذف فئة "Women" أو "Men"):
+     * يجب أولاً استدعاء searchDatabase على جدول Category بشرط {"name": {"$regex": "Women", "$options": "i"}} لجلب الـ _id الحقيقي للفئة!
+     * ممنوع منعاً باتاً تخمين _id الفئة من عندك أو وضع اسم الفئة كنص في $pull.
+     * بعد جلب _id الفئة الحقيقي (مثال "65a123..."), استخدم: {"$pull": {"category": "65a123..."}}.
 
-2. صيغة التعديلات (updateJson):
+2. عند طلب الأدمن تعديل مستندات:
+   - يجب أن تجلب الـ _id الحقيقي المكون من 24 خانة لكل مستند عبر أداة searchDatabase أولاً!
+   - ممنوع منعاً باتاً استخدام أرقام تسلسلية ("1", "2", "3") كـ documentIds في أداة proposeDatabaseUpdate.
+
+3. صيغة التعديلات (updateJson):
    - يجب استخدام أوامر MongoDB مثل:
-     * {"$set": {"canBeAddedToBox": true}} (وليس isBoxable أو قيم نصية)
-     * {"$set": {"price": 150, "isActive": false}}
-     * {"$pull": {"category": "CATEGORY_ID"}}
-     * {"$push": {"category": "CATEGORY_ID"}}
+     * {"$set": {"canBeAddedToBox": true}}
+     * {"$pull": {"category": "CATEGORY_OBJECT_ID"}}
+     * {"$push": {"category": "CATEGORY_OBJECT_ID"}}
      * {"$inc": {"stock": 10}}
-   - التأكد من أنواع البيانات: الـ Booleans تكون true أو false بدون علامات تنصيص، والأرقام تكون Numbers بدون علامات تنصيص.
+   - التأكد من أن مفاتيح التعديل تبدأ بـ $ وأن أنواع البيانات صحيحة.
 `;
 
 const tools = [
@@ -390,11 +414,18 @@ router.post('/execute', asyncHandler(async (req, res) => {
   // Ensure updates is using MongoDB operators safely.
   // If it doesn't contain any $ operator, we assume it's just raw fields and wrap it in $set for backwards compatibility
   const hasOperator = Object.keys(updates).some(k => k.startsWith('$'));
-  const finalUpdate = hasOperator ? updates : { $set: updates };
+  let finalUpdate = hasOperator ? updates : { $set: updates };
+  
+  // Convert any string ObjectIDs inside updates ($pull, $push, etc.) to real mongoose.Types.ObjectId
+  finalUpdate = castObjectIds(finalUpdate);
+
+  const validDocIds = documentIds.map(id => 
+    mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id
+  );
 
   // Execute update
   const result = await Model.updateMany(
-    { _id: { $in: documentIds } },
+    { _id: { $in: validDocIds } },
     finalUpdate
   );
 
@@ -406,9 +437,14 @@ router.post('/execute', asyncHandler(async (req, res) => {
     );
   }
 
+  const isZero = result.modifiedCount === 0;
+  const statusMsg = isZero 
+    ? 'لم يتم تعديل أي عنصر لأن القيم المراد تعديلها مطابقة بالفعل أو المعرفات غير موجودة بالمنتجات.'
+    : `تم تعديل ${result.modifiedCount} عنصر بنجاح`;
+
   res.json({
     success: true,
-    message: `تم تعديل ${result.modifiedCount} عنصر بنجاح`,
+    message: statusMsg,
     modifiedCount: result.modifiedCount
   });
 }));

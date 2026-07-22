@@ -1,10 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { adminAPI } from '../../services/api';
-import { FiMessageSquare, FiPlus, FiX, FiCheck, FiXCircle, FiTrash2 } from 'react-icons/fi';
+import { 
+  FiMessageSquare, 
+  FiPlus, 
+  FiX, 
+  FiCheck, 
+  FiXCircle, 
+  FiTrash2, 
+  FiMaximize2, 
+  FiMinimize2, 
+  FiSidebar 
+} from 'react-icons/fi';
 
 const AdminAIAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
   const [sessions, setSessions] = useState([]);
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -260,11 +272,11 @@ const AdminAIAssistant = () => {
     }
 
     return (
-      <div className="overflow-x-auto max-w-full rounded-lg border border-gray-200 shadow-sm max-h-[300px] overflow-y-auto custom-scrollbar">
-        <table className="w-full text-right text-xs text-gray-700 bg-white">
+      <div className="overflow-x-auto w-full rounded-xl border border-gray-200 shadow-sm max-h-[350px] overflow-y-auto custom-scrollbar bg-white">
+        <table className="min-w-full w-full text-right text-xs text-gray-700 bg-white">
           <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0 z-10 shadow-sm">
             <tr>
-              {headers.map((h, i) => <th key={i} className="px-3 py-2 font-bold">{h}</th>)}
+              {headers.map((h, i) => <th key={i} className="px-3 py-2.5 font-bold whitespace-nowrap">{h}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -285,139 +297,169 @@ const AdminAIAssistant = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+        title="المساعد الذكي (Admin)"
       >
         <span className="text-2xl">✨</span>
       </button>
 
       {/* Drawer Overlay */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black/30 z-[60]" onClick={() => setIsOpen(false)} />
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-[60]" onClick={() => setIsOpen(false)} />
       )}
 
       {/* Drawer Container */}
-      <div className={`fixed top-0 right-0 h-full bg-white shadow-2xl z-[70] transition-transform duration-300 flex overflow-hidden border-l border-gray-200 ${
-        isOpen ? 'translate-x-0 w-[90vw] md:w-[700px]' : 'translate-x-full w-0'
+      <div className={`fixed top-0 right-0 h-full bg-white shadow-2xl z-[70] transition-all duration-300 flex overflow-hidden border-l border-gray-200 ${
+        isOpen 
+          ? isExpanded 
+            ? 'translate-x-0 w-full md:w-[96vw]' 
+            : 'translate-x-0 w-full md:w-[850px] lg:w-[950px]' 
+          : 'translate-x-full w-0'
       }`}>
         
         {/* Left Sidebar (Sessions History) */}
-        <div className="w-[250px] bg-gray-50 border-l border-gray-200 flex flex-col hidden md:flex">
-          <div className="p-4 border-b border-gray-200">
-            <button 
-              onClick={startNewSession}
-              className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors text-sm font-bold text-gray-700"
-            >
-              <FiPlus /> محادثة جديدة
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-            {sessions.map(s => (
-              <div
-                key={s._id}
-                onClick={() => setCurrentSessionId(s._id)}
-                className={`w-full text-right p-3 rounded-lg text-sm transition-colors flex items-center justify-between group cursor-pointer ${
-                  currentSessionId === s._id ? 'bg-purple-100 text-purple-700 font-medium' : 'hover:bg-gray-200 text-gray-700'
-                }`}
+        {showSidebar && (
+          <div className="w-[260px] bg-gray-50 border-l border-gray-200 flex flex-col hidden md:flex shrink-0">
+            <div className="p-4 border-b border-gray-200">
+              <button 
+                onClick={startNewSession}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-gray-300 rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-all text-sm font-bold text-gray-700 shadow-xs"
               >
-                <div className="flex items-center gap-2 truncate overflow-hidden">
-                  <FiMessageSquare className="shrink-0" />
-                  <span className="truncate block">{s.title}</span>
-                </div>
-                <button
-                  onClick={(e) => handleDeleteSession(e, s._id)}
-                  className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
-                  title="حذف المحادثة"
+                <FiPlus /> محادثة جديدة
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+              {sessions.map(s => (
+                <div
+                  key={s._id}
+                  onClick={() => setCurrentSessionId(s._id)}
+                  className={`w-full text-right p-3 rounded-xl text-sm transition-colors flex items-center justify-between group cursor-pointer ${
+                    currentSessionId === s._id ? 'bg-purple-100 text-purple-800 font-bold shadow-xs' : 'hover:bg-gray-200/70 text-gray-700'
+                  }`}
                 >
-                  <FiTrash2 size={16} />
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-center gap-2 truncate overflow-hidden">
+                    <FiMessageSquare className="shrink-0 text-purple-600" />
+                    <span className="truncate block">{s.title}</span>
+                  </div>
+                  <button
+                    onClick={(e) => handleDeleteSession(e, s._id)}
+                    className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                    title="حذف المحادثة"
+                  >
+                    <FiTrash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Right Area (Active Chat) */}
-        <div className="flex-1 flex flex-col bg-white">
+        <div className="flex-1 flex flex-col bg-white min-w-0">
           {/* Header */}
-          <div className="p-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white flex justify-between items-center shadow-md z-10">
-            <div className="flex items-center gap-2">
+          <div className="p-3.5 px-4 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white flex justify-between items-center shadow-md z-10">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setShowSidebar(!showSidebar)} 
+                className="hidden md:flex p-1.5 hover:bg-white/20 rounded-lg transition-colors text-white"
+                title={showSidebar ? "إخفاء قائمة المحادثات" : "إظهار قائمة المحادثات"}
+              >
+                <FiSidebar size={18} />
+              </button>
               <span className="text-xl">✨</span>
               <div>
-                <h3 className="font-bold leading-tight">المساعد الذكي (Admin)</h3>
-                <p className="text-[10px] text-purple-100">صلاحيات كاملة على المنتجات، المستخدمين، الطلبات</p>
+                <h3 className="font-bold text-sm md:text-base leading-tight">المساعد الذكي (Admin)</h3>
+                <p className="text-[10px] text-purple-100">تحليل وتعديل المنتجات، المستخدمين، والطلبات</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-               {/* Mobile new chat button */}
-               <button onClick={startNewSession} className="md:hidden p-2 text-white hover:bg-white/20 rounded">
-                 <FiPlus />
+            
+            <div className="flex items-center gap-1.5">
+               {/* Expand / Fullscreen button */}
+               <button 
+                 onClick={() => setIsExpanded(!isExpanded)} 
+                 className="hidden md:flex p-2 text-white hover:bg-white/20 rounded-lg transition-colors"
+                 title={isExpanded ? "تصغير الحجم" : "توسيع الشاشة بالكامل"}
+               >
+                 {isExpanded ? <FiMinimize2 size={18} /> : <FiMaximize2 size={18} />}
                </button>
+
+               {/* Mobile new chat button */}
+               <button onClick={startNewSession} className="md:hidden p-2 text-white hover:bg-white/20 rounded-lg">
+                 <FiPlus size={18} />
+               </button>
+
                <button onClick={() => setIsOpen(false)} className="p-2 text-white hover:bg-white/20 rounded-lg transition-colors">
-                 <FiX size={24} />
+                 <FiX size={20} />
                </button>
             </div>
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5" style={{ scrollBehavior: 'smooth' }}>
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-5 bg-gray-50/40" style={{ scrollBehavior: 'smooth' }}>
             {messages.map((msg, index) => (
               <div key={msg._id || index} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                 {msg.text && (
-                  <div className={`max-w-[85%] p-3 rounded-2xl ${
+                  <div className={`max-w-[88%] md:max-w-[80%] p-3.5 rounded-2xl shadow-xs ${
                     msg.role === 'user' 
-                      ? 'bg-purple-600 text-white rounded-br-none' 
-                      : 'bg-gray-100 text-gray-800 shadow-sm border border-gray-200 rounded-bl-none'
+                      ? 'bg-purple-600 text-white rounded-br-none font-medium' 
+                      : 'bg-white text-gray-800 border border-gray-200/80 rounded-bl-none shadow-sm'
                   }`}>
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.text}</p>
                   </div>
                 )}
                 
                 {msg.proposedAction && (
-                  <div className="mt-3 w-full max-w-[95%] bg-white rounded-xl shadow-lg border border-yellow-300 overflow-hidden">
-                    <div className="p-3 bg-gradient-to-r from-yellow-50 to-orange-50 border-b border-yellow-200 flex items-start gap-2">
-                      <span className="text-orange-500 mt-1 text-lg">⚠️</span>
-                      <div>
-                        <h4 className="font-bold text-orange-800 text-sm">مراجعة تعديلات على: {msg.proposedAction.collectionName}</h4>
-                        <p className="text-xs text-orange-700 mt-1">{msg.proposedAction.reasoning}</p>
+                  <div className="mt-3 w-full bg-white rounded-2xl shadow-lg border border-amber-300/80 overflow-hidden">
+                    <div className="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200/80 flex items-start gap-2.5">
+                      <span className="text-orange-500 mt-0.5 text-lg">⚠️</span>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-orange-900 text-sm">مراجعة تعديلات على جدول: {msg.proposedAction.collectionName}</h4>
+                        <p className="text-xs text-orange-800 mt-0.5 font-medium">{msg.proposedAction.reasoning}</p>
                       </div>
                     </div>
                     
-                    <div className="p-4 bg-gray-50">
-                      <p className="text-xs font-semibold text-gray-600 mb-2">
-                        العناصر المتأثرة ({msg.proposedAction.preview?.length || msg.proposedAction.documentIds?.length || 0}):
-                      </p>
-                      <div className="mb-4">
+                    <div className="p-4 bg-gray-50/60 space-y-4">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-bold text-gray-700">
+                            العناصر المتأثرة ({msg.proposedAction.preview?.length || msg.proposedAction.documentIds?.length || 0}):
+                          </p>
+                          <span className="text-[10px] text-gray-500 bg-gray-200/60 px-2 py-0.5 rounded-full">
+                            جدول قابل للتمرير الأفقي والرأسي
+                          </span>
+                        </div>
                         {renderPreviewTable(msg.proposedAction.collectionName, msg.proposedAction.preview)}
                       </div>
 
-                      <div className="text-xs text-gray-700 bg-blue-50/50 p-3 rounded-xl border border-blue-200/50 mb-4 shadow-inner">
-                        <span className="font-bold text-blue-800 block mb-2 flex items-center gap-1">
-                          <span className="text-blue-500">🔧</span> التحديثات المقترحة:
+                      <div className="text-xs text-gray-700 bg-blue-50/60 p-3.5 rounded-xl border border-blue-200/70 shadow-xs">
+                        <span className="font-bold text-blue-900 block mb-2 flex items-center gap-1.5">
+                          <span className="text-blue-600">🔧</span> التحديثات المقترحة (MongoDB JSON):
                         </span>
-                        <pre className="whitespace-pre-wrap font-mono text-[11px] text-blue-900 bg-white p-2 rounded border border-blue-100">
+                        <pre className="whitespace-pre-wrap font-mono text-[11px] text-blue-950 bg-white p-2.5 rounded-lg border border-blue-100/80 max-h-[160px] overflow-y-auto custom-scrollbar break-all">
                           {JSON.stringify(msg.proposedAction.updates, null, 2)}
                         </pre>
                       </div>
 
                       {!msg.executed ? (
-                         <div className="flex gap-3 mt-2">
+                         <div className="flex gap-3 pt-1">
                            <button 
                              onClick={() => handleExecuteAction(msg.proposedAction, msg._id, index)}
-                             className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-2.5 rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                             className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white py-2.5 rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
                            >
                              <FiCheck size={18} /> تأكيد التنفيذ
                            </button>
                            <button 
                              onClick={() => handleRejectAction(msg._id, index)}
-                             className="px-4 bg-white border-2 border-red-100 text-red-600 hover:bg-red-50 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-2"
+                             className="px-5 bg-white border border-red-200 text-red-600 hover:bg-red-50 py-2.5 rounded-xl text-sm font-bold shadow-xs transition-all flex items-center gap-2"
                            >
                              <FiXCircle size={18} /> إلغاء
                            </button>
                          </div>
                       ) : msg.executed === 'rejected' ? (
-                         <div className="text-center py-2.5 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+                         <div className="text-center py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
                            <FiXCircle size={18} /> تم رفض التعديلات
                          </div>
                       ) : (
-                         <div className="text-center py-2.5 bg-green-50 text-green-700 border border-green-200 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+                         <div className="text-center py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
                            <FiCheck size={18} /> تم تنفيذ التعديلات بنجاح
                          </div>
                       )}
