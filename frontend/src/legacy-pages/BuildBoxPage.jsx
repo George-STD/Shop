@@ -9,6 +9,10 @@ import {
   FiTrash2,
   FiSearch,
   FiPlus,
+  FiFilter,
+  FiGrid,
+  FiCheck,
+  FiLayers,
 } from 'react-icons/fi';
 import { productsAPI, categoriesAPI } from '../services/api';
 import { useBuildBoxStore, useCartStore } from '../store';
@@ -24,6 +28,7 @@ const BuildBoxPage = () => {
   const { addItem: addCartItem } = useCartStore();
   const navigate = useNavigate();
 
+  // null = Show All Products
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   // Fetch box categories
@@ -32,14 +37,15 @@ const BuildBoxPage = () => {
     queryFn: () => categoriesAPI.getAll({ showInBox: 'true' }).then((res) => res.data.data),
   });
 
-  // Fetch box-eligible products for selected category
+  // Fetch box-eligible products (defaults to ALL products if no category is selected)
   const { data: productsData, isLoading } = useQuery({
     queryKey: ['products', { canBeAddedToBox: 'true', category: selectedCategory, search: searchTerm }],
-    queryFn: () =>
-      selectedCategory
-        ? productsAPI.getAll({ canBeAddedToBox: 'true', category: selectedCategory, search: searchTerm }).then((res) => res.data)
-        : Promise.resolve({ data: [] }),
-    enabled: !!selectedCategory,
+    queryFn: () => {
+      const params = { canBeAddedToBox: 'true' };
+      if (selectedCategory) params.category = selectedCategory;
+      if (searchTerm) params.search = searchTerm;
+      return productsAPI.getAll(params).then((res) => res.data);
+    },
   });
 
   const products = productsData?.data || [];
@@ -146,25 +152,76 @@ const BuildBoxPage = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Column: Products List */}
           <div className="flex-1">
-            {/* Category Tabs */}
-            {categories.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto pb-4 mb-2 scrollbar-hide">
-                {categories.map((cat) => (
+            {/* Category Filter Banner / Navigation */}
+            <div className="bg-gradient-to-r from-purple-50/90 via-white to-pink-50/90 rounded-2xl p-4 md:p-5 mb-6 border border-purple-100 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold text-base shadow-md shadow-purple-500/20">
+                    <FiFilter />
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-gray-900 text-base md:text-lg">
+                      اختر الفئة لتضييق البحث:
+                    </h2>
+                    <p className="text-xs text-gray-500">
+                      تصفح جميع المنتجات أو اختر فئة محددة لإظهار منتجاتها فقط
+                    </p>
+                  </div>
+                </div>
+                {selectedCategory && (
                   <button
-                    key={cat._id}
-                    onClick={() => setSelectedCategory(cat._id)}
-                    className={`whitespace-nowrap px-6 py-2.5 rounded-full font-medium transition-all duration-300 ${
-                      selectedCategory === cat._id
-                        ? 'bg-purple-600 text-white shadow-md'
-                        : 'bg-white text-gray-600 border border-gray-200 hover:border-purple-300 hover:text-purple-600'
-                    }`}
+                    onClick={() => setSelectedCategory(null)}
+                    className="self-start sm:self-auto text-xs font-bold text-purple-700 bg-white hover:bg-purple-50 border border-purple-200 px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1 shadow-sm"
                   >
-                    {cat.name}
+                    <FiRefreshCw className="w-3 h-3" />
+                    عرض جميع المنتجات
                   </button>
-                ))}
+                )}
               </div>
-            )}
 
+              {/* Category Options List */}
+              <div className="flex gap-2.5 overflow-x-auto pb-1 pt-1 scrollbar-hide -mx-1 px-1">
+                {/* All Products Option */}
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className={`shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${
+                    !selectedCategory
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/25 ring-2 ring-purple-400/30'
+                      : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300 hover:text-purple-700 shadow-sm'
+                  }`}
+                >
+                  <FiGrid className="w-4 h-4" />
+                  <span>جميع المنتجات</span>
+                  {!selectedCategory && <FiCheck className="w-4 h-4" />}
+                </button>
+
+                {/* Categories List */}
+                {categories.map((cat) => {
+                  const isSelected = selectedCategory === cat._id;
+                  return (
+                    <button
+                      key={cat._id}
+                      onClick={() => setSelectedCategory(cat._id)}
+                      className={`shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${
+                        isSelected
+                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-500/25 ring-2 ring-purple-400/30'
+                          : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300 hover:text-purple-700 shadow-sm'
+                      }`}
+                    >
+                      {cat.image ? (
+                        <img src={cat.image} alt={cat.name} className="w-5 h-5 object-cover rounded-md" />
+                      ) : (
+                        <FiLayers className="w-4 h-4 opacity-70" />
+                      )}
+                      <span>{cat.name}</span>
+                      {isSelected && <FiCheck className="w-4 h-4" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Search Input */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6 sticky top-24 z-10">
               <div className="relative">
                 <input
@@ -186,14 +243,6 @@ const BuildBoxPage = () => {
                     className="bg-white rounded-2xl h-64 skeleton border border-gray-100"
                   ></div>
                 ))}
-              </div>
-            ) : !selectedCategory ? (
-              <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
-                <div className="text-6xl mb-6">🎁</div>
-                <h3 className="text-2xl font-bold text-purple-800 mb-3">اختر فئة لتبدأ!</h3>
-                <p className="text-gray-500 text-lg">
-                  يرجى اختيار إحدى الفئات من الشريط العلوي لاستعراض المنتجات المتاحة وإضافتها للبوكس الخاص بك بكل سهولة.
-                </p>
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
