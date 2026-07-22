@@ -41,7 +41,7 @@ const BuildBoxPage = () => {
   const { data: productsData, isLoading } = useQuery({
     queryKey: ['products', { canBeAddedToBox: 'true', category: selectedCategory, search: searchTerm }],
     queryFn: () => {
-      const params = { canBeAddedToBox: 'true' };
+      const params = { canBeAddedToBox: 'true', limit: 50 };
       if (selectedCategory) params.category = selectedCategory;
       if (searchTerm) params.search = searchTerm;
       return productsAPI.getAll(params).then((res) => res.data);
@@ -180,7 +180,7 @@ const BuildBoxPage = () => {
               </div>
 
               {/* Category Options List */}
-              <div className="flex gap-2.5 overflow-x-auto pb-1 pt-1 scrollbar-hide -mx-1 px-1">
+              <div className="flex flex-wrap gap-2.5 pb-1 pt-1">
                 {/* All Products Option */}
                 <button
                   onClick={() => setSelectedCategory(null)}
@@ -251,62 +251,76 @@ const BuildBoxPage = () => {
                 <p className="text-gray-500">{STRINGS.BUILD_BOX_PAGE.NO_PRODUCTS_DESC}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {products.map((product) => (
-                  <div
-                    key={product._id}
-                    className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:border-purple-200 transition-all group flex flex-col"
-                  >
-                    <Link
-                      to={`/product/${product.slug}`}
-                      target="_blank"
-                      className="relative h-48 overflow-hidden block"
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {products.map((product) => (
+                    <div
+                      key={product._id}
+                      className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:border-purple-200 transition-all group flex flex-col"
                     >
-                      <img
-                        src={product.images[0]?.url}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      {product.stock === 0 && (
-                        <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center">
-                          <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-                            {STRINGS.PRODUCT.OUT_OF_STOCK}
-                          </span>
-                        </div>
-                      )}
-                    </Link>
-                    <div className="p-4 flex flex-col flex-1">
                       <Link
                         to={`/product/${product.slug}`}
                         target="_blank"
-                        className="font-bold text-gray-800 line-clamp-1 hover:text-purple-600 mb-1"
+                        className="relative h-48 overflow-hidden block"
                       >
-                        {product.name}
+                        <img
+                          src={product.images[0]?.url}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        {product.stock === 0 && (
+                          <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center">
+                            <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                              {STRINGS.PRODUCT.OUT_OF_STOCK}
+                            </span>
+                          </div>
+                        )}
                       </Link>
-                      <div className="mb-4">
-                        <span className="text-gray-400 line-through text-sm">
-                          {formatPrice(product.price)} {STRINGS.PRODUCT.CURRENCY}
-                        </span>
-                        <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-lg">
-                          {formatPrice(
-                            product.price * (1 - (product.boxDiscount !== undefined ? product.boxDiscount : 25) / 100)
-                          )}{' '}
-                          {STRINGS.PRODUCT.CURRENCY}
-                        </p>
-                      </div>
+                      <div className="p-4 flex flex-col flex-1">
+                        <Link
+                          to={`/product/${product.slug}`}
+                          target="_blank"
+                          className="font-bold text-gray-800 line-clamp-1 hover:text-purple-600 mb-1"
+                        >
+                          {product.name}
+                        </Link>
+                        <div className="mb-4">
+                          <span className="text-gray-400 line-through text-sm">
+                            {formatPrice(product.price)} {STRINGS.PRODUCT.CURRENCY}
+                          </span>
+                          <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-lg">
+                            {formatPrice(
+                              product.price * (1 - (product.boxDiscount !== undefined ? product.boxDiscount : 25) / 100)
+                            )}{' '}
+                            {STRINGS.PRODUCT.CURRENCY}
+                          </p>
+                        </div>
 
-                      <button
-                        onClick={() => handleAddToBox(product)}
-                        disabled={product.stock === 0}
-                        className="mt-auto w-full btn-outline border-purple-200 text-purple-600 hover:bg-purple-50 disabled:opacity-50 py-2 rounded-xl flex items-center justify-center gap-2"
-                      >
-                        <FiPlus />
-                        {STRINGS.BUILD_BOX_PAGE.ADD_TO_BOX}
-                      </button>
+                        <button
+                          onClick={() => handleAddToBox(product)}
+                          disabled={product.stock === 0}
+                          className="mt-auto w-full btn-outline border-purple-200 text-purple-600 hover:bg-purple-50 disabled:opacity-50 py-2 rounded-xl flex items-center justify-center gap-2"
+                        >
+                          <FiPlus />
+                          {STRINGS.BUILD_BOX_PAGE.ADD_TO_BOX}
+                        </button>
+                      </div>
                     </div>
+                  ))}
+                </div>
+
+                {productsData?.total > products.length && (
+                  <div className="mt-8 p-6 bg-purple-50/80 rounded-2xl border border-purple-100 flex flex-col items-center justify-center text-center">
+                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-purple-600 shadow-sm mb-3">
+                      <FiFilter className="w-6 h-6" />
+                    </div>
+                    <h4 className="font-bold text-lg text-purple-900 mb-1">يوجد المزيد من المنتجات!</h4>
+                    <p className="text-sm text-purple-700/80 max-w-md">
+                      قم بتحديد فئة معينة من الأعلى لتضييق نطاق البحث وعرض المنتجات المناسبة لك بسهولة.
+                    </p>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
 
