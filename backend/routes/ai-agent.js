@@ -307,6 +307,7 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
 
       if (name === 'searchDatabase') {
         const filter = safeParse(args.filterJson);
+        const castFilter = castObjectIds(filter);
         const limit = args.limit || 20;
         
         // Dynamic selection based on collection
@@ -316,7 +317,7 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
         else if (args.collectionName === 'Order') selectStr = '_id orderNumber status total user';
         else if (args.collectionName === 'Category') selectStr = '_id name slug isActive showInBox';
 
-        const data = await Model.find(filter).select(selectStr).limit(limit).lean();
+        const data = await Model.find(castFilter).select(selectStr).limit(limit).lean();
         toolResult = { data };
         iteration++;
 
