@@ -82,6 +82,28 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
   } else if (status === 'cancelled' && previousStatus !== 'cancelled') {
     const { handleOrderLoyaltyRefundOrDeduction } = require('../orderController');
     await handleOrderLoyaltyRefundOrDeduction(order);
+
+    // Restore inventory stock for cancelled order items
+    const Product = require('../../models/Product');
+    for (const item of order.items) {
+      if (item.product) {
+        await Product.updateOne(
+          { _id: item.product },
+          { $inc: { stock: item.quantity, salesCount: -item.quantity } }
+        );
+      }
+    }
+  } else if (previousStatus === 'cancelled' && status !== 'cancelled') {
+    // Re-deduct inventory stock if order is un-cancelled
+    const Product = require('../../models/Product');
+    for (const item of order.items) {
+      if (item.product) {
+        await Product.updateOne(
+          { _id: item.product },
+          { $inc: { stock: -item.quantity, salesCount: item.quantity } }
+        );
+      }
+    }
   }
 
   await order.save();

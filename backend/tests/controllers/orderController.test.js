@@ -93,4 +93,82 @@ describe('Order Controller Tests', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body.success).toBe(false);
   });
+
+  it('should deduct product stock when an order is created and restore stock when order is cancelled', async () => {
+    // Check initial stock of productNormal
+    const initialProduct = await Product.findById(productNormal._id);
+    const initialStock = initialProduct.stock;
+
+    // Create order for 3 items
+    const createRes = await request(app)
+      .post('/api/orders')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        items: [{ productId: productNormal._id, quantity: 3 }],
+        shippingAddress: {
+          firstName: 'Stock', lastName: 'Tester', phone: '01000000000',
+          governorate: 'Cairo', city: 'Cairo', street: 'Main St', building: '1'
+        },
+        paymentMethod: 'cod'
+      });
+
+    expect(createRes.statusCode).toBe(201);
+    const orderId = createRes.body.data._id;
+
+    // Verify stock decreased by 3
+    const productAfterOrder = await Product.findById(productNormal._id);
+    expect(productAfterOrder.stock).toBe(initialStock - 3);
+
+    // Cancel order
+    const cancelRes = await request(app)
+      .put(`/api/orders/${orderId}/cancel`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ reason: 'Changed mind' });
+
+    expect(cancelRes.statusCode).toBe(200);
+
+    // Verify stock restored back to initialStock
+    const productAfterCancel = await Product.findById(productNormal._id);
+    expect(productAfterCancel.stock).toBe(initialStock);
+  });
+
+  it('should restore stock when admin updates order status to cancelled', async () => {
+    // Set user role to admin
+    await User.findByIdAndUpdate(user._id, { role: 'admin' });
+
+    const initialProduct = await Product.findById(productNormal._id);
+    const initialStock = initialProduct.stock;
+
+    // Create order for 4 items
+    const createRes = await request(app)
+      .post('/api/orders')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        items: [{ productId: productNormal._id, quantity: 4 }],
+        shippingAddress: {
+          firstName: 'AdminStock', lastName: 'Tester', phone: '01000000000',
+          governorate: 'Cairo', city: 'Cairo', street: 'Main St', building: '1'
+        },
+        paymentMethod: 'cod'
+      });
+
+    expect(createRes.statusCode).toBe(201);
+    const orderId = createRes.body.data._id;
+
+    // Verify stock decreased by 4
+    const productAfterOrder = await Product.findById(productNormal._id);
+    expect(productAfterOrder.stock).toBe(initialStock - 4);
+
+    // Admin updates order status to cancelled
+    const adminCancelRes = await request(app)
+      .put(`/api/admin/orders/${orderId}/status`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'cancelled' });
+
+    expect(adminCancelRes.statusCode).toBe(200);
+
+    // Verify stock restored back to initialStock
+    const productAfterAdminCancel = await Product.findById(productNormal._id);
+    expect(productAfterAdminCancel.stock).toBe(initialStock);
+  });
 });
