@@ -131,23 +131,66 @@ const buildOrderItems = (items, productMap) => {
 /**
  * Build the full order data object (shared between session/non-session).
  */
-const buildOrderData = ({ userId, guestEmail, orderItems, subtotal, boxGroups, req }) => {
+const buildOrderData = async ({ userId, guestEmail, orderItems, subtotal, boxGroups, req, session }) => {
   const {
     shippingAddress, billingAddress, paymentMethod, deliveryType,
     scheduledDate, scheduledTime, isGift, giftMessage, giftRecipient,
-    hidePrice, customerNote
+    hidePrice, customerNote, pointsToRedeem
   } = req.body;
 
   const totalBoxPrice = boxGroups.size * CONFIG.BUSINESS.BOX_BASE_PRICE_EGP;
   subtotal += totalBoxPrice;
   const shippingCost = CONFIG.BUSINESS.SHIPPING_COST_EGP;
-  const total = subtotal + shippingCost;
+  let total = subtotal + shippingCost;
+
+  let pointsRedeemed = 0;
+  let pointsDiscount = 0;
+
+  // Loyalty points redemption logic
+  if (pointsToRedeem && Number(pointsToRedeem) > 0 && userId) {
+    const Settings = require('../models/Settings');
+    const User = require('../models/User');
+    const settings = await Settings.getSettings();
+
+    if (settings?.loyalty?.enabled) {
+      const redeemAmount = Number(pointsToRedeem);
+      if (redeemAmount < settings.loyalty.minPointsToRedeem) {
+        throw createClientError(`الحد الأدنى لاستبدال النقاط هو ${settings.loyalty.minPointsToRedeem} نقطة`);
+      }
+
+      // ATOMIC check & update on User model to prevent race conditions (double spending)
+      const opts = session ? { session } : {};
+      const userUpdate = await User.updateOne(
+        { _id: userId, loyaltyPoints: { $gte: redeemAmount } },
+        {
+          $inc: { loyaltyPoints: -redeemAmount },
+          $push: {
+            pointsHistory: {
+              points: redeemAmount,
+              reason: 'استبدال نقاط لخصم في طلب جديد',
+              type: 'REDEEMED'
+            }
+          }
+        },
+        opts
+      );
+
+      if (userUpdate.modifiedCount !== 1) {
+        throw createClientError('رصيد النقاط غير كافٍ أو تغير أثناء عملية الشراء');
+      }
+
+      pointsRedeemed = redeemAmount;
+      pointsDiscount = redeemAmount * settings.loyalty.egpPerPointRedeemed;
+      total = Math.max(0, total - pointsDiscount);
+    }
+  }
 
   return {
     user: userId,
     guestEmail: req.user?.email || guestEmail || undefined,
     items: orderItems,
     shippingAddress, billingAddress, subtotal, shippingCost, total,
+    pointsRedeemed, pointsDiscount,
     paymentMethod, deliveryType, scheduledDate, scheduledTime,
     isGift, giftMessage, giftRecipient, hidePrice, customerNote,
     statusHistory: [{ status: CONFIG.ORDER_STATUS.PENDING, note: MESSAGES.ORDERS.RECEIVED }],
@@ -183,6 +226,61 @@ const rollbackStock = async (items) => {
   }
 };
 
+/**
+ * Handle loyalty points refund/deduction on order cancellation or status change.
+ */
+const handleOrderLoyaltyRefundOrDeduction = async (order, session) => {
+  if (!order || !order.user) return;
+  const User = require('../models/User');
+  const opts = session ? { session } : {};
+
+  // 1. Restore redeemed points if any
+  if (order.pointsRedeemed > 0) {
+    const redeemedToRefund = order.pointsRedeemed;
+    order.pointsRedeemed = 0;
+    order.pointsDiscount = 0;
+    await User.updateOne(
+      { _id: order.user },
+      {
+        $inc: { loyaltyPoints: redeemedToRefund },
+        $push: {
+          pointsHistory: {
+            points: redeemedToRefund,
+            reason: `استرجاع نقاط الطلب الملغى #${order.orderNumber || order._id}`,
+            type: 'REFUNDED'
+          }
+        }
+      },
+      opts
+    );
+  }
+
+  // 2. Deduct earned points if order was previously marked delivered
+  if (order.pointsEarned > 0) {
+    const earnedToDeduct = order.pointsEarned;
+    order.pointsEarned = 0;
+    await User.updateOne(
+      { _id: order.user },
+      {
+        $inc: { loyaltyPoints: -earnedToDeduct },
+        $push: {
+          pointsHistory: {
+            points: earnedToDeduct,
+            reason: `إلغاء نقاط الطلب الملغى #${order.orderNumber || order._id}`,
+            type: 'DEDUCTED'
+          }
+        }
+      },
+      opts
+    );
+    // Ensure points don't go below 0
+    await User.updateOne({ _id: order.user, loyaltyPoints: { $lt: 0 } }, { $set: { loyaltyPoints: 0 } }, opts);
+  }
+};
+
+// Export helper for use in admin controllers
+exports.handleOrderLoyaltyRefundOrDeduction = handleOrderLoyaltyRefundOrDeduction;
+
 // =====================================================
 // ROUTE HANDLERS
 // =====================================================
@@ -211,7 +309,7 @@ exports.createOrder = asyncHandler(async (req, res) => {
     const productMap = new Map(products.map((p) => [p._id.toString(), p]));
 
     const { orderItems, subtotal, boxGroups } = buildOrderItems(items, productMap);
-    const orderData = buildOrderData({ userId, guestEmail, orderItems, subtotal, boxGroups, req });
+    const orderData = await buildOrderData({ userId, guestEmail, orderItems, subtotal, boxGroups, req, session });
 
     const [createdOrder] = await Order.create([orderData], { session });
     await deductStock(orderItems, session);
@@ -226,7 +324,7 @@ exports.createOrder = asyncHandler(async (req, res) => {
     const productMap = new Map(products.map((p) => [p._id.toString(), p]));
 
     const { orderItems, subtotal, boxGroups } = buildOrderItems(items, productMap);
-    const orderData = buildOrderData({ userId, guestEmail, orderItems, subtotal, boxGroups, req });
+    const orderData = await buildOrderData({ userId, guestEmail, orderItems, subtotal, boxGroups, req });
 
     // Deduct stock with manual rollback on failure
     const stockUpdates = [];
@@ -346,6 +444,7 @@ exports.cancelOrder = async (req, res) => {
     order.cancelledAt = new Date();
     order.statusHistory.push({ status: CONFIG.ORDER_STATUS.CANCELLED, note: req.body.reason || MESSAGES.ORDERS.CANCELLED_BY_CUSTOMER });
 
+    await handleOrderLoyaltyRefundOrDeduction(order, session);
     await order.save({ session });
 
     for (const item of order.items) {
@@ -372,6 +471,8 @@ exports.cancelOrder = async (req, res) => {
         order.cancellationReason = req.body.reason;
         order.cancelledAt = new Date();
         order.statusHistory.push({ status: CONFIG.ORDER_STATUS.CANCELLED, note: req.body.reason || MESSAGES.ORDERS.CANCELLED_BY_CUSTOMER });
+        
+        await handleOrderLoyaltyRefundOrDeduction(order);
         await order.save();
 
         // Restore stock for cancelled order items using rollbackStock

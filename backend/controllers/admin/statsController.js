@@ -83,13 +83,34 @@ exports.getStats = asyncHandler(async (req, res) => {
 // DATA ANALYSIS
 // =====================================================
 exports.getAnalysis = asyncHandler(async (req, res) => {
+  const { period, startDate, endDate } = req.query;
+
+  // Build date query for orders
+  const dateQuery = { status: { $ne: 'cancelled' } };
+  const now = new Date();
+
+  if (startDate || endDate) {
+    dateQuery.createdAt = {};
+    if (startDate) dateQuery.createdAt.$gte = new Date(startDate);
+    if (endDate) dateQuery.createdAt.$lte = new Date(endDate);
+  } else if (period === '7d') {
+    dateQuery.createdAt = { $gte: new Date(now.setDate(now.getDate() - 7)) };
+  } else if (period === '30d') {
+    dateQuery.createdAt = { $gte: new Date(now.setDate(now.getDate() - 30)) };
+  }
+
   // Aggregate sales by product category
-  const orders = await Order.find({ status: { $ne: 'cancelled' } })
-    .populate({
+  const [orders, lowStockProducts] = await Promise.all([
+    Order.find(dateQuery).populate({
       path: 'items.product',
       select: 'category name',
       populate: { path: 'category', select: 'name' }
-    });
+    }),
+    Product.find({ isActive: true, stock: { $lte: 5 } })
+      .select('name price stock category images')
+      .sort({ stock: 1 })
+      .limit(10)
+  ]);
 
   let categorySales = {};
   let productSales = {};
@@ -131,7 +152,8 @@ exports.getAnalysis = asyncHandler(async (req, res) => {
     success: true,
     data: {
       categorySales: categorySalesChart,
-      productSales: productSalesChart
+      productSales: productSalesChart,
+      lowStockProducts
     }
   });
 }, 'حدث خطأ أثناء جلب بيانات التحليل');
@@ -156,3 +178,51 @@ exports.getLogs = asyncHandler(async (req, res) => {
     data: logs
   });
 }, 'حدث خطأ أثناء جلب سجل النشاطات');
+
+// =====================================================
+// EXPORT REPORT DATA
+// =====================================================
+exports.getExportReport = asyncHandler(async (req, res) => {
+  const { reportType } = req.query; // 'sales' | 'inventory' | 'orders'
+
+  if (reportType === 'inventory') {
+    const products = await Product.find()
+      .populate('category', 'name')
+      .select('name sku price stock salesCount isActive isFeatured canBeAddedToBox createdAt')
+      .lean();
+
+    const formattedData = products.map(p => ({
+      'اسم المنتج': p.name,
+      'SKU': p.sku || '-',
+      'السعر (ج.م)': p.price,
+      'المخزون': p.stock,
+      'عدد المبيعات': p.salesCount || 0,
+      'قابل للإضافة لبوكس': p.canBeAddedToBox ? 'نعم' : 'لا',
+      'الحالة': p.isActive ? 'نشط' : 'غير نشط'
+    }));
+
+    return res.json({ success: true, reportType: 'inventory', data: formattedData });
+  }
+
+  if (reportType === 'orders' || reportType === 'sales') {
+    const orders = await Order.find()
+      .populate('user', 'firstName lastName email phone')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const formattedData = orders.map(o => ({
+      'رقم الطلب': o.orderNumber || o._id,
+      'تاريخ الطلب': new Date(o.createdAt).toLocaleDateString('ar-EG'),
+      'العميل': o.user ? `${o.user.firstName} ${o.user.lastName}` : (o.guestEmail || 'زائر'),
+      'الهاتف': o.user?.phone || o.shippingAddress?.phone || '-',
+      'إجمالي المبلغ (ج.م)': o.total,
+      'طريقة الدفع': o.paymentMethod === 'cod' ? 'الدفع عند الاستلام' : 'إنستا باي',
+      'خصم النقاط (ج.م)': o.pointsDiscount || 0,
+      'حالة الطلب': o.status
+    }));
+
+    return res.json({ success: true, reportType, data: formattedData });
+  }
+
+  return res.status(400).json({ success: false, message: 'نوع التقرير غير مدعوم' });
+}, 'حدث خطأ أثناء تصدير التقرير');

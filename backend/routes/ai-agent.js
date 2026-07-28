@@ -201,7 +201,7 @@ router.post('/sessions', asyncHandler(async (req, res) => {
     title: req.body.title || 'محادثة جديدة',
     messages: []
   });
-  res.status(201).json({ success: true, data: session });
+  res.json({ success: true, data: session });
 }));
 // ============================================================================
 // @route   DELETE /api/admin/ai-agent/sessions/:id

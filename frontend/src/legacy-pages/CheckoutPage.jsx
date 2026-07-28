@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FiCheck, FiCreditCard, FiTruck } from 'react-icons/fi';
+import { FiCheck, FiCreditCard, FiTruck, FiAward } from 'react-icons/fi';
 import { useCartStore, useAuthStore } from '../store';
-import { ordersAPI } from '../services/api';
+import { ordersAPI, settingsAPI } from '../services/api';
+import { useQuery } from '@tanstack/react-query';
 import { BUSINESS_CONFIG, STRINGS } from '../constants';
 import toast from 'react-hot-toast';
 
@@ -19,9 +20,15 @@ const CheckoutPage = () => {
     }
   }, [_hasHydrated, isAuthenticated, navigate]);
 
+  const { data: loyaltySettings } = useQuery({
+    queryKey: ['public-loyalty-settings'],
+    queryFn: () => settingsAPI.getLoyaltySettings().then((res) => res.data?.data),
+  });
+
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
 
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -42,7 +49,10 @@ const CheckoutPage = () => {
 
   const subtotal = getTotal();
   const shippingCost = BUSINESS_CONFIG.SHIPPING_COST;
-  const total = subtotal + shippingCost;
+
+  const egpPerPoint = loyaltySettings?.egpPerPointRedeemed || 0.1;
+  const pointsDiscount = pointsToRedeem * egpPerPoint;
+  const total = Math.max(0, subtotal + shippingCost - pointsDiscount);
 
   const governorates = STRINGS.EGYPT_GOVERNORATES;
 
@@ -127,6 +137,7 @@ const CheckoutPage = () => {
         deliveryType: formData.deliveryType,
         customerNote: formData.customerNote,
         guestEmail: formData.email,
+        pointsToRedeem: pointsToRedeem > 0 ? pointsToRedeem : undefined,
       };
 
       const response = await ordersAPI.create(orderData);
@@ -534,6 +545,40 @@ const CheckoutPage = () => {
                       </div>
                     ))}
                   </div>
+                  {/* Loyalty Points Redemption Widget */}
+                  {loyaltySettings?.enabled !== false && user?.loyaltyPoints >= (loyaltySettings?.minPointsToRedeem || 100) && (
+                    <div className="mb-6 p-3.5 bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 rounded-xl space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-1.5">
+                        <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                          <FiAward className="text-purple-600" />
+                          استبدال نقاط الولاء
+                        </span>
+                        <span className="text-[11px] font-semibold text-purple-700 bg-white px-2 py-0.5 rounded-full border border-purple-200">
+                          رصيدك: {user.loyaltyPoints} نقطة
+                        </span>
+                      </div>
+
+                      <div className="flex items-start gap-2 pt-1">
+                        <input
+                          type="checkbox"
+                          id="redeemPoints"
+                          checked={pointsToRedeem > 0}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setPointsToRedeem(user.loyaltyPoints);
+                            } else {
+                              setPointsToRedeem(0);
+                            }
+                          }}
+                          className="w-4 h-4 mt-0.5 flex-shrink-0 text-purple-600 rounded focus:ring-purple-500 cursor-pointer"
+                        />
+                        <label htmlFor="redeemPoints" className="text-xs text-gray-700 font-medium cursor-pointer leading-relaxed">
+                          خصم نقاط الرصيد ({user.loyaltyPoints} نقطة = -{(user.loyaltyPoints * egpPerPoint).toFixed(2)} ج.م)
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-3 py-4 border-t border-b">
                     <div className="flex justify-between text-gray-600">
                       <span>{STRINGS.CART.SUBTOTAL}</span>
@@ -543,6 +588,12 @@ const CheckoutPage = () => {
                       <span>{STRINGS.CART.SHIPPING}</span>
                       <span>{`${shippingCost} ${STRINGS.PRODUCT.CURRENCY}`}</span>
                     </div>
+                    {pointsDiscount > 0 && (
+                      <div className="flex justify-between text-green-600 font-bold">
+                        <span>خصم نقاط الولاء</span>
+                        <span>-{pointsDiscount.toFixed(2)} {STRINGS.PRODUCT.CURRENCY}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex justify-between text-lg font-bold mt-4">
                     <span>{STRINGS.CART.TOTAL}</span>

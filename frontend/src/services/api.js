@@ -111,7 +111,7 @@ export const occasionsAPI = {
 export const adminAPI = {
   // Stats & Analysis
   getStats: () => api.get('/admin/stats'),
-  getAnalysis: () => api.get('/admin/analysis'),
+  getAnalysis: (params) => api.get('/admin/analysis', { params }),
   getLogs: (params) => api.get('/admin/logs', { params }),
 
   // Users
@@ -182,6 +182,15 @@ export const adminAPI = {
   agentExecute: (data) => api.post('/admin/ai-agent/execute', data),
   agentReject: (data) => api.post('/admin/ai-agent/reject', data),
   agentDeleteSession: (id) => api.delete(`/admin/ai-agent/sessions/${id}`),
+
+  // Settings & Reports
+  getLoyaltySettings: () => api.get('/settings/loyalty'),
+  updateLoyaltySettings: (data) => api.put('/settings/admin/loyalty', data),
+  getExportReport: (reportType) => api.get('/admin/export-report', { params: { reportType } })
+};
+
+export const settingsAPI = {
+  getLoyaltySettings: () => api.get('/settings/loyalty')
 };
 
 export default api;

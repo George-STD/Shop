@@ -50,9 +50,40 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
   if (!order) return res.status(404).json({ success: false, message: 'الطلب غير موجود' });
 
+  const previousStatus = order.status;
   order.status = status;
   order.statusHistory.push({ status, date: new Date(), note: 'تم تحديث الحالة بواسطة المسؤول' });
   if (trackingNumber) order.trackingNumber = trackingNumber;
+
+  // Handle loyalty points logic on status change
+  const Settings = require('../../models/Settings');
+  const settings = await Settings.getSettings();
+
+  if (status === 'delivered' && previousStatus !== 'delivered' && order.user) {
+    if (settings?.loyalty?.enabled && (order.pointsEarned || 0) === 0) {
+      const earned = Math.floor(order.total * (settings.loyalty.pointsPerEgpSpent || 1));
+      if (earned > 0) {
+        order.pointsEarned = earned;
+        await User.updateOne(
+          { _id: order.user },
+          {
+            $inc: { loyaltyPoints: earned },
+            $push: {
+              pointsHistory: {
+                points: earned,
+                reason: `مكافأة إتمام الطلب #${order.orderNumber || order._id}`,
+                type: 'EARNED'
+              }
+            }
+          }
+        );
+      }
+    }
+  } else if (status === 'cancelled' && previousStatus !== 'cancelled') {
+    const { handleOrderLoyaltyRefundOrDeduction } = require('../orderController');
+    await handleOrderLoyaltyRefundOrDeduction(order);
+  }
+
   await order.save();
 
   if (status === 'shipped' && (trackingNumber || order.trackingNumber)) {

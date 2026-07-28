@@ -83,7 +83,18 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: Date,
   pendingEmail: String,
   emailChangeCode: String,
-  emailChangeExpires: Date
+  emailChangeExpires: Date,
+  loyaltyPoints: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  pointsHistory: [{
+    points: { type: Number, required: true },
+    reason: { type: String, required: true },
+    type: { type: String, enum: ['EARNED', 'REDEEMED', 'REFUNDED', 'DEDUCTED'], required: true },
+    createdAt: { type: Date, default: Date.now }
+  }]
 }, {
   timestamps: true
 });

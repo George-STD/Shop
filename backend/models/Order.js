@@ -98,6 +98,18 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  pointsEarned: {
+    type: Number,
+    default: 0
+  },
+  pointsRedeemed: {
+    type: Number,
+    default: 0
+  },
+  pointsDiscount: {
+    type: Number,
+    default: 0
+  },
   
   // Payment
   paymentMethod: {

@@ -19,6 +19,7 @@ router.use(sanitizeInput);
 router.get('/stats', adminController.getStats);
 router.get('/analysis', adminController.getAnalysis);
 router.get('/logs', adminController.getLogs);
+router.get('/export-report', adminController.getExportReport);
 
 // =====================================================
 // USERS MANAGEMENT

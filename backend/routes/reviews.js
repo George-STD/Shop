@@ -172,6 +172,33 @@ router.post('/', apiLimiter, [
 
     if (userId) await review.populate('user', 'firstName lastName avatar');
 
+    // Award loyalty points ONLY for verified purchases if loyalty system is enabled
+    if (userId && isVerifiedPurchase) {
+      try {
+        const Settings = require('../models/Settings');
+        const User = require('../models/User');
+        const settings = await Settings.getSettings();
+        if (settings?.loyalty?.enabled && settings?.loyalty?.pointsPerReview > 0) {
+          const pointsAwarded = settings.loyalty.pointsPerReview;
+          await User.updateOne(
+            { _id: userId },
+            {
+              $inc: { loyaltyPoints: pointsAwarded },
+              $push: {
+                pointsHistory: {
+                  points: pointsAwarded,
+                  reason: `مكافأة تقييم منتج موثوق`,
+                  type: 'EARNED'
+                }
+              }
+            }
+          );
+        }
+      } catch (loyaltyErr) {
+        console.error('Loyalty points for review error:', loyaltyErr);
+      }
+    }
+
     return sendCreated(res, { data: review, message: MESSAGES.REVIEWS.CREATED });
   } catch (error) {
     if (error?.code === 11000) {

@@ -3,6 +3,7 @@ const Category = require('../models/Category');
 const { CONFIG, MESSAGES } = require('../constants');
 const { sendSuccess, sendError, sendNotFound, sendPaginated } = require('../utils/response');
 const asyncHandler = require('../utils/asyncHandler');
+const { escapeRegex } = require('../utils/helpers');
 
 /**
  * Get all products with filters
@@ -58,7 +59,12 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
   if (canBeAddedToBox === 'true') query.canBeAddedToBox = true;
 
   if (search) {
-    query.$text = { $search: String(search) };
+    const searchRegex = new RegExp(escapeRegex(search), 'i');
+    query.$or = [
+      { name: searchRegex },
+      { description: searchRegex },
+      { tags: searchRegex }
+    ];
   }
 
   let sortOption = { createdAt: -1 };

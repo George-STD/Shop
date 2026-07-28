@@ -10,7 +10,10 @@ import {
   FiArrowRight,
   FiMail,
   FiLock,
+  FiAward
 } from 'react-icons/fi';
+import LoyaltyPointsCard from '../components/account/LoyaltyPointsCard';
+import { settingsAPI } from '../services/api';
 import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { STRINGS } from '../constants';
@@ -514,8 +517,14 @@ const Dashboard = () => {
   const { user, logout } = useAuthStore();
   const location = useLocation();
 
+  const { data: loyaltySettings } = useQuery({
+    queryKey: ['public-loyalty-settings'],
+    queryFn: () => settingsAPI.getLoyaltySettings().then((res) => res.data?.data),
+  });
+
   const menuItems = [
     { path: '/account', icon: FiUser, label: STRINGS.ACCOUNT.MY_ACCOUNT, exact: true },
+    { path: '/account/loyalty', icon: FiAward, label: 'نقاط الولاء والمكافآت' },
     { path: '/account/orders', icon: FiPackage, label: STRINGS.ACCOUNT.MY_ORDERS },
     { path: '/account/wishlist', icon: FiHeart, label: STRINGS.ACCOUNT.WISHLIST },
     { path: '/account/addresses', icon: FiMapPin, label: STRINGS.ACCOUNT.MY_ADDRESSES },
@@ -528,7 +537,7 @@ const Dashboard = () => {
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl p-6">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <div className="text-center mb-6">
                 <div className="w-20 h-20 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <FiUser className="text-purple-600 text-3xl" />
@@ -537,6 +546,12 @@ const Dashboard = () => {
                   {user?.firstName} {user?.lastName}
                 </h2>
                 <p className="text-gray-500 text-sm">{user?.email}</p>
+                {loyaltySettings?.enabled !== false && (
+                  <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-xs font-bold">
+                    <FiAward className="w-3.5 h-3.5" />
+                    {user?.loyaltyPoints || 0} نقطة
+                  </div>
+                )}
               </div>
 
               <nav className="space-y-2">
@@ -550,7 +565,7 @@ const Dashboard = () => {
                           ? location.pathname === item.path
                           : location.pathname.startsWith(item.path)
                       )
-                        ? 'bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 text-transparent'
+                        ? 'bg-purple-50 font-bold text-purple-700 border-r-4 border-purple-600'
                         : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -571,9 +586,10 @@ const Dashboard = () => {
 
           {/* Content */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl p-6">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <Routes>
-                <Route index element={<ProfileOverview />} />
+                <Route index element={<ProfileOverview loyaltySettings={loyaltySettings} />} />
+                <Route path="loyalty" element={<LoyaltyPointsCard user={user} loyaltySettings={loyaltySettings} />} />
                 <Route path="orders" element={<OrdersPage />} />
                 <Route path="wishlist" element={<Navigate to="/wishlist" />} />
                 <Route path="addresses" element={<AddressesPage />} />
@@ -587,23 +603,30 @@ const Dashboard = () => {
   );
 };
 
-const ProfileOverview = () => {
+const ProfileOverview = ({ loyaltySettings }) => {
   const { user } = useAuthStore();
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">{STRINGS.ACCOUNT.WELCOME} {user?.firstName}!</h1>
-      <div className="grid md:grid-cols-3 gap-4">
-        <Link to="/account/orders" className="p-6 bg-gray-50 rounded-xl hover:bg-gray-100">
+      <div className="grid md:grid-cols-4 gap-4">
+        {loyaltySettings?.enabled !== false && (
+          <Link to="/account/loyalty" className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-100 hover:shadow-md transition-all">
+            <FiAward className="text-3xl text-purple-600 mb-2" />
+            <h3 className="font-bold text-gray-800">نقاط المكافآت</h3>
+            <p className="text-xs text-purple-600 mt-1 font-semibold">{user?.loyaltyPoints || 0} نقطة ولاء</p>
+          </Link>
+        )}
+        <Link to="/account/orders" className="p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all">
           <FiPackage className="text-3xl text-purple-600 mb-2" />
           <h3 className="font-medium">{STRINGS.ACCOUNT.MY_ORDERS}</h3>
           <p className="text-sm text-gray-500">{STRINGS.ACCOUNT.TRACK_ORDERS}</p>
         </Link>
-        <Link to="/wishlist" className="p-6 bg-gray-50 rounded-xl hover:bg-gray-100">
+        <Link to="/wishlist" className="p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all">
           <FiHeart className="text-3xl text-purple-600 mb-2" />
           <h3 className="font-medium">{STRINGS.ACCOUNT.WISHLIST}</h3>
           <p className="text-sm text-gray-500">{STRINGS.ACCOUNT.FAVORITE_PRODUCTS}</p>
         </Link>
-        <Link to="/account/settings" className="p-6 bg-gray-50 rounded-xl hover:bg-gray-100">
+        <Link to="/account/settings" className="p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all">
           <FiSettings className="text-3xl text-purple-600 mb-2" />
           <h3 className="font-medium">{STRINGS.ACCOUNT.SETTINGS}</h3>
           <p className="text-sm text-gray-500">{STRINGS.ACCOUNT.EDIT_PROFILE}</p>
