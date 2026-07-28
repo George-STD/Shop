@@ -20,7 +20,7 @@ import { Autoplay, Pagination, Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
-import { productsAPI, reviewsAPI } from '../services/api';
+import { productsAPI, reviewsAPI, settingsAPI } from '../services/api';
 import { useCartStore, useWishlistStore, useAuthStore } from '../store';
 import ProductCard from '../components/product/ProductCard';
 import toast from 'react-hot-toast';
@@ -198,6 +198,11 @@ const ProductPage = () => {
     removeItem: removeFromWishlist,
     isInWishlist,
   } = useWishlistStore();
+
+  const { data: loyaltySettings } = useQuery({
+    queryKey: ['public-loyalty-settings'],
+    queryFn: () => settingsAPI.getLoyaltySettings().then((res) => res.data?.data),
+  });
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
 
@@ -751,6 +756,19 @@ const ProductPage = () => {
                   </>
                 )}
               </div>
+
+              {/* Loyalty Reward Badge */}
+              {loyaltySettings?.enabled !== false && (
+                <div className="p-3 bg-gradient-to-r from-purple-50 via-pink-50 to-amber-50 border border-purple-200/80 rounded-2xl flex items-center gap-3 text-xs sm:text-sm font-semibold text-purple-900 shadow-sm">
+                  <div className="w-8 h-8 rounded-xl bg-purple-600 text-yellow-300 flex items-center justify-center flex-shrink-0 text-base shadow-sm">
+                    🎁
+                  </div>
+                  <div>
+                    <span>تكسب <strong className="text-purple-700 font-extrabold text-sm sm:text-base">{Math.floor(product.price * (loyaltySettings?.pointsPerEgpSpent || 1))} نقطة ولاء</strong> عند إتمام شراء هذا المنتج!</span>
+                    <span className="block text-[11px] text-gray-500 font-normal mt-0.5">تتحول النقاط تلقائياً لخصم مباشر في طلبياتك القادمة.</span>
+                  </div>
+                </div>
+              )}
 
               {/* Variant Groups */}
               {product.variantGroups?.length > 0 &&
