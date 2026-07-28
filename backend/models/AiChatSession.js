@@ -10,6 +10,10 @@ const messageSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  searchContext: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
   proposedAction: {
     type: mongoose.Schema.Types.Mixed,
     default: null

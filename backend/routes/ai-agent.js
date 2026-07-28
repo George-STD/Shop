@@ -74,21 +74,7 @@ const systemInstruction = `
    - discount: Number (نسبة الخصم)
    - stock: Number (الكمية بالمخزون)
    - category: Array of Category ObjectIds (مصفوفة من المعرفات الحقيقية للفئات)
-   - isActive: Boolean (نشط/مفعل)
-   - isFeatured: Boolean (مميز)
-   - isNewArrival: Boolean (وصل حديثاً)
-   - isBestseller: Boolean (الأكثر مبيعاً)
-
-2. User (المستخدمين):
-   - firstName, lastName, email, role ('user' | 'admin'), isActive
-
-3. Order (الطلبات):
-   - orderNumber, status ('pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'), total, isPaid
-
-4. Category (الفئات):
-   - _id, name, slug, isActive, showInBox
-
-قواعد صارمة ومهمة جداً للعمليات:
+   - isقواعد صارمة ومهمة جداً للعمليات:
 1. عند التعامل مع فئات المنتجات (category في Product):
    - حقل category في المنتجات يحوي _id الفئة المكون من 24 حرفاً (Category ObjectId).
    - إذا طلب الأدمن تعديل فئة معينة (مثال: نقل منتجات إلى فئة "T-Shirt" أو حذف فئة "Women"):
@@ -113,6 +99,12 @@ const systemInstruction = `
      * {"$push": {"category": "CATEGORY_OBJECT_ID"}}
      * {"$inc": {"stock": 10}}
    - التأكد من أن مفاتيح التعديل تبدأ بـ $ وأن أنواع البيانات صحيحة.
+
+5. عند تعامل الأدمن مع قوالب سابقة (مثال: "خلي المنتجات دي..." أو "تعديل هذه القائمة"):
+   - راجع قائمة الـ ObjectIDs المسترجعة السابقة المتاحة في ملاحظات النظام [System Note].
+   - إذا أراد الأدمن نقل تلك المنتجات لفئة معينة (مثال: "في فئة T-Shirt فقط"):
+     * ابحث أولاً عن _id الفئة الحقيقية عبر searchDatabase على Category.
+     * استدعِ أداة proposeDatabaseUpdate فوراً مستخدماً قائمة الـ documentIds وممرراً التحديث {"$set": {"category": ["CATEGORY_OBJECT_ID"]}}.
 `;
 
 const tools = [
@@ -209,6 +201,7 @@ router.post('/sessions', asyncHandler(async (req, res) => {
   });
   res.json({ success: true, data: session });
 }));
+
 // ============================================================================
 // @route   DELETE /api/admin/ai-agent/sessions/:id
 // @desc    Delete a specific chat session
@@ -247,9 +240,12 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
   
   // Construct Gemini history from session messages
   const history = session.messages
-    .filter(msg => msg.text || msg.proposedAction)
+    .filter(msg => msg.text || msg.proposedAction || msg.searchContext)
     .map(msg => {
       let contentText = msg.text || '';
+      if (msg.searchContext && msg.searchContext.items && msg.searchContext.items.length > 0) {
+        contentText += `\n[System Note: Document IDs and names retrieved in search for '${msg.searchContext.collectionName}': ${JSON.stringify(msg.searchContext.items)}]`;
+      }
       if (msg.proposedAction) {
         contentText += `\n[System Note: The model proposed an action on collection '${msg.proposedAction.collectionName}' for documentIds [${msg.proposedAction.documentIds.join(', ')}]. User is reviewing it.]`;
       }
@@ -264,6 +260,7 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
 
   let finalResult = null;
   let proposedAction = null;
+  let searchContext = null;
   let finalResponseText = null;
   let currentModelIndex = 0;
 
@@ -321,6 +318,16 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
 
             const data = await Model.find(castFilter).select(selectStr).limit(limit).lean();
             toolResult = { data };
+
+            if (data && data.length > 0) {
+              searchContext = {
+                collectionName: args.collectionName,
+                items: data.slice(0, 30).map(d => ({
+                  _id: d._id.toString(),
+                  name: d.name || d.firstName || d.orderNumber || d.slug || 'عنصر'
+                }))
+              };
+            }
             iteration++;
 
           } else if (name === 'proposeDatabaseUpdate') {
@@ -388,10 +395,19 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
     return res.status(500).json({ success: false, message: 'حدث خطأ في الاتصال بالذكاء الاصطناعي أو انتهى وقت الاتصال.' });
   }
 
+  // Ensure text is never empty
+  let defaultText = 'لقد قمت بمعالجة طلبك.';
+  if (proposedAction) {
+    defaultText = 'لقد قمت بإعداد بطاقة التعديل المطلوبة. يرجى مراجعة المنتجات والتغييرات أدناه والضغط على زر "موافقة وتنفيذ" لإتمام العملية.';
+  } else if (searchContext && searchContext.items && searchContext.items.length > 0) {
+    defaultText = `تم استرجاع ${searchContext.items.length} عنصر من قاعدة البيانات.`;
+  }
+
   // Save model response
   const modelMsg = {
     role: 'model',
-    text: finalResponseText || (proposedAction ? 'لقد قمت بإعداد بطاقة التعديل المطلوبة. يرجى مراجعة المنتجات والتغييرات أدناه والضغط على زر "موافقة وتنفيذ" لإتمام العملية.' : ''),
+    text: (finalResponseText && finalResponseText.trim()) ? finalResponseText.trim() : defaultText,
+    searchContext,
     proposedAction
   };
   session.messages.push(modelMsg);

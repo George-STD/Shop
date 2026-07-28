@@ -178,8 +178,8 @@ async function generateWithFallback(aiClient, { contents, config }) {
   throw new Error('لم يتمكن أي من الموديلات المتاحة من إتمام الطلب.');
 }
 
-module.exports = { 
-  generateWithFallback, 
+module.exports = {
+  generateWithFallback,
   MODEL_TIERS,
   getModelStatus,
   recordSuccess,
