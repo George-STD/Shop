@@ -25,7 +25,7 @@ function getAiClient() {
   return _aiClient;
 }
 
-const { MODEL_TIERS } = require('../utils/geminiModelManager');
+const { MODEL_TIERS, getModelStatus, recordSuccess, markRpmExhausted } = require('../utils/geminiModelManager');
 
 const MODELS_MAP = {
   Product,
@@ -262,126 +262,130 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
   // Pop the last user message because we pass it directly to sendMessage
   history.pop();
 
-  let result;
-  let chatSession;
+  let finalResult = null;
+  let proposedAction = null;
+  let finalResponseText = null;
   let currentModelIndex = 0;
 
-  // Try models with fallback
+  // Try models with full-turn fallback
   while (currentModelIndex < MODEL_TIERS.length) {
     const tier = MODEL_TIERS[currentModelIndex];
-    chatSession = ai.chats.create({
+    const status = getModelStatus(tier);
+    if (!status.available) {
+      currentModelIndex++;
+      continue;
+    }
+
+    const chatSession = ai.chats.create({
       model: tier.realId || tier.id,
       config: { systemInstruction, tools, temperature: 0.1 },
       history
     });
 
     try {
-      // Use Promise.race to add a 45-second timeout to the Gemini call
-      const timeoutPromise = new Promise((_, reject) => 
+      // 1. Send initial user message
+      const timeoutPromise1 = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Gemini API Timeout')), 45000)
       );
-      result = await Promise.race([
+      let result = await Promise.race([
         chatSession.sendMessage({ message }),
-        timeoutPromise
+        timeoutPromise1
       ]);
-      break; // Success, exit fallback loop
+
+      let functionCalls = result.functionCalls;
+      finalResponseText = result.text;
+
+      // 2. Tool loop (max 4 iterations)
+      let iteration = 0;
+      while (functionCalls && functionCalls.length > 0 && iteration < 4) {
+        const toolCall = functionCalls[0];
+        const name = toolCall.name;
+        const args = toolCall.args;
+        let toolResult;
+
+        try {
+          const Model = MODELS_MAP[args.collectionName];
+          if (!Model) throw new Error(`Collection ${args.collectionName || name} not supported`);
+
+          if (name === 'searchDatabase') {
+            const filter = safeParse(args.filterJson);
+            const castFilter = castObjectIds(filter);
+            const limit = args.limit || 20;
+            
+            // Dynamic selection based on collection
+            let selectStr = '';
+            if (args.collectionName === 'Product') selectStr = '_id name price stock isActive canBeAddedToBox isCustomBox boxDiscount category';
+            else if (args.collectionName === 'User') selectStr = '_id firstName lastName email role isActive';
+            else if (args.collectionName === 'Order') selectStr = '_id orderNumber status total user';
+            else if (args.collectionName === 'Category') selectStr = '_id name slug isActive showInBox';
+
+            const data = await Model.find(castFilter).select(selectStr).limit(limit).lean();
+            toolResult = { data };
+            iteration++;
+
+          } else if (name === 'proposeDatabaseUpdate') {
+            const updates = safeParse(args.updateJson);
+            
+            // Fetch previews with full relevant details for the detailed table
+            let selectStr = '';
+            if (args.collectionName === 'Product') selectStr = '_id name images.url isActive price stock category canBeAddedToBox';
+            else if (args.collectionName === 'User') selectStr = '_id firstName lastName email role avatar isActive';
+            else if (args.collectionName === 'Order') selectStr = '_id orderNumber status total user';
+            else if (args.collectionName === 'Category') selectStr = '_id name image isActive slug';
+
+            const affectedDocuments = await Model.find({ _id: { $in: args.documentIds } }).select(selectStr).lean();
+            
+            if (!affectedDocuments || affectedDocuments.length === 0) {
+              toolResult = {
+                error: `INVALID_DOCUMENT_IDS: None of the documentIds provided [${args.documentIds.slice(0, 5).join(', ')}...] were found in ${args.collectionName}. You MUST call 'searchDatabase' first to retrieve the real 24-character hexadecimal MongoDB '_id's before proposing updates. Do NOT use numbers ('1', '2') or names as documentIds.`
+              };
+              iteration++;
+            } else {
+              const validIds = affectedDocuments.map(doc => doc._id.toString());
+              proposedAction = {
+                collectionName: args.collectionName,
+                documentIds: validIds,
+                updates,
+                reasoning: args.reasoning,
+                preview: affectedDocuments
+              };
+              
+              toolResult = { status: 'PROPOSAL_RECEIVED', message: 'User is reviewing the proposal. Stop execution.' };
+              break;
+            }
+          } else {
+            toolResult = { error: `Tool ${name} not supported` };
+          }
+        } catch (dbErr) {
+          toolResult = { error: dbErr.message };
+        }
+
+        const timeoutPromise2 = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Gemini API Timeout')), 15000)
+        );
+        result = await Promise.race([
+          chatSession.sendMessage({ message: [{ functionResponse: { name, response: toolResult } }] }),
+          timeoutPromise2
+        ]);
+        functionCalls = result.functionCalls;
+        if (result.text) finalResponseText = result.text;
+        iteration++;
+      }
+
+      recordSuccess(tier.id);
+      finalResult = result;
+      break; // Success, exit model fallback loop
+
     } catch (error) {
       console.error(`Agent chat error with model ${tier.id}:`, error.message);
+      const is429 = error.status === 429 || error.message?.includes('429') || error.message?.toLowerCase().includes('quota') || error.status === 503;
+      if (is429) markRpmExhausted(tier.id, tier);
       currentModelIndex++;
     }
   }
 
-  if (!result) {
+  if (!finalResult && !proposedAction) {
     return res.status(500).json({ success: false, message: 'حدث خطأ في الاتصال بالذكاء الاصطناعي أو انتهى وقت الاتصال.' });
-  }
-
-  let functionCalls = result.functionCalls;
-  let finalResponseText = result.text;
-  let proposedAction = null;
-
-  // Tool loop (max 4 iterations)
-  let iteration = 0;
-  while (functionCalls && functionCalls.length > 0 && iteration < 4) {
-    const toolCall = functionCalls[0];
-    const name = toolCall.name;
-    const args = toolCall.args;
-    let toolResult;
-
-    try {
-      const Model = MODELS_MAP[args.collectionName];
-      if (!Model) throw new Error(`Collection ${args.collectionName} not supported`);
-
-      if (name === 'searchDatabase') {
-        const filter = safeParse(args.filterJson);
-        const castFilter = castObjectIds(filter);
-        const limit = args.limit || 20;
-        
-        // Dynamic selection based on collection
-        let selectStr = '';
-        if (args.collectionName === 'Product') selectStr = '_id name price stock isActive canBeAddedToBox isCustomBox boxDiscount category';
-        else if (args.collectionName === 'User') selectStr = '_id firstName lastName email role isActive';
-        else if (args.collectionName === 'Order') selectStr = '_id orderNumber status total user';
-        else if (args.collectionName === 'Category') selectStr = '_id name slug isActive showInBox';
-
-        const data = await Model.find(castFilter).select(selectStr).limit(limit).lean();
-        toolResult = { data };
-        iteration++;
-
-      } else if (name === 'proposeDatabaseUpdate') {
-        const updates = safeParse(args.updateJson);
-        
-        // Fetch previews with full relevant details for the detailed table
-        let selectStr = '';
-        if (args.collectionName === 'Product') selectStr = '_id name images.url isActive price stock category canBeAddedToBox';
-        else if (args.collectionName === 'User') selectStr = '_id firstName lastName email role avatar isActive';
-        else if (args.collectionName === 'Order') selectStr = '_id orderNumber status total user';
-        else if (args.collectionName === 'Category') selectStr = '_id name image isActive slug';
-
-        const affectedDocuments = await Model.find({ _id: { $in: args.documentIds } }).select(selectStr).lean();
-        
-        if (!affectedDocuments || affectedDocuments.length === 0) {
-          toolResult = {
-            error: `INVALID_DOCUMENT_IDS: None of the documentIds provided [${args.documentIds.slice(0, 5).join(', ')}...] were found in ${args.collectionName}. You MUST call 'searchDatabase' first to retrieve the real 24-character hexadecimal MongoDB '_id's before proposing updates. Do NOT use numbers ('1', '2') or names as documentIds.`
-          };
-          iteration++;
-        } else {
-          const validIds = affectedDocuments.map(doc => doc._id.toString());
-          proposedAction = {
-            collectionName: args.collectionName,
-            documentIds: validIds,
-            updates,
-            reasoning: args.reasoning,
-            preview: affectedDocuments
-          };
-          
-          toolResult = { status: 'PROPOSAL_RECEIVED', message: 'User is reviewing the proposal. Stop execution.' };
-          break;
-        }
-      } else {
-        toolResult = { error: 'Unknown tool' };
-      }
-    } catch (err) {
-      toolResult = { error: err.message };
-    }
-
-    try {
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Gemini API Timeout')), 15000)
-      );
-      result = await Promise.race([
-        chatSession.sendMessage({ message: [{ functionResponse: { name, response: toolResult } }] }),
-        timeoutPromise
-      ]);
-      functionCalls = result.functionCalls;
-      finalResponseText = result.text;
-      iteration++;
-    } catch (err) {
-      console.error('Error sending tool result:', err.message);
-      if (!finalResponseText && !proposedAction) {
-        finalResponseText = "عذراً، حدث خطأ في معالجة طلبك أو انتهى وقت الاتصال. يرجى المحاولة مرة أخرى.";
-      }
-      break;
-    }
   }
 
   // Save model response
