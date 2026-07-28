@@ -91,18 +91,24 @@ const systemInstruction = `
 قواعد صارمة ومهمة جداً للعمليات:
 1. عند التعامل مع فئات المنتجات (category في Product):
    - حقل category في المنتجات يحوي _id الفئة المكون من 24 حرفاً (Category ObjectId).
-   - إذا طلب الأدمن حذف فئة معينة (مثال: حذف فئة "Women" أو "Men"):
-     * يجب أولاً استدعاء searchDatabase على جدول Category بشرط {"name": {"$regex": "Women", "$options": "i"}} لجلب الـ _id الحقيقي للفئة!
-     * ممنوع منعاً باتاً تخمين _id الفئة من عندك أو وضع اسم الفئة كنص في $pull.
-     * بعد جلب _id الفئة الحقيقي (مثال "65a123..."), استخدم: {"$pull": {"category": "65a123..."}}.
+   - إذا طلب الأدمن تعديل فئة معينة (مثال: نقل منتجات إلى فئة "T-Shirt" أو حذف فئة "Women"):
+     * يجب أولاً استدعاء searchDatabase على جدول Category بشرط {"name": {"$regex": "T-Shirt", "$options": "i"}} لجلب الـ _id الحقيقي للفئة!
+     * ممنوع منعاً باتاً تخمين _id الفئة من عندك أو وضع اسم الفئة كنص في $pull أو $push أو $set.
+     * بعد جلب _id الفئة الحقيقي (مثال "65a123..."), استخدم: {"$push": {"category": "65a123..."}} أو {"$set": {"category": ["65a123..."]}}.
 
 2. عند طلب الأدمن تعديل مستندات:
    - يجب أن تجلب الـ _id الحقيقي المكون من 24 خانة لكل مستند عبر أداة searchDatabase أولاً!
    - ممنوع منعاً باتاً استخدام أرقام تسلسلية ("1", "2", "3") كـ documentIds في أداة proposeDatabaseUpdate.
 
-3. صيغة التعديلات (updateJson):
+3. الاستدعاء الفوري لأداة اقتراح التعديل (proposeDatabaseUpdate) - هام جداً جداً:
+   - عندما يطلب منك الأدمن أي تعديل على المستندات (إضافة/حذف فئات، تغيير أسعار، خصومات، إلخ)، يجب عليك فوراً العثور على المنتجات عبر searchDatabase ثم استدعاء أداة proposeDatabaseUpdate فوراً في نفس الجلسة!
+   - يمنع منعاً باتاً كتابة أي نص يسأل الأدمن أسئلة مثل "هل أرسل طلب التعديل؟" أو "هل تريد مني إنشاء كارت التعديل؟".
+   - لا تسأل الأدمن عن الموافقة نصياً لأن واجهة الموقع تعتمد على استدعاء أداة proposeDatabaseUpdate لعرض كارت التعديل وبداخله زر (موافقة وتنفيذ) للأدمن ليضغط عليه بنفسه!
+
+4. صيغة التعديلات (updateJson):
    - يجب استخدام أوامر MongoDB مثل:
      * {"$set": {"canBeAddedToBox": true}}
+     * {"$set": {"category": ["CATEGORY_OBJECT_ID"]}}
      * {"$pull": {"category": "CATEGORY_OBJECT_ID"}}
      * {"$push": {"category": "CATEGORY_OBJECT_ID"}}
      * {"$inc": {"stock": 10}}
@@ -381,7 +387,7 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
   // Save model response
   const modelMsg = {
     role: 'model',
-    text: finalResponseText || '',
+    text: finalResponseText || (proposedAction ? 'لقد قمت بإعداد بطاقة التعديل المطلوبة. يرجى مراجعة المنتجات والتغييرات أدناه والضغط على زر "موافقة وتنفيذ" لإتمام العملية.' : ''),
     proposedAction
   };
   session.messages.push(modelMsg);

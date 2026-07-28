@@ -10,11 +10,13 @@
  */
 
 const MODEL_TIERS = [
-  { id: 'gemini-3.5-flash', realId: 'gemini-3.1-flash-lite', rpm: 5, rpd: 20 },
-  { id: 'gemini-3.0-flash', realId: 'gemini-3.1-flash-lite', rpm: 5, rpd: 20 },
-  { id: 'gemini-2.5-flash', realId: 'gemini-3.1-flash-lite', rpm: 5, rpd: 20 },
+  { id: 'gemini-3.6-flash', realId: 'gemini-3.6-flash', rpm: 5, rpd: 20 },
+  { id: 'gemini-3.5-flash', realId: 'gemini-3.5-flash', rpm: 5, rpd: 20 },
+  { id: 'gemini-3.5-flash-lite', realId: 'gemini-3.5-flash-lite', rpm: 15, rpd: 500 },
   { id: 'gemini-3.1-flash-lite', realId: 'gemini-3.1-flash-lite', rpm: 15, rpd: 500 },
-  { id: 'gemini-2.5-flash-lite', realId: 'gemini-3.1-flash-lite', rpm: 10, rpd: 20 },
+  { id: 'gemini-3.0-flash', realId: 'gemini-3.0-flash', rpm: 5, rpd: 20 },
+  { id: 'gemini-2.5-flash', realId: 'gemini-2.5-flash', rpm: 5, rpd: 20 },
+  { id: 'gemini-2.5-flash-lite', realId: 'gemini-2.5-flash-lite', rpm: 10, rpd: 20 },
 ];
 
 // In-memory usage tracking (resets on server restart, which is fine)
