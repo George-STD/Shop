@@ -1,6 +1,7 @@
 import React from 'react';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
+import toast from 'react-hot-toast';
 
 const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, handleDelete, selectedIds, handleSelect, handleSelectAll }) => {
   const formatCurrency = (amount) => {
@@ -79,6 +80,15 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
                     <div>
                       <p className="font-medium text-xs sm:text-sm">{product.name}</p>
                       <p className="text-xs sm:text-sm text-gray-500">{product.sku}</p>
+                      <p className="text-[10px] text-gray-400 mt-1 cursor-pointer hover:text-blue-500" 
+                         onClick={() => {
+                           navigator.clipboard.writeText(product._id);
+                           toast.success('تم نسخ معرف المنتج (ID)');
+                         }}
+                         title="انسخ معرف المنتج لاستخدامه في البوكس الجاهز"
+                      >
+                        ID: {product._id}
+                      </p>
                     </div>
                   </div>
                 </td>
