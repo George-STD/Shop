@@ -41,17 +41,8 @@ const processReadyBoxes = async (products) => {
         p.stock = minStock === Infinity ? 0 : minStock;
         
         if (p.autoCalculatePrice) {
-          // Apply boxDiscount if it exists (e.g., 10% off the total sum of the items)
-          const boxDiscountPercent = p.boxDiscount || 0;
-          
-          if (boxDiscountPercent > 0) {
-            p.oldPrice = computedOldPrice;
-            p.price = computedPrice - (computedPrice * boxDiscountPercent / 100);
-          } else {
-            p.price = computedPrice;
-            p.oldPrice = computedOldPrice > computedPrice ? computedOldPrice : null;
-          }
-          
+          p.price = computedPrice;
+          p.oldPrice = computedOldPrice > computedPrice ? computedOldPrice : null;
           p.discount = p.oldPrice ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
         }
       } else {
