@@ -145,7 +145,7 @@ const Header = () => {
             {isAdmin && (
               <Link
                 to="/admin"
-                className="p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl flex items-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="hidden sm:flex p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl items-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
                 aria-label={STRINGS.NAV.ADMIN}
               >
                 <FiSettings size={20} className="text-purple-600" aria-hidden="true" />

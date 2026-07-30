@@ -58,14 +58,14 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
             </tr>
           </thead>
           <tbody className="divide-y">
-            {products?.data?.map((product) => (
+            {products?.data?.map((product, index) => (
               <tr key={product._id} className="hover:bg-gray-50">
                 <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6 text-center">
                   <input 
                     type="checkbox" 
                     className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4"
                     checked={selectedIds.includes(product._id)}
-                    onChange={() => handleSelect(product._id)}
+                    onChange={(e) => handleSelect(product._id, e.nativeEvent, index)}
                   />
                 </td>
                 <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6">

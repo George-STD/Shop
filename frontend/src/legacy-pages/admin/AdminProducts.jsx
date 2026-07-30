@@ -21,6 +21,7 @@ const AdminProducts = () => {
   const [showAiUploader, setShowAiUploader] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [lastSelectedIndex, setLastSelectedIndex] = useState(null);
 
   const initialFormState = {
     name: '',
@@ -224,14 +225,35 @@ const AdminProducts = () => {
     } else {
       setSelectedIds(selectedIds.filter(id => !allIds.includes(id)));
     }
+    setLastSelectedIndex(null);
   };
 
-  const handleSelect = (id) => {
-    if (selectedIds.includes(id)) {
-      setSelectedIds(selectedIds.filter(item => item !== id));
+  const handleSelect = (id, event, index) => {
+    if (event?.shiftKey && lastSelectedIndex !== null && products?.data) {
+      const start = Math.min(lastSelectedIndex, index);
+      const end = Math.max(lastSelectedIndex, index);
+      
+      const newSelectedIds = new Set(selectedIds);
+      // Determine the target state based on the current state of the clicked item
+      const isSelecting = !selectedIds.includes(id);
+      
+      for (let i = start; i <= end; i++) {
+        if (!products.data[i]) continue;
+        if (isSelecting) {
+          newSelectedIds.add(products.data[i]._id);
+        } else {
+          newSelectedIds.delete(products.data[i]._id);
+        }
+      }
+      setSelectedIds(Array.from(newSelectedIds));
     } else {
-      setSelectedIds([...selectedIds, id]);
+      if (selectedIds.includes(id)) {
+        setSelectedIds(selectedIds.filter(item => item !== id));
+      } else {
+        setSelectedIds([...selectedIds, id]);
+      }
     }
+    setLastSelectedIndex(index);
   };
 
   const handleBarcodeScan = async (barcode) => {
