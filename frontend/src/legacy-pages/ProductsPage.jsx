@@ -21,6 +21,7 @@ const ProductsPage = () => {
   const search = searchParams.get('search') || '';
   const categorySlug = searchParams.get('category') || '';
   const canBeAddedToBox = searchParams.get('canBeAddedToBox') || '';
+  const isReadyBox = searchParams.get('isReadyBox') || '';
 
   // Fetch category info (for display only)
   const { data: categoryInfo } = useQuery({
@@ -43,6 +44,7 @@ const ProductsPage = () => {
         recipient,
         search,
         canBeAddedToBox,
+        isReadyBox,
       },
     ],
     queryFn: () =>
@@ -57,6 +59,7 @@ const ProductsPage = () => {
           recipient,
           search,
           canBeAddedToBox: canBeAddedToBox || undefined,
+          isReadyBox: isReadyBox || undefined,
         })
         .then((res) => res.data),
   });

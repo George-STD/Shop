@@ -5,6 +5,58 @@ const { sendSuccess, sendError, sendNotFound, sendPaginated } = require('../util
 const asyncHandler = require('../utils/asyncHandler');
 const { escapeRegex } = require('../utils/helpers');
 
+const processReadyBoxes = async (products) => {
+  if (!products) return products;
+  const isArray = Array.isArray(products);
+  const items = isArray ? products : [products];
+  const readyBoxes = items.filter(p => p && p.isReadyBox);
+  
+  if (readyBoxes.length > 0) {
+    await Product.populate(readyBoxes, {
+      path: 'includedProducts.product',
+      select: 'name stock price discount'
+    });
+
+    readyBoxes.forEach(p => {
+      if (p.includedProducts && p.includedProducts.length > 0) {
+        let minStock = Infinity;
+        let computedPrice = 0;
+        let computedOldPrice = 0;
+
+        p.includedProducts.forEach(item => {
+          if (item.product) {
+            const availableForThis = Math.floor(item.product.stock / item.quantity);
+            if (availableForThis < minStock) minStock = availableForThis;
+            
+            if (p.autoCalculatePrice) {
+              const baseItemPrice = item.product.price;
+              const itemDiscount = item.product.discount || 0;
+              const itemPrice = baseItemPrice - (baseItemPrice * itemDiscount / 100);
+              computedPrice += itemPrice * item.quantity;
+              computedOldPrice += baseItemPrice * item.quantity;
+            }
+          }
+        });
+        
+        p.stock = minStock === Infinity ? 0 : minStock;
+        
+        if (p.autoCalculatePrice) {
+          p.price = computedPrice;
+          p.oldPrice = computedOldPrice > computedPrice ? computedOldPrice : null;
+          p.discount = p.oldPrice ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
+        }
+      } else {
+        p.stock = 0;
+      }
+      
+      // Clean up the populated object if needed, or leave it so frontend can see what's inside
+    });
+  }
+  return isArray ? items : items[0];
+};
+
+exports.processReadyBoxes = processReadyBoxes;
+
 /**
  * Get all products with filters
  */
@@ -23,7 +75,8 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
     featured,
     bestseller,
     newArrivals,
-    canBeAddedToBox
+    canBeAddedToBox,
+    isReadyBox
   } = req.query;
 
   const query = { isActive: true };
@@ -57,6 +110,7 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
   if (bestseller === 'true') query.isBestseller = true;
   if (newArrivals === 'true') query.isNewArrival = true;
   if (canBeAddedToBox === 'true') query.canBeAddedToBox = true;
+  if (isReadyBox === 'true') query.isReadyBox = true;
 
   if (search) {
     const searchRegex = new RegExp(escapeRegex(search), 'i');
@@ -84,9 +138,10 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
     .limit(finalLimit)
     .lean();
 
+  const processedProducts = await processReadyBoxes(products);
   const total = await Product.countDocuments(query);
 
-  return sendPaginated(res, { data: products, page, limit: finalLimit, total });
+  return sendPaginated(res, { data: processedProducts, page, limit: finalLimit, total });
 }, MESSAGES.PRODUCTS.FETCH_ERROR);
 
 /**
@@ -98,7 +153,8 @@ exports.getFeaturedProducts = asyncHandler(async (req, res) => {
     .populate('category', 'name slug')
     .limit(Number(limit))
     .lean();
-  return sendSuccess(res, { data: products });
+  const processedProducts = await processReadyBoxes(products);
+  return sendSuccess(res, { data: processedProducts });
 }, MESSAGES.PRODUCTS.FEATURED_ERROR);
 
 /**
@@ -111,7 +167,8 @@ exports.getBestsellers = asyncHandler(async (req, res) => {
     .sort({ salesCount: -1 })
     .limit(Number(limit))
     .lean();
-  return sendSuccess(res, { data: products });
+  const processedProducts = await processReadyBoxes(products);
+  return sendSuccess(res, { data: processedProducts });
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);
 
 /**
@@ -124,7 +181,8 @@ exports.getNewArrivals = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .limit(Number(limit))
     .lean();
-  return sendSuccess(res, { data: products });
+  const processedProducts = await processReadyBoxes(products);
+  return sendSuccess(res, { data: processedProducts });
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);
 
 /**
@@ -139,7 +197,8 @@ exports.getProductsByOccasion = asyncHandler(async (req, res) => {
     .populate('category', 'name slug')
     .limit(Number(limit))
     .lean();
-  return sendSuccess(res, { data: products });
+  const processedProducts = await processReadyBoxes(products);
+  return sendSuccess(res, { data: processedProducts });
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);
 
 /**
@@ -154,7 +213,8 @@ exports.getProductsByRecipient = asyncHandler(async (req, res) => {
     .populate('category', 'name slug')
     .limit(Number(limit))
     .lean();
-  return sendSuccess(res, { data: products });
+  const processedProducts = await processReadyBoxes(products);
+  return sendSuccess(res, { data: processedProducts });
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);
 
 /**
@@ -168,10 +228,13 @@ exports.getProductBySlug = asyncHandler(async (req, res) => {
 
   if (!product) return sendNotFound(res, MESSAGES.PRODUCTS.NOT_FOUND);
 
-  product.views += 1;
-  await product.save();
+  const processedProduct = await processReadyBoxes(product);
+  processedProduct.views += 1;
+  
+  // Save the view count to original document without awaiting its result to speed up
+  Product.updateOne({ _id: processedProduct._id }, { $inc: { views: 1 } }).exec();
 
-  return sendSuccess(res, { data: product });
+  return sendSuccess(res, { data: processedProduct });
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);
 
 /**
@@ -181,7 +244,8 @@ exports.getProductById = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id)
     .populate('category', 'name slug');
   if (!product) return sendNotFound(res, MESSAGES.PRODUCTS.NOT_FOUND);
-  return sendSuccess(res, { data: product });
+  const processedProduct = await processReadyBoxes(product);
+  return sendSuccess(res, { data: processedProduct });
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);
 
 /**
@@ -201,7 +265,9 @@ exports.getRelatedProducts = asyncHandler(async (req, res) => {
     ]
   })
     .limit(CONFIG.LIMITS.RELATED_PRODUCTS)
-    .populate('category', 'name slug');
+    .populate('category', 'name slug')
+    .lean();
 
-  return sendSuccess(res, { data: related });
+  const processedRelated = await processReadyBoxes(related);
+  return sendSuccess(res, { data: processedRelated });
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);

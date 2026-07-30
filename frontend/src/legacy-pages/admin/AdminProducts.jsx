@@ -46,6 +46,9 @@ const AdminProducts = () => {
     boxDiscount: 25,
     isCustomBox: false,
     boxSlots: [],
+    isReadyBox: false,
+    autoCalculatePrice: true,
+    includedProducts: []
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -167,6 +170,9 @@ const AdminProducts = () => {
       boxDiscount: product.boxDiscount !== undefined ? product.boxDiscount : 25,
       isCustomBox: product.isCustomBox || false,
       boxSlots: product.boxSlots || [],
+      isReadyBox: product.isReadyBox || false,
+      autoCalculatePrice: product.autoCalculatePrice !== undefined ? product.autoCalculatePrice : true,
+      includedProducts: product.includedProducts || [],
     });
     setShowModal(true);
   };
@@ -179,6 +185,12 @@ const AdminProducts = () => {
       comparePrice: formData.comparePrice ? Number(formData.comparePrice) : undefined,
       stock: Number(formData.stock),
       images: formData.images.filter((img) => img.url),
+      includedProducts: formData.isReadyBox
+        ? (formData.includedProducts || []).map(p => ({
+            product: p.product._id || p.product,
+            quantity: Number(p.quantity)
+          }))
+        : [],
       variantGroups: formData.hasVariantGroups
         ? formData.variantGroups
             .filter((g) => g.name)

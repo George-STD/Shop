@@ -13,7 +13,8 @@ const ALLOWED_PRODUCT_FIELDS = [
   'images', 'category', 'subcategory', 'tags', 'occasions', 'recipients', 'budgetRange',
   'stock', 'sku', 'sizes', 'colors', 'shapes', 'addons', 'variantGroups',
   'isActive', 'isFeatured', 'isNewArrival', 'isBestseller',
-  'isCustomBox', 'boxSlots', 'seo', 'canBeAddedToBox', 'boxDiscount'
+  'isCustomBox', 'boxSlots', 'seo', 'canBeAddedToBox', 'boxDiscount',
+  'isReadyBox', 'autoCalculatePrice', 'includedProducts'
 ];
 
 exports.getProducts = asyncHandler(async (req, res) => {

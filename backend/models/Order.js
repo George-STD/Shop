@@ -33,7 +33,12 @@ const orderItemSchema = new mongoose.Schema({
     image: String
   }],
   boxId: String,
-  subtotal: Number
+  subtotal: Number,
+  isReadyBox: Boolean,
+  includedProducts: [{
+    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+    quantity: Number
+  }]
 });
 
 const orderSchema = new mongoose.Schema({

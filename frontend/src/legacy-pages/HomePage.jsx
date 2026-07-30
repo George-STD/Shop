@@ -31,6 +31,12 @@ const HomePage = () => {
     queryFn: () => productsAPI.getNew(8).then((res) => res.data.data),
   });
 
+  // Fetch Ready Boxes
+  const { data: readyBoxes, isLoading: loadingReadyBoxes } = useQuery({
+    queryKey: ['products', 'readyBoxes'],
+    queryFn: () => productsAPI.getAll({ isReadyBox: true, limit: 8 }).then((res) => res.data.data),
+  });
+
   // Fetch categories
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -226,6 +232,78 @@ const HomePage = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Ready Boxes */}
+      <section className="py-14 sm:py-20 bg-gradient-to-b from-blue-50 to-white">
+        <div className="container-custom">
+          <div className="flex items-end justify-between mb-10">
+            <div>
+              <span className="inline-flex items-center gap-1.5 text-blue-600 font-medium text-sm mb-2">
+                <span className="w-8 h-[2px] bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"></span>
+                إليك بوكسات جاهزة
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">بوكسات جاهزة</h2>
+            </div>
+            <Link
+              to="/products?isReadyBox=true"
+              className="hidden sm:inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-sm hover:gap-2 transition-all"
+            >
+              {STRINGS.COMMON.VIEW_ALL}
+              <span>←</span>
+            </Link>
+          </div>
+
+          {loadingReadyBoxes ? (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+              {[...Array(4)].map((_, i) => <ProductSkeleton key={i} />)}
+            </div>
+          ) : readyBoxes?.length > 0 ? (
+            <div className="relative group">
+              <Swiper
+                modules={[Navigation, Pagination]}
+                spaceBetween={16}
+                slidesPerView={2}
+                navigation={{
+                  nextEl: '.swiper-button-next-readyboxes',
+                  prevEl: '.swiper-button-prev-readyboxes',
+                }}
+                breakpoints={{
+                  640: { slidesPerView: 2, spaceBetween: 24 },
+                  1024: { slidesPerView: 3, spaceBetween: 32 },
+                  1280: { slidesPerView: 4, spaceBetween: 32 },
+                }}
+                className="!pb-12"
+              >
+                {readyBoxes.map((product) => (
+                  <SwiperSlide key={product._id} className="h-auto">
+                    <ProductCard product={product} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+              <button className="swiper-button-next-readyboxes absolute top-1/3 -left-4 sm:-left-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-blue-600 hover:bg-blue-50 hover:scale-110 transition-all z-10 opacity-0 group-hover:opacity-100 disabled:opacity-0">
+                ←
+              </button>
+              <button className="swiper-button-prev-readyboxes absolute top-1/3 -right-4 sm:-right-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-blue-600 hover:bg-blue-50 hover:scale-110 transition-all z-10 opacity-0 group-hover:opacity-100 disabled:opacity-0">
+                →
+              </button>
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+              <span className="text-4xl mb-4 block">🎁</span>
+              <p className="text-gray-500 font-medium">لا توجد بوكسات جاهزة حالياً</p>
+            </div>
+          )}
+
+          <div className="mt-8 text-center sm:hidden">
+            <Link
+              to="/products?isReadyBox=true"
+              className="inline-block btn-outline w-full max-w-xs"
+            >
+              {STRINGS.COMMON.VIEW_ALL}
+            </Link>
           </div>
         </div>
       </section>

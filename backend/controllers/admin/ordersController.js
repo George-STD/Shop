@@ -86,7 +86,22 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
     // Restore inventory stock for cancelled order items
     const Product = require('../../models/Product');
     for (const item of order.items) {
-      if (item.product) {
+      if (!item.product) continue;
+      if (item.isReadyBox && item.includedProducts && item.includedProducts.length > 0) {
+        // Restore stock to each component product
+        for (const boxItem of item.includedProducts) {
+          const subQty = boxItem.quantity * item.quantity;
+          await Product.updateOne(
+            { _id: boxItem.product },
+            { $inc: { stock: subQty, salesCount: -subQty } }
+          );
+        }
+        // Decrement box salesCount only
+        await Product.updateOne(
+          { _id: item.product },
+          { $inc: { salesCount: -item.quantity } }
+        );
+      } else {
         await Product.updateOne(
           { _id: item.product },
           { $inc: { stock: item.quantity, salesCount: -item.quantity } }
@@ -97,7 +112,22 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
     // Re-deduct inventory stock if order is un-cancelled
     const Product = require('../../models/Product');
     for (const item of order.items) {
-      if (item.product) {
+      if (!item.product) continue;
+      if (item.isReadyBox && item.includedProducts && item.includedProducts.length > 0) {
+        // Deduct stock from each component product
+        for (const boxItem of item.includedProducts) {
+          const subQty = boxItem.quantity * item.quantity;
+          await Product.updateOne(
+            { _id: boxItem.product },
+            { $inc: { stock: -subQty, salesCount: subQty } }
+          );
+        }
+        // Increment box salesCount only
+        await Product.updateOne(
+          { _id: item.product },
+          { $inc: { salesCount: item.quantity } }
+        );
+      } else {
         await Product.updateOne(
           { _id: item.product },
           { $inc: { stock: -item.quantity, salesCount: item.quantity } }

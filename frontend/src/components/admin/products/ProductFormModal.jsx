@@ -1215,6 +1215,97 @@ const ProductFormModal = ({
             </div>
           )}
 
+          {/* Ready Box Section */}
+          <div className="border-t pt-4 mt-4">
+            <label className="flex items-center gap-2 mb-4">
+              <input
+                type="checkbox"
+                checked={formData.isReadyBox || false}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    isReadyBox: e.target.checked,
+                    includedProducts: e.target.checked ? (formData.includedProducts || []) : [],
+                  })
+                }
+                className="rounded"
+              />
+              <span className="font-medium text-blue-700">هذا المنتج عبارة عن بوكس جاهز (Ready Box)</span>
+            </label>
+            
+            {formData.isReadyBox && (
+              <div className="space-y-4 border rounded-xl p-4 bg-blue-50/50">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.autoCalculatePrice !== false}
+                    onChange={(e) => setFormData({ ...formData, autoCalculatePrice: e.target.checked })}
+                    className="rounded"
+                  />
+                  <span className="font-medium text-sm">حساب السعر تلقائياً بناءً على محتويات البوكس</span>
+                </label>
+                
+                <h3 className="font-bold text-blue-700">محتويات البوكس</h3>
+                
+                {(formData.includedProducts || []).map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2 bg-white p-2 border rounded-lg">
+                    <input 
+                      type="text" 
+                      placeholder="رقم الـ ID للمنتج" 
+                      value={item.product?._id || item.product || ''} 
+                      onChange={(e) => {
+                        const newIncluded = [...formData.includedProducts];
+                        newIncluded[idx] = { ...newIncluded[idx], product: e.target.value };
+                        setFormData({ ...formData, includedProducts: newIncluded });
+                      }}
+                      className="flex-1 border rounded px-2 py-1"
+                      required
+                    />
+                    <input 
+                      type="number"
+                      min="1"
+                      placeholder="الكمية"
+                      value={item.quantity || 1}
+                      onChange={(e) => {
+                        const newIncluded = [...formData.includedProducts];
+                        newIncluded[idx] = { ...newIncluded[idx], quantity: parseInt(e.target.value) || 1 };
+                        setFormData({ ...formData, includedProducts: newIncluded });
+                      }}
+                      className="w-20 border rounded px-2 py-1"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newIncluded = formData.includedProducts.filter((_, i) => i !== idx);
+                        setFormData({ ...formData, includedProducts: newIncluded });
+                      }}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      includedProducts: [...(formData.includedProducts || []), { product: '', quantity: 1 }]
+                    })
+                  }
+                  className="w-full border-2 border-dashed border-blue-300 text-blue-600 rounded-lg py-2 hover:bg-blue-50"
+                >
+                  + إضافة منتج للبوكس
+                </button>
+                <p className="text-xs text-gray-500 mt-2">
+                  * يجب إدخال الـ ID الخاص بالمنتج (Product Object ID). يمكنك نسخه من صفحة المنتجات أو شريط الرابط.
+                </p>
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-4 pt-4 border-t">
             <button
               type="button"

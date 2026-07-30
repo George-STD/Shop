@@ -67,6 +67,25 @@ const productSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  isReadyBox: {
+    type: Boolean,
+    default: false
+  },
+  autoCalculatePrice: {
+    type: Boolean,
+    default: true
+  },
+  includedProducts: [{
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product'
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1
+    }
+  }],
   sku: {
     type: String,
     unique: true,
