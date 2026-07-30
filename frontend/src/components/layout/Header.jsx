@@ -81,11 +81,11 @@ const Header = () => {
       <div
         className={`container-custom transition-all duration-300 ${isScrolled ? 'py-1.5' : 'py-2'}`}
       >
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
           {/* Mobile Menu Button */}
           <button
             onClick={toggleMobileMenu}
-            className="lg:hidden p-2 hover:bg-purple-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+            className="lg:hidden p-1.5 sm:p-2 hover:bg-purple-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
             aria-label={STRINGS.ACCESSIBILITY.OPEN_MENU}
             aria-expanded="false"
           >
@@ -97,12 +97,12 @@ const Header = () => {
             <img
               src="/images/logo.jpeg"
               alt={STRINGS.NAV.LOGO_ALT}
-              className={`w-auto object-contain transition-all duration-300 ${isScrolled ? 'h-10 sm:h-14' : 'h-14 sm:h-20 md:h-28'}`}
+              className={`w-auto object-contain transition-all duration-300 ${isScrolled ? 'h-9 sm:h-12' : 'h-11 sm:h-16 md:h-24'}`}
             />
           </Link>
 
           {/* Search Bar - Desktop */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-xl" role="search">
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-xl mx-4" role="search">
             <div className="relative w-full group">
               <label htmlFor="desktop-search" className="sr-only">
                 {STRINGS.SEARCH.PLACEHOLDER}
@@ -126,11 +126,11 @@ const Header = () => {
           </form>
 
           {/* Actions */}
-          <div className="flex items-center gap-1 md:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {/* Mobile Search Toggle */}
             <button
               onClick={() => setIsSearchVisible(!isSearchVisible)}
-              className="md:hidden p-2.5 hover:bg-purple-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+              className="md:hidden p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
               aria-label={
                 isSearchVisible
                   ? STRINGS.ACCESSIBILITY.CLOSE_SEARCH
@@ -145,7 +145,7 @@ const Header = () => {
             {isAdmin && (
               <Link
                 to="/admin"
-                className="p-2.5 hover:bg-purple-50 rounded-xl flex items-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl flex items-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500"
                 aria-label={STRINGS.NAV.ADMIN}
               >
                 <FiSettings size={20} className="text-purple-600" aria-hidden="true" />
@@ -158,7 +158,7 @@ const Header = () => {
             {/* Account */}
             <Link
               to="/account"
-              className="p-2.5 hover:bg-purple-50 rounded-xl hidden sm:flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+              className="p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl hidden sm:flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
               aria-label={isAuthenticated ? STRINGS.NAV.ACCOUNT : STRINGS.AUTH.LOGIN}
             >
               <FiUser size={20} aria-hidden="true" />
@@ -170,7 +170,7 @@ const Header = () => {
             {/* Wishlist */}
             <Link
               to="/wishlist"
-              className="p-2.5 hover:bg-purple-50 rounded-xl relative focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+              className="p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl relative focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
               aria-label={`${STRINGS.NAV.WISHLIST}${wishlistCount > 0 ? ` (${wishlistCount} ${STRINGS.PRODUCT.ITEMS})` : ''}`}
             >
               <FiHeart size={20} aria-hidden="true" />
@@ -187,7 +187,7 @@ const Header = () => {
             {/* Cart */}
             <button
               onClick={toggleCart}
-              className="p-2.5 hover:bg-purple-50 rounded-xl relative focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+              className="p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl relative focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
               aria-label={`${STRINGS.NAV.CART}${cartCount > 0 ? ` (${cartCount} ${STRINGS.PRODUCT.ITEMS})` : ''}`}
             >
               <FiShoppingBag size={20} aria-hidden="true" />

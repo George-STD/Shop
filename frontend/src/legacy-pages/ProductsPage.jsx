@@ -189,11 +189,6 @@ const ProductsPage = () => {
             {categoryInfo?.description && (
               <p className="text-gray-600 mt-2">{categoryInfo.description}</p>
             )}
-            {pagination.total > 0 && (
-              <p className="text-gray-500 mt-2">
-                {STRINGS.PRODUCTS_PAGE.SHOWING} {products.length} {STRINGS.PRODUCTS_PAGE.OF} {pagination.total} {STRINGS.PRODUCTS_PAGE.PRODUCT_COUNT_LABEL}
-              </p>
-            )}
           </div>
         </div>
 

@@ -34,7 +34,7 @@ const Footer = () => {
             <p className="text-purple-100 mb-8 text-sm sm:text-base">
               {STRINGS.FOOTER.NEWSLETTER_SUBTITLE}
             </p>
-            <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+            <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto px-4 sm:px-0">
               <input
                 type="email"
                 placeholder={STRINGS.FOOTER.NEWSLETTER_PLACEHOLDER}
@@ -52,10 +52,10 @@ const Footer = () => {
       </div>
 
       {/* Main Footer */}
-      <div className="container-custom py-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+      <div className="container-custom py-14 pb-28 md:pb-14">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-center md:text-right">
           {/* About */}
-          <div>
+          <div className="flex flex-col items-center md:items-start">
             <img
               src="/images/logo.jpeg"
               alt="For You Gift Shop"
@@ -64,7 +64,7 @@ const Footer = () => {
             <p className="text-gray-400 mb-6 leading-relaxed text-sm">
               {STRINGS.FOOTER.ABOUT_DESC}
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-3 justify-center md:justify-start w-full">
               <a
                 href="https://www.facebook.com/share/1BzYfakvLp/?mibextid=wwXIfr"
                 className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center hover:bg-gradient-to-br hover:from-purple-500 hover:to-pink-500 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5"

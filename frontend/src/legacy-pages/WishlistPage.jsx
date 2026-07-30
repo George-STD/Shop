@@ -47,7 +47,6 @@ const WishlistPage = () => {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-800">{STRINGS.WISHLIST.TITLE}</h1>
-              <p className="text-gray-500 mt-1">{items.length} {STRINGS.PRODUCTS_PAGE.PRODUCT_COUNT_LABEL}</p>
             </div>
             {items.length > 0 && (
               <button
