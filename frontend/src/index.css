@@ -165,7 +165,7 @@ body {
 }
 
 .product-card .product-image {
-  @apply w-full h-64 object-cover transition-transform duration-700 ease-out group-hover:scale-110;
+  @apply w-full h-48 sm:h-56 md:h-64 object-cover transition-transform duration-700 ease-out group-hover:scale-110;
 }
 
 .product-card .quick-actions {

@@ -1003,7 +1003,7 @@ const ProductPage = () => {
                         {slot.slotLabel}
                         {slot.required && <span className="text-red-500 mr-1">*</span>}
                       </h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                         {slot.options.map((opt) => {
                           const isSelected = boxSelections[slot.slotLabel]?.name === opt.name;
                           const optImages = getOptImages(opt);
@@ -1255,7 +1255,7 @@ const ProductPage = () => {
           {relatedProducts?.length > 0 && (
             <div className="mt-12">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">{STRINGS.PRODUCT.RELATED_PRODUCTS}</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                 {relatedProducts.map((product) => (
                   <ProductCard key={product._id} product={product} />
                 ))}

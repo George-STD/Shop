@@ -408,7 +408,7 @@ const ProductsPage = () => {
               {/* Products Grid */}
               {isLoading ? (
                 <div
-                  className={`grid ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1'} gap-6`}
+                  className={`grid ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1'} gap-3 sm:gap-4 md:gap-6`}
                 >
                   {[...Array(9)].map((_, i) => (
                     <div key={i} className="card p-4">
@@ -420,7 +420,7 @@ const ProductsPage = () => {
                 </div>
               ) : products.length > 0 ? (
                 <div
-                  className={`grid ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1'} gap-6`}
+                  className={`grid ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1'} gap-3 sm:gap-4 md:gap-6`}
                 >
                   {products.map((product) => (
                     <ProductCard key={product._id} product={product} />

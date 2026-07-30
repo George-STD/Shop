@@ -56,7 +56,7 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="card product-card group">
+    <div className="card product-card group min-w-0 flex flex-col h-full">
       {/* Image Container */}
       <div className="relative overflow-hidden bg-gray-50">
         <Link to={`/product/${product.slug}`}>
@@ -108,7 +108,7 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-3 sm:p-4 flex flex-col flex-grow">
         {/* Category */}
         {product.category && (
           <div className="text-xs text-purple-400 font-medium uppercase tracking-wider">
@@ -132,7 +132,7 @@ const ProductCard = ({ product }) => {
         <h3 className="mt-1.5">
           <Link
             to={`/product/${product.slug}`}
-            className="font-semibold text-gray-800 hover:text-purple-700 line-clamp-2 transition-colors duration-200 text-sm sm:text-base"
+            className="font-semibold text-gray-800 hover:text-purple-700 line-clamp-2 transition-colors duration-200 text-xs sm:text-sm md:text-base"
           >
             {product.name}
           </Link>
@@ -156,8 +156,8 @@ const ProductCard = ({ product }) => {
         )}
 
         {/* Price */}
-        <div className="flex items-baseline gap-2 mt-3">
-          <span className="text-lg font-bold text-gray-900">
+        <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2 mt-auto pt-3">
+          <span className="text-base sm:text-lg font-bold text-gray-900">
             {formatPrice(product.price)}{' '}
             <span className="text-xs font-normal text-gray-500">{STRINGS.PRODUCT.CURRENCY}</span>
           </span>
@@ -172,10 +172,10 @@ const ProductCard = ({ product }) => {
         <button
           onClick={handleAddToCart}
           disabled={Number(product.stock) === 0}
-          className="w-full mt-4 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white py-2.5 rounded-xl font-medium 
+          className="w-full mt-3 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white py-2 sm:py-2.5 rounded-xl font-medium 
                      hover:from-purple-600 hover:to-fuchsia-600 hover:shadow-lg hover:shadow-purple-500/25 
                      transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none
-                     active:scale-[0.98] md:hidden text-sm"
+                     active:scale-[0.98] md:hidden text-xs sm:text-sm"
         >
           {Number(product.stock) === 0 ? STRINGS.PRODUCT.OUT_OF_STOCK : `🛒 ${STRINGS.PRODUCT.ADD_TO_CART}`}
         </button>

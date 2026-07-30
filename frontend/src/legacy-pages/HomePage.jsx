@@ -257,7 +257,7 @@ const HomePage = () => {
           </div>
 
           {loadingReadyBoxes ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-8">
               {[...Array(4)].map((_, i) => <ProductSkeleton key={i} />)}
             </div>
           ) : readyBoxes?.length > 0 ? (
@@ -329,13 +329,13 @@ const HomePage = () => {
           </div>
 
           {loadingFeatured ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {[...Array(8)].map((_, i) => (
                 <ProductSkeleton key={i} />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {featuredProducts?.map((product) => (
                 <ProductCard key={product._id} product={product} />
               ))}
@@ -387,7 +387,7 @@ const HomePage = () => {
           </div>
 
           {loadingBestsellers ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {[...Array(4)].map((_, i) => (
                 <ProductSkeleton key={i} />
               ))}
@@ -435,7 +435,7 @@ const HomePage = () => {
           </div>
 
           {loadingNew ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {[...Array(4)].map((_, i) => (
                 <ProductSkeleton key={i} />
               ))}
