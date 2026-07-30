@@ -3,6 +3,7 @@ const { validationResult } = require('express-validator');
 const asyncHandler = require('../../utils/asyncHandler');
 const { escapeRegex, parsePagination, buildPaginationMeta } = require('../../utils/helpers');
 const logAudit = require('../../utils/auditLogger');
+const { processReadyBoxes } = require('../productController');
 
 // =====================================================
 // PRODUCTS MANAGEMENT (Admin)
@@ -36,9 +37,11 @@ exports.getProducts = asyncHandler(async (req, res) => {
     Product.countDocuments(query)
   ]);
 
+  const processedProducts = await processReadyBoxes(products);
+
   res.json({
     success: true,
-    data: products,
+    data: processedProducts,
     pagination: buildPaginationMeta({ page, limit, total })
   });
 }, 'حدث خطأ أثناء جلب المنتجات');

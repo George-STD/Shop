@@ -14,7 +14,7 @@ const processReadyBoxes = async (products) => {
   if (readyBoxes.length > 0) {
     await Product.populate(readyBoxes, {
       path: 'includedProducts.product',
-      select: 'name stock price discount'
+      select: 'name stock price oldPrice'
     });
 
     readyBoxes.forEach(p => {
@@ -29,11 +29,11 @@ const processReadyBoxes = async (products) => {
             if (availableForThis < minStock) minStock = availableForThis;
             
             if (p.autoCalculatePrice) {
-              const baseItemPrice = item.product.price;
-              const itemDiscount = item.product.discount || 0;
-              const itemPrice = baseItemPrice - (baseItemPrice * itemDiscount / 100);
-              computedPrice += itemPrice * item.quantity;
-              computedOldPrice += baseItemPrice * item.quantity;
+              const itemCurrentPrice = item.product.price;
+              const itemOldPrice = item.product.oldPrice || item.product.price;
+              
+              computedPrice += itemCurrentPrice * item.quantity;
+              computedOldPrice += itemOldPrice * item.quantity;
             }
           }
         });
@@ -41,8 +41,17 @@ const processReadyBoxes = async (products) => {
         p.stock = minStock === Infinity ? 0 : minStock;
         
         if (p.autoCalculatePrice) {
-          p.price = computedPrice;
-          p.oldPrice = computedOldPrice > computedPrice ? computedOldPrice : null;
+          // Apply boxDiscount if it exists (e.g., 10% off the total sum of the items)
+          const boxDiscountPercent = p.boxDiscount || 0;
+          
+          if (boxDiscountPercent > 0) {
+            p.oldPrice = computedOldPrice;
+            p.price = computedPrice - (computedPrice * boxDiscountPercent / 100);
+          } else {
+            p.price = computedPrice;
+            p.oldPrice = computedOldPrice > computedPrice ? computedOldPrice : null;
+          }
+          
           p.discount = p.oldPrice ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
         }
       } else {
