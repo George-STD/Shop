@@ -140,7 +140,7 @@ const AdminProducts = () => {
       name: product.name,
       description: product.description || '',
       price: product.price,
-      comparePrice: product.comparePrice || '',
+      comparePrice: product.oldPrice || product.comparePrice || '',
       category: Array.isArray(product.category)
         ? product.category.map((c) => c._id || c)
         : product.category
@@ -182,7 +182,7 @@ const AdminProducts = () => {
     const data = {
       ...formData,
       price: Number(formData.price),
-      comparePrice: formData.comparePrice ? Number(formData.comparePrice) : undefined,
+      oldPrice: formData.comparePrice ? Number(formData.comparePrice) : undefined,
       stock: Number(formData.stock),
       images: formData.images.filter((img) => img.url),
       includedProducts: formData.isReadyBox

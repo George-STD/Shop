@@ -101,9 +101,9 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
                   <span className="font-medium text-xs sm:text-sm">
                     {formatCurrency(product.price)}
                   </span>
-                  {product.comparePrice && (
+                  {product.oldPrice && (
                     <span className="text-xs sm:text-sm text-gray-400 line-through mr-2">
-                      {formatCurrency(product.comparePrice)}
+                      {formatCurrency(product.oldPrice)}
                     </span>
                   )}
                 </td>

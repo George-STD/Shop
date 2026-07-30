@@ -538,22 +538,34 @@ const ProductFormModal = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">{STRINGS.ADMIN.PRODUCT_FORM.PRICE}</label>
+              <label className="block text-sm font-medium mb-1">
+                {STRINGS.ADMIN.PRODUCT_FORM.PRICE}
+                {formData.isReadyBox && formData.autoCalculatePrice && (
+                  <span className="text-xs text-blue-500 mr-2 bg-blue-50 px-2 py-0.5 rounded">يتم حسابه تلقائياً</span>
+                )}
+              </label>
               <input
                 type="number"
-                value={formData.price}
+                value={formData.isReadyBox && formData.autoCalculatePrice ? 0 : formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
-                required
+                className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 ${formData.isReadyBox && formData.autoCalculatePrice ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
+                required={!(formData.isReadyBox && formData.autoCalculatePrice)}
+                disabled={formData.isReadyBox && formData.autoCalculatePrice}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">{STRINGS.ADMIN.PRODUCT_FORM.PRICE_BEFORE_DISCOUNT}</label>
+              <label className="block text-sm font-medium mb-1">
+                {STRINGS.ADMIN.PRODUCT_FORM.PRICE_BEFORE_DISCOUNT}
+                {formData.isReadyBox && formData.autoCalculatePrice && (
+                  <span className="text-xs text-blue-500 mr-2 bg-blue-50 px-2 py-0.5 rounded">يتم حسابه تلقائياً</span>
+                )}
+              </label>
               <input
                 type="number"
-                value={formData.comparePrice}
+                value={formData.isReadyBox && formData.autoCalculatePrice ? 0 : formData.comparePrice}
                 onChange={(e) => setFormData({ ...formData, comparePrice: e.target.value })}
-                className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
+                className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 ${formData.isReadyBox && formData.autoCalculatePrice ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
+                disabled={formData.isReadyBox && formData.autoCalculatePrice}
               />
             </div>
           </div>
@@ -597,13 +609,19 @@ const ProductFormModal = ({
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">{STRINGS.ADMIN.PRODUCT_FORM.STOCK_QUANTITY}</label>
+              <label className="block text-sm font-medium mb-1">
+                {STRINGS.ADMIN.PRODUCT_FORM.STOCK_QUANTITY}
+                {formData.isReadyBox && (
+                  <span className="text-xs text-blue-500 mr-2 bg-blue-50 px-2 py-0.5 rounded">يتم حسابه تلقائياً</span>
+                )}
+              </label>
               <input
                 type="number"
-                value={formData.stock}
+                value={formData.isReadyBox ? 0 : formData.stock}
                 onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
-                required
+                className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 ${formData.isReadyBox ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
+                required={!formData.isReadyBox}
+                disabled={formData.isReadyBox}
               />
             </div>
           </div>
