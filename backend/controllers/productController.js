@@ -14,7 +14,7 @@ const processReadyBoxes = async (products) => {
   if (readyBoxes.length > 0) {
     await Product.populate(readyBoxes, {
       path: 'includedProducts.product',
-      select: 'name stock price oldPrice'
+      select: 'name stock price oldPrice boxDiscount'
     });
 
     readyBoxes.forEach(p => {
@@ -29,8 +29,12 @@ const processReadyBoxes = async (products) => {
             if (availableForThis < minStock) minStock = availableForThis;
             
             if (p.autoCalculatePrice) {
-              const itemCurrentPrice = item.product.price;
+              let itemCurrentPrice = item.product.price;
               const itemOldPrice = item.product.oldPrice || item.product.price;
+              
+              if (item.product.boxDiscount > 0) {
+                itemCurrentPrice = itemOldPrice - (itemOldPrice * item.product.boxDiscount / 100);
+              }
               
               computedPrice += itemCurrentPrice * item.quantity;
               computedOldPrice += itemOldPrice * item.quantity;
