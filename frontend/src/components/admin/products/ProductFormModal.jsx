@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import toast from 'react-hot-toast';
-import { adminAPI } from '../../../services/api';
+import { adminAPI, productsAPI } from '../../../services/api';
 import { STRINGS, API_URL } from '../../../constants';
 
 const ProductFormModal = ({
@@ -19,6 +19,30 @@ const ProductFormModal = ({
   const fileInputRefs = useRef({});
   const [uploadingImages, setUploadingImages] = React.useState([]);
   const [isEnhancing, setIsEnhancing] = React.useState(false);
+  const [productImagesCache, setProductImagesCache] = React.useState({});
+
+  React.useEffect(() => {
+    if (!formData.isReadyBox || !formData.includedProducts) return;
+    
+    formData.includedProducts.forEach(item => {
+      const id = item.product?._id || item.product;
+      if (typeof id === 'string' && id.length === 24 && !productImagesCache[id]) {
+        // Optimistically set to pending to avoid multiple calls
+        setProductImagesCache(prev => ({ ...prev, [id]: { pending: true } }));
+        productsAPI.getById(id)
+          .then(res => {
+            if (res.data?.success && res.data?.data) {
+              const img = res.data.data.images?.[0]?.url;
+              const name = res.data.data.name;
+              setProductImagesCache(prev => ({ ...prev, [id]: { img, name } }));
+            }
+          })
+          .catch(() => {
+            setProductImagesCache(prev => ({ ...prev, [id]: { error: true } }));
+          });
+      }
+    });
+  }, [formData.includedProducts, formData.isReadyBox]);
 
   const handleAIEnhance = async () => {
     const firstImageUrl = formData.images?.find(img => img.url)?.url;
@@ -1266,42 +1290,65 @@ const ProductFormModal = ({
                 <h3 className="font-bold text-blue-700">محتويات البوكس</h3>
                 
                 {(formData.includedProducts || []).map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 bg-white p-2 border rounded-lg">
-                    <input 
-                      type="text" 
-                      placeholder="رقم الـ ID للمنتج" 
-                      value={item.product?._id || item.product || ''} 
-                      onChange={(e) => {
-                        const newIncluded = [...formData.includedProducts];
-                        newIncluded[idx] = { ...newIncluded[idx], product: e.target.value };
-                        setFormData({ ...formData, includedProducts: newIncluded });
-                      }}
-                      className="flex-1 border rounded px-2 py-1"
-                      required
-                    />
-                    <input 
-                      type="number"
-                      min="1"
-                      placeholder="الكمية"
-                      value={item.quantity || 1}
-                      onChange={(e) => {
-                        const newIncluded = [...formData.includedProducts];
-                        newIncluded[idx] = { ...newIncluded[idx], quantity: parseInt(e.target.value) || 1 };
-                        setFormData({ ...formData, includedProducts: newIncluded });
-                      }}
-                      className="w-20 border rounded px-2 py-1"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newIncluded = formData.includedProducts.filter((_, i) => i !== idx);
-                        setFormData({ ...formData, includedProducts: newIncluded });
-                      }}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      ✕
-                    </button>
+                  <div key={idx} className="flex flex-col gap-2 bg-white p-3 border rounded-xl shadow-sm relative">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="text" 
+                        placeholder="رقم الـ ID للمنتج" 
+                        value={item.product?._id || item.product || ''} 
+                        onChange={(e) => {
+                          const newIncluded = [...formData.includedProducts];
+                          newIncluded[idx] = { ...newIncluded[idx], product: e.target.value };
+                          setFormData({ ...formData, includedProducts: newIncluded });
+                        }}
+                        className="flex-1 border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        required
+                      />
+                      <input 
+                        type="number"
+                        min="1"
+                        placeholder="الكمية"
+                        value={item.quantity || 1}
+                        onChange={(e) => {
+                          const newIncluded = [...formData.includedProducts];
+                          newIncluded[idx] = { ...newIncluded[idx], quantity: parseInt(e.target.value) || 1 };
+                          setFormData({ ...formData, includedProducts: newIncluded });
+                        }}
+                        className="w-24 border rounded px-3 py-2 text-sm text-center focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newIncluded = formData.includedProducts.filter((_, i) => i !== idx);
+                          setFormData({ ...formData, includedProducts: newIncluded });
+                        }}
+                        className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg p-2 transition-colors"
+                        title="إزالة"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    
+                    {/* Image Preview Area */}
+                    {(item.product?._id || item.product)?.length === 24 && productImagesCache[item.product?._id || item.product] && (
+                      <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                        {productImagesCache[item.product?._id || item.product].img ? (
+                          <img 
+                            src={productImagesCache[item.product?._id || item.product].img} 
+                            alt="preview" 
+                            className="w-10 h-10 object-cover rounded-md shadow-sm"
+                          />
+                        ) : productImagesCache[item.product?._id || item.product].pending ? (
+                          <div className="w-10 h-10 bg-gray-200 rounded-md animate-pulse flex items-center justify-center text-xs text-gray-500">...</div>
+                        ) : (
+                          <div className="w-10 h-10 bg-red-50 text-red-400 rounded-md flex items-center justify-center text-xs">✕</div>
+                        )}
+                        <span className="text-sm font-medium text-gray-700">
+                          {productImagesCache[item.product?._id || item.product].name || (productImagesCache[item.product?._id || item.product].pending ? 'جاري التحميل...' : 'لم يتم العثور على المنتج')}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ))}
                 
