@@ -444,6 +444,13 @@ body {
   color: #fff !important;
 }
 
+@media (max-width: 640px) {
+  .swiper-button-next,
+  .swiper-button-prev {
+    display: none !important;
+  }
+}
+
 /* Mini swiper for box option cards */
 .box-option-swiper .swiper-pagination-bullet {
   width: 6px !important;
