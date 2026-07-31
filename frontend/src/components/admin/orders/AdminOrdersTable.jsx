@@ -1,4 +1,4 @@
-﻿import { LoadingSpinner } from '../../common/LoadingSpinner';
+import { LoadingSpinner } from '../../common/LoadingSpinner';
 import React from 'react';
 import { FiEye } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
