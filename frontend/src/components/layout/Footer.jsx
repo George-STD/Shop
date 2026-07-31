@@ -13,6 +13,11 @@ import { STRINGS, BUSINESS_CONFIG } from '../../constants';
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
+  const handleNewsletterSubmit = (e) => {
+    e.preventDefault();
+    // TODO: implement newsletter signup
+  };
+
   return (
     <footer className="bg-gray-900 text-gray-300">
       {/* Newsletter Section */}
@@ -34,7 +39,7 @@ const Footer = () => {
             <p className="text-purple-100 mb-8 text-sm sm:text-base">
               {STRINGS.FOOTER.NEWSLETTER_SUBTITLE}
             </p>
-            <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto px-4 sm:px-0">
+            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto px-4 sm:px-0">
               <input
                 type="email"
                 placeholder={STRINGS.FOOTER.NEWSLETTER_PLACEHOLDER}

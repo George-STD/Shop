@@ -241,9 +241,11 @@ const AdminLayout = ({ children }) => {
 
           <Link
             to="/"
-            className="text-xs sm:text-sm text-gray-500 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex items-center gap-1"
+            className="text-xs sm:text-sm text-gray-500 flex items-center gap-1 hover:text-purple-600 transition-colors group"
           >
-            {STRINGS.ADMIN.BACK_TO_SITE}
+            <span className="group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600">
+              {STRINGS.ADMIN.BACK_TO_SITE}
+            </span>
             <FiChevronLeft className="transform rotate-180 w-4 h-4 sm:w-5 sm:h-5" />
           </Link>
         </header>

@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import toast from 'react-hot-toast';
 import { adminAPI, productsAPI } from '../../../services/api';
 import { STRINGS, API_URL } from '../../../constants';
+import Modal from '../../ui/Modal';
 
 const ProductFormModal = ({
   showModal,
@@ -218,17 +219,17 @@ const ProductFormModal = ({
     }
   };
 
-  if (!showModal) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white rounded-2xl max-w-md sm:max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-4 sm:p-6 border-b sticky top-0 bg-white">
-          <h2 className="text-lg sm:text-xl font-bold">
-            {editingProduct ? STRINGS.ADMIN.PRODUCT_FORM.EDIT_PRODUCT : STRINGS.ADMIN.PRODUCT_FORM.ADD_NEW_PRODUCT}
-          </h2>
-        </div>
-        <form onSubmit={handleSubmit} className="p-2 sm:p-6 space-y-3 sm:space-y-4">
+    <Modal
+      isOpen={showModal}
+      onClose={() => {
+        resetForm();
+        setShowModal(false);
+      }}
+      title={editingProduct ? STRINGS.ADMIN.PRODUCT_FORM.EDIT_PRODUCT : STRINGS.ADMIN.PRODUCT_FORM.ADD_NEW_PRODUCT}
+      maxWidth="max-w-4xl"
+    >
+      <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6">
           {/* Occasions (المناسبات) */}
           <div>
             <div className="flex justify-between items-center mb-1">
@@ -1371,12 +1372,12 @@ const ProductFormModal = ({
             )}
           </div>
 
-          <div className="flex gap-4 pt-4 border-t">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-6 border-t mt-6">
             <button
               type="button"
               onClick={() => {
-                setShowModal(false);
                 resetForm();
+                setShowModal(false);
               }}
               className="flex-1 border rounded-lg py-2 hover:bg-gray-50"
             >
@@ -1390,9 +1391,8 @@ const ProductFormModal = ({
               {createMutation.isPending || updateMutation.isPending ? STRINGS.ADMIN.PRODUCT_FORM.SAVING : STRINGS.ADMIN.PRODUCT_FORM.SAVE}
             </button>
           </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 };
 

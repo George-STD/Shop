@@ -1,6 +1,7 @@
 import React from 'react';
-import { FiX, FiCheck, FiTruck, FiPackage } from 'react-icons/fi';
+import { FiCheck, FiTruck, FiPackage } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
+import Modal from '../../ui/Modal';
 
 const OrderDetailsModal = ({
   selectedOrder,
@@ -13,21 +14,13 @@ const OrderDetailsModal = ({
   if (!selectedOrder) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-4 sm:p-6 border-b sticky top-0 bg-white flex items-center justify-between z-10">
-          <h2 className="text-base sm:text-xl font-bold">
-            {STRINGS.ADMIN.ORDERS.ORDER_DETAILS} #{selectedOrder.orderNumber}
-          </h2>
-          <button
-            onClick={() => setSelectedOrder(null)}
-            className="p-2 hover:bg-gray-100 rounded-lg"
-          >
-            <FiX className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+    <Modal
+      isOpen={!!selectedOrder}
+      onClose={() => setSelectedOrder(null)}
+      title={`${STRINGS.ADMIN.ORDERS.ORDER_DETAILS} #${selectedOrder.orderNumber}`}
+      maxWidth="max-w-2xl"
+    >
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Order Summary */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div>
@@ -187,9 +180,8 @@ const OrderDetailsModal = ({
               </button>
             )}
           </div>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 

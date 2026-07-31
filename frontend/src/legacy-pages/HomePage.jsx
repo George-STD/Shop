@@ -84,7 +84,7 @@ const HomePage = () => {
           autoplay={{ delay: 5000, disableOnInteraction: false }}
           pagination={{ clickable: true }}
           navigation
-          className="h-[380px] sm:h-[450px] md:h-[550px]"
+          className="min-h-[420px] sm:min-h-[450px] md:h-[550px]"
         >
           {/* Slide 1: Loyalty Points & Rewards System */}
           {loyaltySettings?.enabled !== false && (

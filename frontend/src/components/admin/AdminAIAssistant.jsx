@@ -311,8 +311,8 @@ const AdminAIAssistant = () => {
       <div className={`fixed top-0 right-0 h-full bg-white shadow-2xl z-[70] transition-all duration-300 flex overflow-hidden border-l border-gray-200 ${
         isOpen 
           ? isExpanded 
-            ? 'translate-x-0 w-full md:w-[96vw]' 
-            : 'translate-x-0 w-full md:w-[850px] lg:w-[950px]' 
+            ? 'translate-x-0 w-full md:w-[min(96vw,1200px)]' 
+            : 'translate-x-0 w-full md:w-[min(850px,96vw)] lg:w-[min(950px,96vw)]' 
           : 'translate-x-full w-0'
       }`}>
         

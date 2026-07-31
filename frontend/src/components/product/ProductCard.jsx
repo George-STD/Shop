@@ -132,7 +132,7 @@ const ProductCard = ({ product }) => {
         <h3 className="mt-1.5">
           <Link
             to={`/product/${product.slug}`}
-            className="font-semibold text-gray-800 hover:text-purple-700 line-clamp-2 transition-colors duration-200 text-xs sm:text-sm md:text-base"
+            className="font-semibold text-gray-800 hover:text-purple-700 line-clamp-2 transition-colors duration-200 text-xs sm:text-sm md:text-base break-words whitespace-normal"
           >
             {product.name}
           </Link>
@@ -175,9 +175,14 @@ const ProductCard = ({ product }) => {
           className="w-full mt-3 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white py-2 sm:py-2.5 rounded-xl font-medium 
                      hover:from-purple-600 hover:to-fuchsia-600 hover:shadow-lg hover:shadow-purple-500/25 
                      transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none
-                     active:scale-[0.98] md:hidden text-xs sm:text-sm"
+                     active:scale-[0.98] md:hidden text-xs sm:text-sm whitespace-normal break-words leading-tight flex items-center justify-center gap-1"
         >
-          {Number(product.stock) === 0 ? STRINGS.PRODUCT.OUT_OF_STOCK : `🛒 ${STRINGS.PRODUCT.ADD_TO_CART}`}
+          {Number(product.stock) === 0 ? STRINGS.PRODUCT.OUT_OF_STOCK : (
+            <>
+              <FiShoppingBag className="shrink-0" />
+              <span className="line-clamp-2">{STRINGS.PRODUCT.ADD_TO_CART}</span>
+            </>
+          )}
         </button>
       </div>
     </div>

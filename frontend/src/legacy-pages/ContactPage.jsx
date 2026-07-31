@@ -90,7 +90,7 @@ const ContactPage = () => {
                     <a
                       key={idx}
                       href={item.link}
-                      className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-100 hover:to-pink-100 hover:text-transparent transition-colors"
+                      className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition-colors"
                     >
                       <item.icon className="text-xl" />
                     </a>

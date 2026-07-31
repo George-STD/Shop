@@ -115,14 +115,16 @@ const FAQPage = () => {
                       <button
                         key={idx}
                         onClick={() => setActiveCategory(idx)}
-                        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors font-medium ${
                           activeCategory === idx
-                            ? 'bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 text-transparent'
+                            ? 'bg-purple-50 text-purple-700'
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        <cat.icon />
-                        {cat.category}
+                        <cat.icon className={activeCategory === idx ? 'text-purple-600' : ''} />
+                        <span className={activeCategory === idx ? 'bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 text-transparent' : ''}>
+                          {cat.category}
+                        </span>
                       </button>
                     ))}
                   </nav>

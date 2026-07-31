@@ -586,7 +586,7 @@ const ProductPage = () => {
                 {/* Zoomed overlay — outside overflow-hidden so it's not clipped */}
                 {isZooming && (
                   <div
-                    className="hidden lg:block absolute top-0 right-[calc(100%+16px)] w-[500px] h-[500px] bg-white border-2 border-gray-200 rounded-2xl shadow-2xl z-50"
+                    className="hidden xl:block absolute top-0 right-[calc(100%+16px)] w-[clamp(300px,30vw,500px)] h-[clamp(300px,30vw,500px)] bg-white border-2 border-gray-200 rounded-2xl shadow-2xl z-50"
                     style={{
                       backgroundImage: `url(${mainOverrideImage || activeBoxImage || displayImages[activeImageIdx]?.url})`,
                       backgroundSize: '250%',
@@ -1128,10 +1128,12 @@ const ProductPage = () => {
                 </button>
                 <button
                   onClick={handleShare}
-                  className="flex items-center gap-2 text-gray-600 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
+                  className="flex items-center gap-2 text-gray-600 hover:text-purple-600 transition-colors group"
                 >
-                  <FiShare2 />
-                  {STRINGS.PRODUCT.SHARE}
+                  <FiShare2 className="group-hover:text-purple-600" />
+                  <span className="group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600">
+                    {STRINGS.PRODUCT.SHARE}
+                  </span>
                 </button>
               </div>
 

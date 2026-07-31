@@ -56,10 +56,12 @@ const OverviewCards = ({ stats, formatCurrency }) => {
           {card.link && (
             <Link
               to={card.link}
-              className="inline-flex items-center gap-1 text-xs sm:text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mt-4 hover:underline"
+              className="inline-flex items-center gap-1 text-xs sm:text-sm mt-4 hover:underline group"
             >
-              {STRINGS.ADMIN.DASHBOARD.VIEW_ALL}
-              <FiArrowUpRight className="w-4 h-4" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+                {STRINGS.ADMIN.DASHBOARD.VIEW_ALL}
+              </span>
+              <FiArrowUpRight className="w-4 h-4 text-purple-600" />
             </Link>
           )}
         </div>

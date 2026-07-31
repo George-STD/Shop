@@ -1,3 +1,4 @@
+import { LoadingSpinner } from '../../common/LoadingSpinner';
 import React from 'react';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
@@ -15,7 +16,7 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
   if (isLoading) {
     return (
       <div className="bg-white rounded-2xl shadow-sm overflow-x-auto p-8 text-center">
-        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full mx-auto" />
+        <LoadingSpinner size="md" className="mx-auto" />
       </div>
     );
   }
@@ -24,8 +25,8 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
   const isAllSelected = allIds.length > 0 && allIds.every(id => selectedIds.includes(id));
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-x-auto">
-      <div className="overflow-x-auto">
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden relative before:content-[''] before:absolute before:inset-y-0 before:left-0 before:w-4 before:bg-gradient-to-r before:from-white before:to-transparent before:z-10 before:pointer-events-none after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-white/80 after:to-transparent after:z-10 after:pointer-events-none md:after:hidden">
+      <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-xs sm:text-sm">
           <thead className="bg-gray-50 text-xs md:text-sm">
             <tr>
@@ -78,7 +79,7 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
                       />
                     )}
                     <div>
-                      <p className="font-medium text-xs sm:text-sm">{product.name}</p>
+                      <p className="font-medium text-xs sm:text-sm line-clamp-1 max-w-[220px]" title={product.name}>{product.name}</p>
                       <p className="text-xs sm:text-sm text-gray-500">{product.sku}</p>
                       <p className="text-[10px] text-gray-400 mt-1 cursor-pointer hover:text-blue-500" 
                          onClick={() => {
@@ -129,6 +130,7 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
                       onClick={() => handleEdit(product)}
                       className="p-1 sm:p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                       title={STRINGS.ADMIN.TABLE.EDIT}
+                      aria-label={STRINGS.ADMIN.TABLE.EDIT}
                     >
                       <FiEdit2 className="w-4 h-4" />
                     </button>
@@ -136,6 +138,7 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
                       onClick={() => handleDelete(product)}
                       className="p-1 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg"
                       title={STRINGS.ADMIN.TABLE.DELETE}
+                      aria-label={STRINGS.ADMIN.TABLE.DELETE}
                     >
                       <FiTrash2 className="w-4 h-4" />
                     </button>
@@ -179,3 +182,4 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
 };
 
 export default AdminProductsTable;
+

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { adminAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import { FiGift, FiX, FiCheck, FiAward, FiDollarSign, FiMessageSquare, FiSliders } from 'react-icons/fi';
+import Modal from '../ui/Modal';
 
 const LoyaltySettingsModal = ({ isOpen, onClose, onUpdated }) => {
   const [loading, setLoading] = useState(false);
@@ -52,10 +53,12 @@ const LoyaltySettingsModal = ({ isOpen, onClose, onUpdated }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
-      <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-gray-100 overflow-hidden my-auto max-h-[95vh] overflow-y-auto">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-purple-700 via-pink-600 to-red-500 p-6 text-white flex items-center justify-between">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-xl"
+      customHeader={
+        <div className="bg-gradient-to-r from-purple-700 via-pink-600 to-red-500 p-6 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
               <FiGift className="w-6 h-6 text-yellow-300" />
@@ -68,12 +71,13 @@ const LoyaltySettingsModal = ({ isOpen, onClose, onUpdated }) => {
           <button
             onClick={onClose}
             className="p-2 hover:bg-white/20 rounded-full transition-colors"
+            aria-label="Close modal"
           >
             <FiX className="w-6 h-6" />
           </button>
         </div>
-
-        {/* Content */}
+      }
+    >
         {loading ? (
           <div className="p-12 text-center text-gray-500 font-medium">جاري تحميل الإعدادات...</div>
         ) : (
@@ -189,10 +193,9 @@ const LoyaltySettingsModal = ({ isOpen, onClose, onUpdated }) => {
                 {saving ? 'جاري الحفظ...' : 'حفظ التعديلات'}
               </button>
             </div>
-          </form>
+        </form>
         )}
-      </div>
-    </div>
+    </Modal>
   );
 };
 

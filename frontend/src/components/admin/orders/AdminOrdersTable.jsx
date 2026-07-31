@@ -1,3 +1,4 @@
+﻿import { LoadingSpinner } from '../../common/LoadingSpinner';
 import React from 'react';
 import { FiEye } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
@@ -17,14 +18,14 @@ const AdminOrdersTable = ({
   if (isLoading) {
     return (
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden p-8 text-center">
-        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full mx-auto" />
+        <LoadingSpinner size="md" className="mx-auto" />
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden relative before:content-[''] before:absolute before:inset-y-0 before:left-0 before:w-4 before:bg-gradient-to-r before:from-white before:to-transparent before:z-10 before:pointer-events-none after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-white/80 after:to-transparent after:z-10 after:pointer-events-none md:after:hidden">
+      <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
@@ -78,6 +79,7 @@ const AdminOrdersTable = ({
                     onClick={() => setSelectedOrder(order)}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                     title={STRINGS.ADMIN.TABLE.VIEW_DETAILS}
+                    aria-label={STRINGS.ADMIN.TABLE.VIEW_DETAILS}
                   >
                     <FiEye className="w-4 h-4" />
                   </button>
@@ -120,3 +122,4 @@ const AdminOrdersTable = ({
 };
 
 export default AdminOrdersTable;
+

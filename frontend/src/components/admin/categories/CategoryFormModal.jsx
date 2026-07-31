@@ -1,5 +1,6 @@
 import React from 'react';
 import { STRINGS } from '../../../constants';
+import Modal from '../../ui/Modal';
 
 const CategoryFormModal = ({
   showModal,
@@ -11,7 +12,6 @@ const CategoryFormModal = ({
   setShowModal,
   isPending,
 }) => {
-  if (!showModal) return null;
 
   const generateSlug = (name) => {
     return name
@@ -22,14 +22,16 @@ const CategoryFormModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b sticky top-0 bg-white">
-          <h2 className="text-xl font-bold">
-            {editingCategory ? STRINGS.ADMIN.CATEGORIES.EDIT_CATEGORY : STRINGS.ADMIN.CATEGORIES.ADD_NEW_CATEGORY}
-          </h2>
-        </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+    <Modal
+      isOpen={showModal}
+      onClose={() => {
+        resetForm();
+        setShowModal(false);
+      }}
+      title={editingCategory ? STRINGS.ADMIN.CATEGORIES.EDIT_CATEGORY : STRINGS.ADMIN.CATEGORIES.ADD_NEW_CATEGORY}
+      maxWidth="max-w-lg"
+    >
+      <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">{STRINGS.ADMIN.CATEGORIES.CATEGORY_NAME}</label>
             <input
@@ -152,9 +154,8 @@ const CategoryFormModal = ({
               {isPending ? STRINGS.ADMIN.PRODUCT_FORM.SAVING : STRINGS.ADMIN.PRODUCT_FORM.SAVE}
             </button>
           </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 };
 

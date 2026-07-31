@@ -1,5 +1,6 @@
 import React from 'react';
 import { STRINGS } from '../../../constants';
+import Modal from '../../ui/Modal';
 
 const defaultColors = [
   'from-pink-400 to-pink-600',
@@ -23,17 +24,15 @@ const OccasionFormModal = ({
   closeModal,
   isPending
 }) => {
-  if (!showModal) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-bold">
-            {editing ? STRINGS.ADMIN.OCCASIONS.EDIT_OCCASION : STRINGS.ADMIN.OCCASIONS.ADD_NEW_OCCASION}
-          </h2>
-        </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+    <Modal
+      isOpen={showModal}
+      onClose={closeModal}
+      title={editing ? STRINGS.ADMIN.OCCASIONS.EDIT_OCCASION : STRINGS.ADMIN.OCCASIONS.ADD_NEW_OCCASION}
+      maxWidth="max-w-md"
+    >
+      <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           {/* Name */}
           <div>
             <label className="block text-gray-700 mb-2 font-medium">{STRINGS.ADMIN.OCCASIONS.OCCASION_NAME_LABEL}</label>
@@ -133,9 +132,8 @@ const OccasionFormModal = ({
                   : STRINGS.ADMIN.OCCASIONS.CREATE}
             </button>
           </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 };
 

@@ -1,3 +1,4 @@
+﻿import { LoadingSpinner } from '../../common/LoadingSpinner';
 import React from 'react';
 import { FiTrash2, FiUserCheck, FiUserX, FiShield, FiUser } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
@@ -6,14 +7,14 @@ const AdminUsersTable = ({ data, isLoading, page, setPage, handleToggleRole, han
   if (isLoading) {
     return (
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden p-8 text-center">
-        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full mx-auto" />
+        <LoadingSpinner size="md" className="mx-auto" />
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden relative before:content-[''] before:absolute before:inset-y-0 before:left-0 before:w-4 before:bg-gradient-to-r before:from-white before:to-transparent before:z-10 before:pointer-events-none after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-white/80 after:to-transparent after:z-10 after:pointer-events-none md:after:hidden">
+      <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
@@ -105,6 +106,7 @@ const AdminUsersTable = ({ data, isLoading, page, setPage, handleToggleRole, han
                           : 'text-green-600 hover:bg-green-50'
                       }`}
                       title={user.isActive ? STRINGS.ADMIN.TABLE.DEACTIVATE_ACCOUNT : STRINGS.ADMIN.TABLE.ACTIVATE_ACCOUNT}
+                      aria-label={user.isActive ? STRINGS.ADMIN.TABLE.DEACTIVATE_ACCOUNT : STRINGS.ADMIN.TABLE.ACTIVATE_ACCOUNT}
                     >
                       {user.isActive ? (
                         <FiUserX className="w-4 h-4" />
@@ -116,6 +118,7 @@ const AdminUsersTable = ({ data, isLoading, page, setPage, handleToggleRole, han
                       onClick={() => handleDelete(user)}
                       className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg"
                       title={STRINGS.ADMIN.TABLE.DELETE}
+                      aria-label={STRINGS.ADMIN.TABLE.DELETE}
                     >
                       <FiTrash2 className="w-4 h-4" />
                     </button>
@@ -159,3 +162,4 @@ const AdminUsersTable = ({ data, isLoading, page, setPage, handleToggleRole, han
 };
 
 export default AdminUsersTable;
+
