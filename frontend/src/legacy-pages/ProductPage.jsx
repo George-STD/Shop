@@ -671,21 +671,22 @@ const ProductPage = () => {
                 {product.isReadyBox && product.includedProducts &&
                   product.includedProducts
                     .filter((item) => item.product && item.product.images?.length > 0)
-                    .flatMap((item) =>
-                      item.product.images.map((img, imgIdx) => (
+                    .map((item, idx) => {
+                      const mainImg = item.product.images[0];
+                      return (
                         <button
-                          key={`ready-${item.product._id}-${imgIdx}`}
-                          onClick={() => setActiveBoxImage(img.url)}
-                          onMouseEnter={() => setActiveBoxImage(img.url)}
+                          key={`ready-${item.product._id}-${idx}`}
+                          onClick={() => setActiveBoxImage(mainImg.url)}
+                          onMouseEnter={() => setActiveBoxImage(mainImg.url)}
                           className={`flex-shrink-0 rounded-lg overflow-hidden w-14 sm:w-16 md:w-20 border-2 transition-all ${
-                            activeBoxImage === img.url
+                            activeBoxImage === mainImg.url
                               ? 'border-purple-500 shadow-md scale-105'
                               : 'border-transparent hover:border-purple-300'
                           }`}
                         >
                           <div className="aspect-square relative">
                             <img
-                              src={img.url}
+                              src={mainImg.url}
                               alt={item.product.name}
                               className="w-full h-full object-cover"
                             />
@@ -694,8 +695,8 @@ const ProductPage = () => {
                             </span>
                           </div>
                         </button>
-                      ))
-                    )}
+                      );
+                    })}
                 {/* Shape images thumbnails */}
                 {selectedShape &&
                   product.shapes
