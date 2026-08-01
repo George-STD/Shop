@@ -59,8 +59,10 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
             </tr>
           </thead>
           <tbody className="divide-y">
-            {products?.data?.map((product, index) => (
-              <tr key={product._id} className="hover:bg-gray-50">
+            {products?.data?.map((product, index) => {
+              if (!product) return null;
+              return (
+              <tr key={product._id || index} className="hover:bg-gray-50">
                 <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6 text-center">
                   <input 
                     type="checkbox" 
@@ -95,7 +97,7 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
                 </td>
                 <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6 text-gray-600">
                   {(Array.isArray(product.category)
-                    ? product.category.map((c) => c.name).join(', ')
+                    ? product.category.map((c) => c?.name).filter(Boolean).join(', ')
                     : product.category?.name) || '-'}
                 </td>
                 <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6">
@@ -145,7 +147,8 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

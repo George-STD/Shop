@@ -21,11 +21,11 @@ const CONFIG = {
   RATE_LIMIT: {
     API: {
       WINDOW_MS: 15 * 60 * 1000, // 15 minutes
-      MAX_REQUESTS: 100,
+      MAX_REQUESTS: 500,
     },
     ADMIN: {
       WINDOW_MS: 15 * 60 * 1000, // 15 minutes
-      MAX_REQUESTS: 50,
+      MAX_REQUESTS: 500,
     },
     LOGIN: {
       WINDOW_MS: 60 * 60 * 1000, // 1 hour
