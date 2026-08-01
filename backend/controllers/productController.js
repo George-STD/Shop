@@ -14,7 +14,7 @@ const processReadyBoxes = async (products) => {
   if (readyBoxes.length > 0) {
     await Product.populate(readyBoxes, {
       path: 'includedProducts.product',
-      select: 'name stock price oldPrice boxDiscount'
+      select: 'name stock price oldPrice boxDiscount images'
     });
 
     readyBoxes.forEach(p => {
