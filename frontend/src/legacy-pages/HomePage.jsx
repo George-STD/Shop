@@ -243,9 +243,9 @@ const HomePage = () => {
             <div>
               <span className="inline-flex items-center gap-1.5 text-blue-600 font-medium text-sm mb-2">
                 <span className="w-8 h-[2px] bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"></span>
-                إليك بوكسات جاهزة
+                إليك بوكسات هدايا على ذوقك
               </span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">بوكسات جاهزة</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">بوكسات هدايا على ذوقك</h2>
             </div>
             <Link
               to="/products?isReadyBox=true"
