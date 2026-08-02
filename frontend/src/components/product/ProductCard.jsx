@@ -58,7 +58,7 @@ const ProductCard = ({ product }) => {
   return (
     <div className="card product-card group min-w-0 flex flex-col h-full overflow-hidden w-full">
       {/* Image Container */}
-      <div className="relative overflow-hidden bg-gray-50">
+      <div className="relative overflow-hidden bg-gray-50 aspect-square">
         <Link to={`/product/${product.slug}`}>
           <img
             src={product.images?.[0]?.url || '/images/placeholder.jpg'}

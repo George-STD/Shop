@@ -30,7 +30,7 @@ const CartSidebar = () => {
   const formatPrice = (price) => new Intl.NumberFormat('ar-EG').format(price);
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-[60]">
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm overlay-backdrop"

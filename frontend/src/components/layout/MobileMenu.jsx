@@ -18,7 +18,7 @@ const MobileMenu = () => {
   const categories = STRINGS.NAV_CATEGORIES;
 
   return (
-    <div className="fixed inset-0 z-50 lg:hidden">
+    <div className="fixed inset-0 z-[60] lg:hidden">
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm overlay-backdrop"
