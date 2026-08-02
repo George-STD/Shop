@@ -380,19 +380,35 @@ const CheckoutPage = () => {
                       ))}
                     </div>
                     {formData.paymentMethod === 'instapay' && (
-                      <div className="mt-6 p-4 bg-gray-50 rounded-xl flex flex-col gap-2">
+                      <div className="mt-6 p-4 bg-purple-50/80 border border-purple-200 rounded-2xl flex flex-col gap-3">
                         <div className="flex items-center gap-2">
                           <img
                             src="/images/payments/instapay.svg"
                             alt="InstaPay"
-                            className="h-5 w-5"
+                            className="h-6 w-6"
                           />
-                          <span className="font-medium">
-                            {STRINGS.CHECKOUT.INSTAPAY_INFO1}
+                          <span className="font-bold text-purple-950 text-base">
+                            الدفع عبر تطبيق إنستاباي (InstaPay)
                           </span>
                         </div>
-                        <p className="text-sm text-gray-500">
-                          {STRINGS.CHECKOUT.INSTAPAY_INFO2}
+                        <div className="p-3.5 bg-white rounded-xl border border-purple-200/80 flex items-center justify-between shadow-sm">
+                          <span className="text-gray-700 text-xs sm:text-sm font-semibold">رقم تحويل إنستاباي:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base sm:text-lg font-bold text-purple-700 font-mono tracking-wider dir-ltr select-all">+201286153004</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText('+201286153004');
+                                toast.success('تم نسخ رقم إنستاباي بنجاح!');
+                              }}
+                              className="text-xs bg-purple-100 hover:bg-purple-200 text-purple-800 px-2.5 py-1 rounded-lg transition-colors font-semibold"
+                            >
+                              نسخ
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-xs text-purple-800 leading-relaxed font-medium">
+                          يرجى تحويل المبلغ الإجمالي إلى الرقم أعلاه عبر InstaPay. بعد تأكيد الطلب، سيرسل لك إيميل يحتوي أيضاً على تفاصيل التحويل.
                         </p>
                       </div>
                     )}
@@ -454,10 +470,17 @@ const CheckoutPage = () => {
                         <FiCreditCard />
                         {STRINGS.CHECKOUT.PAYMENT_METHOD}
                       </h3>
-                      <p className="text-gray-600">
-                        {formData.paymentMethod === 'cod' && STRINGS.CHECKOUT.COD}
-                        {formData.paymentMethod === 'instapay' && STRINGS.CHECKOUT.INSTAPAY}
-                      </p>
+                      <div className="text-gray-600">
+                        {formData.paymentMethod === 'cod' && <span className="font-medium">{STRINGS.CHECKOUT.COD}</span>}
+                        {formData.paymentMethod === 'instapay' && (
+                          <div className="flex flex-col gap-2">
+                            <span className="text-purple-700 font-bold">{STRINGS.CHECKOUT.INSTAPAY}</span>
+                            <div className="inline-flex items-center gap-2 text-sm bg-purple-50 border border-purple-200 text-purple-900 px-3.5 py-2 rounded-xl w-fit">
+                              📱 رقم التحويل: <strong className="dir-ltr text-purple-700 font-mono text-base">+201286153004</strong>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {/* Items Summary */}
                     <div className="space-y-4">

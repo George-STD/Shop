@@ -60,6 +60,7 @@ async function sendEmail({ to, subject, html }) {
  */
 async function sendOrderConfirmationEmail(to, order) {
   const subject = `تأكيد طلبك من ${BRAND_NAME}`;
+  const isInstaPay = order.paymentMethod === 'instapay';
   const html = `
     <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #eee;">
       <div style="background: linear-gradient(135deg, #a855f7, #ec4899); padding: 24px; text-align: center;">
@@ -67,9 +68,19 @@ async function sendOrderConfirmationEmail(to, order) {
       </div>
       <div style="padding: 32px 24px;">
         <h2 style="color: #1f2937; margin-top: 0;">شكرًا لطلبك! 🎁</h2>
-        <p style="color: #6b7280;">رقم الطلب: <b>${order.orderNumber || order._id}</b></p>
-        <p style="color: #6b7280;">المجموع: <b>${order.total} ج.م</b></p>
-        <p style="color: #6b7280;">سنقوم بمعالجة طلبك قريبًا.</p>
+        <p style="color: #6b7280; font-size: 15px;">رقم الطلب: <b style="color: #1f2937;">${order.orderNumber || order._id}</b></p>
+        <p style="color: #6b7280; font-size: 15px;">المجموع الإجمالي: <b style="color: #a855f7;">${order.total} ج.م</b></p>
+        <p style="color: #6b7280; font-size: 15px;">طريقة الدفع: <b>${isInstaPay ? 'إنستاباي (InstaPay)' : 'الدفع عند الاستلام (كاش)'}</b></p>
+        
+        ${isInstaPay ? `
+          <div style="margin: 20px 0; padding: 20px; background-color: #fdf4ff; border: 2px dashed #c084fc; border-radius: 12px; text-align: center;">
+            <p style="margin: 0 0 6px 0; color: #7e22ce; font-weight: bold; font-size: 16px;">📱 تفاصيل الدفع عبر إنستاباي (InstaPay)</p>
+            <p style="margin: 8px 0; color: #581c87; font-size: 22px; font-weight: 800; letter-spacing: 1px; direction: ltr;">+201286153004</p>
+            <p style="margin: 6px 0 0 0; color: #6b21a8; font-size: 13px; line-height: 1.5;">يرجى تحويل المبلغ الإجمالي (<b>${order.total} ج.م</b>) إلى هذا الرقم عبر تطبيق InstaPay لإتمام ومعالجة الطلب.</p>
+          </div>
+        ` : ''}
+
+        <p style="color: #6b7280; margin-top: 24px;">سنقوم بمعالجة طلبك قريبًا.</p>
       </div>
     </div>
   `;
