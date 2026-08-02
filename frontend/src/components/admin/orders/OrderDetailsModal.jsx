@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiCheck, FiTruck, FiPackage } from 'react-icons/fi';
+import { FiCheck, FiTruck, FiPackage, FiX } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
 import Modal from '../../ui/Modal';
 
