@@ -283,10 +283,10 @@ const HomePage = () => {
                   </SwiperSlide>
                 ))}
               </Swiper>
-              <button className="swiper-button-next-readyboxes absolute top-1/3 -left-4 sm:-left-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-blue-600 hover:bg-blue-50 hover:scale-110 transition-all z-10 opacity-0 group-hover:opacity-100 disabled:opacity-0">
+              <button className="swiper-button-next-readyboxes absolute top-1/3 -left-4 sm:-left-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 hidden md:flex items-center justify-center text-blue-600 hover:bg-blue-50 hover:scale-110 transition-all z-10 opacity-0 group-hover:opacity-100 disabled:opacity-0">
                 ←
               </button>
-              <button className="swiper-button-prev-readyboxes absolute top-1/3 -right-4 sm:-right-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-blue-600 hover:bg-blue-50 hover:scale-110 transition-all z-10 opacity-0 group-hover:opacity-100 disabled:opacity-0">
+              <button className="swiper-button-prev-readyboxes absolute top-1/3 -right-4 sm:-right-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 hidden md:flex items-center justify-center text-blue-600 hover:bg-blue-50 hover:scale-110 transition-all z-10 opacity-0 group-hover:opacity-100 disabled:opacity-0">
                 →
               </button>
             </div>

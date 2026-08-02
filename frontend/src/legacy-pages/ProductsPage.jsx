@@ -199,7 +199,7 @@ const ProductsPage = () => {
           <div className="flex gap-8">
             {/* Sidebar Filters - Desktop */}
             <aside className="hidden lg:block w-64 flex-shrink-0">
-              <div className="bg-white rounded-2xl p-6 sticky top-24 lg:top-32">
+              <div className="bg-white rounded-2xl p-6 sticky top-20 lg:top-24">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="font-bold text-gray-800">{STRINGS.PRODUCTS_PAGE.FILTER}</h2>
                   {hasActiveFilters && (

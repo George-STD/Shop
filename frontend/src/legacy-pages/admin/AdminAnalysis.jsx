@@ -20,6 +20,7 @@ const AdminAnalysis = () => {
   const [period, setPeriod] = useState('all'); // '7d' | '30d' | 'all'
   const [isLoyaltyModalOpen, setIsLoyaltyModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const { data: analysisData, isLoading: isAnalysisLoading, refetch: refetchAnalysis } = useQuery({
     queryKey: ['admin-analysis', period],
@@ -122,34 +123,46 @@ const AdminAnalysis = () => {
           </button>
 
           {/* Export Reports Dropdown */}
-          <div className="relative group">
+          <div className="relative">
             <button
               disabled={exporting}
+              onClick={() => setShowExportMenu((prev) => !prev)}
               className="px-4 py-2 bg-gray-800 text-white rounded-xl text-sm font-semibold shadow-sm hover:bg-gray-900 transition-all flex items-center gap-2 disabled:opacity-50"
             >
               <FiDownload className="w-4 h-4" />
               {exporting ? 'جاري التصدير...' : 'تصدير تقرير (CSV)'}
             </button>
-            <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-100 rounded-xl shadow-xl hidden group-hover:block z-20 py-2">
-              <button
-                onClick={() => handleExportCSV('sales')}
-                className="w-full text-right px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors flex items-center gap-2"
-              >
-                📊 تقرير المبيعات (Sales)
-              </button>
-              <button
-                onClick={() => handleExportCSV('inventory')}
-                className="w-full text-right px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors flex items-center gap-2"
-              >
-                📦 تقرير المخزون (Inventory)
-              </button>
-              <button
-                onClick={() => handleExportCSV('orders')}
-                className="w-full text-right px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors flex items-center gap-2"
-              >
-                🛒 تقرير الطلبات (Orders)
-              </button>
-            </div>
+            {showExportMenu && (
+              <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-20 py-2">
+                <button
+                  onClick={() => {
+                    handleExportCSV('sales');
+                    setShowExportMenu(false);
+                  }}
+                  className="w-full text-right px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors flex items-center gap-2"
+                >
+                  📊 تقرير المبيعات (Sales)
+                </button>
+                <button
+                  onClick={() => {
+                    handleExportCSV('inventory');
+                    setShowExportMenu(false);
+                  }}
+                  className="w-full text-right px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors flex items-center gap-2"
+                >
+                  📦 تقرير المخزون (Inventory)
+                </button>
+                <button
+                  onClick={() => {
+                    handleExportCSV('orders');
+                    setShowExportMenu(false);
+                  }}
+                  className="w-full text-right px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors flex items-center gap-2"
+                >
+                  🛒 تقرير الطلبات (Orders)
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Navigation Tabs */}

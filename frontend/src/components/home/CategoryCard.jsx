@@ -24,15 +24,15 @@ const CategoryCard = ({ category }) => {
 
         {/* Content */}
         <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-5">
-          <h3 className="text-white font-bold text-base sm:text-lg transform translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+          <h3 className="text-white font-bold text-base sm:text-lg transform translate-y-0 transition-transform duration-300">
             {category.name}
           </h3>
           {category.productsCount > 0 && (
-            <p className="text-white/70 text-sm mt-1 transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-75">
+            <p className="text-white/80 text-xs sm:text-sm mt-1 transform translate-y-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:translate-y-2 md:group-hover:translate-y-0 transition-all duration-300">
               {STRINGS.HOME.PRODUCTS_COUNT(category.productsCount)}
             </p>
           )}
-          <div className="mt-2 flex items-center gap-1 text-white/80 text-xs font-medium transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-150">
+          <div className="mt-1.5 flex items-center gap-1 text-white/90 text-xs font-medium transform translate-y-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:translate-y-2 md:group-hover:translate-y-0 transition-all duration-300">
             <span>{STRINGS.HOME.BROWSE}</span>
             <span className="transform group-hover:-translate-x-1 transition-transform duration-300">
               ←
