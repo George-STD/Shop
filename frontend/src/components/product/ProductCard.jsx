@@ -56,7 +56,7 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="card product-card group min-w-0 flex flex-col h-full">
+    <div className="card product-card group min-w-0 flex flex-col h-full overflow-hidden w-full">
       {/* Image Container */}
       <div className="relative overflow-hidden bg-gray-50">
         <Link to={`/product/${product.slug}`}>
@@ -108,7 +108,7 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* Content */}
-      <div className="p-3 sm:p-4 flex flex-col flex-grow">
+      <div className="p-2.5 sm:p-4 flex flex-col flex-grow min-w-0">
         {/* Category */}
         {product.category && (
           <div className="text-xs text-purple-400 font-medium uppercase tracking-wider">
@@ -156,14 +156,15 @@ const ProductCard = ({ product }) => {
         )}
 
         {/* Price */}
-        <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2 mt-auto pt-3">
-          <span className="text-base sm:text-lg font-bold text-gray-900">
-            {formatPrice(product.price)}{' '}
+        <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-auto pt-2.5 min-w-0">
+          <span className="text-sm sm:text-base md:text-lg font-bold text-gray-900 whitespace-nowrap">
+            <bdi>{formatPrice(product.price)}</bdi>{' '}
             <span className="text-xs font-normal text-gray-500">{STRINGS.PRODUCT.CURRENCY}</span>
           </span>
           {product.oldPrice && (
-            <span className="text-sm text-gray-400 line-through">
-              {formatPrice(product.oldPrice)}
+            <span className="text-xs sm:text-sm text-gray-400 line-through whitespace-nowrap">
+              <bdi>{formatPrice(product.oldPrice)}</bdi>{' '}
+              <span className="text-[10px] sm:text-xs font-normal text-gray-400">{STRINGS.PRODUCT.CURRENCY}</span>
             </span>
           )}
         </div>

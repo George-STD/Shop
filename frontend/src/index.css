@@ -24,6 +24,12 @@ body {
   direction: rtl;
   overflow-x: hidden;
   width: 100%;
+  max-width: 100vw;
+}
+
+/* Mobile Safari & RTL Text Isolation Fixes */
+bdi, [dir="auto"] {
+  unicode-bidi: isolate;
 }
 
 /* Custom Scrollbar */

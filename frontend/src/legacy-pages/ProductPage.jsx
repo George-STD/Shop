@@ -774,13 +774,13 @@ const ProductPage = () => {
 
               {/* Price */}
               <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-                <span className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                  {product.price} {STRINGS.PRODUCT.CURRENCY}
+                <span className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 whitespace-nowrap">
+                  <bdi>{product.price}</bdi> {STRINGS.PRODUCT.CURRENCY}
                 </span>
                 {product.oldPrice && (
                   <>
-                    <span className="text-base sm:text-xl text-gray-400 line-through">
-                      {product.oldPrice} {STRINGS.PRODUCT.CURRENCY}
+                    <span className="text-base sm:text-xl text-gray-400 line-through whitespace-nowrap">
+                      <bdi>{product.oldPrice}</bdi> {STRINGS.PRODUCT.CURRENCY}
                     </span>
                     <span className="badge badge-sale">{STRINGS.PRODUCT.SAVE_AMOUNT} {discount}%</span>
                   </>

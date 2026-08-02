@@ -305,7 +305,7 @@ const ProductsPage = () => {
             </aside>
 
             {/* Main Content */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               {/* Toolbar */}
               <div className="bg-white rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
                 {/* Mobile Filter Toggle */}
@@ -420,7 +420,7 @@ const ProductsPage = () => {
                 </div>
               ) : products.length > 0 ? (
                 <div
-                  className={`grid ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1'} gap-3 sm:gap-4 md:gap-6`}
+                  className={`grid ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1'} gap-2.5 sm:gap-4 md:gap-6 min-w-0 w-full`}
                 >
                   {products.map((product) => (
                     <ProductCard key={product._id} product={product} />
