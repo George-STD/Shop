@@ -71,7 +71,7 @@ const ProductCard = ({ product }) => {
         {/* Badges */}
         <div className="absolute top-3 right-3 flex flex-col gap-1.5">
           {discount > 0 && <span className="badge badge-sale">-{discount}%</span>}
-          {product.isNew && <span className="badge badge-new">{STRINGS.PRODUCT.NEW}</span>}
+          {(product.isNewArrival || product.isNew) && <span className="badge badge-new">{STRINGS.PRODUCT.NEW}</span>}
           {product.isBestseller && <span className="badge badge-bestseller">{STRINGS.PRODUCT.BESTSELLER}</span>}
         </div>
 

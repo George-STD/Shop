@@ -63,7 +63,7 @@ const WishlistPage = () => {
             <div className="text-center py-16">
               <FiHeart className="text-6xl text-gray-300 mx-auto mb-4" />
               <h2 className="text-xl font-bold text-gray-800 mb-2">{STRINGS.WISHLIST.EMPTY}</h2>
-              <p className="text-gray-500 mb-6">{STRINGS.WISHLIST.EMPTY_DESC}</p>
+              <p className="text-gray-500 mb-6">{STRINGS.WISHLIST.EMPTY_DESC || STRINGS.WISHLIST.EMPTY_MESSAGE}</p>
               <Link to="/products" className="btn-primary">
                 {STRINGS.PRODUCT.BROWSE_PRODUCTS}
               </Link>

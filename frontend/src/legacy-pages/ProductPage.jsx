@@ -747,7 +747,7 @@ const ProductPage = () => {
                         {i < arr.length - 1 && <span className="text-gray-300 mx-1">·</span>}
                       </span>
                     ))}
-                {product.isNew && <span className="badge badge-new">{STRINGS.PRODUCT.NEW}</span>}
+                {(product.isNewArrival || product.isNew) && <span className="badge badge-new">{STRINGS.PRODUCT.NEW}</span>}
                 {product.isBestseller && (
                   <span className="badge badge-bestseller">{STRINGS.PRODUCT.BESTSELLER}</span>
                 )}
