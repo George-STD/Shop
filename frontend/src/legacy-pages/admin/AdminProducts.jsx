@@ -80,7 +80,7 @@ const AdminProducts = () => {
   const createMutation = useMutation({
     mutationFn: (data) => adminAPI.createProduct(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-products']);
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       setShowModal(false);
       resetForm();
     },
@@ -89,7 +89,7 @@ const AdminProducts = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => adminAPI.updateProduct(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-products']);
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       setShowModal(false);
       resetForm();
     },
@@ -98,14 +98,14 @@ const AdminProducts = () => {
   const deleteMutation = useMutation({
     mutationFn: (id) => adminAPI.deleteProduct(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-products']);
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
     },
   });
 
   const bulkMutation = useMutation({
     mutationFn: (data) => adminAPI.bulkProductAction(data),
     onSuccess: (res) => {
-      queryClient.invalidateQueries(['admin-products']);
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       setSelectedIds([]);
       toast.success(res.data?.message || 'تم التنفيذ بنجاح');
     },
@@ -447,7 +447,7 @@ const AdminProducts = () => {
         onClose={() => setShowAiUploader(false)} 
         categories={categories}
         occasionsList={occasionsList}
-        onSuccess={() => queryClient.invalidateQueries(['admin-products'])}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['admin-products'] })}
       />
     </div>
   );

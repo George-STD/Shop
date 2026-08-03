@@ -1232,7 +1232,7 @@ const ProductPage = () => {
                   {/* Review Form Component */}
                   <ReviewForm
                     productId={product._id}
-                    refreshReviews={() => queryClient.invalidateQueries(['reviews', product._id])}
+                    refreshReviews={() => queryClient.invalidateQueries({ queryKey: ['reviews', product._id] })}
                   />
 
                   {reviewsData?.data?.length > 0 ? (

@@ -30,14 +30,14 @@ const AdminUsers = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => adminAPI.updateUser(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-users']);
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => adminAPI.deleteUser(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-users']);
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
   });
 

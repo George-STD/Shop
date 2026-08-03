@@ -157,7 +157,7 @@ const MobileMenu = () => {
             {[
               { to: '/track-order', label: STRINGS.NAV.TRACK_ORDER, icon: '📦' },
               { to: '/stores', label: STRINGS.NAV.STORES, icon: '🏪' },
-              { to: '/faq', label: STRINGS.NOT_FOUND_PAGE.HELPFUL_LINKS.find(l => l.to === '/faq').label, icon: '❓' },
+              { to: '/faq', label: STRINGS.FOOTER.FAQ || 'الأسئلة الشائعة', icon: '❓' },
               { to: '/contact', label: STRINGS.NAV.CONTACT, icon: '💬' },
             ].map((link) => (
               <li key={link.to}>

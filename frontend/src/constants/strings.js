@@ -121,6 +121,7 @@ export const STRINGS = {
     ABOUT_DESC: 'متجرك الأول للهدايا في مصر. نقدم لك أفضل تشكيلة من الهدايا لجميع المناسبات مع توصيل سريع لباب بيتك.',
     CONTACT_FORM: 'نموذج التواصل',
     MADE_WITH: 'صُنع بـ',
+    RIGHTS_RESERVED: 'جميع الحقوق محفوظة.',
     PAYMENT_METHODS: 'طرق الدفع المتاحة:',
     COPYRIGHT: '© {year} For You Gift Shop. جميع الحقوق محفوظة.',
     ABOUT_TEXT: 'متجرك الأول للهدايا في مصر. نقدم لك أفضل تشكيلة من الهدايا لجميع المناسبات مع توصيل سريع لباب بيتك.',
@@ -1284,59 +1285,7 @@ export const STRINGS = {
     STATUS_CANCELLED: 'ملغي',
   },
 
-  // =====================================================
-  // AUTH
-  // =====================================================
-  AUTH: {
-    LOGIN: 'تسجيل الدخول',
-    REGISTER: 'إنشاء حساب',
-    LOGOUT: 'تسجيل الخروج',
-    EMAIL: 'البريد الإلكتروني',
-    PASSWORD: 'كلمة المرور',
-    CONFIRM_PASSWORD: 'تأكيد كلمة المرور',
-    FORGOT_PASSWORD: 'نسيت كلمة المرور؟',
-    RESET_PASSWORD: 'إعادة تعيين كلمة المرور',
-    FIRST_NAME: 'الاسم الأول',
-    LAST_NAME: 'الاسم الأخير',
-    PHONE: 'رقم الهاتف',
-    VERIFICATION_CODE: 'كود التحقق',
-    VERIFY: 'تحقق',
-    RESEND_CODE: 'إعادة إرسال الكود',
-    // Messages
-    LOGIN_SUCCESS: 'تم تسجيل الدخول بنجاح',
-    LOGIN_REQUIRED: 'سجل دخول أولاً',
-    REGISTER_SUCCESS: 'تم إنشاء الحساب بنجاح',
-    VERIFICATION_SENT: 'تم إرسال كود التحقق إلى بريدك الإلكتروني',
-    LOGOUT_SUCCESS: 'تم تسجيل الخروج',
-    PASSWORD_CHANGED: 'تم تغيير كلمة المرور بنجاح',
-  },
 
-  // =====================================================
-  // ACCOUNT
-  // =====================================================
-  ACCOUNT: {
-    TITLE: 'حسابي',
-    PROFILE: 'الملف الشخصي',
-    ORDERS: 'طلباتي',
-    ADDRESSES: 'العناوين',
-    WISHLIST: 'قائمة الأمنيات',
-    SETTINGS: 'الإعدادات',
-    CHANGE_PASSWORD: 'تغيير كلمة المرور',
-    CURRENT_PASSWORD: 'كلمة المرور الحالية',
-    NEW_PASSWORD: 'كلمة المرور الجديدة',
-    UPDATE_PROFILE: 'تحديث البيانات',
-    PROFILE_UPDATED: 'تم تحديث البيانات بنجاح',
-  },
-
-  // =====================================================
-  // WISHLIST
-  // =====================================================
-  WISHLIST: {
-    TITLE: 'قائمة الأمنيات',
-    EMPTY: 'قائمة الأمنيات فارغة',
-    EMPTY_MESSAGE: 'لم تقم بإضافة أي منتجات للأمنيات بعد',
-    LOGIN_REQUIRED: 'سجل دخول أولاً لإضافة منتجات لقائمة الأمنيات',
-  },
 
   // =====================================================
   // GIFT FINDER
@@ -1610,6 +1559,9 @@ export const STRINGS = {
   // =====================================================
   AUTH: {
     LOGIN_SUCCESS: 'تم تسجيل الدخول بنجاح',
+    LOGIN_REQUIRED: 'سجل دخول أولاً',
+    LOGOUT_SUCCESS: 'تم تسجيل الخروج',
+    REGISTER_SUCCESS: 'تم إنشاء الحساب بنجاح',
     ACCOUNT_NOT_VERIFIED: 'حسابك غير مُفعّل. تم إرسال كود التفعيل',
     LOGIN_ERROR: 'حدث خطأ في تسجيل الدخول',
     PASSWORDS_DO_NOT_MATCH: 'كلمتا المرور غير متطابقتين',
@@ -1624,10 +1576,12 @@ export const STRINGS = {
     RESET_CODE_SENT: 'تم إرسال كود إعادة التعيين إلى بريدك الإلكتروني',
     CODE_CORRECT_ENTER_PASSWORD: 'الكود صحيح. أدخل كلمة المرور الجديدة',
     PASSWORD_CHANGED_SUCCESS: 'تم تغيير كلمة المرور بنجاح!',
+    PASSWORD_CHANGED: 'تم تغيير كلمة المرور بنجاح',
     LOGIN: 'تسجيل الدخول',
     REGISTER: 'إنشاء حساب جديد',
     VERIFY_ACCOUNT: 'تفعيل الحساب',
     FORGOT_PASSWORD: 'نسيت كلمة المرور',
+    RESET_PASSWORD: 'إعادة تعيين كلمة المرور',
     ENTER_VERIFICATION_CODE: 'إدخال كود التحقق',
     NEW_PASSWORD: 'كلمة مرور جديدة',
     CODE_SENT_TO: 'تم إرسال كود مكوّن من 6 أرقام إلى',
@@ -1657,16 +1611,21 @@ export const STRINGS = {
   // ACCOUNT
   // =====================================================
   ACCOUNT: {
+    TITLE: 'حسابي',
     MY_ACCOUNT: 'حسابي',
+    ORDERS: 'طلباتي',
     MY_ORDERS: 'طلباتي',
-    WISHLIST: 'قائمة الأمنيات',
+    ADDRESSES: 'العناوين',
     MY_ADDRESSES: 'عناويني',
+    WISHLIST: 'قائمة الأمنيات',
     SETTINGS: 'الإعدادات',
     LOGOUT: 'تسجيل الخروج',
     WELCOME: 'مرحباً',
     TRACK_ORDERS: 'تتبع وإدارة طلباتك',
     FAVORITE_PRODUCTS: 'منتجاتك المفضلة',
     EDIT_PROFILE: 'تعديل بياناتك',
+    UPDATE_PROFILE: 'تحديث البيانات',
+    NEW_PASSWORD: 'كلمة المرور الجديدة',
     NO_ORDERS_YET: 'لا توجد طلبات بعد',
     ORDER_NUMBER: 'رقم الطلب:',
     STATUS: 'الحالة:',

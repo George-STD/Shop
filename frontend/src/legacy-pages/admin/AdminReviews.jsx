@@ -26,14 +26,14 @@ const AdminReviews = () => {
   const approveMutation = useMutation({
     mutationFn: ({ id, isApproved }) => adminAPI.approveReview(id, isApproved),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-reviews']);
+      queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => adminAPI.deleteReview(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-reviews']);
+      queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
     },
   });
 

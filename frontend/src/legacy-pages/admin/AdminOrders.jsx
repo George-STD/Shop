@@ -52,7 +52,7 @@ const AdminOrders = () => {
     mutationFn: ({ id, status, trackingNumber }) =>
       adminAPI.updateOrderStatus(id, { status, trackingNumber }),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-orders']);
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
       setSelectedOrder(null);
     },
   });

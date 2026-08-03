@@ -19,7 +19,7 @@ const AdminEmails = () => {
   const deleteMutation = useMutation({
     mutationFn: (id) => adminAPI.deleteEmail(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-emails']);
+      queryClient.invalidateQueries({ queryKey: ['admin-emails'] });
       setSelectedEmail(null);
     },
   });
@@ -28,7 +28,7 @@ const AdminEmails = () => {
     if (!email.isRead) {
       // Fetch full email to mark as read
       const res = await adminAPI.getEmail(email._id);
-      queryClient.invalidateQueries(['admin-emails']);
+      queryClient.invalidateQueries({ queryKey: ['admin-emails'] });
       setSelectedEmail(res.data.data);
     } else {
       setSelectedEmail(email);

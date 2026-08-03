@@ -30,7 +30,7 @@ const AdminCategories = () => {
   const createMutation = useMutation({
     mutationFn: (data) => adminAPI.createCategory(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['categories']);
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
       setShowModal(false);
       resetForm();
     },
@@ -39,7 +39,7 @@ const AdminCategories = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => adminAPI.updateCategory(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['categories']);
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
       setShowModal(false);
       resetForm();
     },
@@ -48,7 +48,7 @@ const AdminCategories = () => {
   const deleteMutation = useMutation({
     mutationFn: (id) => adminAPI.deleteCategory(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['categories']);
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
     onError: (error) => {
       alert(error.response?.data?.message || STRINGS.ADMIN.NOTIFICATIONS.DELETE_CATEGORY_ERROR);
