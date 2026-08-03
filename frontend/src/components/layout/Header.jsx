@@ -11,13 +11,18 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const scrolledRef = useRef(false);
 
+  const [isMounted, setIsMounted] = useState(false);
   const { getItemsCount } = useCartStore();
   const { items: wishlistItems } = useWishlistStore();
   const { isAuthenticated, user } = useAuthStore();
   const { toggleMobileMenu, toggleCart } = useUIStore();
 
-  const cartCount = getItemsCount();
-  const wishlistCount = wishlistItems.length;
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const cartCount = isMounted ? getItemsCount() : 0;
+  const wishlistCount = isMounted ? wishlistItems.length : 0;
   const isAdmin = user?.role === 'admin';
 
   // Scroll detection with hysteresis to prevent vibration

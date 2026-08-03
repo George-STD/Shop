@@ -254,11 +254,23 @@ const deductStock = async (orderItems, session) => {
 const rollbackStock = async (items, session) => {
   const opts = session ? { session } : {};
   for (const item of items) {
-    if (item.isReadyBox && item.includedProducts) {
-      for (const boxItem of item.includedProducts) {
-        const requiredSubQty = boxItem.quantity * item.quantity;
+    let includedProducts = item.includedProducts;
+    let isReadyBox = item.isReadyBox;
+
+    if (isReadyBox && (!includedProducts || includedProducts.length === 0)) {
+      const dbProduct = await Product.findById(item.product).select('isReadyBox includedProducts');
+      if (dbProduct && dbProduct.isReadyBox) {
+        includedProducts = dbProduct.includedProducts;
+      }
+    }
+
+    if (isReadyBox && includedProducts && includedProducts.length > 0) {
+      for (const boxItem of includedProducts) {
+        const targetProdId = boxItem.product?._id || boxItem.product || boxItem.productId;
+        if (!targetProdId) continue;
+        const requiredSubQty = (boxItem.quantity || 1) * item.quantity;
         await Product.updateOne(
-          { _id: (boxItem.product._id || boxItem.product) },
+          { _id: targetProdId },
           { $inc: { stock: requiredSubQty, salesCount: -requiredSubQty } },
           opts
         );
