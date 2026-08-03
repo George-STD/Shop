@@ -300,4 +300,126 @@ router.post('/:id/helpful', protect, async (req, res) => {
   }
 });
 
+// @route   GET /api/reviews/order-info/:orderNumber
+// @desc    Get order info for review page
+// @access  Public
+router.get('/order-info/:orderNumber', async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+    const order = await Order.findOne({
+      $or: [{ orderNumber: orderNumber }, { _id: mongoose.Types.ObjectId.isValid(orderNumber) ? orderNumber : null }]
+    }).populate('items.product', 'name images price slug');
+
+    if (!order) {
+      return sendNotFound(res, 'الطلب غير موجود');
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        orderNumber: order.orderNumber,
+        createdAt: order.createdAt,
+        status: order.status,
+        customerName: `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`.trim() || order.user?.firstName || 'عميلنا العزيز',
+        customerEmail: order.user?.email || '',
+        items: order.items.map(item => ({
+          productId: item.product?._id || item.product,
+          name: item.name || item.product?.name,
+          image: item.image || item.product?.images?.[0]?.url || '/images/placeholder.jpg',
+          price: item.price,
+          quantity: item.quantity
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching order info for review:', error);
+    sendError(res, { message: 'حدث خطأ في جلب بيانات الطلب' });
+  }
+});
+
+// @route   POST /api/reviews/batch-order-review
+// @desc    Submit a review that applies to all products in an order
+// @access  Public
+router.post('/batch-order-review', apiLimiter, [
+  body('orderNumber').notEmpty().withMessage('رقم الطلب مطلوب'),
+  body('rating').toInt().isInt({ min: 1, max: 5 }).withMessage('التقييم يجب أن يكون بين 1 و 5'),
+  body('comment').trim().notEmpty().withMessage('تعليق التقييم مطلوب')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return sendBadRequest(res, MESSAGES.GENERAL.VALIDATION_ERROR, errors.array());
+    }
+
+    const { orderNumber, rating = 5, comment = 'ممتاز جداً', title, guestName, guestEmail } = req.body;
+    const userId = getOptionalUserId(req);
+
+    const order = await Order.findOne({
+      $or: [{ orderNumber: orderNumber }, { _id: mongoose.Types.ObjectId.isValid(orderNumber) ? orderNumber : null }]
+    }).populate('items.product');
+
+    if (!order) {
+      return sendNotFound(res, 'الطلب غير موجود');
+    }
+
+    const customerEmail = guestEmail || order.user?.email;
+    const customerName = guestName || `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`.trim() || order.user?.firstName || 'عميل محدد';
+
+    const createdReviews = [];
+
+    for (const item of order.items) {
+      const productId = item.product?._id || item.product;
+      if (!productId) continue;
+
+      // Check if duplicate review exists
+      let existingReview = null;
+      if (userId) {
+        existingReview = await Review.findOne({ product: productId, user: userId });
+      } else if (customerEmail) {
+        existingReview = await Review.findOne({ product: productId, guestEmail: customerEmail.toLowerCase().trim() });
+      }
+
+      if (existingReview) {
+        // Update existing review with new rating & comment
+        existingReview.rating = rating;
+        existingReview.comment = comment;
+        if (title) existingReview.title = title;
+        existingReview.isApproved = true;
+        await existingReview.save();
+        createdReviews.push(existingReview);
+      } else {
+        // Create new review
+        const newReview = await Review.create({
+          product: productId,
+          user: userId || undefined,
+          guestName: !userId ? customerName : undefined,
+          guestEmail: !userId && customerEmail ? customerEmail.toLowerCase().trim() : undefined,
+          order: order._id,
+          rating,
+          title: title || 'تقييم الطلب',
+          comment,
+          isVerifiedPurchase: true,
+          isApproved: true
+        });
+        createdReviews.push(newReview);
+      }
+
+      // Recalculate average rating for product
+      try {
+        await Review.calcAverageRating(productId);
+      } catch (err) {
+        console.error('Error recalculating rating for product', productId, err);
+      }
+    }
+
+    return sendSuccess(res, {
+      message: 'تم إضافة تقييمك بنجاح لجميع منتجات الطلب! شكراً لك ❤️',
+      count: createdReviews.length
+    });
+  } catch (error) {
+    console.error('Error submitting batch order review:', error);
+    return sendError(res, { message: 'حدث خطأ أثناء حفظ التقييم' });
+  }
+});
+
 module.exports = router;
