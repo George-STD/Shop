@@ -10,13 +10,13 @@ export default function ReviewOrderClient({ orderNumber }) {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('ممتاز جداً');
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
-  
+
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -113,7 +113,7 @@ export default function ReviewOrderClient({ orderNumber }) {
       <div className="min-h-[75vh] flex items-center justify-center p-4 py-12">
         <div className="max-w-lg w-full bg-white rounded-3xl p-8 sm:p-10 shadow-xl text-center border border-purple-100 relative overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400"></div>
-          
+
           <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-lg shadow-green-500/20 animate-bounce">
             <FiCheckCircle />
           </div>
@@ -143,11 +143,11 @@ export default function ReviewOrderClient({ orderNumber }) {
   return (
     <div className="min-h-[80vh] py-8 sm:py-14 bg-gradient-to-b from-purple-50/50 via-white to-pink-50/30">
       <div className="container-custom max-w-2xl">
-        
+
         {/* Header Badge */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-purple-100 mb-8 relative overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-purple-600 to-pink-600"></div>
-          
+
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-2xl shrink-0">
               <FiGift />
@@ -192,7 +192,7 @@ export default function ReviewOrderClient({ orderNumber }) {
 
         {/* Rating Form */}
         <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-purple-100 space-y-6">
-          
+
           {/* Star Selector */}
           <div className="text-center py-4 bg-purple-50/50 rounded-2xl border border-purple-100">
             <label className="block text-gray-800 font-bold text-sm sm:text-base mb-3">
