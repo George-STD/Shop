@@ -48,7 +48,10 @@ const AdminAnalysis = () => {
 
       data.forEach(row => {
         const values = headers.map(header => {
-          const val = row[header] !== undefined && row[header] !== null ? String(row[header]) : '';
+          let val = row[header] !== undefined && row[header] !== null ? String(row[header]) : '';
+          if (/^[=+\-@\t\r]/.test(val)) {
+            val = "'" + val;
+          }
           return `"${val.replace(/"/g, '""')}"`;
         });
         csvRows.push(values.join(','));

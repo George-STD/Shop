@@ -306,15 +306,28 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
 
           if (name === 'searchDatabase') {
             const filter = safeParse(args.filterJson);
-            const castFilter = castObjectIds(filter);
-            const limit = args.limit || 20;
+            // Sanitize filter to remove dangerous operators like $where, $function, $accumulator
+            const sanitizeFilter = (obj) => {
+              if (!obj || typeof obj !== 'object') return obj;
+              for (const key of Object.keys(obj)) {
+                if (key === '$where' || key === '$function' || key === '$accumulator') {
+                  delete obj[key];
+                } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                  sanitizeFilter(obj[key]);
+                }
+              }
+              return obj;
+            };
+            const cleanFilter = sanitizeFilter(filter);
+            const castFilter = castObjectIds(cleanFilter);
+            const limit = Math.min(Math.max(1, Number(args.limit) || 20), 50);
             
             // Dynamic selection based on collection
             let selectStr = '';
             if (args.collectionName === 'Product') selectStr = '_id name price stock isActive canBeAddedToBox isCustomBox boxDiscount category';
             else if (args.collectionName === 'User') selectStr = '_id firstName lastName email role isActive';
             else if (args.collectionName === 'Order') selectStr = '_id orderNumber status total user';
-            else if (args.collectionName === 'Category') selectStr = '_id name slug isActive showInBox';
+            else if (args.collectionName === 'Category') selectStr = '_id name image isActive slug';
 
             const data = await Model.find(castFilter).select(selectStr).limit(limit).lean();
             toolResult = { data };
@@ -333,12 +346,6 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
           } else if (name === 'proposeDatabaseUpdate') {
             const updates = safeParse(args.updateJson);
             
-            // Fetch previews with full relevant details for the detailed table
-            let selectStr = '';
-            if (args.collectionName === 'Product') selectStr = '_id name images.url isActive price stock category canBeAddedToBox';
-            else if (args.collectionName === 'User') selectStr = '_id firstName lastName email role avatar isActive';
-            else if (args.collectionName === 'Order') selectStr = '_id orderNumber status total user';
-            else if (args.collectionName === 'Category') selectStr = '_id name image isActive slug';
 
             const affectedDocuments = await Model.find({ _id: { $in: args.documentIds } }).select(selectStr).lean();
             
@@ -436,6 +443,23 @@ router.post('/execute', asyncHandler(async (req, res) => {
   const Model = MODELS_MAP[collectionName];
   if (!Model) {
     return res.status(400).json({ success: false, message: 'جدول غير مدعوم' });
+  }
+
+  // Ensure prohibited fields cannot be updated via AI Agent execute route
+  const FORBIDDEN_FIELDS = ['password', 'role', 'emailVerificationCode', 'emailVerificationExpires', 'resetPasswordToken', 'resetPasswordExpires'];
+  const containsForbiddenField = (obj) => {
+    if (!obj || typeof obj !== 'object') return false;
+    for (const key of Object.keys(obj)) {
+      if (FORBIDDEN_FIELDS.includes(key)) return true;
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        if (containsForbiddenField(obj[key])) return true;
+      }
+    }
+    return false;
+  };
+
+  if (containsForbiddenField(updates)) {
+    return res.status(400).json({ success: false, message: 'لا يمكن تعديل الحقول الحساسة (كلمة المرور، الدور، التوكنات) عبر AI Agent.' });
   }
 
   // Ensure updates is using MongoDB operators safely.

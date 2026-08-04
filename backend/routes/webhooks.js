@@ -59,7 +59,7 @@ router.post('/resend', express.raw({ type: 'application/json' }), async (req, re
       .filter(Boolean);
 
     const isForSupport = recipients.some(
-      (addr) => addr.includes('support@foryo.me')
+      (addr) => addr === 'support@foryo.me' || addr.includes('<support@foryo.me>')
     );
 
     if (!isForSupport) {

@@ -216,6 +216,34 @@ router.post(
       return res.status(400).json({ success: false, message: 'رابط الصورة مطلوب' });
     }
 
+    // ── Prevent SSRF: Validate URL protocol & block internal/metadata IPs ──
+    if (!imageUrl.startsWith('/')) {
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(imageUrl);
+      } catch (_) {
+        return res.status(400).json({ success: false, message: 'رابط الصورة غير صالح' });
+      }
+
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        return res.status(400).json({ success: false, message: 'بروتوكول الصورة غير مسموح به' });
+      }
+
+      const hostname = parsedUrl.hostname.toLowerCase();
+      const isPrivateOrInternal = 
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === '::1' ||
+        hostname.startsWith('10.') ||
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('169.254.') || // Cloud Metadata Endpoint
+        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname);
+
+      if (isPrivateOrInternal) {
+        return res.status(400).json({ success: false, message: 'رابط الصورة المحظور غير مسموح به' });
+      }
+    }
+
     // ── Fetch image from URL and convert to base64 ──
     let buffer;
     let mimeType;

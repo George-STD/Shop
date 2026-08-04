@@ -144,7 +144,6 @@ export const STRINGS = {
     ROLE_ADMIN: 'مدير',
     ROLE_USER: 'مستخدم',
     LOGOUT: 'تسجيل الخروج',
-    LOGOUT: 'تسجيل الخروج',
     BACK_TO_SITE: 'العودة للموقع',
     TABLE: {
       USER: 'المستخدم',
