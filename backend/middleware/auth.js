@@ -151,6 +151,18 @@ const registerLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiter for AI routes (Gemini API protection)
+const aiLimiter = rateLimit({
+  windowMs: CONFIG.RATE_LIMIT.AI.WINDOW_MS,
+  max: CONFIG.RATE_LIMIT.AI.MAX_REQUESTS,
+  message: {
+    success: false,
+    message: MESSAGES.RATE_LIMIT.AI
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // =====================================================
 // VALIDATE OBJECT ID - Prevent NoSQL injection
 // =====================================================
@@ -231,6 +243,7 @@ module.exports = {
   loginLimiter,
   verifyLimiter,
   registerLimiter,
+  aiLimiter,
   validateObjectId,
   sanitizeInput,
   logAdminAction

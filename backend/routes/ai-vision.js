@@ -4,9 +4,14 @@ const multer = require('multer');
 const path = require('path');
 const dns = require('dns');
 const cloudinary = require('../config/cloudinary');
-const { protect, admin, adminLimiter, sanitizeInput } = require('../middleware/auth');
+const { protect, admin, adminLimiter, sanitizeInput, aiLimiter } = require('../middleware/auth');
 const asyncHandler = require('../utils/asyncHandler');
 const { generateWithFallback } = require('../utils/geminiModelManager');
+
+router.use(protect);
+router.use(admin);
+router.use(adminLimiter);
+router.use(aiLimiter);
 
 // Lazily initialized — only created when the first request arrives
 let _aiClient = null;

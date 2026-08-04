@@ -39,6 +39,10 @@ const CONFIG = {
       WINDOW_MS: 60 * 60 * 1000, // 1 hour
       MAX_REQUESTS: 5,
     },
+    AI: {
+      WINDOW_MS: 15 * 60 * 1000, // 15 minutes
+      MAX_REQUESTS: 20,
+    },
   },
 
   // =====================================================

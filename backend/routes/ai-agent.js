@@ -3,7 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { GoogleGenAI } = require('@google/genai');
 
-const { protect, admin, adminLimiter } = require('../middleware/auth');
+const { protect, admin, adminLimiter, aiLimiter } = require('../middleware/auth');
 const asyncHandler = require('../utils/asyncHandler');
 
 // Models
@@ -17,6 +17,7 @@ const logAudit = require('../utils/auditLogger');
 router.use(protect);
 router.use(admin);
 router.use(adminLimiter);
+router.use(aiLimiter);
 
 let _aiClient = null;
 function getAiClient() {
