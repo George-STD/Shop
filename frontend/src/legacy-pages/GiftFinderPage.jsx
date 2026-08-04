@@ -5,7 +5,6 @@ import {
   FiUser,
   FiHeart,
   FiSmile,
-  FiSparkles,
   FiCheckCircle,
   FiRefreshCw,
   FiShoppingCart,
@@ -14,6 +13,7 @@ import {
   FiZap,
   FiHelpCircle,
 } from 'react-icons/fi';
+import { HiSparkles } from 'react-icons/hi';
 import { giftFinderAPI } from '../services/api';
 import { useCartStore } from '../store';
 import toast from 'react-hot-toast';
@@ -200,7 +200,7 @@ const GiftFinderPage = () => {
         {/* Top AI Badge & Title */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white px-5 py-2 rounded-full text-sm font-medium shadow-lg shadow-purple-500/20 mb-4 animate-pulse">
-            <FiSparkles className="text-amber-300" size={18} />
+            <HiSparkles className="text-amber-300" size={18} />
             <span>مساعد الهدايا الذكي (Gemini AI)</span>
           </div>
 
@@ -219,7 +219,7 @@ const GiftFinderPage = () => {
               <div className="absolute inset-0 rounded-full border-4 border-purple-200 border-t-purple-600 animate-spin"></div>
               <div className="absolute inset-2 rounded-full border-4 border-pink-200 border-b-pink-500 animate-spin-slow"></div>
               <div className="absolute inset-0 flex items-center justify-center">
-                <FiSparkles className="text-purple-600 text-3xl animate-bounce" />
+                <HiSparkles className="text-purple-600 text-3xl animate-bounce" />
               </div>
             </div>
 
@@ -243,7 +243,7 @@ const GiftFinderPage = () => {
 
               <div className="flex items-start gap-4 relative z-10">
                 <div className="p-3 bg-gradient-to-tr from-amber-400 to-pink-500 rounded-2xl shadow-lg shrink-0">
-                  <FiSparkles className="text-white text-2xl" />
+                  <HiSparkles className="text-white text-2xl" />
                 </div>
                 <div>
                   <div className="inline-block bg-white/10 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-semibold text-amber-300 mb-2 border border-white/10">
@@ -294,7 +294,7 @@ const GiftFinderPage = () => {
                       {isTopMatch && (
                         <div className="bg-gradient-to-r from-amber-500 via-pink-500 to-purple-600 text-white text-xs font-bold px-4 py-1.5 flex items-center justify-between">
                           <span className="flex items-center gap-1.5">
-                            <FiSparkles />
+                            <HiSparkles />
                             <span>الخيار الأكثر ملاءمة وشعبية ✨</span>
                           </span>
                           <span>توافق {item.matchScore}%</span>
@@ -335,7 +335,7 @@ const GiftFinderPage = () => {
                             {/* AI Match Reason Box */}
                             <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-3.5 rounded-2xl border border-purple-100/60 text-xs sm:text-sm text-purple-900 leading-relaxed">
                               <span className="font-bold block text-purple-700 mb-1 flex items-center gap-1">
-                                <FiSparkles className="text-amber-500" />
+                                <HiSparkles className="text-amber-500" />
                                 <span>لماذا اختار الذكاء الاصطناعي هذا البوكس؟</span>
                               </span>
                               {item.matchReason}
