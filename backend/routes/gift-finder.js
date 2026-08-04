@@ -5,6 +5,8 @@ const asyncHandler = require('../utils/asyncHandler');
 const { generateWithFallback } = require('../utils/geminiModelManager');
 const { sanitizeInput } = require('../middleware/auth');
 
+const { processReadyBoxes } = require('../controllers/productController');
+
 let _aiClient = null;
 function getAiClient() {
   if (!_aiClient) {
@@ -25,7 +27,6 @@ router.post('/ai-recommend', sanitizeInput, asyncHandler(async (req, res) => {
   // 1. Fetch Active Ready Gift Boxes strictly
   let readyBoxes = await Product.find({ isActive: true, isReadyBox: true })
     .populate('category', 'name')
-    .populate('includedProducts.product', 'name price images')
     .lean();
 
   // Fallback: If fewer than 5 explicit ready boxes exist, fetch active products with canBeAddedToBox
@@ -44,6 +45,9 @@ router.post('/ai-recommend', sanitizeInput, asyncHandler(async (req, res) => {
       message: 'لا تتوفر بوكسات هدايا جاهزة حالياً في المتجر.'
     });
   }
+
+  // Calculate dynamic prices for ready boxes with autoCalculatePrice: true
+  await processReadyBoxes(readyBoxes);
 
   // 2. Prepare lightweight box inventory summary for Gemini AI
   const boxInventory = readyBoxes.map((box, index) => {

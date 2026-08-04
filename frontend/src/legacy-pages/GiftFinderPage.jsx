@@ -322,8 +322,15 @@ const GiftFinderPage = () => {
                           <div>
                             <div className="flex items-center justify-between gap-2 mb-1">
                               <h4 className="text-xl font-bold text-gray-900">{box.name}</h4>
-                              <div className="text-lg font-extrabold text-purple-700 whitespace-nowrap">
-                                {box.salePrice || box.price} ج.م
+                              <div className="text-left dir-ltr shrink-0">
+                                <span className="text-lg font-extrabold text-purple-700 whitespace-nowrap">
+                                  {box.price} ج.م
+                                </span>
+                                {box.oldPrice && box.oldPrice > box.price && (
+                                  <span className="text-xs text-gray-400 line-through block font-normal">
+                                    {box.oldPrice} ج.م
+                                  </span>
+                                )}
                               </div>
                             </div>
 

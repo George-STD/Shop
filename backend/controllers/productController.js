@@ -275,3 +275,5 @@ exports.getRelatedProducts = asyncHandler(async (req, res) => {
   const processedRelated = await processReadyBoxes(related);
   return sendSuccess(res, { data: processedRelated });
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);
+
+exports.processReadyBoxes = processReadyBoxes;
