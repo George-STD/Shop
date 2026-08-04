@@ -190,8 +190,23 @@ app.use((req, res) => {
   res.status(404).json({ success: false, message: MESSAGES.GENERAL.NOT_FOUND });
 });
 
+const validateEnvironment = () => {
+  const required = ['MONGODB_URI', 'JWT_SECRET'];
+  const missing = required.filter((key) => !process.env[key]);
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+  if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32 && process.env.NODE_ENV === 'production') {
+    console.warn('⚠️ WARNING: JWT_SECRET should be at least 32 characters long for production security.');
+  }
+  if (!process.env.GEMINI_API_KEY) {
+    console.warn('⚠️ NOTICE: GEMINI_API_KEY is not set. AI features will operate in fallback mode.');
+  }
+};
+
 const startServer = async () => {
   try {
+    validateEnvironment();
     await connectToDatabase();
 
     const PORT = process.env.PORT || 5000;

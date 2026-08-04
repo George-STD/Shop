@@ -66,6 +66,7 @@ export const BUSINESS_CONFIG = {
 
   // Contact Information
   EMAIL: 'support@foryo.me',
+  INSTAPAY_NUMBER: process.env.NEXT_PUBLIC_INSTAPAY_NUMBER || '+201286153004',
 
   // Address
   ADDRESS: {

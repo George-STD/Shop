@@ -404,11 +404,11 @@ const CheckoutPage = () => {
                         <div className="p-3.5 bg-white rounded-xl border border-purple-200/80 flex items-center justify-between shadow-sm">
                           <span className="text-gray-700 text-xs sm:text-sm font-semibold">رقم تحويل إنستاباي:</span>
                           <div className="flex items-center gap-2">
-                            <span className="text-base sm:text-lg font-bold text-purple-700 font-mono tracking-wider dir-ltr select-all">+201286153004</span>
+                            <span className="text-base sm:text-lg font-bold text-purple-700 font-mono tracking-wider dir-ltr select-all">{BUSINESS_CONFIG.INSTAPAY_NUMBER}</span>
                             <button
                               type="button"
                               onClick={() => {
-                                navigator.clipboard.writeText('+201286153004');
+                                navigator.clipboard.writeText(BUSINESS_CONFIG.INSTAPAY_NUMBER);
                                 toast.success('تم نسخ رقم إنستاباي بنجاح!');
                               }}
                               className="text-xs bg-purple-100 hover:bg-purple-200 text-purple-800 px-2.5 py-1 rounded-lg transition-colors font-semibold"
@@ -486,7 +486,7 @@ const CheckoutPage = () => {
                           <div className="flex flex-col gap-2">
                             <span className="text-purple-700 font-bold">{STRINGS.CHECKOUT.INSTAPAY}</span>
                             <div className="inline-flex items-center gap-2 text-sm bg-purple-50 border border-purple-200 text-purple-900 px-3.5 py-2 rounded-xl w-fit">
-                              📱 رقم التحويل: <strong className="dir-ltr text-purple-700 font-mono text-base">+201286153004</strong>
+                              📱 رقم التحويل: <strong className="dir-ltr text-purple-700 font-mono text-base">{BUSINESS_CONFIG.INSTAPAY_NUMBER}</strong>
                             </div>
                           </div>
                         )}

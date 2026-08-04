@@ -15,7 +15,7 @@ const auditLogSchema = new mongoose.Schema({
   },
   action: {
     type: String,
-    enum: ['CREATE', 'UPDATE', 'DELETE', 'STOCK_CHANGE', 'STATUS_CHANGE', 'BULK_UPDATE'],
+    enum: ['CREATE', 'UPDATE', 'DELETE', 'STOCK_CHANGE', 'STATUS_CHANGE', 'BULK_UPDATE', 'ai_bulk_update'],
     required: true
   },
   adminId: {
@@ -33,8 +33,9 @@ const auditLogSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for faster queries
+// Index for faster queries & 30-day automatic TTL expiration
 auditLogSchema.index({ entityType: 1, action: 1, createdAt: -1 });
 auditLogSchema.index({ entityId: 1, createdAt: -1 });
+auditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
 
 module.exports = mongoose.model('AuditLog', auditLogSchema);
