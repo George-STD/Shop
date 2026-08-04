@@ -4,8 +4,10 @@ import { STORAGE_KEYS } from '../constants';
 
 const clearStoredAuthSession = () => {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem(STORAGE_KEYS.TOKEN);
-  localStorage.removeItem(STORAGE_KEYS.AUTH);
+  try {
+    localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.AUTH);
+  } catch (_) {}
 };
 
 export const useAuthStore = create(
@@ -22,7 +24,9 @@ export const useAuthStore = create(
 
       setAuth: (user, token) => {
         if (typeof window !== 'undefined') {
-          localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+          try {
+            if (token) localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+          } catch (_) {}
         }
         set({ user, token, isAuthenticated: true });
       },
