@@ -107,6 +107,11 @@ export const occasionsAPI = {
   getAll: () => api.get('/occasions'),
 };
 
+// AI Gift Finder API
+export const giftFinderAPI = {
+  getAiRecommendations: (data) => api.post('/gift-finder/ai-recommend', data),
+};
+
 // Admin API
 export const adminAPI = {
   // Stats & Analysis
