@@ -71,7 +71,7 @@ export const useCartStore = create(
                 slug: product.slug,
                 price: product.price,
                 oldPrice: product.oldPrice,
-                image: product.images[0]?.url,
+                image: product.images?.[0]?.url,
                 quantity: finalQuantity,
                 stock: stockLimit,
                 selectedSize: options.selectedSize,
@@ -171,7 +171,7 @@ export const useCartStore = create(
 
           if (item.boxId) {
             boxGroups.add(item.boxId);
-            const discountPercent = item.boxDiscount !== undefined ? item.boxDiscount : 25;
+            const discountPercent = item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE;
             priceToUse = item.price * (1 - discountPercent / 100);
           }
 

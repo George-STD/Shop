@@ -112,7 +112,7 @@ const MobileMenu = () => {
             {categories.map((category) => (
               <li key={category.slug}>
                 <Link
-                  to={`/products?category=${category.slug}`}
+                  to={category.slug ? `/products?category=${category.slug}` : '/products'}
                   onClick={closeMobileMenu}
                   className="flex items-center justify-between py-2.5 px-3 text-gray-600 hover:text-purple-700 hover:bg-purple-50 rounded-xl transition-all group"
                 >

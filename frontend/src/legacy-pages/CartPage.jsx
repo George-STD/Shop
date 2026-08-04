@@ -5,7 +5,15 @@ import { BUSINESS_CONFIG, STRINGS } from '../constants';
 import toast from 'react-hot-toast';
 
 const CartPage = () => {
-  const { items, removeItem, updateQuantity, getTotal, clearCart } = useCartStore();
+  const { items, removeItem, updateQuantity, getTotal, clearCart, _hasHydrated } = useCartStore();
+
+  if (!_hasHydrated) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   const increaseQuantity = (item) => {
     const result = updateQuantity(
@@ -159,7 +167,7 @@ const CartPage = () => {
                       <div className="text-left">
                         <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
                           {(item.boxId
-                            ? item.price * (1 - (item.boxDiscount !== undefined ? item.boxDiscount : 25) / 100)
+                            ? item.price * (1 - (item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE) / 100)
                             : item.price) * item.quantity}{' '}
                           {STRINGS.PRODUCT.CURRENCY}
                         </span>
@@ -187,7 +195,7 @@ const CartPage = () => {
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-2xl p-6 sticky top-20 lg:top-24">
+              <div className="bg-white rounded-2xl p-6 sticky sticky-header-offset transition-all duration-300">
                 <h2 className="text-xl font-bold text-gray-800 mb-6">{STRINGS.CART.ORDER_SUMMARY}</h2>
 
                 <div className="space-y-4 mb-6">

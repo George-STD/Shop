@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
-import { FiHome, FiUsers, FiPackage, FiShoppingCart, FiGrid, FiStar, FiSettings, FiLogOut, FiMenu, FiX, FiChevronLeft, FiMail } from 'react-icons/fi';
+import { FiHome, FiUsers, FiPackage, FiShoppingCart, FiGrid, FiStar, FiSettings, FiLogOut, FiMenu, FiX, FiChevronLeft, FiMail, FiBarChart2 } from 'react-icons/fi';
 import { useAuthStore } from '../../store';
 import { STRINGS } from '../../constants';
 import AdminAIAssistant from './AdminAIAssistant';
@@ -76,7 +76,7 @@ const AdminLayout = ({ children }) => {
 
   const menuItems = [
     { path: '/admin', icon: FiHome, label: STRINGS.ADMIN.DASHBOARD.TITLE, exact: true },
-    { path: '/admin/analysis', icon: require('react-icons/fi').FiBarChart2, label: 'التحليلات والتتبع' },
+    { path: '/admin/analysis', icon: FiBarChart2, label: 'التحليلات والتتبع' },
     { path: '/admin/users', icon: FiUsers, label: STRINGS.ADMIN.USERS },
     { path: '/admin/products', icon: FiPackage, label: STRINGS.ADMIN.PRODUCTS },
     { path: '/admin/orders', icon: FiShoppingCart, label: STRINGS.ADMIN.ORDERS.TITLE },

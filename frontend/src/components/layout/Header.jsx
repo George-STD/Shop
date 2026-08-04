@@ -29,16 +29,17 @@ const Header = () => {
   useEffect(() => {
     const handleScroll = () => {
       const y = window.scrollY;
-      // Use a large gap between thresholds to account for the header's height reduction (~160px).
-      // When the header shrinks, scroll anchoring shifts scrollY down by ~160px.
       if (!scrolledRef.current && y > 250) {
         scrolledRef.current = true;
         setIsScrolled(true);
+        document.documentElement.style.setProperty('--header-offset', '80px');
       } else if (scrolledRef.current && y < 20) {
         scrolledRef.current = false;
         setIsScrolled(false);
+        document.documentElement.style.setProperty('--header-offset', '140px');
       }
     };
+    document.documentElement.style.setProperty('--header-offset', '140px');
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);

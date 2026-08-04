@@ -147,6 +147,10 @@ export function Routes({ children }) {
   });
 
   if (!matched) {
+    matched = routeDefs.find((route) => route.path === '*');
+  }
+
+  if (!matched) {
     matched = routeDefs.find((route) => route.index);
   }
 

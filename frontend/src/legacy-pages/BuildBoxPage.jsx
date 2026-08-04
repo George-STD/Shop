@@ -222,7 +222,7 @@ const BuildBoxPage = () => {
             </div>
 
             {/* Search Input */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6 sticky top-20 lg:top-24 z-10">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6 sticky sticky-header-offset z-10 transition-all duration-300">
               <div className="relative">
                 <input
                   type="text"
@@ -326,7 +326,7 @@ const BuildBoxPage = () => {
 
           {/* Right Column: Current Box Status */}
           <div className="lg:w-96 flex-shrink-0">
-            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 sticky top-20 lg:top-24">
+            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 sticky sticky-header-offset transition-all duration-300">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600 text-xl">
                   <FiGift />

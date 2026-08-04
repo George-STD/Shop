@@ -9,16 +9,22 @@ import toast from 'react-hot-toast';
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
-  const { items, getTotal, clearCart } = useCartStore();
-  const { isAuthenticated, user, _hasHydrated } = useAuthStore();
+  const { items, getTotal, clearCart, _hasHydrated: _cartHasHydrated } = useCartStore();
+  const { isAuthenticated, user, _hasHydrated: _authHasHydrated } = useAuthStore();
 
-  // Redirect to login if not authenticated
+  const isHydrated = _cartHasHydrated && _authHasHydrated;
+
+  // Redirect to login if not authenticated or to cart if empty
   useEffect(() => {
-    if (_hasHydrated && !isAuthenticated) {
-      toast(STRINGS.CHECKOUT.LOGIN_REQUIRED, { icon: '🔐' });
-      navigate('/account', { state: { from: '/checkout' } });
+    if (isHydrated) {
+      if (!isAuthenticated) {
+        toast(STRINGS.CHECKOUT.LOGIN_REQUIRED, { icon: '🔐' });
+        navigate('/account', { state: { from: '/checkout' } });
+      } else if (items.length === 0) {
+        navigate('/cart');
+      }
     }
-  }, [_hasHydrated, isAuthenticated, navigate]);
+  }, [isHydrated, isAuthenticated, items.length, navigate]);
 
   const { data: loyaltySettings } = useQuery({
     queryKey: ['public-loyalty-settings'],
@@ -522,7 +528,7 @@ const CheckoutPage = () => {
 
               {/* Order Summary Sidebar */}
               <div className="lg:col-span-1">
-                <div className="bg-white rounded-2xl p-6 sticky top-20 lg:top-24">
+                <div className="bg-white rounded-2xl p-6 sticky sticky-header-offset transition-all duration-300">
                   <h2 className="text-xl font-bold mb-6">{STRINGS.CHECKOUT.ORDER_SUMMARY}</h2>
                   <div className="space-y-4 mb-6">
                     {items.map((item, index) => (

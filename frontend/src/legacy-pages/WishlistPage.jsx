@@ -2,12 +2,18 @@ import { Link, Navigate } from 'react-router-dom';
 import { FiHeart, FiTrash2, FiShoppingCart } from 'react-icons/fi';
 import { useWishlistStore, useCartStore, useAuthStore } from '../store';
 import { STRINGS } from '../constants';
+import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const WishlistPage = () => {
   const { items, removeItem, clearWishlist } = useWishlistStore();
   const { addItem } = useCartStore();
   const { isAuthenticated } = useAuthStore();
+
+  const handleRemove = (id) => {
+    removeItem(id);
+    authAPI.removeFromWishlist(id).catch(() => {});
+  };
 
   if (!isAuthenticated) {
     return <Navigate to="/account" replace />;
@@ -82,7 +88,7 @@ const WishlistPage = () => {
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     <button
-                      onClick={() => removeItem(product.id)}
+                      onClick={() => handleRemove(product.id)}
                       className="absolute top-3 left-3 p-2 bg-white rounded-full shadow-md text-red-500 hover:bg-red-50"
                     >
                       <FiTrash2 />

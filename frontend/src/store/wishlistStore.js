@@ -27,7 +27,7 @@ export const useWishlistStore = create(
                 slug: product.slug,
                 price: product.price,
                 oldPrice: product.oldPrice,
-                image: product.images[0]?.url,
+                image: product.images?.[0]?.url,
                 stock: parseStock(product.stock),
               },
             ],

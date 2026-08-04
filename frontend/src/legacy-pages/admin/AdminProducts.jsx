@@ -44,7 +44,7 @@ const AdminProducts = () => {
     isFeatured: false,
     isBestseller: false,
     canBeAddedToBox: false,
-    boxDiscount: 25,
+    boxDiscount: BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE,
     isCustomBox: false,
     boxSlots: [],
     isReadyBox: false,
@@ -168,7 +168,7 @@ const AdminProducts = () => {
       isFeatured: product.isFeatured || false,
       isBestseller: product.isBestseller || false,
       canBeAddedToBox: product.canBeAddedToBox || false,
-      boxDiscount: product.boxDiscount !== undefined ? product.boxDiscount : 25,
+      boxDiscount: product.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE,
       isCustomBox: product.isCustomBox || false,
       boxSlots: product.boxSlots || [],
       isReadyBox: product.isReadyBox || false,
@@ -299,17 +299,14 @@ const AdminProducts = () => {
           ['عيد ميلاد', 'نجاح'].forEach(o => matchedOccs.add(o));
         }
 
-        const availableOccs = occasionsList ? occasionsList.map(o => o.name) : [];
-        const availableRecs = STRINGS.ADMIN.PRODUCT_FORM.RECIPIENTS_LIST || [];
-
-        let finalOccs = [...matchedOccs].filter(o => availableOccs.includes(o));
-        let finalRecs = [...matchedRecs].filter(r => availableRecs.includes(r));
+        let finalOccs = [...matchedOccs];
+        let finalRecs = [...matchedRecs];
         let finalCats = categories ? categories.filter(c => matches([c.name.toLowerCase()])).map(c => c._id) : [];
 
-        // Fallbacks if no keywords matched
-        if (finalOccs.length === 0) finalOccs = availableOccs;
-        if (finalRecs.length === 0) finalRecs = availableRecs;
-        if (finalCats.length === 0) finalCats = categories ? categories.map(c => c._id) : [];
+        // Keep as empty arrays if no keywords matched so admin selects manually
+        if (finalOccs.length === 0) finalOccs = [];
+        if (finalRecs.length === 0) finalRecs = [];
+        if (finalCats.length === 0) finalCats = [];
 
         return { finalOccs, finalRecs, finalCats };
       };
@@ -338,29 +335,25 @@ const AdminProducts = () => {
 
       // Not found anywhere — open empty form with barcode as SKU
       toast.error(STRINGS.ADMIN.NOTIFICATIONS.BARCODE_NOT_FOUND, { id: toastId });
-      const { finalOccs: emptyOccs, finalRecs: emptyRecs, finalCats: emptyCats } = getSmartDefaults('', '');
       resetForm();
       setFormData((prev) => ({ 
         ...prev, 
         sku: barcode,
-        category: emptyCats,
-        occasions: emptyOccs,
-        recipients: emptyRecs,
+        category: [],
+        occasions: [],
+        recipients: [],
       }));
       setShowModal(true);
     } catch (error) {
       console.error(error);
       toast.error(STRINGS.ADMIN.NOTIFICATIONS.BARCODE_ERROR, { id: toastId });
-      const availableOccs = occasionsList ? occasionsList.map(o => o.name) : [];
-      const availableRecs = STRINGS.ADMIN.PRODUCT_FORM.RECIPIENTS_LIST || [];
-      const allCats = categories ? categories.map(c => c._id) : [];
       resetForm();
       setFormData((prev) => ({ 
         ...prev, 
         sku: barcode,
-        category: allCats,
-        occasions: availableOccs,
-        recipients: availableRecs,
+        category: [],
+        occasions: [],
+        recipients: [],
       }));
       setShowModal(true);
     }

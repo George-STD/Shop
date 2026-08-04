@@ -1,10 +1,16 @@
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiHeart, FiShoppingBag, FiEye } from 'react-icons/fi';
 import { STRINGS } from '../../constants';
 import { useCartStore, useWishlistStore, useAuthStore } from '../../store';
 import toast from 'react-hot-toast';
 
+import { authAPI } from '../../services/api';
+
 const ProductCard = ({ product }) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const { addItem } = useCartStore();
   const {
     addItem: addToWishlist,
@@ -14,7 +20,7 @@ const ProductCard = ({ product }) => {
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
 
-  const inWishlist = isInWishlist(product._id);
+  const inWishlist = mounted && isInWishlist(product._id);
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -40,11 +46,14 @@ const ProductCard = ({ product }) => {
       navigate('/account');
       return;
     }
+
     if (inWishlist) {
       removeFromWishlist(product._id);
+      authAPI.removeFromWishlist(product._id).catch(() => {});
       toast.success(STRINGS.PRODUCT.REMOVED_FROM_WISHLIST);
     } else {
       addToWishlist(product);
+      authAPI.addToWishlist(product._id).catch(() => {});
       toast.success(STRINGS.PRODUCT.ADDED_TO_WISHLIST);
     }
   };
@@ -71,7 +80,7 @@ const ProductCard = ({ product }) => {
         {/* Badges */}
         <div className="absolute top-3 right-3 flex flex-col gap-1.5">
           {discount > 0 && <span className="badge badge-sale">-{discount}%</span>}
-          {(product.isNewArrival || product.isNew) && <span className="badge badge-new">{STRINGS.PRODUCT.NEW}</span>}
+          {product.isNewArrival && <span className="badge badge-new">{STRINGS.PRODUCT.NEW}</span>}
           {product.isBestseller && <span className="badge badge-bestseller">{STRINGS.PRODUCT.BESTSELLER}</span>}
         </div>
 
