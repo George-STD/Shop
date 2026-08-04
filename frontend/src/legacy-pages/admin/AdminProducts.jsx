@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { STRINGS } from '../../constants';
+import { STRINGS, BUSINESS_CONFIG } from '../../constants';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI, categoriesAPI, occasionsAPI } from '../../services/api';
 import toast from 'react-hot-toast';

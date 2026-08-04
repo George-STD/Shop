@@ -48,6 +48,19 @@ router.post('/', protect, admin, (req, res, next) => {
     return res.status(400).json({ success: false, message: 'لم يتم رفع أي ملف' });
   }
 
+  // Validate image magic bytes to prevent file extension spoofing
+  const buf = req.file.buffer;
+  const isImageHeader = buf && buf.length >= 4 && (
+    (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) || // JPEG
+    (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) || // PNG
+    (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38) || // GIF
+    (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46)    // WEBP
+  );
+
+  if (!isImageHeader) {
+    return res.status(400).json({ success: false, message: 'محتوى الملف الفعلي ليس صورة صالحة.' });
+  }
+
   // Upload the file buffer to Cloudinary
   const uploadStream = cloudinary.uploader.upload_stream(
     { folder: 'giftshop_uploads' },

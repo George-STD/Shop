@@ -9,11 +9,13 @@ const statusLabels = {
   confirmed: STRINGS.TRACK_ORDER_PAGE.STATUS.CONFIRMED,
   processing: STRINGS.TRACK_ORDER_PAGE.STATUS.PROCESSING,
   shipped: STRINGS.TRACK_ORDER_PAGE.STATUS.SHIPPED,
+  out_for_delivery: STRINGS.TRACK_ORDER_PAGE.STATUS.OUT_FOR_DELIVERY,
   delivered: STRINGS.TRACK_ORDER_PAGE.STATUS.DELIVERED,
   cancelled: STRINGS.TRACK_ORDER_PAGE.STATUS.CANCELLED,
+  returned: STRINGS.TRACK_ORDER_PAGE.STATUS.RETURNED,
 };
 
-const statusFlow = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
+const statusFlow = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'];
 
 const TrackOrderPage = () => {
   const [searchParams] = useSearchParams();
@@ -77,12 +79,12 @@ const TrackOrderPage = () => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'ordered':
+      case 'pending':
       case 'confirmed':
+      case 'processing':
         return <FiPackage />;
-      case 'preparing':
       case 'shipped':
-      case 'in-transit':
+      case 'out_for_delivery':
         return <FiTruck />;
       case 'delivered':
         return <FiCheckCircle />;
@@ -193,7 +195,7 @@ const TrackOrderPage = () => {
               </div>
 
               {/* Timeline */}
-              {order.status !== 'cancelled' && (
+              {order.status !== 'cancelled' && order.status !== 'returned' && (
                 <div className="bg-white rounded-2xl p-6 mb-6">
                   <h3 className="font-bold mb-6">{STRINGS.TRACK_ORDER_PAGE.SHIPMENT_STATUS_TITLE}</h3>
                   <div className="relative">

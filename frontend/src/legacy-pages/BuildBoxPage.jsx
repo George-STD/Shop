@@ -16,8 +16,7 @@ import {
 } from 'react-icons/fi';
 import { productsAPI, categoriesAPI } from '../services/api';
 import { useBuildBoxStore, useCartStore } from '../store';
-import { BUSINESS_CONFIG } from '../constants/config';
-import { STRINGS } from '../constants';
+import { STRINGS, BUSINESS_CONFIG } from '../constants';
 import toast from 'react-hot-toast';
 
 const BuildBoxPage = () => {

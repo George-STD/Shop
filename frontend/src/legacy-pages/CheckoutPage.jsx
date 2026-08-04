@@ -257,8 +257,12 @@ const CheckoutPage = () => {
                           name="email"
                           value={formData.email}
                           onChange={handleChange}
-                          className={`input-field ${errors.email ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                          disabled={isAuthenticated}
+                          className={`input-field ${isAuthenticated ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''} ${errors.email ? 'border-red-500 ring-1 ring-red-500' : ''}`}
                         />
+                        {isAuthenticated && (
+                          <p className="text-xs text-gray-400 mt-1">البريد الإلكتروني مرتبط بحسابك المسجّل.</p>
+                        )}
                         {errors.email && (
                           <p className="text-red-500 text-sm mt-1">{errors.email}</p>
                         )}

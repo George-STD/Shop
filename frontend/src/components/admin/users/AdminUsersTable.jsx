@@ -1,5 +1,5 @@
-﻿import { LoadingSpinner } from '../../common/LoadingSpinner';
 import React from 'react';
+import { LoadingSpinner } from '../../common/LoadingSpinner';
 import { FiTrash2, FiUserCheck, FiUserX, FiShield, FiUser } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
 

@@ -149,11 +149,9 @@ app.use('/api/upload', require('./routes/upload'));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// Static files for uploads
-app.use('/uploads', express.static('uploads'));
-
-// Rate limiting for API
-const { apiLimiter } = require('./middleware/auth');
+// Input Sanitization Middleware (XSS & NoSQL Operator Neutralizer)
+const { sanitizeInput, apiLimiter } = require('./middleware/auth');
+app.use(sanitizeInput);
 app.use('/api', apiLimiter);
 
 // Routes

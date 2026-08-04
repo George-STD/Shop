@@ -472,7 +472,7 @@ exports.getOrders = asyncHandler(async (req, res) => {
 exports.getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate('items.product', 'name slug images');
   if (!order) return sendNotFound(res, MESSAGES.ORDERS.NOT_FOUND);
-  if (order.user && order.user.toString() !== req.user._id.toString()) {
+  if (!order.user || order.user.toString() !== req.user._id.toString()) {
     return sendForbidden(res, MESSAGES.ORDERS.UNAUTHORIZED);
   }
   return sendSuccess(res, { data: order });

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const dns = require('dns');
 const cloudinary = require('../config/cloudinary');
 const { protect, admin, adminLimiter, sanitizeInput } = require('../middleware/auth');
 const asyncHandler = require('../utils/asyncHandler');
@@ -230,14 +231,29 @@ router.post(
       }
 
       const hostname = parsedUrl.hostname.toLowerCase();
+      
+      // Perform DNS lookup to resolve host to IP
+      const resolvedIp = await new Promise((resolve) => {
+        dns.lookup(hostname, (err, address) => {
+          if (err) resolve(null);
+          else resolve(address);
+        });
+      });
+
+      const targetIp = (resolvedIp || hostname).toLowerCase();
       const isPrivateOrInternal = 
+        targetIp === 'localhost' ||
+        targetIp === '127.0.0.1' ||
+        targetIp === '::1' ||
+        targetIp === '0.0.0.0' ||
+        targetIp.startsWith('10.') ||
+        targetIp.startsWith('192.168.') ||
+        targetIp.startsWith('169.254.') ||
+        targetIp.startsWith('::ffff:169.254.') ||
+        targetIp.startsWith('::ffff:127.') ||
+        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(targetIp) ||
         hostname === 'localhost' ||
-        hostname === '127.0.0.1' ||
-        hostname === '::1' ||
-        hostname.startsWith('10.') ||
-        hostname.startsWith('192.168.') ||
-        hostname.startsWith('169.254.') || // Cloud Metadata Endpoint
-        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname);
+        hostname.startsWith('169.254.');
 
       if (isPrivateOrInternal) {
         return res.status(400).json({ success: false, message: 'رابط الصورة المحظور غير مسموح به' });
@@ -251,7 +267,7 @@ router.post(
       const fetchUrl = imageUrl.startsWith('/')
         ? `${req.protocol}://${req.get('host')}${imageUrl}`
         : imageUrl;
-      const fetchResponse = await fetch(fetchUrl);
+      const fetchResponse = await fetch(fetchUrl, { redirect: 'error' });
       if (!fetchResponse.ok) {
         throw new Error(`Failed to fetch image: ${fetchResponse.statusText}`);
       }

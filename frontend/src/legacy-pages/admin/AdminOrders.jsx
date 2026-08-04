@@ -14,11 +14,13 @@ const statusColors = {
   confirmed: 'bg-blue-100 text-blue-800',
   processing: 'bg-purple-100 text-purple-800',
   shipped: 'bg-indigo-100 text-indigo-800',
+  out_for_delivery: 'bg-teal-100 text-teal-800',
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
+  returned: 'bg-orange-100 text-orange-800',
 };
 
-const statusOptions = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+const statusOptions = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'returned'];
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('ar-EG', {

@@ -21,6 +21,7 @@ export const STRINGS = {
     FILTER: 'تصفية',
     SORT: 'ترتيب',
     CLEAR: 'مسح',
+    CLEAR_ALL: 'مسح الكل',
     CLOSE: 'إغلاق',
     BACK: 'رجوع',
     NEXT: 'التالي',
@@ -381,8 +382,10 @@ export const STRINGS = {
       confirmed: 'مؤكد',
       processing: 'قيد التجهيز',
       shipped: 'تم الشحن',
+      out_for_delivery: 'خرج للتوصيل',
       delivered: 'تم التوصيل',
       cancelled: 'ملغي',
+      returned: 'مرتجع',
     },
   },
 
@@ -1220,7 +1223,6 @@ export const STRINGS = {
     LOGIN_REQUIRED: 'يجب تسجيل الدخول أولاً لإتمام الطلب',
     ORDER_SUCCESS: 'تم إنشاء الطلب بنجاح!',
     ORDER_ERROR: 'حدث خطأ أثناء إنشاء الطلب',
-    SHIPPING_INFO: 'معلومات الشحن',
     ERRORS: {
       FIRST_NAME_REQUIRED: 'الاسم الأول مطلوب',
       EMAIL_REQUIRED: 'البريد الإلكتروني مطلوب',
@@ -1282,8 +1284,10 @@ export const STRINGS = {
     STATUS_CONFIRMED: 'تم التأكيد',
     STATUS_PROCESSING: 'جاري التجهيز',
     STATUS_SHIPPED: 'تم الشحن',
+    STATUS_OUT_FOR_DELIVERY: 'خرج للتوصيل',
     STATUS_DELIVERED: 'تم التوصيل',
     STATUS_CANCELLED: 'ملغي',
+    STATUS_RETURNED: 'مرتجع',
   },
 
 
@@ -1311,6 +1315,34 @@ export const STRINGS = {
     ENTER_ORDER_NUMBER: 'أدخل رقم الطلب',
     TRACK: 'تتبع',
     ORDER_NOT_FOUND: 'الطلب غير موجود',
+  },
+
+  TRACK_ORDER_PAGE: {
+    HERO_TITLE: 'تتبع حالة طلبك',
+    HERO_SUBTITLE: 'أدخل رقم الطلب المكون من أرقام أو حروف لمعرفة حالة الشحنة لحظة بلحظة',
+    SEARCHING: 'جاري البحث...',
+    TRACK_BUTTON: 'تتبع الشحنة',
+    TRACK_ERROR_NOT_FOUND: 'لم نتمكن من العثور على طلب بهذا الرقم. تأكد من صحة الرقم وأعد المحاولة.',
+    ORDER_NUM_PREFIX: 'طلب رقم #',
+    ORDER_DATE: 'تاريخ الطلب: ',
+    PRODUCTS_TITLE: 'المنتجات في الطلب',
+    QUANTITY_LABEL: 'الكمية: ',
+    SHIPMENT_STATUS_TITLE: 'مراحل خط سير الشحنة',
+    COMING_SOON: 'قريباً',
+    HELP_TITLE: 'هل تحتاج إلى مساعدة؟',
+    HELP_DESC: 'إذا كان لديك أي استفسار حول طلبك، يمكنك التواصل مع فريق الدعم الفني أو تصفح طلباتك الأخيرة.',
+    MY_ORDERS: 'طلباتي',
+    CONTACT_US: 'تواصل معنا',
+    STATUS: {
+      PENDING: 'قيد الانتظار',
+      CONFIRMED: 'مؤكد',
+      PROCESSING: 'جاري التجهيز',
+      SHIPPED: 'تم الشحن',
+      OUT_FOR_DELIVERY: 'خرج للتوصيل',
+      DELIVERED: 'تم التوصيل',
+      CANCELLED: 'ملغي',
+      RETURNED: 'مرتجع',
+    },
   },
 
   // =====================================================

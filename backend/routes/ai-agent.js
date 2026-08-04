@@ -12,6 +12,7 @@ const Product = require('../models/Product');
 const Category = require('../models/Category');
 const User = require('../models/User');
 const Order = require('../models/Order');
+const logAudit = require('../utils/auditLogger');
 
 router.use(protect);
 router.use(admin);
@@ -347,7 +348,7 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
             const updates = safeParse(args.updateJson);
             
             // Block sensitive fields from being proposed via AI
-            const FORBIDDEN_FIELDS = ['password', 'role', 'emailVerificationCode', 'emailVerificationExpires', 'resetPasswordToken', 'resetPasswordExpires'];
+            const FORBIDDEN_FIELDS = ['password', 'role', 'email', 'emailVerificationCode', 'emailVerificationExpires', 'resetPasswordToken', 'resetPasswordExpires', 'loyaltyPoints', 'wallet', 'walletBalance', 'isEmailVerified', 'addresses', 'permissions'];
             const containsForbiddenField = (obj) => {
               if (!obj || typeof obj !== 'object') return false;
               for (const key of Object.keys(obj)) {
@@ -470,7 +471,7 @@ router.post('/execute', asyncHandler(async (req, res) => {
   }
 
   // Ensure prohibited fields cannot be updated via AI Agent execute route
-  const FORBIDDEN_FIELDS = ['password', 'role', 'emailVerificationCode', 'emailVerificationExpires', 'resetPasswordToken', 'resetPasswordExpires'];
+  const FORBIDDEN_FIELDS = ['password', 'role', 'email', 'emailVerificationCode', 'emailVerificationExpires', 'resetPasswordToken', 'resetPasswordExpires', 'loyaltyPoints', 'wallet', 'walletBalance', 'isEmailVerified', 'addresses', 'permissions'];
   const containsForbiddenField = (obj) => {
     if (!obj || typeof obj !== 'object') return false;
     for (const key of Object.keys(obj)) {
@@ -503,6 +504,17 @@ router.post('/execute', asyncHandler(async (req, res) => {
     { _id: { $in: validDocIds } },
     finalUpdate
   );
+
+  // Audit Log
+  logAudit({
+    entityType: collectionName,
+    entityId: validDocIds[0] || null,
+    entityName: `AI Bulk Update (${validDocIds.length} items)`,
+    action: 'ai_bulk_update',
+    adminId: req.user._id,
+    changes: updates,
+    reason: 'Executed via AI Agent'
+  });
 
   // Mark message as executed
   if (sessionId && messageId) {
