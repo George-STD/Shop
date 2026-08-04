@@ -346,26 +346,50 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
           } else if (name === 'proposeDatabaseUpdate') {
             const updates = safeParse(args.updateJson);
             
+            // Block sensitive fields from being proposed via AI
+            const FORBIDDEN_FIELDS = ['password', 'role', 'emailVerificationCode', 'emailVerificationExpires', 'resetPasswordToken', 'resetPasswordExpires'];
+            const containsForbiddenField = (obj) => {
+              if (!obj || typeof obj !== 'object') return false;
+              for (const key of Object.keys(obj)) {
+                if (FORBIDDEN_FIELDS.includes(key)) return true;
+                if (typeof obj[key] === 'object' && obj[key] !== null) {
+                  if (containsForbiddenField(obj[key])) return true;
+                }
+              }
+              return false;
+            };
 
-            const affectedDocuments = await Model.find({ _id: { $in: args.documentIds } }).select(selectStr).lean();
-            
-            if (!affectedDocuments || affectedDocuments.length === 0) {
-              toolResult = {
-                error: `INVALID_DOCUMENT_IDS: None of the documentIds provided [${args.documentIds.slice(0, 5).join(', ')}...] were found in ${args.collectionName}. You MUST call 'searchDatabase' first to retrieve the real 24-character hexadecimal MongoDB '_id's before proposing updates. Do NOT use numbers ('1', '2') or names as documentIds.`
-              };
+            if (containsForbiddenField(updates)) {
+              toolResult = { error: 'PROHIBITED_FIELD: Cannot update sensitive account credentials or user roles via AI Agent.' };
               iteration++;
             } else {
-              const validIds = affectedDocuments.map(doc => doc._id.toString());
-              proposedAction = {
-                collectionName: args.collectionName,
-                documentIds: validIds,
-                updates,
-                reasoning: args.reasoning,
-                preview: affectedDocuments
-              };
+              // Fetch previews with full relevant details for the detailed table
+              let selectStr = '';
+              if (args.collectionName === 'Product') selectStr = '_id name images.url isActive price stock category canBeAddedToBox';
+              else if (args.collectionName === 'User') selectStr = '_id firstName lastName email role avatar isActive';
+              else if (args.collectionName === 'Order') selectStr = '_id orderNumber status total user';
+              else if (args.collectionName === 'Category') selectStr = '_id name image isActive slug';
+
+              const affectedDocuments = await Model.find({ _id: { $in: args.documentIds } }).select(selectStr).lean();
               
-              toolResult = { status: 'PROPOSAL_RECEIVED', message: 'User is reviewing the proposal. Stop execution.' };
-              break;
+              if (!affectedDocuments || affectedDocuments.length === 0) {
+                toolResult = {
+                  error: `INVALID_DOCUMENT_IDS: None of the documentIds provided [${args.documentIds.slice(0, 5).join(', ')}...] were found in ${args.collectionName}. You MUST call 'searchDatabase' first to retrieve the real 24-character hexadecimal MongoDB '_id's before proposing updates. Do NOT use numbers ('1', '2') or names as documentIds.`
+                };
+                iteration++;
+              } else {
+                const validIds = affectedDocuments.map(doc => doc._id.toString());
+                proposedAction = {
+                  collectionName: args.collectionName,
+                  documentIds: validIds,
+                  updates,
+                  reasoning: args.reasoning,
+                  preview: affectedDocuments
+                };
+                
+                toolResult = { status: 'PROPOSAL_RECEIVED', message: 'User is reviewing the proposal. Stop execution.' };
+                break;
+              }
             }
           } else {
             toolResult = { error: `Tool ${name} not supported` };
