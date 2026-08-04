@@ -8,6 +8,8 @@ import toast from 'react-hot-toast';
 import { authAPI } from '../../services/api';
 
 const ProductCard = ({ product }) => {
+  if (!product) return null;
+
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 

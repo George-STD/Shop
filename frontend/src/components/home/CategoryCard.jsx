@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { STRINGS } from '../../constants';
 
 const CategoryCard = ({ category }) => {
+  if (!category) return null;
   return (
     <Link to={`/products?category=${category.slug}`} className="group block">
       <div className="relative overflow-hidden rounded-2xl aspect-square bg-gradient-to-br from-purple-100 to-pink-100">

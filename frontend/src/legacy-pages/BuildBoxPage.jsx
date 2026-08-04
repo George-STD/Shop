@@ -406,7 +406,7 @@ const BuildBoxPage = () => {
                             e.stopPropagation();
                             removeItem(idx);
                           }}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                          className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-md"
                         >
                           <FiX size={10} />
                         </button>
@@ -452,7 +452,7 @@ const BuildBoxPage = () => {
                       </div>
                       <button
                         onClick={() => removeItem(index)}
-                        className="absolute top-2 left-2 p-1.5 bg-red-50 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 left-2 p-1.5 bg-red-50 text-red-500 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                         title={STRINGS.BUILD_BOX_PAGE.REMOVE_FROM_BOX}
                       >
                         <FiTrash2 size={14} />
