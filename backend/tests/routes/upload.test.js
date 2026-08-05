@@ -69,7 +69,7 @@ describe('Upload Routes Tests', () => {
       const res = await request(app)
         .post('/api/upload')
         .set('Authorization', `Bearer ${adminToken}`)
-        .attach('image', Buffer.from('fake-image-data'), 'test.jpg');
+        .attach('image', Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]), 'test.jpg');
 
       expect(res.statusCode).toBe(200);
       expect(res.body.success).toBe(true);
