@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { FiPlay, FiPause, FiChevronDown } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
+import { FiChevronDown, FiArrowLeft, FiGift, FiStar, FiAward } from 'react-icons/fi';
 import styles from './ScrollVideoSequence.module.css';
 
 const DEFAULT_SEGMENTS = Array.from(
@@ -7,26 +8,50 @@ const DEFAULT_SEGMENTS = Array.from(
   (_, i) => `/videos/segment-${i + 1}.mp4`
 );
 
+const STORY_STEPS = [
+  {
+    range: [0, 0.32],
+    badge: '✨ تجربة إهداء استثنائية',
+    icon: FiStar,
+    title: 'صُممت بعناية لتصنع الفارق',
+    subtitle: 'استمتع بتجربة تفاعلية فريدة في كشف البوكس الفاخر أثناء السكرول.',
+  },
+  {
+    range: [0.32, 0.68],
+    badge: '🎁 تغليف 3D أنيق ومخصص',
+    icon: FiGift,
+    title: 'كل هداياك في مكان واحد',
+    subtitle: 'تشكيلة راقية من المنتجات المختارة بعناية لتناسب كافة الأذواق والمناسبات.',
+  },
+  {
+    range: [0.68, 1.0],
+    badge: '👑 جاهز للإهداء المباشر',
+    icon: FiAward,
+    title: 'ابحث عن هديتك المثالية الآن',
+    subtitle: 'توصيل سريع وتغليف مجاني لكل أنحاء مصر لباب البيت.',
+    cta: {
+      text: 'صمّم بوكس هديتك الآن ←',
+      url: '/build-a-box',
+    },
+  },
+];
+
 export default function ScrollVideoSequence({
   segments = DEFAULT_SEGMENTS,
-  poster,
-  ariaLabel = 'عرض فتح صندوق الهدايا 3D',
+  poster = null,
+  ariaLabel = 'تجربة تفاعلية 3D لاستكشاف بوكس الهدايا',
 }) {
   const totalSegments = segments.length;
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
+  const containerRef = useRef(null);
+  const videoRefs = useRef([]);
+
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [activeSegment, setActiveSegment] = useState(0);
   const [allLoaded, setAllLoaded] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
 
-  const videoRefs = useRef([]);
-  const currentIndexRef = useRef(0);
-
-  useEffect(() => {
-    currentIndexRef.current = currentIndex;
-  }, [currentIndex]);
-
-  // Preload videos
+  // Preload videos into memory
   useEffect(() => {
     let loadedCount = 0;
     const loadedSet = new Set();
@@ -55,7 +80,7 @@ export default function ScrollVideoSequence({
           vid.addEventListener('canplaythrough', onCanPlay, { once: true });
           vid.addEventListener('loadeddata', onCanPlay, { once: true });
 
-          const t = setTimeout(() => checkLoaded(idx), 2500);
+          const t = setTimeout(() => checkLoaded(idx), 2000);
           timers.push(t);
         }
       } else {
@@ -68,175 +93,170 @@ export default function ScrollVideoSequence({
     };
   }, [segments, totalSegments]);
 
-  // Play segment by index
-  const playSegment = useCallback(
-    (targetIndex) => {
-      if (targetIndex < 0 || targetIndex >= totalSegments) return;
+  // Sticky Scroll Scrubbing Logic (Apple Style)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
 
-      videoRefs.current.forEach((v, idx) => {
-        if (v && idx !== targetIndex) {
-          v.pause();
-        }
-      });
+    let ticking = false;
 
-      setCurrentIndex(targetIndex);
-      currentIndexRef.current = targetIndex;
-      setIsPlaying(true);
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const container = containerRef.current;
+          if (container) {
+            const rect = container.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            const totalScrollableDistance = rect.height - windowHeight;
 
-      const vid = videoRefs.current[targetIndex];
-      if (vid) {
-        try {
-          vid.currentTime = 0;
-        } catch (_) {}
-        const p = vid.play();
-        if (p !== undefined) {
-          p.catch(() => {
-            setIsPlaying(false);
-          });
-        }
+            if (totalScrollableDistance > 0) {
+              const currentScroll = -rect.top;
+              const rawProgress = currentScroll / totalScrollableDistance;
+              const clampedProgress = Math.max(0, Math.min(1, rawProgress));
+
+              setScrollProgress(clampedProgress);
+
+              const targetIndex = Math.min(
+                totalSegments - 1,
+                Math.floor(clampedProgress * totalSegments)
+              );
+
+              if (targetIndex !== activeSegment) {
+                setActiveSegment(targetIndex);
+
+                // Ensure current video plays smoothly
+                const targetVid = videoRefs.current[targetIndex];
+                if (targetVid) {
+                  try {
+                    targetVid.currentTime = 0;
+                    targetVid.play().catch(() => {});
+                  } catch (_) {}
+                }
+              }
+            }
+          }
+          ticking = false;
+        });
+        ticking = true;
       }
-    },
-    [totalSegments]
-  );
+    };
 
-  // Auto transition to next segment on end
-  const handleVideoEnded = useCallback(
-    (index) => {
-      if (index !== currentIndexRef.current) return;
-      const nextIndex = (index + 1) % totalSegments;
-      playSegment(nextIndex);
-    },
-    [totalSegments, playSegment]
-  );
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Initial check
 
-  // Toggle play/pause
-  const togglePlay = () => {
-    const vid = videoRefs.current[currentIndex];
-    if (!vid) return;
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [totalSegments, activeSegment]);
 
-    if (isPlaying) {
-      vid.pause();
-      setIsPlaying(false);
-    } else {
-      vid.play().catch(() => {});
-      setIsPlaying(true);
-    }
-  };
-
-  const scrollToHeroContent = () => {
+  const scrollToHeroContent = useCallback(() => {
     const heroElem = document.getElementById('main-hero-content');
     if (heroElem) {
       heroElem.scrollIntoView({ behavior: 'smooth' });
     }
-  };
+  }, []);
 
-  // Loading state
-  if (!allLoaded) {
-    return (
-      <section className={styles.section} aria-label={ariaLabel}>
-        <div style={{ display: 'none' }}>
-          {segments.map((src, idx) => (
-            <video
-              key={idx}
-              ref={(el) => {
-                videoRefs.current[idx] = el;
-              }}
-              src={src}
-              muted
-              playsInline
-              preload="auto"
-            />
-          ))}
-        </div>
-
-        <div className={styles.loadingContainer}>
-          <div className={styles.loadingSpinner} />
-          <p className={styles.loadingText}>جاري تجهيز استعراض الهدايا 🎁</p>
-          <div className={styles.loadingBar}>
-            <div
-              className={styles.loadingBarFill}
-              style={{ '--progress': `${loadProgress}%` }}
-            />
-          </div>
-          <p className={styles.loadingPercent}>{loadProgress}%</p>
-        </div>
-      </section>
-    );
-  }
+  // Determine active story card based on scrollProgress
+  const activeStory =
+    STORY_STEPS.find(
+      (step) =>
+        scrollProgress >= step.range[0] && scrollProgress <= step.range[1]
+    ) || STORY_STEPS[0];
 
   return (
-    <section
-      className={styles.section}
+    <div
+      ref={containerRef}
+      className={styles.scrollContainer}
       aria-label={ariaLabel}
-      role="region"
-      id="video-sequence-hero"
+      id="video-scroll-sequence"
     >
-      <div className={styles.overlay} />
+      <div className={styles.stickyWrapper}>
+        <div className={styles.overlay} />
 
-      {/* Render stacked video segments */}
-      {segments.map((src, idx) => (
-        <video
-          key={idx}
-          ref={(el) => {
-            videoRefs.current[idx] = el;
-          }}
-          src={src}
-          className={styles.video}
-          style={{
-            opacity: idx === currentIndex ? 1 : 0,
-            pointerEvents: idx === currentIndex ? 'auto' : 'none',
-            transition: 'opacity 0.35s ease-in-out',
-          }}
-          muted
-          playsInline
-          autoPlay={idx === 0}
-          preload="auto"
-          poster={poster}
-          onEnded={() => handleVideoEnded(idx)}
-          aria-hidden={idx !== currentIndex}
-        />
-      ))}
+        {/* Loading overlay if assets are still preloading */}
+        {!allLoaded && (
+          <div className={styles.loadingContainer}>
+            <div className={styles.loadingSpinner} />
+            <p className={styles.loadingText}>جاري تحميل التجربة الـ 3D 🎁</p>
+            <div className={styles.loadingBar}>
+              <div
+                className={styles.loadingBarFill}
+                style={{ '--progress': `${loadProgress}%` }}
+              />
+            </div>
+            <p className={styles.loadingPercent}>{loadProgress}%</p>
+          </div>
+        )}
 
-      {/* Scroll down button */}
-      <button
-        type="button"
-        className={styles.scrollDownBtn}
-        onClick={scrollToHeroContent}
-        aria-label="الانتقال للعروض والخصومات"
-      >
-        <span>تصفح العروض</span>
-        <FiChevronDown className="w-4 h-4 animate-bounce" />
-      </button>
+        {/* Stacked Video Segments Scrubbed by Scroll */}
+        {segments.map((src, idx) => (
+          <video
+            key={idx}
+            ref={(el) => {
+              videoRefs.current[idx] = el;
+            }}
+            src={src}
+            className={styles.video}
+            style={{
+              opacity: idx === activeSegment ? 1 : 0,
+              pointerEvents: 'none',
+              transition: 'opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+            muted
+            playsInline
+            preload="auto"
+            poster={poster}
+            aria-hidden={idx !== activeSegment}
+          />
+        ))}
 
-      {/* Bottom controls & segment indicators */}
-      <div className={styles.controlsBar}>
+        {/* Floating Arabic Story Card */}
+        {allLoaded && (
+          <div className={styles.storyCard} key={activeStory.badge}>
+            <div className={styles.badge}>
+              <activeStory.icon className="w-4 h-4" />
+              <span>{activeStory.badge}</span>
+            </div>
+            <h3 className={styles.title}>{activeStory.title}</h3>
+            <p className={styles.subtitle}>{activeStory.subtitle}</p>
+
+            {activeStory.cta ? (
+              <Link to={activeStory.cta.url} className={styles.ctaBtn}>
+                <span>{activeStory.cta.text}</span>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={scrollToHeroContent}
+                className={styles.ctaBtn}
+              >
+                <span>تصفح المنتجات ←</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Scroll Indicator Prompt */}
         <button
           type="button"
-          className={styles.playToggleBtn}
-          onClick={togglePlay}
-          aria-label={isPlaying ? 'إيقاف مؤقت' : 'تشغيل الفيديو'}
+          onClick={scrollToHeroContent}
+          className={styles.scrollHint}
+          aria-label="تخطي إلى العروض"
         >
-          {isPlaying ? <FiPause /> : <FiPlay />}
+          <div className={styles.mouseIcon}>
+            <div className={styles.wheelDot} />
+          </div>
+          <span>مرّر لأسفل للاستكشاف</span>
+          <FiChevronDown className="w-4 h-4" />
         </button>
 
-        <div className={styles.progressDots}>
-          {segments.map((_, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => playSegment(idx)}
-              className={`${styles.dot} ${
-                idx === currentIndex ? styles.dotActive : ''
-              }`}
-              aria-label={`الانتقال للمقطع ${idx + 1}`}
-            />
-          ))}
+        {/* Progress Timeline at bottom edge */}
+        <div className={styles.timeline}>
+          <div
+            className={styles.timelineFill}
+            style={{ width: `${Math.round(scrollProgress * 100)}%` }}
+          />
         </div>
-
-        <span className={styles.progressLabel}>
-          {currentIndex + 1} / {totalSegments}
-        </span>
       </div>
-    </section>
+    </div>
   );
 }
