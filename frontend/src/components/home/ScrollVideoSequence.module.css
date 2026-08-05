@@ -140,13 +140,32 @@
   pointer-events: auto;
 }
 
-@media (max-width: 768px) {
+/* On tablets: tighten but keep at top */
+@media (max-width: 768px) and (min-width: 641px) {
   .storyCard {
-    top: 8%;
+    top: 10%;
+    right: 4%;
+    left: auto;
+    max-width: 320px;
+    padding: 1.1rem 1.3rem;
+  }
+}
+
+/* On mobile: move to bottom to avoid covering the animation */
+@media (max-width: 640px) {
+  .storyCard {
+    top: auto;
+    bottom: 5rem;   /* sit above the skip/progress bar */
     right: 4%;
     left: 4%;
     max-width: none;
-    padding: 1.2rem 1.4rem;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    background: rgba(9, 5, 20, 0.82);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
   }
 }
 
@@ -162,6 +181,20 @@
   padding: 0.3rem 0.85rem;
   border-radius: 99px;
   margin-bottom: 0.6rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    margin-bottom: 0;
+  }
+}
+
+.storyCardText {
+  flex: 1;
+  min-width: 0;
 }
 
 .title {
@@ -176,7 +209,11 @@
 
 @media (max-width: 640px) {
   .title {
-    font-size: 1.2rem;
+    font-size: 0.95rem;
+    margin-bottom: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -185,6 +222,12 @@
   color: rgba(255, 255, 255, 0.85);
   line-height: 1.5;
   margin-bottom: 1.1rem;
+}
+
+@media (max-width: 640px) {
+  .subtitle {
+    display: none; /* hide long text on mobile to keep card compact */
+  }
 }
 
 .ctaBtn {
@@ -207,6 +250,12 @@
 .ctaBtn:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 25px rgba(168, 85, 247, 0.5);
+}
+
+@media (max-width: 640px) {
+  .ctaBtn {
+    display: none; /* hide CTA button in compact mobile mode; user can tap the dots or the card itself */
+  }
 }
 
 /* Fast Scroll Down Button (Bottom Left) */

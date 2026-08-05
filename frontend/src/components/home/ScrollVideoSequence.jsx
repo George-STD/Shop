@@ -333,22 +333,24 @@ export default function ScrollVideoSequence({
             <activeStory.icon className="w-4 h-4" />
             <span>{activeStory.badge}</span>
           </div>
-          <h3 className={styles.title}>{activeStory.title}</h3>
-          <p className={styles.subtitle}>{activeStory.subtitle}</p>
+          <div className={styles.storyCardText}>
+            <h3 className={styles.title}>{activeStory.title}</h3>
+            <p className={styles.subtitle}>{activeStory.subtitle}</p>
 
-          {activeStory.cta ? (
-            <Link to={activeStory.cta.url} className={styles.ctaBtn}>
-              <span>{activeStory.cta.text}</span>
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={scrollToHeroContent}
-              className={styles.ctaBtn}
-            >
-              <span>تصفح المنتجات ←</span>
-            </button>
-          )}
+            {activeStory.cta ? (
+              <Link to={activeStory.cta.url} className={styles.ctaBtn}>
+                <span>{activeStory.cta.text}</span>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={scrollToHeroContent}
+                className={styles.ctaBtn}
+              >
+                <span>تصفح المنتجات ←</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 
