@@ -178,12 +178,15 @@ const productSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for search
+// Index for search & high-performance queries
+productSchema.index({ slug: 1 }, { unique: true });
 productSchema.index({ name: 'text', description: 'text', tags: 'text' });
 productSchema.index({ price: 1 });
 productSchema.index({ category: 1 });
 productSchema.index({ occasions: 1 });
 productSchema.index({ isFeatured: 1 });
+productSchema.index({ isActive: 1, isReadyBox: 1 });
+productSchema.index({ isActive: 1, category: 1 });
 productSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Product', productSchema);

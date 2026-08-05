@@ -116,4 +116,6 @@ userSchema.virtual('fullName').get(function() {
   return `${this.firstName} ${this.lastName}`;
 });
 
+userSchema.index({ role: 1 });
+
 module.exports = mongoose.model('User', userSchema);
