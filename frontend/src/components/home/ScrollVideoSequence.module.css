@@ -1,33 +1,26 @@
 /* ═══════════════════════════════════════════════════════════════
-   Apple-Style Sticky Scroll Video Sequence — Calibrated Height
+   Fast Interactive Step-Scroll Video Sequence — Seamless Hero
    ═══════════════════════════════════════════════════════════════ */
 
-/* Calibrated scroll distance container */
-.scrollContainer {
+/* Full-viewport section without any trailing dark empty gap below */
+.section {
   position: relative;
   width: 100%;
-  height: 220vh;
-  background: #090514;
-}
-
-@media (max-width: 640px) {
-  .scrollContainer {
-    height: 190vh;
-  }
-}
-
-/* Sticky wrapper pinned to top of screen during scroll */
-.stickyWrapper {
-  position: sticky;
-  top: 0;
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
+  height: 85vh;
+  min-height: 520px;
+  max-height: 820px;
   overflow: hidden;
+  background: #090514;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #090514;
+}
+
+@media (max-width: 640px) {
+  .section {
+    height: 75vh;
+    min-height: 450px;
+  }
 }
 
 /* Video element */
@@ -39,6 +32,18 @@
   object-fit: cover;
 }
 
+/* Bottom fade transition blending seamlessly into the white/purple site theme */
+.bottomFade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 90px;
+  background: linear-gradient(to bottom, rgba(9, 5, 20, 0) 0%, #fbf5ff 100%);
+  z-index: 6;
+  pointer-events: none;
+}
+
 /* Cinematic overlay gradient */
 .overlay {
   position: absolute;
@@ -46,8 +51,8 @@
   background: radial-gradient(
     circle at center,
     rgba(9, 5, 20, 0.15) 0%,
-    rgba(9, 5, 20, 0.55) 75%,
-    rgba(9, 5, 20, 0.85) 100%
+    rgba(9, 5, 20, 0.5) 75%,
+    rgba(9, 5, 20, 0.8) 100%
   );
   z-index: 5;
   pointer-events: none;
@@ -119,29 +124,29 @@
 /* Dynamic Floating Arabic Story Card */
 .storyCard {
   position: absolute;
-  top: 15%;
+  top: 14%;
   right: 5%;
   max-width: 420px;
   z-index: 10;
-  background: rgba(15, 10, 30, 0.7);
+  background: rgba(15, 10, 30, 0.72);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 1.5rem;
-  padding: 1.75rem 2rem;
+  padding: 1.5rem 1.75rem;
   color: #fff;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
   pointer-events: auto;
 }
 
 @media (max-width: 768px) {
   .storyCard {
-    top: 10%;
+    top: 8%;
     right: 4%;
     left: 4%;
     max-width: none;
-    padding: 1.25rem 1.5rem;
+    padding: 1.2rem 1.4rem;
   }
 }
 
@@ -154,16 +159,16 @@
   color: #fbbf24;
   font-size: 0.8125rem;
   font-weight: 800;
-  padding: 0.35rem 0.9rem;
+  padding: 0.3rem 0.85rem;
   border-radius: 99px;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.6rem;
 }
 
 .title {
-  font-size: 1.65rem;
+  font-size: 1.55rem;
   font-weight: 900;
   line-height: 1.3;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   background: linear-gradient(135deg, #ffffff 0%, #e9d5ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -171,15 +176,15 @@
 
 @media (max-width: 640px) {
   .title {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
   }
 }
 
 .subtitle {
-  font-size: 0.925rem;
+  font-size: 0.875rem;
   color: rgba(255, 255, 255, 0.85);
-  line-height: 1.6;
-  margin-bottom: 1.25rem;
+  line-height: 1.5;
+  margin-bottom: 1.1rem;
 }
 
 .ctaBtn {
@@ -189,12 +194,12 @@
   background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
   color: #fff;
   font-weight: 800;
-  font-size: 0.875rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 1rem;
+  font-size: 0.85rem;
+  padding: 0.65rem 1.4rem;
+  border-radius: 0.9rem;
   text-decoration: none;
   box-shadow: 0 8px 20px rgba(168, 85, 247, 0.35);
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   border: none;
   cursor: pointer;
 }
@@ -204,77 +209,98 @@
   box-shadow: 0 12px 25px rgba(168, 85, 247, 0.5);
 }
 
-/* Scroll Hint Bar (Bottom Center) */
-.scrollHint {
+/* Fast Scroll Down Button (Bottom Left) */
+.skipButton {
+  position: absolute;
+  bottom: 2rem;
+  left: 2rem;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 0.55rem 1.25rem;
+  border-radius: 99px;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.skipButton:hover {
+  background: rgba(168, 85, 247, 0.85);
+  border-color: rgba(216, 180, 254, 0.6);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 640px) {
+  .skipButton {
+    bottom: 1.25rem;
+    left: 1rem;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Stepped Progress Indicator (Bottom Center) */
+.progressIndicator {
   position: absolute;
   bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  z-index: 10;
-  background: rgba(0, 0, 0, 0.55);
+  gap: 0.85rem;
+  z-index: 15;
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0.6rem 1.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 0.5rem 1.2rem;
   border-radius: 99px;
-  color: #fff;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
 }
 
-.scrollHint:hover {
-  background: rgba(168, 85, 247, 0.8);
-  border-color: rgba(216, 180, 254, 0.6);
+@media (max-width: 640px) {
+  .progressIndicator {
+    bottom: 1.25rem;
+    padding: 0.4rem 0.9rem;
+    gap: 0.5rem;
+  }
 }
 
-.mouseIcon {
-  width: 18px;
-  height: 28px;
-  border: 2px solid rgba(255, 255, 255, 0.7);
-  border-radius: 10px;
+.progressDots {
   display: flex;
-  justify-content: center;
-  padding-top: 4px;
+  align-items: center;
+  gap: 6px;
 }
 
-.wheelDot {
-  width: 4px;
-  height: 6px;
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dotActive {
   background: #f59e0b;
-  border-radius: 2px;
-  animation: scrollAnim 1.6s ease-in-out infinite;
-}
-
-@keyframes scrollAnim {
-  0% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(10px);
-    opacity: 0;
-  }
-}
-
-/* Progress bar timeline at bottom edge */
-.timeline {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.1);
-  z-index: 10;
-}
-
-.timelineFill {
-  height: 100%;
-  background: linear-gradient(90deg, #a855f7 0%, #ec4899 50%, #f59e0b 100%);
-  transition: width 0.1s linear;
+  border-color: #f59e0b;
+  width: 20px;
+  border-radius: 99px;
   box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+}
+
+.progressText {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
