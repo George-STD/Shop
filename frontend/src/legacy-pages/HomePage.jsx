@@ -8,6 +8,7 @@ import ProductCard from '../components/product/ProductCard';
 import CategoryCard from '../components/home/CategoryCard';
 import FeatureCard from '../components/home/FeatureCard';
 import OccasionCard from '../components/home/OccasionCard';
+import ScrollVideoSequence from '../components/home/ScrollVideoSequence';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
@@ -75,8 +76,11 @@ const HomePage = () => {
 
   return (
     <>
+      {/* 3D Gift Box Unboxing Animation */}
+      <ScrollVideoSequence />
+
       {/* Hero Section */}
-      <section className="hero-gradient relative">
+      <section className="hero-gradient relative" id="main-hero-content">
         <Swiper
           modules={[Autoplay, Pagination, Navigation]}
           spaceBetween={0}
