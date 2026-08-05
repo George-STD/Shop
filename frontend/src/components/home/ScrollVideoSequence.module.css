@@ -1,13 +1,13 @@
 /* ═══════════════════════════════════════════════════════════════
-   ScrollVideoSequence — Styles for Gift Box Unboxing Animation
+   ScrollVideoSequence — Smooth Autoplay Video Hero (No Scroll Trap)
    ═══════════════════════════════════════════════════════════════ */
 
 .section {
   position: relative;
   width: 100%;
-  height: 85vh;
-  min-height: 550px;
-  max-height: 850px;
+  height: 70vh;
+  min-height: 460px;
+  max-height: 720px;
   overflow: hidden;
   background: #090514;
   display: flex;
@@ -17,13 +17,9 @@
 
 @media (max-width: 640px) {
   .section {
-    height: 75vh;
-    min-height: 480px;
+    height: 60vh;
+    min-height: 380px;
   }
-}
-
-.active {
-  /* Visual cue when section is active */
 }
 
 /* Video element */
@@ -33,6 +29,20 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Dark gradient overlay for text readability */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(9, 5, 20, 0.4) 0%,
+    rgba(9, 5, 20, 0.2) 50%,
+    rgba(9, 5, 20, 0.75) 100%
+  );
+  z-index: 5;
+  pointer-events: none;
 }
 
 /* Loading screen */
@@ -46,8 +56,8 @@
 }
 
 .loadingSpinner {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border: 3.5px solid rgba(255, 255, 255, 0.15);
   border-top-color: #d8b4fe;
   border-radius: 50%;
@@ -62,13 +72,12 @@
 
 .loadingText {
   color: rgba(255, 255, 255, 0.9);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  letter-spacing: 0.02em;
 }
 
 .loadingBar {
-  width: 200px;
+  width: 180px;
   height: 4px;
   background: rgba(255, 255, 255, 0.15);
   border-radius: 99px;
@@ -90,173 +99,113 @@
   font-weight: 700;
 }
 
-/* Scroll prompt */
-.scrollPrompt {
+/* Bottom controls bar */
+.controlsBar {
   position: absolute;
-  bottom: 2.5rem;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 1.5rem;
+  right: 1.5rem;
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 0.75rem;
   z-index: 10;
-  animation: fadeInUp 1s ease 0.3s both;
-  cursor: pointer;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-.scrollIcon {
-  width: 26px;
-  height: 42px;
-  border: 2px solid rgba(255, 255, 255, 0.6);
-  border-radius: 14px;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(4px);
-}
-
-.scrollDot {
-  width: 5px;
-  height: 9px;
-  background: #f59e0b;
-  border-radius: 3px;
-  margin-top: 6px;
-  animation: scrollBounce 1.8s ease-in-out infinite;
-}
-
-@keyframes scrollBounce {
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  50% {
-    transform: translateY(14px);
-    opacity: 0.3;
-  }
-}
-
-.scrollText {
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
-  background: rgba(0, 0, 0, 0.4);
-  padding: 4px 14px;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 8px 16px;
   border-radius: 99px;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Progress indicator */
-.progressContainer {
-  position: absolute;
-  left: 1.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  z-index: 10;
-  animation: fadeIn 0.5s ease both;
-  background: rgba(0, 0, 0, 0.35);
-  padding: 10px 8px;
-  border-radius: 99px;
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+@media (max-width: 640px) {
+  .controlsBar {
+    bottom: 1rem;
+    right: 1rem;
+    padding: 6px 12px;
+  }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.playToggleBtn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  transition: background 0.2s ease;
+}
+
+.playToggleBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .progressDots {
   display: flex;
-  flex-direction: column;
-  gap: 7px;
+  align-items: center;
+  gap: 6px;
 }
 
 .dot {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s ease;
 }
 
 .dotActive {
   background: #f59e0b;
   border-color: #f59e0b;
+  width: 22px;
+  border-radius: 99px;
   box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
-}
-
-.dotPlaying {
-  animation: pulse 0.6s ease-in-out infinite alternate;
-}
-
-@keyframes pulse {
-  from {
-    transform: scale(1);
-    box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
-  }
-  to {
-    transform: scale(1.4);
-    box-shadow: 0 0 16px rgba(245, 158, 11, 0.9);
-  }
 }
 
 .progressLabel {
   color: rgba(255, 255, 255, 0.85);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
 }
 
-/* Skip button */
-.skipButton {
+/* Scroll down hint button */
+.scrollDownBtn {
   position: absolute;
-  top: 1.25rem;
-  left: 1.25rem;
-  z-index: 20;
-  background: rgba(0, 0, 0, 0.55);
+  bottom: 1.5rem;
+  left: 1.5rem;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(8px);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 0.5rem 1.25rem;
-  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.5rem 1rem;
+  border-radius: 99px;
   font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.skipButton:hover {
+.scrollDownBtn:hover {
   background: rgba(168, 85, 247, 0.8);
   border-color: rgba(216, 180, 254, 0.6);
   transform: translateY(-2px);
+}
+
+@media (max-width: 640px) {
+  .scrollDownBtn {
+    bottom: 1rem;
+    left: 1rem;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+  }
 }
