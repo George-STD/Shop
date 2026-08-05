@@ -2,13 +2,12 @@
    Fast Interactive Step-Scroll Video Sequence — Seamless Hero
    ═══════════════════════════════════════════════════════════════ */
 
-/* Full-viewport section without any trailing dark empty gap below */
+/* Full-viewport section — fills entire screen on desktop */
 .section {
   position: relative;
   width: 100%;
-  height: 85vh;
-  min-height: 520px;
-  max-height: 820px;
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: #090514;
   display: flex;
