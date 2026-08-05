@@ -308,7 +308,7 @@ const BuildBoxPage = () => {
                   ))}
                 </div>
 
-                {productsData?.total > products.length && (
+                {(productsData?.pagination?.total || productsData?.total) > products.length && (
                   <div className="mt-8 p-6 bg-purple-50/80 rounded-2xl border border-purple-100 flex flex-col items-center justify-center text-center">
                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-purple-600 shadow-sm mb-3">
                       <FiFilter className="w-6 h-6" />
