@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { FiChevronDown, FiGift, FiStar, FiAward } from 'react-icons/fi';
+import { FiGift, FiStar, FiAward, FiArrowLeft } from 'react-icons/fi';
 import styles from './ScrollVideoSequence.module.css';
 
 const DEFAULT_SEGMENTS = Array.from(
@@ -8,29 +8,35 @@ const DEFAULT_SEGMENTS = Array.from(
   (_, i) => `/videos/segment-${i + 1}.mp4`
 );
 
-const STORY_STEPS = [
+const CHAPTER_STEPS = [
   {
-    range: [0, 2],
+    range: [0, 0.35],
+    chapterNum: '01',
+    chapterLabel: 'كشف البوكس',
     badge: '✨ تجربة إهداء استثنائية',
     icon: FiStar,
     title: 'صُممت بعناية لتصنع الفارق',
-    subtitle: 'استمتع بتجربة تفاعلية فريدة في كشف البوكس الفاخر أثناء السكرول.',
+    subtitle: 'استمتع بتجربة تفاعلية فريدة في استكشاف تفاصيل البوكس الفاخر مع حركتك على المتجر.',
   },
   {
-    range: [3, 5],
+    range: [0.35, 0.7],
+    chapterNum: '02',
+    chapterLabel: 'المحتويات والتغليف',
     badge: '🎁 تغليف 3D أنيق ومخصص',
     icon: FiGift,
     title: 'كل هداياك في مكان واحد',
-    subtitle: 'تشكيلة راقية من المنتجات المختارة بعناية لتناسب كافة الأذواق والمناسبات.',
+    subtitle: 'تشكيلة راقية من المنتجات المختارة بعناية لتناسب كافة الأذواق والمناسبات السعيدة.',
   },
   {
-    range: [6, 7],
+    range: [0.7, 1.0],
+    chapterNum: '03',
+    chapterLabel: 'جاهز للإهداء',
     badge: '👑 جاهز للإهداء المباشر',
     icon: FiAward,
     title: 'ابحث عن هديتك المثالية الآن',
-    subtitle: 'توصيل سريع وتغليف مجاني لكل أنحاء مصر لباب البيت.',
+    subtitle: 'توصيل سريع وتغليف فاخر مجاني لكل أنحاء مصر لباب البيت مباشرة.',
     cta: {
-      text: 'صمّم بوكس هديتك الآن ←',
+      text: 'صمّم بوكس هديتك الآن',
       url: '/build-a-box',
     },
   },
@@ -43,26 +49,13 @@ export default function ScrollVideoSequence({
 }) {
   const totalSegments = segments.length;
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isActive, setIsActive] = useState(true);
+  const containerRef = useRef(null);
+  const videoRefs = useRef([]);
+
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [activeSegment, setActiveSegment] = useState(0);
   const [allLoaded, setAllLoaded] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
-
-  const sectionRef = useRef(null);
-  const videoRefs = useRef([]);
-  const currentIndexRef = useRef(0);
-  const isActiveRef = useRef(true);
-  const cooldownRef = useRef(false);
-  const cooldownTimer = useRef(null);
-  const touchStartY = useRef(0);
-
-  useEffect(() => {
-    currentIndexRef.current = currentIndex;
-  }, [currentIndex]);
-
-  useEffect(() => {
-    isActiveRef.current = isActive;
-  }, [isActive]);
 
   // Preload videos into memory
   useEffect(() => {
@@ -106,283 +99,186 @@ export default function ScrollVideoSequence({
     };
   }, [segments, totalSegments]);
 
-  // Play specific segment
-  const playSegment = useCallback(
-    (targetIndex) => {
-      if (targetIndex < 0 || targetIndex >= totalSegments) return;
-
-      videoRefs.current.forEach((v, idx) => {
-        if (v && idx !== targetIndex) {
-          v.pause();
-        }
-      });
-
-      setCurrentIndex(targetIndex);
-      currentIndexRef.current = targetIndex;
-
-      const vid = videoRefs.current[targetIndex];
-      if (vid) {
-        try {
-          vid.currentTime = 0;
-          vid.play().catch(() => {});
-        } catch (_) {}
-      }
-    },
-    [totalSegments]
-  );
-
-  const scrollToHeroContent = useCallback(() => {
-    setIsActive(false);
-    isActiveRef.current = false;
-    const heroElem = document.getElementById('main-hero-content');
-    if (heroElem) {
-      heroElem.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, []);
-
-  // Fast Step Scroll Handler (Wheel & Touch)
-  const handleStepScroll = useCallback(
-    (direction, e) => {
-      if (cooldownRef.current) {
-        if (e && e.cancelable) e.preventDefault();
-        return;
-      }
-
-      const cIdx = currentIndexRef.current;
-
-      if (direction === 'down') {
-        if (cIdx < totalSegments - 1) {
-          if (e && e.cancelable) e.preventDefault();
-          playSegment(cIdx + 1);
-
-          // Fast 120ms cooldown for snappy stepping
-          cooldownRef.current = true;
-          if (cooldownTimer.current) clearTimeout(cooldownTimer.current);
-          cooldownTimer.current = setTimeout(() => {
-            cooldownRef.current = false;
-          }, 120);
-        } else {
-          // Reached end of animation -> release lock for smooth scroll to Hero
-          setIsActive(false);
-          isActiveRef.current = false;
-        }
-      } else if (direction === 'up') {
-        if (cIdx > 0) {
-          if (e && e.cancelable) e.preventDefault();
-          playSegment(cIdx - 1);
-
-          cooldownRef.current = true;
-          if (cooldownTimer.current) clearTimeout(cooldownTimer.current);
-          cooldownTimer.current = setTimeout(() => {
-            cooldownRef.current = false;
-          }, 120);
-        } else {
-          // Reached top of animation -> release lock for smooth scroll to Header
-          setIsActive(false);
-          isActiveRef.current = false;
-        }
-      }
-    },
-    [totalSegments, playSegment]
-  );
-
-  // Attach Wheel Listener
+  // Smooth Scroll Scrubbing driven naturally by window scroll
   useEffect(() => {
-    if (!allLoaded) return;
+    if (typeof window === 'undefined') return;
 
-    const onWheel = (e) => {
-      if (!isActiveRef.current) return;
+    let ticking = false;
 
-      const section = sectionRef.current;
-      if (!section) return;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const container = containerRef.current;
+          if (container) {
+            const rect = container.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            const totalScrollable = rect.height - windowHeight;
 
-      const rect = section.getBoundingClientRect();
-      const inView =
-        rect.top <= window.innerHeight * 0.4 &&
-        rect.bottom >= window.innerHeight * 0.6;
+            if (totalScrollable > 0) {
+              const currentScroll = -rect.top;
+              const rawProgress = currentScroll / totalScrollable;
+              const clampedProgress = Math.max(0, Math.min(1, rawProgress));
 
-      if (!inView) return;
+              setScrollProgress(clampedProgress);
 
-      if (Math.abs(e.deltaY) < 5) return;
+              const targetIndex = Math.min(
+                totalSegments - 1,
+                Math.floor(clampedProgress * totalSegments)
+              );
 
-      const dir = e.deltaY > 0 ? 'down' : 'up';
-      handleStepScroll(dir, e);
-    };
+              if (targetIndex !== activeSegment) {
+                setActiveSegment(targetIndex);
 
-    window.addEventListener('wheel', onWheel, { passive: false });
-    return () => window.removeEventListener('wheel', onWheel);
-  }, [allLoaded, handleStepScroll]);
-
-  // Attach Touch Listener for Mobile
-  useEffect(() => {
-    if (!allLoaded) return;
-
-    const section = sectionRef.current;
-    if (!section) return;
-
-    const onTouchStart = (e) => {
-      touchStartY.current = e.touches[0].clientY;
-    };
-
-    const onTouchMove = (e) => {
-      if (isActiveRef.current) {
-        const deltaY = touchStartY.current - e.touches[0].clientY;
-        if (Math.abs(deltaY) > 8 && e.cancelable) {
-          e.preventDefault();
-        }
+                const targetVid = videoRefs.current[targetIndex];
+                if (targetVid) {
+                  try {
+                    targetVid.currentTime = 0;
+                    targetVid.play().catch(() => {});
+                  } catch (_) {}
+                }
+              }
+            }
+          }
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 
-    const onTouchEnd = (e) => {
-      if (!isActiveRef.current) return;
-
-      const deltaY = touchStartY.current - e.changedTouches[0].clientY;
-      if (Math.abs(deltaY) < 20) return;
-
-      const dir = deltaY > 0 ? 'down' : 'up';
-      handleStepScroll(dir, e);
-    };
-
-    section.addEventListener('touchstart', onTouchStart, { passive: true });
-    section.addEventListener('touchmove', onTouchMove, { passive: false });
-    section.addEventListener('touchend', onTouchEnd, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
 
     return () => {
-      section.removeEventListener('touchstart', onTouchStart);
-      section.removeEventListener('touchmove', onTouchMove);
-      section.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('scroll', handleScroll);
     };
-  }, [allLoaded, handleStepScroll]);
+  }, [totalSegments, activeSegment]);
 
-  // Re-engage lock when scrolling back into section
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
+  const jumpToProgress = (targetProgress) => {
+    const container = containerRef.current;
+    if (container) {
+      const containerTop = container.offsetTop;
+      const totalScrollable = container.offsetHeight - window.innerHeight;
+      const targetScroll = containerTop + targetProgress * totalScrollable;
+      window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+    }
+  };
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsActive(true);
-          isActiveRef.current = true;
-        }
-      },
-      { threshold: 0.5 }
-    );
-
-    observer.observe(section);
-    return () => observer.disconnect();
-  }, []);
-
-  // Determine active story card based on currentIndex
-  const activeStory =
-    STORY_STEPS.find(
-      (step) => currentIndex >= step.range[0] && currentIndex <= step.range[1]
-    ) || STORY_STEPS[0];
+  const activeChapter =
+    CHAPTER_STEPS.find(
+      (step) =>
+        scrollProgress >= step.range[0] && scrollProgress <= step.range[1]
+    ) || CHAPTER_STEPS[0];
 
   return (
-    <section
-      ref={sectionRef}
-      className={styles.section}
+    <div
+      ref={containerRef}
+      className={styles.container}
       aria-label={ariaLabel}
-      id="video-step-sequence"
+      id="video-scroll-sequence"
     >
-      <div className={styles.overlay} />
-      <div className={styles.bottomFade} />
+      <div className={styles.stickyFrame}>
+        {/* Ambient Glowing Orbs */}
+        <div className={styles.glowSphere1} />
+        <div className={styles.glowSphere2} />
 
-      {/* Loading overlay if preloading */}
-      {!allLoaded && (
-        <div className={styles.loadingContainer}>
-          <div className={styles.loadingSpinner} />
-          <p className={styles.loadingText}>جاري تجهيز مفاجأة الفتح 🎁</p>
-          <div className={styles.loadingBar}>
-            <div
-              className={styles.loadingBarFill}
-              style={{ '--progress': `${loadProgress}%` }}
-            />
+        {/* Soft Vignette Overlays for smooth header and footer blending */}
+        <div className={styles.topOverlay} />
+        <div className={styles.bottomOverlay} />
+
+        {/* Loading Overlay */}
+        {!allLoaded && (
+          <div className={styles.loadingContainer}>
+            <div className={styles.loadingSpinner} />
+            <p className={styles.loadingText}>جاري تجهيز التجربة الـ 3D 🎁</p>
+            <div className={styles.loadingBar}>
+              <div
+                className={styles.loadingBarFill}
+                style={{ '--progress': `${loadProgress}%` }}
+              />
+            </div>
+            <p className={styles.loadingPercent}>{loadProgress}%</p>
           </div>
-          <p className={styles.loadingPercent}>{loadProgress}%</p>
-        </div>
-      )}
+        )}
 
-      {/* Stacked Video Segments */}
-      {segments.map((src, idx) => (
-        <video
-          key={idx}
-          ref={(el) => {
-            videoRefs.current[idx] = el;
-          }}
-          src={src}
-          className={styles.video}
-          style={{
-            opacity: idx === currentIndex ? 1 : 0,
-            pointerEvents: 'none',
-            transition: 'opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-          muted
-          playsInline
-          preload="auto"
-          poster={poster}
-          aria-hidden={idx !== currentIndex}
-        />
-      ))}
-
-      {/* Dynamic Floating Arabic Story Card */}
-      {allLoaded && (
-        <div className={styles.storyCard} key={activeStory.badge}>
-          <div className={styles.badge}>
-            <activeStory.icon className="w-4 h-4" />
-            <span>{activeStory.badge}</span>
-          </div>
-          <div className={styles.storyCardText}>
-            <h3 className={styles.title}>{activeStory.title}</h3>
-            <p className={styles.subtitle}>{activeStory.subtitle}</p>
-
-            {activeStory.cta ? (
-              <Link to={activeStory.cta.url} className={styles.ctaBtn}>
-                <span>{activeStory.cta.text}</span>
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={scrollToHeroContent}
-                className={styles.ctaBtn}
-              >
-                <span>تصفح المنتجات ←</span>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Skip to Hero Button */}
-      <button
-        type="button"
-        className={styles.skipButton}
-        onClick={scrollToHeroContent}
-        aria-label="تخطي الأنيميشن"
-      >
-        <span>تخطي الأنيميشن ↓</span>
-      </button>
-
-      {/* Stepped Progress Indicator */}
-      <div className={styles.progressIndicator}>
-        <div className={styles.progressDots}>
-          {segments.map((_, idx) => (
-            <button
+        {/* Video Mask Container */}
+        <div className={styles.videoWrapper}>
+          {segments.map((src, idx) => (
+            <video
               key={idx}
-              type="button"
-              onClick={() => playSegment(idx)}
-              className={`${styles.dot} ${
-                idx === currentIndex ? styles.dotActive : ''
-              }`}
-              aria-label={`المرحلة ${idx + 1}`}
+              ref={(el) => {
+                videoRefs.current[idx] = el;
+              }}
+              src={src}
+              className={styles.video}
+              style={{
+                opacity: idx === activeSegment ? 1 : 0,
+                pointerEvents: 'none',
+              }}
+              muted
+              playsInline
+              preload="auto"
+              poster={poster}
+              aria-hidden={idx !== activeSegment}
             />
           ))}
         </div>
-        <span className={styles.progressText}>
-          {currentIndex + 1} / {totalSegments}
-        </span>
+
+        {/* Glassmorphic Content Card */}
+        {allLoaded && (
+          <div className={styles.contentCard} key={activeChapter.badge}>
+            <div className={styles.badge}>
+              <activeChapter.icon className="w-4 h-4" />
+              <span>{activeChapter.badge}</span>
+            </div>
+            <div className={styles.cardTextWrapper}>
+              <h3 className={styles.title}>{activeChapter.title}</h3>
+              <p className={styles.subtitle}>{activeChapter.subtitle}</p>
+
+              {activeChapter.cta ? (
+                <Link to={activeChapter.cta.url} className={styles.ctaBtn}>
+                  <span>{activeChapter.cta.text}</span>
+                  <FiArrowLeft className="w-4 h-4" />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => jumpToProgress(0.75)}
+                  className={styles.ctaBtn}
+                >
+                  <span>استكشف البوكسات</span>
+                  <FiArrowLeft className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Chapter Pill Selector */}
+        <div className={styles.chapterPill}>
+          {CHAPTER_STEPS.map((ch, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => jumpToProgress((ch.range[0] + ch.range[1]) / 2)}
+              className={`${styles.chapterBtn} ${
+                activeChapter.chapterNum === ch.chapterNum
+                  ? styles.chapterBtnActive
+                  : ''
+              }`}
+            >
+              <span>{ch.chapterNum}. {ch.chapterLabel}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Dynamic Progress Timeline */}
+        <div className={styles.timeline}>
+          <div
+            className={styles.timelineFill}
+            style={{ width: `${Math.round(scrollProgress * 100)}%` }}
+          />
+        </div>
       </div>
-    </section>
+    </div>
   );
 }
