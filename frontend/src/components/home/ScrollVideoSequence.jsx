@@ -99,7 +99,7 @@ export default function ScrollVideoSequence({
     };
   }, [segments, totalSegments]);
 
-  // Smooth Scroll Scrubbing driven naturally by window scroll
+  // Section Scroll Tracking
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -112,30 +112,32 @@ export default function ScrollVideoSequence({
           if (container) {
             const rect = container.getBoundingClientRect();
             const windowHeight = window.innerHeight;
-            const totalScrollable = rect.height - windowHeight;
+            
+            // Calculate progress of section moving through viewport
+            const sectionHeight = rect.height;
+            const startScroll = windowHeight; 
+            const totalDistance = sectionHeight + windowHeight;
+            const currentPos = windowHeight - rect.top;
+            
+            const rawProgress = currentPos / totalDistance;
+            const clampedProgress = Math.max(0, Math.min(1, rawProgress));
 
-            if (totalScrollable > 0) {
-              const currentScroll = -rect.top;
-              const rawProgress = currentScroll / totalScrollable;
-              const clampedProgress = Math.max(0, Math.min(1, rawProgress));
+            setScrollProgress(clampedProgress);
 
-              setScrollProgress(clampedProgress);
+            const targetIndex = Math.min(
+              totalSegments - 1,
+              Math.floor(clampedProgress * totalSegments)
+            );
 
-              const targetIndex = Math.min(
-                totalSegments - 1,
-                Math.floor(clampedProgress * totalSegments)
-              );
+            if (targetIndex !== activeSegment) {
+              setActiveSegment(targetIndex);
 
-              if (targetIndex !== activeSegment) {
-                setActiveSegment(targetIndex);
-
-                const targetVid = videoRefs.current[targetIndex];
-                if (targetVid) {
-                  try {
-                    targetVid.currentTime = 0;
-                    targetVid.play().catch(() => {});
-                  } catch (_) {}
-                }
+              const targetVid = videoRefs.current[targetIndex];
+              if (targetVid) {
+                try {
+                  targetVid.currentTime = 0;
+                  targetVid.play().catch(() => {});
+                } catch (_) {}
               }
             }
           }
@@ -153,13 +155,14 @@ export default function ScrollVideoSequence({
     };
   }, [totalSegments, activeSegment]);
 
-  const jumpToProgress = (targetProgress) => {
-    const container = containerRef.current;
-    if (container) {
-      const containerTop = container.offsetTop;
-      const totalScrollable = container.offsetHeight - window.innerHeight;
-      const targetScroll = containerTop + targetProgress * totalScrollable;
-      window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+  const selectSegment = (idx) => {
+    setActiveSegment(idx);
+    const targetVid = videoRefs.current[idx];
+    if (targetVid) {
+      try {
+        targetVid.currentTime = 0;
+        targetVid.play().catch(() => {});
+      } catch (_) {}
     }
   };
 
@@ -176,108 +179,106 @@ export default function ScrollVideoSequence({
       aria-label={ariaLabel}
       id="video-scroll-sequence"
     >
-      <div className={styles.stickyFrame}>
-        {/* Ambient Glowing Orbs */}
-        <div className={styles.glowSphere1} />
-        <div className={styles.glowSphere2} />
+      {/* Ambient Glowing Orbs */}
+      <div className={styles.glowSphere1} />
+      <div className={styles.glowSphere2} />
 
-        {/* Soft Vignette Overlays for smooth header and footer blending */}
-        <div className={styles.topOverlay} />
-        <div className={styles.bottomOverlay} />
+      {/* Soft Vignette Overlays for smooth header and footer blending */}
+      <div className={styles.topOverlay} />
+      <div className={styles.bottomOverlay} />
 
-        {/* Loading Overlay */}
-        {!allLoaded && (
-          <div className={styles.loadingContainer}>
-            <div className={styles.loadingSpinner} />
-            <p className={styles.loadingText}>جاري تجهيز التجربة الـ 3D 🎁</p>
-            <div className={styles.loadingBar}>
-              <div
-                className={styles.loadingBarFill}
-                style={{ '--progress': `${loadProgress}%` }}
-              />
-            </div>
-            <p className={styles.loadingPercent}>{loadProgress}%</p>
-          </div>
-        )}
-
-        {/* Video Mask Container */}
-        <div className={styles.videoWrapper}>
-          {segments.map((src, idx) => (
-            <video
-              key={idx}
-              ref={(el) => {
-                videoRefs.current[idx] = el;
-              }}
-              src={src}
-              className={styles.video}
-              style={{
-                opacity: idx === activeSegment ? 1 : 0,
-                pointerEvents: 'none',
-              }}
-              muted
-              playsInline
-              preload="auto"
-              poster={poster}
-              aria-hidden={idx !== activeSegment}
+      {/* Loading Overlay */}
+      {!allLoaded && (
+        <div className={styles.loadingContainer}>
+          <div className={styles.loadingSpinner} />
+          <p className={styles.loadingText}>جاري تجهيز التجربة الـ 3D 🎁</p>
+          <div className={styles.loadingBar}>
+            <div
+              className={styles.loadingBarFill}
+              style={{ '--progress': `${loadProgress}%` }}
             />
-          ))}
-        </div>
-
-        {/* Glassmorphic Content Card */}
-        {allLoaded && (
-          <div className={styles.contentCard} key={activeChapter.badge}>
-            <div className={styles.badge}>
-              <activeChapter.icon className="w-4 h-4" />
-              <span>{activeChapter.badge}</span>
-            </div>
-            <div className={styles.cardTextWrapper}>
-              <h3 className={styles.title}>{activeChapter.title}</h3>
-              <p className={styles.subtitle}>{activeChapter.subtitle}</p>
-
-              {activeChapter.cta ? (
-                <Link to={activeChapter.cta.url} className={styles.ctaBtn}>
-                  <span>{activeChapter.cta.text}</span>
-                  <FiArrowLeft className="w-4 h-4" />
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => jumpToProgress(0.75)}
-                  className={styles.ctaBtn}
-                >
-                  <span>استكشف البوكسات</span>
-                  <FiArrowLeft className="w-4 h-4" />
-                </button>
-              )}
-            </div>
           </div>
-        )}
-
-        {/* Chapter Pill Selector */}
-        <div className={styles.chapterPill}>
-          {CHAPTER_STEPS.map((ch, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => jumpToProgress((ch.range[0] + ch.range[1]) / 2)}
-              className={`${styles.chapterBtn} ${
-                activeChapter.chapterNum === ch.chapterNum
-                  ? styles.chapterBtnActive
-                  : ''
-              }`}
-            >
-              <span>{ch.chapterNum}. {ch.chapterLabel}</span>
-            </button>
-          ))}
+          <p className={styles.loadingPercent}>{loadProgress}%</p>
         </div>
+      )}
 
-        {/* Dynamic Progress Timeline */}
-        <div className={styles.timeline}>
-          <div
-            className={styles.timelineFill}
-            style={{ width: `${Math.round(scrollProgress * 100)}%` }}
+      {/* Video Mask Container */}
+      <div className={styles.videoWrapper}>
+        {segments.map((src, idx) => (
+          <video
+            key={idx}
+            ref={(el) => {
+              videoRefs.current[idx] = el;
+            }}
+            src={src}
+            className={styles.video}
+            style={{
+              opacity: idx === activeSegment ? 1 : 0,
+              pointerEvents: 'none',
+            }}
+            muted
+            playsInline
+            preload="auto"
+            poster={poster}
+            aria-hidden={idx !== activeSegment}
           />
+        ))}
+      </div>
+
+      {/* Glassmorphic Content Card */}
+      {allLoaded && (
+        <div className={styles.contentCard} key={activeChapter.badge}>
+          <div className={styles.badge}>
+            <activeChapter.icon className="w-4 h-4" />
+            <span>{activeChapter.badge}</span>
+          </div>
+          <div className={styles.cardTextWrapper}>
+            <h3 className={styles.title}>{activeChapter.title}</h3>
+            <p className={styles.subtitle}>{activeChapter.subtitle}</p>
+
+            {activeChapter.cta ? (
+              <Link to={activeChapter.cta.url} className={styles.ctaBtn}>
+                <span>{activeChapter.cta.text}</span>
+                <FiArrowLeft className="w-4 h-4" />
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => selectSegment(6)}
+                className={styles.ctaBtn}
+              >
+                <span>استكشف البوكسات</span>
+                <FiArrowLeft className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
+      )}
+
+      {/* Chapter Pill Selector */}
+      <div className={styles.chapterPill}>
+        {CHAPTER_STEPS.map((ch, idx) => (
+          <button
+            key={idx}
+            type="button"
+            onClick={() => selectSegment(Math.floor((ch.range[0] + ch.range[1]) * 4))}
+            className={`${styles.chapterBtn} ${
+              activeChapter.chapterNum === ch.chapterNum
+                ? styles.chapterBtnActive
+                : ''
+            }`}
+          >
+            <span>{ch.chapterNum}. {ch.chapterLabel}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Dynamic Progress Timeline */}
+      <div className={styles.timeline}>
+        <div
+          className={styles.timelineFill}
+          style={{ width: `${Math.round(scrollProgress * 100)}%` }}
+        />
       </div>
     </div>
   );
