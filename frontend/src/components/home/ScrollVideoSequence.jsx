@@ -1,12 +1,13 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useLayoutEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiGift, FiStar, FiAward, FiArrowLeft, FiChevronDown } from 'react-icons/fi';
 import styles from './ScrollVideoSequence.module.css';
 
-const DEFAULT_SEGMENTS = Array.from(
-  { length: 8 },
-  (_, i) => `/videos/segment-${i + 1}.mp4`
-);
+/* ═══════════════════════════════════════════════════════════════
+   ScrollVideoSequence — Apple-grade scroll-scrubbed cinematic
+   ═══════════════════════════════════════════════════════════════ */
+
+const DEFAULT_VIDEO_SRC = '/videos/hero-sequence.mp4';
 
 const CHAPTER_STEPS = [
   {
@@ -17,7 +18,8 @@ const CHAPTER_STEPS = [
     badge: '✨ تجربة إهداء استثنائية',
     icon: FiStar,
     title: 'صُممت بعناية لتصنع الفارق',
-    subtitle: 'استمتع بتجربة تفاعلية فريدة في استكشاف تفاصيل البوكس الفاخر مع حركتك على المتجر.',
+    subtitle:
+      'استمتع بتجربة تفاعلية فريدة في استكشاف تفاصيل البوكس الفاخر مع حركتك على المتجر.',
   },
   {
     phase: 1,
@@ -27,7 +29,8 @@ const CHAPTER_STEPS = [
     badge: '🎁 تغليف 3D أنيق ومخصص',
     icon: FiGift,
     title: 'كل هداياك في مكان واحد',
-    subtitle: 'تشكيلة راقية من المنتجات المختارة بعناية تشمل المحفظة، العطر الفاخر، والقلم.',
+    subtitle:
+      'تشكيلة راقية من المنتجات المختارة بعناية تشمل المحفظة، العطر الفاخر، والقلم.',
   },
   {
     phase: 2,
@@ -37,7 +40,8 @@ const CHAPTER_STEPS = [
     badge: '👑 جاهز للإهداء المباشر',
     icon: FiAward,
     title: 'ابحث عن هديتك المثالية الآن',
-    subtitle: 'توصيل سريع وتغليف فاخر مجاني لكل أنحاء مصر لباب البيت مباشرة.',
+    subtitle:
+      'توصيل سريع وتغليف فاخر مجاني لكل أنحاء مصر لباب البيت مباشرة.',
     cta: {
       text: 'صمّم بوكس هديتك الآن',
       url: '/build-a-box',
@@ -45,154 +49,301 @@ const CHAPTER_STEPS = [
   },
 ];
 
+/* ── 1. Detect prefers-reduced-motion ─────────────────────── */
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduced(mq.matches);
+
+    const handler = (e) => setReduced(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  return reduced;
+}
+
+/* ── 2. StoryCard — transitionend-driven (no brittle setTimeout)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function StoryCard({ chapter, reducedMotion, onCtaClick }) {
+  const cardRef = useRef(null);
+  const [displayChapter, setDisplayChapter] = useState(chapter);
+  const [state, setState] = useState('idle'); // idle | exit | enter
+
+  const chapterRef = useRef(chapter);
+  chapterRef.current = chapter;
+
+  // Kick exit when incoming chapter changes
+  useLayoutEffect(() => {
+    if (chapter.phase === displayChapter.phase) return;
+    if (reducedMotion) {
+      setDisplayChapter(chapter);
+      return;
+    }
+    setState('exit');
+  }, [chapter.phase, displayChapter.phase, reducedMotion]);
+
+  const handleTransitionEnd = useCallback(
+    (e) => {
+      if (e.target !== cardRef.current) return;
+      // Only react to the main card transition (opacity or transform)
+      if (e.propertyName !== 'opacity' && e.propertyName !== 'transform') return;
+
+      if (state === 'exit') {
+        // Content swap while fully invisible
+        setDisplayChapter(chapterRef.current);
+        setState('enter');
+        // Force a double-rAF reflow so browser registers the hidden state
+        // before flipping to visible.
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setState('idle');
+          });
+        });
+      }
+    },
+    [state]
+  );
+
+  const cardClass =
+    state === 'exit'
+      ? styles.cardExit
+      : state === 'enter'
+      ? styles.cardEnter
+      : styles.cardIdle;
+
+  const ch = displayChapter;
+  const Icon = ch.icon;
+
+  return (
+    <div
+      ref={cardRef}
+      className={`${styles.storyCard} ${cardClass}`}
+      onTransitionEnd={handleTransitionEnd}
+    >
+      <div data-stagger="0" className={styles.badge}>
+        <Icon className="w-4 h-4" />
+        <span>{ch.badge}</span>
+      </div>
+
+      <div className={styles.cardTextWrapper}>
+        <h3 data-stagger="1" className={styles.title}>
+          {ch.title}
+        </h3>
+        <p data-stagger="2" className={styles.subtitle}>
+          {ch.subtitle}
+        </p>
+
+        <div data-stagger="3">
+          {ch.cta ? (
+            <Link to={ch.cta.url} className={styles.ctaBtn}>
+              <span>{ch.cta.text}</span>
+              <FiArrowLeft className="w-4 h-4" />
+            </Link>
+          ) : (
+            <button type="button" onClick={onCtaClick} className={styles.ctaBtn}>
+              <span>استكشف البوكسات</span>
+              <FiArrowLeft className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── 3. Main Component ─────────────────────────────────────── */
 export default function ScrollVideoSequence({
-  segments = DEFAULT_SEGMENTS,
+  segments, // kept for backward compat — uses first item or falls back
+  videoSrc = segments?.[0] ?? DEFAULT_VIDEO_SRC,
   poster = null,
   ariaLabel = 'تجربة تفاعلية سينمائية 3D لاستكشاف بوكس الهدايا',
 }) {
-  const totalSegments = segments.length;
-
   const trackRef = useRef(null);
-  const videoRefs = useRef([]);
+  const videoRef = useRef(null);
+  const timelineFillRef = useRef(null);
 
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [activeSegment, setActiveSegment] = useState(0);
   const [activePhase, setActivePhase] = useState(0);
-  const [isCardAnimating, setIsCardAnimating] = useState(false);
-  const [allLoaded, setAllLoaded] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+  const [videoDuration, setVideoDuration] = useState(0);
   const [loadProgress, setLoadProgress] = useState(0);
 
-  // Preload video segments
-  useEffect(() => {
-    let loadedCount = 0;
-    const loadedSet = new Set();
+  const reducedMotion = useReducedMotion();
 
-    const checkLoaded = (index) => {
-      if (!loadedSet.has(index)) {
-        loadedSet.add(index);
-        loadedCount++;
-        const pct = Math.round((loadedCount / totalSegments) * 100);
+  // Refs to avoid stale closures & excessive setState inside rAF
+  const phaseRef = useRef(0);
+  const hasScrubbedRef = useRef(false);
+
+  /* ── 3a. Video preload & metadata ───────────────────────── */
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+
+    const onLoadedMeta = () => {
+      setVideoDuration(vid.duration);
+      setVideoReady(true);
+      setLoadProgress(100);
+    };
+
+    const onCanPlay = () => {
+      setVideoReady(true);
+      setLoadProgress(100);
+    };
+
+    const onProgress = () => {
+      if (vid.duration && vid.buffered.length > 0) {
+        const bufferedEnd = vid.buffered.end(vid.buffered.length - 1);
+        const pct = Math.min(100, Math.round((bufferedEnd / vid.duration) * 100));
         setLoadProgress(pct);
-        if (loadedCount >= totalSegments) {
-          setAllLoaded(true);
-        }
       }
     };
 
-    const timers = [];
+    // If already cached
+    if (vid.readyState >= 1 && vid.duration) {
+      onLoadedMeta();
+    }
 
-    segments.forEach((_, idx) => {
-      const vid = videoRefs.current[idx];
-      if (vid) {
-        if (vid.readyState >= 3) {
-          checkLoaded(idx);
-        } else {
-          const onCanPlay = () => checkLoaded(idx);
-          vid.addEventListener('canplaythrough', onCanPlay, { once: true });
-          vid.addEventListener('loadeddata', onCanPlay, { once: true });
-
-          const t = setTimeout(() => checkLoaded(idx), 2000);
-          timers.push(t);
-        }
-      } else {
-        checkLoaded(idx);
-      }
-    });
+    vid.addEventListener('loadedmetadata', onLoadedMeta, { once: true });
+    vid.addEventListener('canplay', onCanPlay, { once: true });
+    vid.addEventListener('progress', onProgress);
 
     return () => {
-      timers.forEach(clearTimeout);
+      vid.removeEventListener('loadedmetadata', onLoadedMeta);
+      vid.removeEventListener('canplay', onCanPlay);
+      vid.removeEventListener('progress', onProgress);
     };
-  }, [segments, totalSegments]);
+  }, [videoSrc]);
 
-  // Scroll Scrubbing & Frame Interpolation via RAF
+  /* ── 3b. Scroll scrubbing (single video, rAF, direct currentTime) ─ */
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (reducedMotion) return; // static poster mode — no scrubbing
 
     let ticking = false;
+    let rafId = 0;
 
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const track = trackRef.current;
-          if (track) {
-            const rect = track.getBoundingClientRect();
-            const windowHeight = window.innerHeight;
-            const scrollableDistance = rect.height - windowHeight;
+    const update = () => {
+      const track = trackRef.current;
+      const video = videoRef.current;
+      if (!track) {
+        ticking = false;
+        return;
+      }
 
-            if (scrollableDistance > 0) {
-              const currentScroll = -rect.top;
-              const rawProgress = currentScroll / scrollableDistance;
-              const clampedProgress = Math.max(0, Math.min(1, rawProgress));
+      const rect = track.getBoundingClientRect();
+      const winH = window.innerHeight;
+      const scrollable = rect.height - winH;
 
-              setScrollProgress(clampedProgress);
+      if (scrollable > 0) {
+        const current = -rect.top;
+        const raw = current / scrollable;
+        const clamped = Math.max(0, Math.min(1, raw));
 
-              // Map scrollProgress (0 to 1) to segment (0 to 7)
-              const targetSegment = Math.min(
-                totalSegments - 1,
-                Math.floor(clampedProgress * totalSegments)
-              );
+        /* Direct video scrubbing — the Apple way:
+           map scrollProgress 0..1 → video.currentTime 0..duration.
+           Only seek when delta > 0.04s to spare decoder stress. */
+        if (video && videoDuration > 0 && video.readyState >= 2) {
+          // Promote video to its own compositor layer only once scrubbing starts
+          if (!hasScrubbedRef.current) {
+            video.style.willChange = 'transform';
+            hasScrubbedRef.current = true;
+          }
 
-              if (targetSegment !== activeSegment) {
-                setActiveSegment(targetSegment);
-
-                const targetVid = videoRefs.current[targetSegment];
-                if (targetVid) {
-                  try {
-                    targetVid.currentTime = 0;
-                    targetVid.play().catch(() => {});
-                  } catch (_) {}
-                }
+          const targetTime = clamped * videoDuration;
+          const delta = Math.abs(video.currentTime - targetTime);
+          if (delta > 0.04) {
+            // Use fastSeek when available (mobile friendly)
+            if (typeof video.fastSeek === 'function') {
+              try {
+                video.fastSeek(targetTime);
+              } catch (_) {
+                video.currentTime = targetTime;
               }
-
-              // Determine chapter phase (0, 1, or 2)
-              const currentChapter = CHAPTER_STEPS.find(
-                (ch) =>
-                  clampedProgress >= ch.range[0] &&
-                  clampedProgress <= ch.range[1]
-              ) || CHAPTER_STEPS[0];
-
-              if (currentChapter.phase !== activePhase) {
-                setIsCardAnimating(true);
-                setActivePhase(currentChapter.phase);
-
-                setTimeout(() => {
-                  setIsCardAnimating(false);
-                }, 150);
-              }
+            } else {
+              video.currentTime = targetTime;
             }
           }
-          ticking = false;
-        });
+        }
+
+        /* Phase detection — chapter lockstep */
+        const currentChapter =
+          CHAPTER_STEPS.find(
+            (ch) => clamped >= ch.range[0] && clamped <= ch.range[1]
+          ) || CHAPTER_STEPS[0];
+
+        if (currentChapter.phase !== phaseRef.current) {
+          phaseRef.current = currentChapter.phase;
+          setActivePhase(currentChapter.phase);
+        }
+
+        /* Timeline fill updated via ref (zero React re-renders) */
+        if (timelineFillRef.current) {
+          timelineFillRef.current.style.width = `${Math.round(clamped * 100)}%`;
+        }
+      }
+
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        rafId = requestAnimationFrame(update);
         ticking = true;
       }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll(); // initial calc
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(rafId);
     };
-  }, [totalSegments, activeSegment, activePhase]);
+  }, [videoDuration, reducedMotion]);
 
-  // Jump to specific chapter phase when clicking pills
-  const jumpToPhase = useCallback(
-    (phaseIndex) => {
-      const track = trackRef.current;
-      if (track) {
-        const targetStep = CHAPTER_STEPS[phaseIndex];
-        const targetProgress = (targetStep.range[0] + targetStep.range[1]) / 2;
-        const trackTop = track.offsetTop;
-        const scrollableDistance = track.offsetHeight - window.innerHeight;
-        const targetScroll = trackTop + targetProgress * scrollableDistance;
+  /* ── 3c. Jump-to-phase helper (chapter pills / CTA) ──────── */
+  const jumpToPhase = useCallback((phaseIndex) => {
+    const track = trackRef.current;
+    if (!track) return;
 
-        window.scrollTo({ top: targetScroll, behavior: 'smooth' });
-      }
-    },
-    []
-  );
+    const targetStep = CHAPTER_STEPS[phaseIndex];
+    const targetProgress = (targetStep.range[0] + targetStep.range[1]) / 2;
+    const trackTop = track.offsetTop;
+    const scrollableDistance = track.offsetHeight - window.innerHeight;
+    const targetScroll = trackTop + targetProgress * scrollableDistance;
+
+    window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+  }, []);
 
   const activeChapter = CHAPTER_STEPS[activePhase];
+
+  /* ── 3d. Visibility-based entrance (IntersectionObserver) ── */
+  const cardWrapRef = useRef(null);
+  const [cardInView, setCardInView] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.IntersectionObserver) {
+      setCardInView(true);
+      return;
+    }
+
+    const el = cardWrapRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setCardInView(true);
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -5% 0px' }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div
@@ -212,7 +363,7 @@ export default function ScrollVideoSequence({
         <div className={styles.bottomOverlay} />
 
         {/* Loading Overlay */}
-        {!allLoaded && (
+        {!videoReady && (
           <div className={styles.loadingContainer}>
             <div className={styles.loadingSpinner} />
             <p className={styles.loadingText}>جاري تحميل التجربة الـ 3D 🎁</p>
@@ -226,65 +377,39 @@ export default function ScrollVideoSequence({
           </div>
         )}
 
-        {/* Full-Screen Video Mask Layer */}
+        {/* Single Full-Screen Video Layer */}
         <div className={styles.videoWrapper}>
-          {segments.map((src, idx) => (
-            <video
-              key={idx}
-              ref={(el) => {
-                videoRefs.current[idx] = el;
-              }}
-              src={src}
-              className={styles.video}
-              style={{
-                opacity: idx === activeSegment ? 1 : 0,
-                pointerEvents: 'none',
-              }}
-              muted
-              playsInline
-              preload="auto"
-              poster={poster}
-              aria-hidden={idx !== activeSegment}
-            />
-          ))}
+          <video
+            ref={videoRef}
+            src={videoSrc}
+            className={styles.video}
+            muted
+            playsInline
+            preload="auto"
+            poster={poster}
+            aria-hidden="false"
+            /* Paused by default — scrubbed purely via currentTime */
+            autoPlay={false}
+          />
         </div>
 
-        {/* Glassmorphic Story Card with Fade In/Out + Y-Slide Keyframed Animations */}
-        {allLoaded && (
+        {/* Glassmorphic Story Card — transitionend-driven */}
+        {videoReady && (
           <div
-            className={`${styles.storyCard} ${
-              isCardAnimating ? styles.cardEntering : styles.cardActive
+            ref={cardWrapRef}
+            className={`${styles.cardViewport} ${
+              cardInView ? styles.cardViewportVisible : ''
             }`}
-            key={activePhase}
           >
-            <div className={styles.badge}>
-              <activeChapter.icon className="w-4 h-4" />
-              <span>{activeChapter.badge}</span>
-            </div>
-            <div className={styles.cardTextWrapper}>
-              <h3 className={styles.title}>{activeChapter.title}</h3>
-              <p className={styles.subtitle}>{activeChapter.subtitle}</p>
-
-              {activeChapter.cta ? (
-                <Link to={activeChapter.cta.url} className={styles.ctaBtn}>
-                  <span>{activeChapter.cta.text}</span>
-                  <FiArrowLeft className="w-4 h-4" />
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => jumpToPhase(2)}
-                  className={styles.ctaBtn}
-                >
-                  <span>استكشف البوكسات</span>
-                  <FiArrowLeft className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+            <StoryCard
+              chapter={activeChapter}
+              reducedMotion={reducedMotion}
+              onCtaClick={() => jumpToPhase(2)}
+            />
           </div>
         )}
 
-        {/* Synchronized Chapter Pill Indicator Bar (Lockstep Sync) */}
+        {/* Synchronized Chapter Pill Indicator Bar */}
         <div className={styles.chapterPillBar}>
           {CHAPTER_STEPS.map((ch, idx) => (
             <button
@@ -295,7 +420,9 @@ export default function ScrollVideoSequence({
                 activePhase === idx ? styles.chapterBtnActive : ''
               }`}
             >
-              <span>{ch.chapterNum}. {ch.chapterLabel}</span>
+              <span>
+                {ch.chapterNum}. {ch.chapterLabel}
+              </span>
             </button>
           ))}
         </div>
@@ -308,10 +435,7 @@ export default function ScrollVideoSequence({
 
         {/* Progress Timeline Track at Bottom Edge */}
         <div className={styles.timelineTrack}>
-          <div
-            className={styles.timelineFill}
-            style={{ width: `${Math.round(scrollProgress * 100)}%` }}
-          />
+          <div ref={timelineFillRef} className={styles.timelineFill} />
         </div>
       </div>
     </div>
