@@ -21,14 +21,14 @@
 .scrollTrack {
   position: relative;
   width: 100%;
-  height: 300vh;
+  height: 220vh;
   background: transparent;
   overflow: visible;
 }
 
 @media (max-width: 640px) {
   .scrollTrack {
-    height: 250vh;
+    height: 180vh;
   }
 }
 
@@ -45,7 +45,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #090414;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(168, 85, 247, 0.14), transparent 28%),
+    radial-gradient(circle at 80% 75%, rgba(236, 72, 153, 0.12), transparent 24%),
+    linear-gradient(180deg, #07030f 0%, #0b0715 45%, #110816 100%);
+  --story-progress: 0;
+  --story-eased: 0;
+  --camera-scale: 1;
+  --camera-x: 0px;
+  --camera-y: 0px;
+  --overlay-strength: 0.72;
 }
 
 /* Ambient glow orbs — reduced will-change to active animation only */
@@ -80,7 +89,7 @@
 @keyframes pulseGlow {
   0% {
     transform: scale3d(1, 1, 1) translate3d(0, 0, 0);
-    opacity: 0.7;
+    opacity: calc(0.5 + var(--story-eased) * 0.4);
   }
   100% {
     transform: scale3d(1.15, 1.15, 1) translate3d(0, -20px, 0);
@@ -97,16 +106,18 @@
   width: 100%;
   height: 100%;
   z-index: 2;
+  transform: translate3d(var(--camera-x), var(--camera-y), 0) scale(var(--camera-scale));
+  transition: transform 180ms linear;
   mask-image: radial-gradient(
     circle at center,
-    rgba(0, 0, 0, 1) 65%,
-    rgba(0, 0, 0, 0.85) 85%,
+    rgba(0, 0, 0, 1) 60%,
+    rgba(0, 0, 0, 0.9) 80%,
     rgba(0, 0, 0, 0) 100%
   );
   -webkit-mask-image: radial-gradient(
     circle at center,
-    rgba(0, 0, 0, 1) 65%,
-    rgba(0, 0, 0, 0.85) 85%,
+    rgba(0, 0, 0, 1) 60%,
+    rgba(0, 0, 0, 0.9) 80%,
     rgba(0, 0, 0, 0) 100%
   );
 }
@@ -117,8 +128,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 1;
-  /* will-change added via JS only while scrubbing for GPU promotion */
+  opacity: 0.9;
+  filter: saturate(0.95) contrast(1.02);
+  will-change: transform, opacity;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -129,8 +141,12 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 140px;
-  background: linear-gradient(to bottom, rgba(9, 4, 20, 0.95) 0%, rgba(9, 4, 20, 0) 100%);
+  height: 160px;
+  background: linear-gradient(
+    to bottom,
+    rgba(7, 3, 15, calc(0.92 * var(--overlay-strength))) 0%,
+    rgba(7, 3, 15, 0) 100%
+  );
   z-index: 5;
   pointer-events: none;
 }
@@ -140,8 +156,12 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 160px;
-  background: linear-gradient(to top, rgba(9, 4, 20, 0.95) 0%, rgba(9, 4, 20, 0) 100%);
+  height: 180px;
+  background: linear-gradient(
+    to top,
+    rgba(7, 3, 15, calc(0.96 * var(--overlay-strength))) 0%,
+    rgba(7, 3, 15, 0) 100%
+  );
   z-index: 5;
   pointer-events: none;
 }
@@ -233,7 +253,7 @@
 }
 
 .storyCard {
-  background: rgba(15, 8, 33, 0.65);
+  background: rgba(15, 8, 33, 0.6);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -328,7 +348,7 @@
   font-weight: 900;
   line-height: 1.3;
   margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, #ffffff 0%, #f3e8ff 50%, #fbcfe8 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #f4f0ff 45%, #fed7e7 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -375,7 +395,7 @@
   align-items: center;
   gap: 0.85rem;
   z-index: 15;
-  background: rgba(15, 8, 33, 0.75);
+  background: rgba(15, 8, 33, 0.68);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -419,7 +439,7 @@
   color: rgba(255, 255, 255, 0.75);
   font-size: 0.8rem;
   font-weight: 700;
-  background: rgba(15, 8, 33, 0.6);
+  background: rgba(15, 8, 33, 0.55);
   padding: 0.45rem 1rem;
   border-radius: 99px;
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -507,6 +527,11 @@
     padding: 0.4rem 0.95rem;
     gap: 0.5rem;
   }
+
+  .videoWrapper {
+    transform: translate3d(calc(var(--camera-x) * 0.35), calc(var(--camera-y) * 0.35), 0)
+      scale(calc(var(--camera-scale) * 0.92));
+  }
 }
 
 @media (max-width: 768px) {
@@ -540,7 +565,7 @@
   }
 
   .cardViewport {
-    opacity: 1;
+    opacity: calc(0.45 + var(--story-eased) * 0.35);
     transform: none;
   }
 

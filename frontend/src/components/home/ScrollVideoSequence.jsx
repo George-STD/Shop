@@ -14,34 +14,34 @@ const CHAPTER_STEPS = [
     phase: 0,
     range: [0, 0.33],
     chapterNum: '01',
-    chapterLabel: 'كشف البوكس',
-    badge: '✨ تجربة إهداء استثنائية',
+    chapterLabel: 'الافتتاح',
+    badge: '✨ دخول بصري هادئ وواضح',
     icon: FiStar,
-    title: 'صُممت بعناية لتصنع الفارق',
+    title: 'فور يو تبدأ بهدوء ثم تثبت الانطباع',
     subtitle:
-      'استمتع بتجربة تفاعلية فريدة في استكشاف تفاصيل البوكس الفاخر مع حركتك على المتجر.',
+      'المشهد الأول يقدّم البراند كواجهة أنيقة بدل فيديو صاخب، بحيث يشعر المستخدم أن الحركة جزء طبيعي من الموقع.',
   },
   {
     phase: 1,
     range: [0.33, 0.66],
     chapterNum: '02',
-    chapterLabel: 'المحتويات والتغليف',
-    badge: '🎁 تغليف 3D أنيق ومخصص',
+    chapterLabel: 'القيمة',
+    badge: '🎁 إبراز المنتج والتفاصيل',
     icon: FiGift,
-    title: 'كل هداياك في مكان واحد',
+    title: 'المشهد يوضح الفخامة بدون تشويش',
     subtitle:
-      'تشكيلة راقية من المنتجات المختارة بعناية تشمل المحفظة، العطر الفاخر، والقلم.',
+      'هنا تتبدل الطبقات والرسالة بوضوح: المنتج يبقى في المركز بينما النص يشرح القيمة بشكل مباشر ومقنع.',
   },
   {
     phase: 2,
     range: [0.66, 1.0],
     chapterNum: '03',
-    chapterLabel: 'جاهز للإهداء',
-    badge: '👑 جاهز للإهداء المباشر',
+    chapterLabel: 'التحويل',
+    badge: '👑 انتقال طبيعي إلى الإجراء',
     icon: FiAward,
-    title: 'ابحث عن هديتك المثالية الآن',
+    title: 'المشهد الأخير يقود لخطوة واضحة',
     subtitle:
-      'توصيل سريع وتغليف فاخر مجاني لكل أنحاء مصر لباب البيت مباشرة.',
+      'بدل أن ينتهي التأثير فجأة، يختتم المشهد برسالة خفيفة تدفع المستخدم لبدء الاختيار أو بناء بوكسه.',
     cta: {
       text: 'صمّم بوكس هديتك الآن',
       url: '/build-a-box',
@@ -162,19 +162,18 @@ export default function ScrollVideoSequence({
   ariaLabel = 'تجربة تفاعلية سينمائية 3D لاستكشاف بوكس الهدايا',
 }) {
   const trackRef = useRef(null);
+  const viewportRef = useRef(null);
   const videoRef = useRef(null);
   const timelineFillRef = useRef(null);
 
   const [activePhase, setActivePhase] = useState(0);
   const [videoReady, setVideoReady] = useState(false);
-  const [videoDuration, setVideoDuration] = useState(0);
   const [loadProgress, setLoadProgress] = useState(0);
 
   const reducedMotion = useReducedMotion();
 
   // Refs to avoid stale closures & excessive setState inside rAF
   const phaseRef = useRef(0);
-  const hasScrubbedRef = useRef(false);
 
   /* ── 3a. Video preload & metadata ───────────────────────── */
   useEffect(() => {
@@ -182,7 +181,6 @@ export default function ScrollVideoSequence({
     if (!vid) return;
 
     const onLoadedMeta = () => {
-      setVideoDuration(vid.duration);
       setVideoReady(true);
       setLoadProgress(100);
     };
@@ -216,17 +214,27 @@ export default function ScrollVideoSequence({
     };
   }, [videoSrc]);
 
-  /* ── 3b. Scroll scrubbing (single video, rAF, direct currentTime) ─ */
+  /* ── 3b. Scroll-driven scene state + ambient motion ───────── */
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (reducedMotion) return; // static poster mode — no scrubbing
+
+    if (reducedMotion) {
+      if (viewportRef.current) {
+        viewportRef.current.style.setProperty('--story-progress', '0');
+        viewportRef.current.style.setProperty('--story-eased', '0');
+        viewportRef.current.style.setProperty('--camera-scale', '1');
+        viewportRef.current.style.setProperty('--camera-x', '0px');
+        viewportRef.current.style.setProperty('--camera-y', '0px');
+        viewportRef.current.style.setProperty('--overlay-strength', '0.72');
+      }
+      return;
+    }
 
     let ticking = false;
     let rafId = 0;
 
     const update = () => {
       const track = trackRef.current;
-      const video = videoRef.current;
       if (!track) {
         ticking = false;
         return;
@@ -240,32 +248,7 @@ export default function ScrollVideoSequence({
         const current = -rect.top;
         const raw = current / scrollable;
         const clamped = Math.max(0, Math.min(1, raw));
-
-        /* Direct video scrubbing — the Apple way:
-           map scrollProgress 0..1 → video.currentTime 0..duration.
-           Only seek when delta > 0.04s to spare decoder stress. */
-        if (video && videoDuration > 0 && video.readyState >= 2) {
-          // Promote video to its own compositor layer only once scrubbing starts
-          if (!hasScrubbedRef.current) {
-            video.style.willChange = 'transform';
-            hasScrubbedRef.current = true;
-          }
-
-          const targetTime = clamped * videoDuration;
-          const delta = Math.abs(video.currentTime - targetTime);
-          if (delta > 0.04) {
-            // Use fastSeek when available (mobile friendly)
-            if (typeof video.fastSeek === 'function') {
-              try {
-                video.fastSeek(targetTime);
-              } catch (_) {
-                video.currentTime = targetTime;
-              }
-            } else {
-              video.currentTime = targetTime;
-            }
-          }
-        }
+        const eased = clamped < 0.5 ? 2 * clamped * clamped : 1 - Math.pow(-2 * clamped + 2, 2) / 2;
 
         /* Phase detection — chapter lockstep */
         const currentChapter =
@@ -281,6 +264,15 @@ export default function ScrollVideoSequence({
         /* Timeline fill updated via ref (zero React re-renders) */
         if (timelineFillRef.current) {
           timelineFillRef.current.style.width = `${Math.round(clamped * 100)}%`;
+        }
+
+        if (viewportRef.current) {
+          viewportRef.current.style.setProperty('--story-progress', clamped.toFixed(3));
+          viewportRef.current.style.setProperty('--story-eased', eased.toFixed(3));
+          viewportRef.current.style.setProperty('--camera-scale', (1.03 + clamped * 0.08).toFixed(3));
+          viewportRef.current.style.setProperty('--camera-x', `${Math.round((clamped - 0.5) * 26)}px`);
+          viewportRef.current.style.setProperty('--camera-y', `${Math.round((0.5 - clamped) * 18)}px`);
+          viewportRef.current.style.setProperty('--overlay-strength', (0.72 - clamped * 0.18).toFixed(3));
         }
       }
 
@@ -301,7 +293,7 @@ export default function ScrollVideoSequence({
       window.removeEventListener('scroll', onScroll);
       cancelAnimationFrame(rafId);
     };
-  }, [videoDuration, reducedMotion]);
+  }, [reducedMotion]);
 
   /* ── 3c. Jump-to-phase helper (chapter pills / CTA) ──────── */
   const jumpToPhase = useCallback((phaseIndex) => {
@@ -353,7 +345,7 @@ export default function ScrollVideoSequence({
       id="video-scroll-sequence"
     >
       {/* Pinned Sticky Viewport (100vh) */}
-      <div className={styles.stickyViewport}>
+      <div ref={viewportRef} className={styles.stickyViewport}>
         {/* Ambient Glowing Orbs */}
         <div className={styles.glowSphere1} />
         <div className={styles.glowSphere2} />
@@ -385,11 +377,11 @@ export default function ScrollVideoSequence({
             className={styles.video}
             muted
             playsInline
-            preload="auto"
+            loop
+            preload="metadata"
             poster={poster}
             aria-hidden="false"
-            /* Paused by default — scrubbed purely via currentTime */
-            autoPlay={false}
+            autoPlay
           />
         </div>
 
