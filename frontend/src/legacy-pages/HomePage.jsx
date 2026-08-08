@@ -76,8 +76,8 @@ const HomePage = () => {
 
   return (
     <>
-      {/* 3D Gift Box Unboxing Animation */}
-      <ScrollVideoSequence />
+      {/* 3D Gift Box Unboxing Animation (Temporarily Disabled) */}
+      {/* <ScrollVideoSequence /> */}
 
       {/* Hero Section */}
       <section className="hero-gradient relative" id="main-hero-content">
