@@ -1,6 +1,6 @@
 const Order = require('../../models/Order');
 const User = require('../../models/User');
-const { sendTrackingEmail } = require('../../utils/mailer');
+const { sendTrackingEmail, sendDeliveredReviewEmail } = require('../../utils/mailer');
 const asyncHandler = require('../../utils/asyncHandler');
 const { escapeRegex, parsePagination, buildPaginationMeta } = require('../../utils/helpers');
 
@@ -140,7 +140,7 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
 
   if (status === 'shipped' && (trackingNumber || order.trackingNumber)) {
     try {
-      let emailTo = order.guestEmail;
+      let emailTo = order.guestEmail || order.shippingAddress?.email;
       if (!emailTo && order.user) {
         const user = await User.findById(order.user);
         emailTo = user?.email;
@@ -148,6 +148,17 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
       if (emailTo) await sendTrackingEmail(emailTo, order, trackingNumber || order.trackingNumber);
     } catch (mailErr) {
       console.error('Tracking email error:', mailErr);
+    }
+  } else if (status === 'delivered' && previousStatus !== 'delivered') {
+    try {
+      let emailTo = order.guestEmail || order.shippingAddress?.email;
+      if (!emailTo && order.user) {
+        const user = await User.findById(order.user);
+        emailTo = user?.email;
+      }
+      if (emailTo) await sendDeliveredReviewEmail(emailTo, order);
+    } catch (mailErr) {
+      console.error('Delivered review email error:', mailErr);
     }
   }
 

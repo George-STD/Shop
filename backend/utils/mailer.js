@@ -168,9 +168,60 @@ async function sendTrackingEmail(to, order, trackingNumber) {
   await sendEmail({ to, subject, html });
 }
 
+/**
+ * Send order delivered review request email
+ */
+async function sendDeliveredReviewEmail(to, order) {
+  const customerName = order.shippingAddress?.firstName || order.user?.firstName || 'عميلنا العزيز';
+  const orderNum = order.orderNumber || order._id;
+  const reviewUrl = `https://www.foryo.me/review-order/${orderNum}`;
+  const subject = `أهلاً ${customerName}، شاركنا رأيك في تجربتك وبوكس الهدايا 🎁 - ${BRAND_NAME}`;
+
+  const html = `
+    <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #f3e8ff; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
+      <div style="background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); padding: 28px 24px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">For You - فور يو</h1>
+      </div>
+      <div style="padding: 36px 28px; background-color: #ffffff;">
+        <h2 style="color: #1f2937; margin-top: 0; font-size: 22px; font-weight: 700;">أهلاً ${customerName}، شكراً لثقتك وتعاملك معنا! 🎁</h2>
+        <p style="color: #4b5563; font-size: 15px; line-height: 1.7; margin-bottom: 24px;">
+          سعداء جداً بخدمتك نتمنى أن يكون بوكس الهدايا والمنتجات قد نالت إعجابك وإعجاب من تحب!
+        </p>
+
+        <div style="background: #faf5ff; border: 1px solid #f3e8ff; border-radius: 14px; padding: 18px 20px; margin: 24px 0; text-align: center;">
+          <span style="color: #7c3aed; font-size: 16px; font-weight: 700;">رقم الطلب: <span style="font-family: monospace; font-size: 17px;">${orderNum}</span></span>
+        </div>
+
+        <p style="color: #374151; font-size: 15px; font-weight: 600; text-align: center; margin-top: 28px; margin-bottom: 20px;">
+          رأيك يهمنا جداً! يرجى التكرم بإضافة تقييمك لمنتجات البوكس الذي قمت بتشكيله:
+        </p>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${reviewUrl}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 700; padding: 16px 36px; border-radius: 50px; box-shadow: 0 8px 20px -4px rgba(168, 85, 247, 0.45); transition: all 0.2s ease;">
+            ⭐ تقييم المنتجات والتجربة (5 نجوم)
+          </a>
+        </div>
+
+        <div style="background-color: #f9fafb; border-right: 4px solid #a855f7; border-radius: 8px 12px 12px 8px; padding: 16px 20px; margin-top: 32px;">
+          <p style="margin: 0; color: #4b5563; font-size: 13px; line-height: 1.6;">
+            💡 <b>ملاحظة:</b> عبر هذا الرابط، يمكنك وضع تقييمك وتعليقك مرة واحدة ليعبق تلقائياً على كل المنتجات الموجودة بداخل البوكس.
+          </p>
+        </div>
+
+        <div style="margin-top: 36px; padding-top: 20px; border-top: 1px solid #f3f4f6; text-align: center; color: #9ca3af; font-size: 13px;">
+          مع تحيات فريق متجر <span style="color: #ec4899; font-weight: 700;">For You ❤️</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  await sendEmail({ to, subject, html });
+}
+
 module.exports = { 
   sendOrderConfirmationEmail, 
   sendTrackingEmail,
+  sendDeliveredReviewEmail,
   sendVerificationEmail, 
   sendPasswordResetEmail, 
   generateVerificationCode 
