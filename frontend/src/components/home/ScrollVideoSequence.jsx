@@ -88,15 +88,11 @@ function StoryCard({ chapter, reducedMotion, onCtaClick }) {
   const handleTransitionEnd = useCallback(
     (e) => {
       if (e.target !== cardRef.current) return;
-      // Only react to the main card transition (opacity or transform)
       if (e.propertyName !== 'opacity' && e.propertyName !== 'transform') return;
 
       if (state === 'exit') {
-        // Content swap while fully invisible
         setDisplayChapter(chapterRef.current);
         setState('enter');
-        // Force a double-rAF reflow so browser registers the hidden state
-        // before flipping to visible.
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             setState('idle');
@@ -156,7 +152,7 @@ function StoryCard({ chapter, reducedMotion, onCtaClick }) {
 
 /* ── 3. Main Component ─────────────────────────────────────── */
 export default function ScrollVideoSequence({
-  segments, // kept for backward compat — uses first item or falls back
+  segments,
   videoSrc = segments?.[0] ?? DEFAULT_VIDEO_SRC,
   poster = null,
   ariaLabel = 'تجربة تفاعلية سينمائية 3D لاستكشاف بوكس الهدايا',
@@ -169,11 +165,17 @@ export default function ScrollVideoSequence({
   const [activePhase, setActivePhase] = useState(0);
   const [videoReady, setVideoReady] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
 
   const reducedMotion = useReducedMotion();
 
-  // Refs to avoid stale closures & excessive setState inside rAF
+  // Smoothing & Lerp Refs for rAF Loop
+  const targetProgressRef = useRef(0);
+  const displayedProgressRef = useRef(0);
+  const lastSeekingTimeRef = useRef(-1);
   const phaseRef = useRef(0);
+  const tickingRef = useRef(false);
+  const isIntersectingRef = useRef(false);
 
   /* ── 3a. Video preload & metadata ───────────────────────── */
   useEffect(() => {
@@ -181,11 +183,21 @@ export default function ScrollVideoSequence({
     if (!vid) return;
 
     const onLoadedMeta = () => {
-      setVideoReady(true);
-      setLoadProgress(100);
+      if (vid.duration && !isNaN(vid.duration) && isFinite(vid.duration)) {
+        setVideoDuration(vid.duration);
+      }
+      vid.pause();
+      if (vid.readyState >= 3) {
+        setVideoReady(true);
+        setLoadProgress(100);
+      }
     };
 
-    const onCanPlay = () => {
+    const onCanPlayThrough = () => {
+      vid.pause();
+      if (vid.duration && !isNaN(vid.duration) && isFinite(vid.duration)) {
+        setVideoDuration(vid.duration);
+      }
       setVideoReady(true);
       setLoadProgress(100);
     };
@@ -195,50 +207,34 @@ export default function ScrollVideoSequence({
         const bufferedEnd = vid.buffered.end(vid.buffered.length - 1);
         const pct = Math.min(100, Math.round((bufferedEnd / vid.duration) * 100));
         setLoadProgress(pct);
+        if (pct >= 85 || vid.readyState >= 3) {
+          setVideoReady(true);
+        }
       }
     };
 
-    // If already cached
-    if (vid.readyState >= 1 && vid.duration) {
+    if (vid.readyState >= 3) {
       onLoadedMeta();
     }
 
-    vid.addEventListener('loadedmetadata', onLoadedMeta, { once: true });
-    vid.addEventListener('canplay', onCanPlay, { once: true });
+    vid.addEventListener('loadedmetadata', onLoadedMeta);
+    vid.addEventListener('canplaythrough', onCanPlayThrough);
     vid.addEventListener('progress', onProgress);
 
     return () => {
       vid.removeEventListener('loadedmetadata', onLoadedMeta);
-      vid.removeEventListener('canplay', onCanPlay);
+      vid.removeEventListener('canplaythrough', onCanPlayThrough);
       vid.removeEventListener('progress', onProgress);
     };
   }, [videoSrc]);
 
-  /* ── 3b. Scroll-driven scene state + ambient motion ───────── */
+  /* ── 3b. Scroll Listener (Measures raw target progress) ──── */
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || reducedMotion) return;
 
-    if (reducedMotion) {
-      if (viewportRef.current) {
-        viewportRef.current.style.setProperty('--story-progress', '0');
-        viewportRef.current.style.setProperty('--story-eased', '0');
-        viewportRef.current.style.setProperty('--camera-scale', '1');
-        viewportRef.current.style.setProperty('--camera-x', '0px');
-        viewportRef.current.style.setProperty('--camera-y', '0px');
-        viewportRef.current.style.setProperty('--overlay-strength', '0.72');
-      }
-      return;
-    }
-
-    let ticking = false;
-    let rafId = 0;
-
-    const update = () => {
+    const onScroll = () => {
       const track = trackRef.current;
-      if (!track) {
-        ticking = false;
-        return;
-      }
+      if (!track) return;
 
       const rect = track.getBoundingClientRect();
       const winH = window.innerHeight;
@@ -247,55 +243,121 @@ export default function ScrollVideoSequence({
       if (scrollable > 0) {
         const current = -rect.top;
         const raw = current / scrollable;
-        const clamped = Math.max(0, Math.min(1, raw));
-        const eased = clamped < 0.5 ? 2 * clamped * clamped : 1 - Math.pow(-2 * clamped + 2, 2) / 2;
-
-        /* Phase detection — chapter lockstep */
-        const currentChapter =
-          CHAPTER_STEPS.find(
-            (ch) => clamped >= ch.range[0] && clamped <= ch.range[1]
-          ) || CHAPTER_STEPS[0];
-
-        if (currentChapter.phase !== phaseRef.current) {
-          phaseRef.current = currentChapter.phase;
-          setActivePhase(currentChapter.phase);
-        }
-
-        /* Timeline fill updated via ref (zero React re-renders) */
-        if (timelineFillRef.current) {
-          timelineFillRef.current.style.width = `${Math.round(clamped * 100)}%`;
-        }
-
-        if (viewportRef.current) {
-          viewportRef.current.style.setProperty('--story-progress', clamped.toFixed(3));
-          viewportRef.current.style.setProperty('--story-eased', eased.toFixed(3));
-          viewportRef.current.style.setProperty('--camera-scale', (1.03 + clamped * 0.08).toFixed(3));
-          viewportRef.current.style.setProperty('--camera-x', `${Math.round((clamped - 0.5) * 26)}px`);
-          viewportRef.current.style.setProperty('--camera-y', `${Math.round((0.5 - clamped) * 18)}px`);
-          viewportRef.current.style.setProperty('--overlay-strength', (0.72 - clamped * 0.18).toFixed(3));
-        }
+        targetProgressRef.current = Math.max(0, Math.min(1, raw));
       }
 
-      ticking = false;
-    };
-
-    const onScroll = () => {
-      if (!ticking) {
-        rafId = requestAnimationFrame(update);
-        ticking = true;
+      // Start rAF loop if not already ticking and section is in view
+      if (!tickingRef.current && isIntersectingRef.current) {
+        tickingRef.current = true;
+        requestAnimationFrame(runAnimationLoop);
       }
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll(); // initial calc
+    onScroll();
 
     return () => {
       window.removeEventListener('scroll', onScroll);
-      cancelAnimationFrame(rafId);
     };
   }, [reducedMotion]);
 
-  /* ── 3c. Jump-to-phase helper (chapter pills / CTA) ──────── */
+  /* ── 3c. Smooth rAF Animation Loop (Lerp + Video Scrubbing) ── */
+  const runAnimationLoop = useCallback(() => {
+    if (!isIntersectingRef.current && Math.abs(targetProgressRef.current - displayedProgressRef.current) < 0.0005) {
+      tickingRef.current = false;
+      return;
+    }
+
+    const vid = videoRef.current;
+    const target = targetProgressRef.current;
+    let current = displayedProgressRef.current;
+
+    // Lerp smoothing (0.12 factor gives Apple-style spring inertia)
+    const smoothingFactor = 0.12;
+    const diff = target - current;
+
+    if (Math.abs(diff) > 0.0001) {
+      current += diff * smoothingFactor;
+    } else {
+      current = target;
+    }
+
+    displayedProgressRef.current = current;
+
+    // Ease progress for UI transforms
+    const eased = current < 0.5 ? 2 * current * current : 1 - Math.pow(-2 * current + 2, 2) / 2;
+
+    // 1. Scrub Video currentTime
+    if (vid && vid.readyState >= 2 && vid.duration && !isNaN(vid.duration) && isFinite(vid.duration)) {
+      const targetTime = current * vid.duration;
+      // Seek only if difference is greater than 0.01s to prevent unnecessary decodes
+      if (Math.abs(targetTime - lastSeekingTimeRef.current) > 0.01) {
+        lastSeekingTimeRef.current = targetTime;
+        if (typeof vid.fastSeek === 'function') {
+          vid.fastSeek(targetTime);
+        } else {
+          vid.currentTime = targetTime;
+        }
+      }
+    }
+
+    // 2. Lockstep Chapter Pill & Text Card
+    const currentChapter =
+      CHAPTER_STEPS.find((ch) => current >= ch.range[0] && current <= ch.range[1]) || CHAPTER_STEPS[0];
+
+    if (currentChapter.phase !== phaseRef.current) {
+      phaseRef.current = currentChapter.phase;
+      setActivePhase(currentChapter.phase);
+    }
+
+    // 3. Update Timeline Fill
+    if (timelineFillRef.current) {
+      timelineFillRef.current.style.width = `${(current * 100).toFixed(2)}%`;
+    }
+
+    // 4. Update Viewport CSS Variables for Smooth Pan & Zoom
+    if (viewportRef.current) {
+      viewportRef.current.style.setProperty('--story-progress', current.toFixed(3));
+      viewportRef.current.style.setProperty('--story-eased', eased.toFixed(3));
+      viewportRef.current.style.setProperty('--camera-scale', (1.02 + current * 0.08).toFixed(3));
+      viewportRef.current.style.setProperty('--camera-x', `${((current - 0.5) * 24).toFixed(1)}px`);
+      viewportRef.current.style.setProperty('--camera-y', `${((0.5 - current) * 16).toFixed(1)}px`);
+      viewportRef.current.style.setProperty('--overlay-strength', (0.72 - current * 0.18).toFixed(3));
+    }
+
+    // Continue loop if target not reached
+    if (Math.abs(target - current) > 0.0005) {
+      requestAnimationFrame(runAnimationLoop);
+    } else {
+      tickingRef.current = false;
+    }
+  }, []);
+
+  /* ── 3d. IntersectionObserver for Loop Control ─────────────── */
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const trackEl = trackRef.current;
+    if (!trackEl) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          isIntersectingRef.current = entry.isIntersecting;
+          if (entry.isIntersecting && !tickingRef.current && !reducedMotion) {
+            tickingRef.current = true;
+            requestAnimationFrame(runAnimationLoop);
+          }
+        });
+      },
+      { threshold: 0.01, rootMargin: '200px 0px 200px 0px' }
+    );
+
+    observer.observe(trackEl);
+    return () => observer.disconnect();
+  }, [runAnimationLoop, reducedMotion]);
+
+  /* ── 3e. Jump-to-phase helper (chapter pills / CTA) ──────── */
   const jumpToPhase = useCallback((phaseIndex) => {
     const track = trackRef.current;
     if (!track) return;
@@ -311,7 +373,7 @@ export default function ScrollVideoSequence({
 
   const activeChapter = CHAPTER_STEPS[activePhase];
 
-  /* ── 3d. Visibility-based entrance (IntersectionObserver) ── */
+  /* ── 3f. Visibility-based entrance (IntersectionObserver) ── */
   const cardWrapRef = useRef(null);
   const [cardInView, setCardInView] = useState(false);
 
@@ -343,6 +405,9 @@ export default function ScrollVideoSequence({
       className={styles.scrollTrack}
       aria-label={ariaLabel}
       id="video-scroll-sequence"
+      style={{
+        height: videoDuration > 0 ? `${Math.max(240, Math.round(videoDuration * 22))}vh` : '300vh',
+      }}
     >
       {/* Pinned Sticky Viewport (100vh) */}
       <div ref={viewportRef} className={styles.stickyViewport}>
@@ -377,11 +442,9 @@ export default function ScrollVideoSequence({
             className={styles.video}
             muted
             playsInline
-            loop
-            preload="metadata"
+            preload="auto"
             poster={poster}
             aria-hidden="false"
-            autoPlay
           />
         </div>
 
@@ -433,3 +496,4 @@ export default function ScrollVideoSequence({
     </div>
   );
 }
+
