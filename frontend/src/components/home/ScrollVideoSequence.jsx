@@ -261,9 +261,9 @@ export default function ScrollVideoSequence({
     };
   }, [reducedMotion]);
 
-  /* ── 3c. Smooth rAF Animation Loop (Lerp + Video Scrubbing) ── */
+  /* ── 3c. Smooth rAF Animation Loop (Lerp + Video Scrubbing + Ambient Micro-Breathing) ── */
   const runAnimationLoop = useCallback(() => {
-    if (!isIntersectingRef.current && Math.abs(targetProgressRef.current - displayedProgressRef.current) < 0.0005) {
+    if (!isIntersectingRef.current) {
       tickingRef.current = false;
       return;
     }
@@ -284,13 +284,17 @@ export default function ScrollVideoSequence({
 
     displayedProgressRef.current = current;
 
-    // Ease progress for UI transforms
-    const eased = current < 0.5 ? 2 * current * current : 1 - Math.pow(-2 * current + 2, 2) / 2;
+    // Organic ambient breathing when idle (sine wave oscillation)
+    const now = Date.now() / 1000;
+    const ambientBreath = Math.sin(now * 1.5) * 0.0025; // subtle 0.25% float
+    const effectiveProgress = Math.max(0, Math.min(1, current + ambientBreath));
 
-    // 1. Scrub Video currentTime
+    // Ease progress for UI transforms
+    const eased = effectiveProgress < 0.5 ? 2 * effectiveProgress * effectiveProgress : 1 - Math.pow(-2 * effectiveProgress + 2, 2) / 2;
+
+    // 1. Scrub Video currentTime with ambient breath
     if (vid && vid.readyState >= 2 && vid.duration && !isNaN(vid.duration) && isFinite(vid.duration)) {
-      const targetTime = current * vid.duration;
-      // Seek only if difference is greater than 0.01s to prevent unnecessary decodes
+      const targetTime = effectiveProgress * vid.duration;
       if (Math.abs(targetTime - lastSeekingTimeRef.current) > 0.01) {
         lastSeekingTimeRef.current = targetTime;
         if (typeof vid.fastSeek === 'function') {
@@ -315,18 +319,21 @@ export default function ScrollVideoSequence({
       timelineFillRef.current.style.width = `${(current * 100).toFixed(2)}%`;
     }
 
-    // 4. Update Viewport CSS Variables for Smooth Pan & Zoom
+    // 4. Update Viewport CSS Variables for Smooth Pan, Zoom & Idle Floating
     if (viewportRef.current) {
+      const idleFloatX = Math.sin(now * 1.2) * 8;
+      const idleFloatY = Math.cos(now * 1.4) * 6;
+
       viewportRef.current.style.setProperty('--story-progress', current.toFixed(3));
       viewportRef.current.style.setProperty('--story-eased', eased.toFixed(3));
-      viewportRef.current.style.setProperty('--camera-scale', (1.02 + current * 0.08).toFixed(3));
-      viewportRef.current.style.setProperty('--camera-x', `${((current - 0.5) * 24).toFixed(1)}px`);
-      viewportRef.current.style.setProperty('--camera-y', `${((0.5 - current) * 16).toFixed(1)}px`);
+      viewportRef.current.style.setProperty('--camera-scale', (1.02 + current * 0.08 + Math.sin(now) * 0.008).toFixed(3));
+      viewportRef.current.style.setProperty('--camera-x', `${(((current - 0.5) * 24) + idleFloatX).toFixed(1)}px`);
+      viewportRef.current.style.setProperty('--camera-y', `${(((0.5 - current) * 16) + idleFloatY).toFixed(1)}px`);
       viewportRef.current.style.setProperty('--overlay-strength', (0.72 - current * 0.18).toFixed(3));
     }
 
-    // Continue loop if target not reached
-    if (Math.abs(target - current) > 0.0005) {
+    // Keep loop active while section is in viewport for continuous living ambient motion
+    if (isIntersectingRef.current) {
       requestAnimationFrame(runAnimationLoop);
     } else {
       tickingRef.current = false;
@@ -411,9 +418,10 @@ export default function ScrollVideoSequence({
     >
       {/* Pinned Sticky Viewport (100vh) */}
       <div ref={viewportRef} className={styles.stickyViewport}>
-        {/* Ambient Glowing Orbs */}
+        {/* Ambient Glowing Orbs & Sparkles */}
         <div className={styles.glowSphere1} />
         <div className={styles.glowSphere2} />
+        <div className={styles.ambientSparkles} />
 
         {/* Top & Bottom Vignette Gradient Overlays */}
         <div className={styles.topOverlay} />
