@@ -34,8 +34,21 @@ const buildPaginationMeta = ({ page, limit, total }) => ({
   limit,
 });
 
+/**
+ * Safe fetch wrapper with timeout via AbortSignal.timeout
+ * @param {string} url - Request target URL
+ * @param {Object} [options={}] - Standard fetch options
+ * @param {number} [timeoutMs=8000] - Request timeout in milliseconds
+ * @returns {Promise<Response>}
+ */
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 8000) => {
+  const signal = options.signal || AbortSignal.timeout(timeoutMs);
+  return fetch(url, { ...options, signal });
+};
+
 module.exports = {
   escapeRegex,
   parsePagination,
   buildPaginationMeta,
+  fetchWithTimeout,
 };

@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 async function run() {
   await mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-  const Product = require('./models/Product.js');
+  const Product = require('../../models/Product');
   
   const ids = [
     '6a5a0465aa51a08b0937e88d',

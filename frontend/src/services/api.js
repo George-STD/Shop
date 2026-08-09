@@ -13,7 +13,9 @@ const api = axios.create({
   },
 });
 
-// Add token to requests
+// TODO (Security): Transition from localStorage JWT storage to httpOnly cookies.
+// Storing JWT tokens in localStorage exposes them to potential XSS exfiltration if any third-party script or inline injection succeeds.
+// Future migration plan: Issue SameSite=Lax httpOnly cookies from Express backend during login/register/refresh.
 api.interceptors.request.use((config) => {
   if (typeof window === 'undefined') {
     return config;

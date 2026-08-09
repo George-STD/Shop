@@ -20,6 +20,14 @@ const asyncHandler = (fn, errorMessage = 'حدث خطأ في الخادم') => {
       // If the controller already sent a response, bail out
       if (res.headersSent) return next(error);
 
+      // If MongoDB E11000 duplicate key error occurred, return 400 with clear message
+      if (error.code === 11000) {
+        return res.status(400).json({
+          success: false,
+          message: 'هذا العنصر موجود بالفعل',
+        });
+      }
+
       res.status(error.statusCode || 500).json({
         success: false,
         message: error.isClientError ? error.message : errorMessage,

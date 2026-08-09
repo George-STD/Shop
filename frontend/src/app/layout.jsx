@@ -1,5 +1,4 @@
 import '../index.css';
-import Script from 'next/script';
 import Providers from './providers';
 import JsonLd from './JsonLd';
 import { SITE_CONFIG, SEO_KEYWORDS } from '../constants';
@@ -94,31 +93,13 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://shop-gx97.onrender.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
-        {/* Non-blocking Google Fonts — preload + swap to eliminate render-blocking */}
-        <link
-          rel="preload"
-          as="style"
-          href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Aref+Ruqaa:wght@400;700&display=swap"
-        />
+        {/* Google Fonts with display=swap */}
         <link
           href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Aref+Ruqaa:wght@400;700&display=swap"
           rel="stylesheet"
-          media="print"
-          onLoad="this.media='all'"
         />
-        <noscript>
-          <link
-            href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Aref+Ruqaa:wght@400;700&display=swap"
-            rel="stylesheet"
-          />
-        </noscript>
       </head>
       <body>
-        {/* High-performance Barcode Detector Polyfill (using zxing-wasm) for blazing fast 1D barcode scanning on laptops/phones */}
-        <Script 
-          src="https://cdn.jsdelivr.net/npm/barcode-detector@3/dist/iife/polyfill.min.js" 
-          strategy="afterInteractive" 
-        />
         <JsonLd />
         <Providers>{children}</Providers>
       </body>

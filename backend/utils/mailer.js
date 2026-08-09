@@ -1,7 +1,4 @@
-/**
- * Mailer utility using Resend HTTP API
- * (SMTP ports are blocked on Render, so we use HTTPS instead)
- */
+const { fetchWithTimeout } = require('./helpers');
 
 const RESEND_API_KEY = process.env.SMTP_PASS; // Resend API key
 const FROM_EMAIL = process.env.SMTP_FROM || 'For You <no-reply@foryo.me>';
@@ -15,14 +12,14 @@ async function sendEmail({ to, subject, html }) {
     return { id: 'test_id', message: 'Email skipped in test environment' };
   }
 
-  const res = await fetch('https://api.resend.com/emails', {
+  const res = await fetchWithTimeout('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${RESEND_API_KEY}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html })
-  });
+  }, 8000);
 
   const data = await res.json();
 
@@ -42,9 +39,9 @@ async function sendEmail({ to, subject, html }) {
     return;
   }
   try {
-    const res = await fetch('https://api.resend.com/domains', {
+    const res = await fetchWithTimeout('https://api.resend.com/domains', {
       headers: { 'Authorization': `Bearer ${RESEND_API_KEY}` }
-    });
+    }, 8000);
     if (res.ok) {
       console.log('✅ Resend API key verified successfully');
     } else {

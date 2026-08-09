@@ -102,6 +102,19 @@ describe('AI Agent Routes Tests', () => {
 
   describe('Actions', () => {
     it('should execute a proposed action', async () => {
+      const session = await AiChatSession.findById(sessionId);
+      session.messages.push({
+        role: 'model',
+        text: 'I propose this update',
+        proposedAction: {
+          collectionName: 'Product',
+          documentIds: [product._id],
+          updates: { price: 200 }
+        }
+      });
+      await session.save();
+      const messageId = session.messages[session.messages.length - 1]._id;
+
       const res = await request(app)
         .post('/api/admin/ai-agent/execute')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -110,7 +123,7 @@ describe('AI Agent Routes Tests', () => {
           documentIds: [product._id],
           updates: { price: 200 },
           sessionId: sessionId.toString(),
-          messageId: new mongoose.Types.ObjectId().toString()
+          messageId: messageId.toString()
         });
       
       expect(res.statusCode).toBe(200);

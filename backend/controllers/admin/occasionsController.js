@@ -18,8 +18,15 @@ exports.createOccasion = asyncHandler(async (req, res) => {
   const existing = await Occasion.findOne({ name });
   if (existing) return res.status(400).json({ success: false, message: 'هذه المناسبة موجودة بالفعل' });
 
-  const occasion = await Occasion.create({ name, icon, color, isActive, order });
-  res.status(201).json({ success: true, message: 'تم إنشاء المناسبة بنجاح', data: occasion });
+  try {
+    const occasion = await Occasion.create({ name, icon, color, isActive, order });
+    res.status(201).json({ success: true, message: 'تم إنشاء المناسبة بنجاح', data: occasion });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ success: false, message: 'هذه المناسبة موجودة بالفعل' });
+    }
+    throw err;
+  }
 }, 'حدث خطأ أثناء إنشاء المناسبة');
 
 exports.updateOccasion = asyncHandler(async (req, res) => {

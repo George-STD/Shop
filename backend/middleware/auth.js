@@ -182,22 +182,31 @@ const validateObjectId = (paramName = 'id') => {
 };
 
 // =====================================================
-// SANITIZE INPUT - XSS prevention
+// SANITIZE INPUT - XSS & NoSQL Injection prevention
+// Strips dangerous HTML tags/attributes while preserving
+// plain-text angle brackets (e.g. "هدية <3", "price <500")
 // =====================================================
 const sanitizeInput = (req, res, next) => {
   const sanitize = (obj) => {
     if (!obj || typeof obj !== 'object') return;
     for (let key in obj) {
+      // NoSQL injection: delete any keys starting with $
       if (key.startsWith('$')) {
         delete obj[key];
         continue;
       }
       if (typeof obj[key] === 'string') {
         obj[key] = obj[key]
-          .replace(/<[^>]*>/g, '')                    // Strip HTML tags
-          .replace(/javascript\s*:/gi, '')             // Strip javascript: URIs
-          .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '') // Strip inline event handlers
-          .replace(/on\w+\s*=/gi, '');                 // Strip remaining event handlers
+          // Strip dangerous tag blocks (script, style, iframe, object, embed) and their contents
+          .replace(/<(script|style|iframe|object|embed|form)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
+          // Strip self-closing or unclosed dangerous tags
+          .replace(/<\/?(script|style|iframe|object|embed|link|meta)\b[^>]*\/?>/gi, '')
+          // Strip all HTML tags that look like real tags (tag name starts with a letter)
+          .replace(/<\/?[a-z][a-z0-9]*\b[^>]*\/?>/gi, '')
+          // Strip javascript: URIs
+          .replace(/javascript\s*:/gi, '')
+          // Strip inline event handlers (onerror=, onclick=, etc.)
+          .replace(/\bon\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '');
       } else if (typeof obj[key] === 'object' && obj[key] !== null) {
         sanitize(obj[key]);
       }

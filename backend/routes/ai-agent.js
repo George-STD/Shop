@@ -76,7 +76,9 @@ const systemInstruction = `
    - discount: Number (نسبة الخصم)
    - stock: Number (الكمية بالمخزون)
    - category: Array of Category ObjectIds (مصفوفة من المعرفات الحقيقية للفئات)
-   - isقواعد صارمة ومهمة جداً للعمليات:
+   - isActive: Boolean (حالة تفعيل المنتج)
+
+قواعد صارمة ومهمة جداً للعمليات:
 1. عند التعامل مع فئات المنتجات (category في Product):
    - حقل category في المنتجات يحوي _id الفئة المكون من 24 حرفاً (Category ObjectId).
    - إذا طلب الأدمن تعديل فئة معينة (مثال: نقل منتجات إلى فئة "T-Shirt" أو حذف فئة "Women"):
@@ -462,8 +464,33 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
 router.post('/execute', asyncHandler(async (req, res) => {
   const { sessionId, messageId, collectionName, documentIds, updates } = req.body;
 
-  if (!collectionName || !documentIds || !updates) {
+  if (!sessionId || !messageId || !collectionName || !documentIds || !updates) {
     return res.status(400).json({ success: false, message: 'بيانات غير مكتملة للتنفيذ' });
+  }
+
+  // Verify that the execution request strictly matches a stored proposedAction in the session
+  const session = await AiChatSession.findOne({ _id: sessionId, 'messages._id': messageId });
+  if (!session) {
+    return res.status(404).json({ success: false, message: 'لم يتم العثور على الجلسة أو الرسالة المحددة' });
+  }
+
+  const msg = session.messages.id ? session.messages.id(messageId) : session.messages.find(m => m._id.toString() === messageId.toString());
+  if (!msg || !msg.proposedAction) {
+    return res.status(400).json({ success: false, message: 'الرسالة المحددة لا تحتوي على اقتراح صالح للتنفيذ' });
+  }
+
+  if (msg.executed === true) {
+    return res.status(400).json({ success: false, message: 'تم تنفيذ هذا الاقتراح بالفعل من قبل' });
+  }
+
+  const proposed = msg.proposedAction;
+  const isMatch =
+    proposed.collectionName === collectionName &&
+    JSON.stringify(proposed.documentIds.map(String)) === JSON.stringify(documentIds.map(String)) &&
+    JSON.stringify(proposed.updates) === JSON.stringify(updates);
+
+  if (!isMatch) {
+    return res.status(400).json({ success: false, message: 'طلب التنفيذ لا يطابق الاقتراح الأصلي المخزن في الجلسة' });
   }
 
   const Model = MODELS_MAP[collectionName];

@@ -1,8 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiX, FiExternalLink, FiCheck } from 'react-icons/fi';
 
 const BarcodeScanner = ({ onScan, onClose }) => {
   const [manualBarcode, setManualBarcode] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !window.BarcodeDetector) {
+      const script = document.createElement('script');
+      script.src = 'https://fastly.jsdelivr.net/npm/barcode-detector@3/dist/iife/polyfill.min.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();

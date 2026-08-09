@@ -9,19 +9,25 @@ const asyncHandler = require('../../utils/asyncHandler');
 
 const ALLOWED_CATEGORY_FIELDS = ['name', 'slug', 'description', 'image', 'icon', 'parent', 'order', 'isActive', 'seo', 'showInBox'];
 
+const filterAllowedCategoryFields = (data) => {
+  const filtered = {};
+  ALLOWED_CATEGORY_FIELDS.forEach(field => {
+    if (data[field] !== undefined) filtered[field] = data[field];
+  });
+  return filtered;
+};
+
 exports.createCategory = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
 
-  const category = await Category.create(req.body);
+  const filteredData = filterAllowedCategoryFields(req.body);
+  const category = await Category.create(filteredData);
   res.status(201).json({ success: true, message: 'تم إنشاء الفئة بنجاح', data: category });
 }, 'حدث خطأ أثناء إنشاء الفئة');
 
 exports.updateCategory = asyncHandler(async (req, res) => {
-  const updates = {};
-  ALLOWED_CATEGORY_FIELDS.forEach(field => {
-    if (req.body[field] !== undefined) updates[field] = req.body[field];
-  });
+  const updates = filterAllowedCategoryFields(req.body);
 
   const category = await Category.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
   if (!category) return res.status(404).json({ success: false, message: 'الفئة غير موجودة' });

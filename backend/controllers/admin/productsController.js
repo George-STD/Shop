@@ -46,6 +46,14 @@ exports.getProducts = asyncHandler(async (req, res) => {
   });
 }, 'حدث خطأ أثناء جلب المنتجات');
 
+const filterAllowedProductFields = (data) => {
+  const filtered = {};
+  ALLOWED_PRODUCT_FIELDS.forEach(field => {
+    if (data[field] !== undefined) filtered[field] = data[field];
+  });
+  return filtered;
+};
+
 exports.createProduct = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
@@ -60,7 +68,8 @@ exports.createProduct = asyncHandler(async (req, res) => {
   const uniqueSlug = slug + '-' + Date.now();
   const sku = req.body.sku || ('SKU-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
 
-  const product = await Product.create({ ...req.body, slug: uniqueSlug, sku });
+  const filteredData = filterAllowedProductFields(req.body);
+  const product = await Product.create({ ...filteredData, slug: uniqueSlug, sku });
   
   await logAudit({
     entityType: 'Product',
@@ -68,7 +77,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
     entityName: product.name,
     action: 'CREATE',
     adminId: req.user._id,
-    changes: req.body
+    changes: filteredData
   });
 
   res.status(201).json({ success: true, message: 'تم إنشاء المنتج بنجاح', data: product });
@@ -91,8 +100,9 @@ exports.createBulkProducts = asyncHandler(async (req, res) => {
     const uniqueSlug = slug + '-' + Date.now() + '-' + index;
     const sku = data.sku || ('SKU-' + Date.now() + '-' + Math.floor(Math.random() * 1000) + '-' + index);
 
+    const filteredData = filterAllowedProductFields(data);
     return {
-      ...data,
+      ...filteredData,
       slug: uniqueSlug,
       sku
     };
@@ -103,10 +113,7 @@ exports.createBulkProducts = asyncHandler(async (req, res) => {
 }, 'حدث خطأ أثناء الإنشاء الجماعي للمنتجات');
 
 exports.updateProduct = asyncHandler(async (req, res) => {
-  const updates = {};
-  ALLOWED_PRODUCT_FIELDS.forEach(field => {
-    if (req.body[field] !== undefined) updates[field] = req.body[field];
-  });
+  const updates = filterAllowedProductFields(req.body);
 
   const product = await Product.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
   if (!product) return res.status(404).json({ success: false, message: 'المنتج غير موجود' });

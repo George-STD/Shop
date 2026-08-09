@@ -1,6 +1,6 @@
 const asyncHandler = require('../../utils/asyncHandler');
 const Product = require('../../models/Product');
-const { escapeRegex } = require('../../utils/helpers');
+const { escapeRegex, fetchWithTimeout } = require('../../utils/helpers');
 const google = require('googlethis');
 
 /**
@@ -44,8 +44,10 @@ exports.barcodeLookup = asyncHandler(async (req, res) => {
 
   // 3. Try Open Food Facts API (free, no rate limits, good coverage)
   try {
-    const offRes = await fetch(
-      `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json?fields=code,product_name,product_name_ar,product_name_en,brands,image_front_url,image_url,categories,generic_name`
+    const offRes = await fetchWithTimeout(
+      `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json?fields=code,product_name,product_name_ar,product_name_en,brands,image_front_url,image_url,categories,generic_name`,
+      {},
+      8000
     );
     if (offRes.ok) {
       const offData = await offRes.json();
@@ -76,7 +78,11 @@ exports.barcodeLookup = asyncHandler(async (req, res) => {
   // 4. Try UPC Item DB as fallback if not found in Open Food Facts
   if (!foundData) {
     try {
-      const upcRes = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${encodeURIComponent(barcode)}`);
+      const upcRes = await fetchWithTimeout(
+        `https://api.upcitemdb.com/prod/trial/lookup?upc=${encodeURIComponent(barcode)}`,
+        {},
+        8000
+      );
       if (upcRes.ok) {
         const upcData = await upcRes.json();
         if (upcData.code === 'OK' && upcData.items && upcData.items.length > 0) {
