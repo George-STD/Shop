@@ -89,11 +89,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ar" dir="rtl">
       <head>
-        {/* Preconnect to critical origins */}
+        {/* Preconnect to critical origins with crossOrigin for API & CDN socket reuse */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://shop-gx97.onrender.com" />
-        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="preconnect" href="https://shop-gx97.onrender.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
         {/* Non-blocking Google Fonts — preload + swap to eliminate render-blocking */}
         <link
           rel="preload"

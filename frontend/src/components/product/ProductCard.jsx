@@ -71,14 +71,14 @@ const ProductCard = ({ product }) => {
     <div className="card product-card group min-w-0 flex flex-col h-full overflow-hidden w-full">
       {/* Image Container */}
       <div className="relative overflow-hidden bg-gray-50 aspect-square">
-        <Link to={`/product/${product.slug}`}>
+        <Link to={`/product/${product.slug}`} aria-label={product.name}>
           <img
-            src={optimizeCloudinaryUrl(product.images?.[0]?.url, 400) || '/images/placeholder.jpg'}
+            src={optimizeCloudinaryUrl(product.images?.[0]?.url, 320) || '/images/placeholder.jpg'}
             alt={product.images?.[0]?.alt || product.name}
             className="product-image"
             loading="lazy"
-            width={400}
-            height={400}
+            width={320}
+            height={320}
           />
         </Link>
 
@@ -98,7 +98,12 @@ const ProductCard = ({ product }) => {
           >
             <FiHeart className={inWishlist ? 'fill-current' : ''} size={16} />
           </button>
-          <Link to={`/product/${product.slug}`} className="quick-action-btn" title={STRINGS.PRODUCT.QUICK_VIEW}>
+          <Link
+            to={`/product/${product.slug}`}
+            className="quick-action-btn"
+            title={STRINGS.PRODUCT.QUICK_VIEW}
+            aria-label={`${STRINGS.PRODUCT.QUICK_VIEW} - ${product.name}`}
+          >
             <FiEye size={16} />
           </Link>
           <button
@@ -125,14 +130,14 @@ const ProductCard = ({ product }) => {
       <div className="p-2.5 sm:p-4 flex flex-col flex-grow min-w-0">
         {/* Category */}
         {product.category && (
-          <div className="text-xs text-purple-300 font-semibold uppercase tracking-wider">
+          <div className="text-xs text-purple-700 font-bold uppercase tracking-wider mb-1">
             {(Array.isArray(product.category) ? product.category : [product.category])
               .filter(Boolean)
               .map((cat, i, arr) => (
                 <span key={cat._id || i}>
                   <Link
                     to={`/products?category=${cat.slug}`}
-                    className="hover:text-purple-600 transition-colors"
+                    className="inline-block py-0.5 hover:text-purple-900 transition-colors"
                   >
                     {cat.name}
                   </Link>

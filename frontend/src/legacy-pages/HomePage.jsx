@@ -423,7 +423,7 @@ const HomePage = () => {
         <div className="container-custom">
           <div className="flex items-end justify-between mb-10">
             <div>
-              <span className="inline-flex items-center gap-1.5 text-emerald-600 font-medium text-sm mb-2">
+              <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold text-sm mb-2">
                 <span className="w-8 h-[2px] bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"></span>
                 ✨ {STRINGS.HOME.NEW_ARRIVALS}
               </span>
@@ -431,7 +431,7 @@ const HomePage = () => {
             </div>
             <Link
               to="/products?new=true"
-              className="hidden sm:inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-medium text-sm hover:gap-2 transition-all"
+              className="hidden sm:inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-semibold text-sm hover:gap-2 transition-all"
             >
               {STRINGS.COMMON.VIEW_ALL}
               <span>←</span>
