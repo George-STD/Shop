@@ -54,6 +54,7 @@ const HomePage = () => {
   const { data: loyaltySettings } = useQuery({
     queryKey: ['public-loyalty-settings'],
     queryFn: () => settingsAPI.getLoyaltySettings().then((res) => res.data?.data),
+    initialData: { enabled: true },
   });
 
   const features = [
