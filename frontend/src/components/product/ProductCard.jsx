@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FiHeart, FiShoppingBag, FiEye } from 'react-icons/fi';
 import { STRINGS } from '../../constants';
 import { useCartStore, useWishlistStore, useAuthStore } from '../../store';
+import { optimizeCloudinaryUrl } from '../../utils/optimizeImage';
 import toast from 'react-hot-toast';
 
 import { authAPI } from '../../services/api';
@@ -72,10 +73,12 @@ const ProductCard = ({ product }) => {
       <div className="relative overflow-hidden bg-gray-50 aspect-square">
         <Link to={`/product/${product.slug}`}>
           <img
-            src={product.images?.[0]?.url || '/images/placeholder.jpg'}
+            src={optimizeCloudinaryUrl(product.images?.[0]?.url, 400) || '/images/placeholder.jpg'}
             alt={product.images?.[0]?.alt || product.name}
             className="product-image"
             loading="lazy"
+            width={400}
+            height={400}
           />
         </Link>
 
@@ -122,7 +125,7 @@ const ProductCard = ({ product }) => {
       <div className="p-2.5 sm:p-4 flex flex-col flex-grow min-w-0">
         {/* Category */}
         {product.category && (
-          <div className="text-xs text-purple-400 font-medium uppercase tracking-wider">
+          <div className="text-xs text-purple-300 font-semibold uppercase tracking-wider">
             {(Array.isArray(product.category) ? product.category : [product.category])
               .filter(Boolean)
               .map((cat, i, arr) => (
@@ -173,9 +176,9 @@ const ProductCard = ({ product }) => {
             <span className="text-xs font-normal text-gray-500">{STRINGS.PRODUCT.CURRENCY}</span>
           </span>
           {product.oldPrice && (
-            <span className="text-xs sm:text-sm text-gray-400 line-through whitespace-nowrap">
+            <span className="text-xs sm:text-sm text-gray-500 line-through whitespace-nowrap">
               <bdi>{formatPrice(product.oldPrice)}</bdi>{' '}
-              <span className="text-[10px] sm:text-xs font-normal text-gray-400">{STRINGS.PRODUCT.CURRENCY}</span>
+              <span className="text-[10px] sm:text-xs font-normal text-gray-500">{STRINGS.PRODUCT.CURRENCY}</span>
             </span>
           )}
         </div>

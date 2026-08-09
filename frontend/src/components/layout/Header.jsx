@@ -104,6 +104,8 @@ const Header = () => {
               src="/images/logo.jpeg"
               alt={STRINGS.NAV.LOGO_ALT}
               className={`w-auto object-contain transition-all duration-300 ${isScrolled ? 'h-9 sm:h-12' : 'h-11 sm:h-16 md:h-24'}`}
+              width={105}
+              height={105}
             />
           </Link>
 

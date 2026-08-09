@@ -488,11 +488,34 @@ bdi, [dir="auto"] {
   border-image: linear-gradient(135deg, #a855f7, #ec4899) 1;
 }
 
-/* Top Bar Gradient */
+/* Top Bar Gradient — composited animation using transform instead of background-position */
 .topbar-gradient {
   background: linear-gradient(90deg, #7c3aed, #a855f7, #d946ef, #ec4899);
-  background-size: 200% 100%;
-  animation: gradient-shift 8s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.topbar-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #ec4899, #7c3aed, #a855f7, #d946ef, #ec4899);
+  animation: gradient-slide 8s ease infinite;
+  will-change: transform;
+}
+
+.topbar-gradient > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes gradient-slide {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-25%);
+  }
 }
 
 /* Footer Gradient */

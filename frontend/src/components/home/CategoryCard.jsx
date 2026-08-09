@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { STRINGS } from '../../constants';
+import { optimizeCloudinaryUrl } from '../../utils/optimizeImage';
 
 const CategoryCard = ({ category }) => {
   if (!category) return null;
@@ -8,9 +9,12 @@ const CategoryCard = ({ category }) => {
       <div className="relative overflow-hidden rounded-2xl aspect-square bg-gradient-to-br from-purple-100 to-pink-100">
         {category.image ? (
           <img
-            src={category.image}
+            src={optimizeCloudinaryUrl(category.image, 400)}
             alt={category.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+            width={400}
+            height={400}
+            loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

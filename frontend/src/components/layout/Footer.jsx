@@ -65,6 +65,8 @@ const Footer = () => {
               src="/images/logo.jpeg"
               alt="For You Gift Shop"
               className="h-20 sm:h-24 w-auto mb-5 bg-white rounded-2xl p-2.5 sm:p-3 object-contain"
+              width={105}
+              height={105}
             />
             <p className="text-gray-400 mb-6 leading-relaxed text-sm">
               {STRINGS.FOOTER.ABOUT_DESC}
@@ -74,22 +76,28 @@ const Footer = () => {
                 href="https://www.facebook.com/share/1BzYfakvLp/?mibextid=wwXIfr"
                 className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center hover:bg-gradient-to-br hover:from-purple-500 hover:to-pink-500 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5"
                 target="_blank"
+                rel="noopener noreferrer"
+                aria-label="تابعنا على فيسبوك"
               >
-                <FiFacebook size={16} />
+                <FiFacebook size={16} aria-hidden="true" />
               </a>
               <a
                 href="https://www.instagram.com/foryou._.21?igsh=d3llMHFjdmE3Z25w&utm_source=qr"
                 className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center hover:bg-gradient-to-br hover:from-purple-500 hover:to-pink-500 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5"
                 target="_blank"
+                rel="noopener noreferrer"
+                aria-label="تابعنا على انستجرام"
               >
-                <FiInstagram size={16} />
+                <FiInstagram size={16} aria-hidden="true" />
               </a>
               <a
                 href="https://youtube.com/@foryou-l1k?si=wL0zO2sHLypUtE-p"
                 className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center hover:bg-gradient-to-br hover:from-purple-500 hover:to-pink-500 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-0.5"
                 target="_blank"
+                rel="noopener noreferrer"
+                aria-label="تابعنا على يوتيوب"
               >
-                <FiYoutube size={16} />
+                <FiYoutube size={16} aria-hidden="true" />
               </a>
             </div>
           </div>
@@ -191,17 +199,21 @@ const Footer = () => {
       <div className="border-t border-gray-800">
         <div className="container-custom py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-gray-500 text-xs uppercase tracking-wider">{STRINGS.FOOTER.PAYMENT_METHODS}</p>
+            <p className="text-gray-400 text-xs uppercase tracking-wider">{STRINGS.FOOTER.PAYMENT_METHODS}</p>
             <div className="flex items-center gap-4">
               <img
                 src="/images/payments/cash.svg"
                 alt="Cash on Delivery"
                 className="h-7 opacity-60 hover:opacity-100 transition-opacity"
+                width={28}
+                height={28}
               />
               <img
                 src="/images/payments/instapay.svg"
                 alt="InstaPay"
                 className="h-7 opacity-60 hover:opacity-100 transition-opacity"
+                width={28}
+                height={28}
               />
             </div>
           </div>
@@ -211,7 +223,7 @@ const Footer = () => {
       {/* Copyright */}
       <div className="border-t border-gray-800/50">
         <div className="container-custom py-5">
-          <p className="text-center text-gray-500 text-xs flex items-center justify-center gap-1">
+          <p className="text-center text-gray-400 text-xs flex items-center justify-center gap-1">
             © {currentYear} {BUSINESS_CONFIG.SITE_NAME_EN}. {STRINGS.FOOTER.MADE_WITH}{' '}
             <FiHeart className="text-pink-500 fill-pink-500" size={12} /> {STRINGS.FOOTER.RIGHTS_RESERVED}
           </p>
