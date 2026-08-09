@@ -100,13 +100,16 @@ const Header = () => {
 
           {/* Logo */}
           <Link to="/" className="flex-shrink-0" aria-label={STRINGS.NAV.HOME}>
-            <img
-              src="/images/logo.jpeg"
-              alt={STRINGS.NAV.LOGO_ALT}
-              className={`w-auto object-contain transition-all duration-300 ${isScrolled ? 'h-9 sm:h-12' : 'h-11 sm:h-16 md:h-24'}`}
-              width={105}
-              height={105}
-            />
+            <picture>
+              <source srcSet="/images/logo.webp" type="image/webp" />
+              <img
+                src="/images/logo.jpeg"
+                alt={STRINGS.NAV.LOGO_ALT}
+                className={`w-auto object-contain transition-all duration-300 ${isScrolled ? 'h-9 sm:h-12' : 'h-11 sm:h-16 md:h-24'}`}
+                width={105}
+                height={105}
+              />
+            </picture>
           </Link>
 
           {/* Search Bar - Desktop */}

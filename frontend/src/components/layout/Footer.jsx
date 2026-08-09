@@ -61,13 +61,16 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-center md:text-right">
           {/* About */}
           <div className="flex flex-col items-center md:items-start">
-            <img
-              src="/images/logo.jpeg"
-              alt="For You Gift Shop"
-              className="h-20 sm:h-24 w-auto mb-5 bg-white rounded-2xl p-2.5 sm:p-3 object-contain"
-              width={105}
-              height={105}
-            />
+            <picture>
+              <source srcSet="/images/logo.webp" type="image/webp" />
+              <img
+                src="/images/logo.jpeg"
+                alt="For You Gift Shop"
+                className="h-20 sm:h-24 w-auto mb-5 bg-white rounded-2xl p-2.5 sm:p-3 object-contain"
+                width={105}
+                height={105}
+              />
+            </picture>
             <p className="text-gray-400 mb-6 leading-relaxed text-sm">
               {STRINGS.FOOTER.ABOUT_DESC}
             </p>

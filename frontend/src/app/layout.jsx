@@ -117,7 +117,7 @@ export default function RootLayout({ children }) {
         {/* High-performance Barcode Detector Polyfill (using zxing-wasm) for blazing fast 1D barcode scanning on laptops/phones */}
         <Script 
           src="https://cdn.jsdelivr.net/npm/barcode-detector@3/dist/iife/polyfill.min.js" 
-          strategy="beforeInteractive" 
+          strategy="afterInteractive" 
         />
         <JsonLd />
         <Providers>{children}</Providers>

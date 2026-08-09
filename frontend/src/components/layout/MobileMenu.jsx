@@ -29,11 +29,16 @@ const MobileMenu = () => {
       <div className="absolute top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl overflow-y-auto panel-slide-right">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-l from-purple-50/50 to-white">
-          <img
-            src="/images/logo.jpeg"
-            alt="For You Gift Shop"
-            className="h-16 w-auto object-contain"
-          />
+          <picture>
+            <source srcSet="/images/logo.webp" type="image/webp" />
+            <img
+              src="/images/logo.jpeg"
+              alt="For You Gift Shop"
+              className="h-16 w-auto object-contain"
+              width={64}
+              height={64}
+            />
+          </picture>
           <button
             onClick={closeMobileMenu}
             className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
