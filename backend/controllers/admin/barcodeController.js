@@ -1,14 +1,67 @@
 const asyncHandler = require('../../utils/asyncHandler');
 const Product = require('../../models/Product');
 const { escapeRegex, fetchWithTimeout } = require('../../utils/helpers');
-const google = require('googlethis');
+
+/**
+ * Fallback web search using native fetch
+ */
+async function searchWebFallback(query) {
+  try {
+    const res = await fetchWithTimeout(
+      `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`,
+      { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } },
+      5000
+    );
+    if (res.ok) {
+      const html = await res.text();
+      const titleMatch = html.match(/<a class="result__a"[^>]*>([\s\S]*?)<\/a>/i);
+      const snippetMatch = html.match(/<a class="result__snippet"[^>]*>([\s\S]*?)<\/a>/i);
+      if (titleMatch) {
+        let name = titleMatch[1].replace(/<[^>]+>/g, '').trim();
+        name = name.replace(query, '').replace(/\|.*/, '').replace(/-.*/, '').trim() || name;
+        const description = snippetMatch ? snippetMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+        if (name && name.length > 2) {
+          return { name, description };
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Web search fallback error:', err.message);
+  }
+  return null;
+}
+
+/**
+ * Fallback image search using native fetch
+ */
+async function searchImageFallback(query) {
+  try {
+    const res = await fetchWithTimeout(
+      `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query + ' image')}`,
+      { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } },
+      5000
+    );
+    if (res.ok) {
+      const html = await res.text();
+      const imgMatches = [...html.matchAll(/https?:\/\/[^"'\s]+\.(?:jpg|jpeg|png|webp)/gi)];
+      const urls = Array.from(new Set(imgMatches.map((m) => m[0]))).filter(
+        (u) => !u.includes('duckduckgo.com') && !u.includes('yandex') && !u.includes('bing')
+      );
+      if (urls.length > 0) {
+        return urls.slice(0, 3).map((url) => ({ url, alt: query }));
+      }
+    }
+  } catch (err) {
+    console.error('Image search fallback error:', err.message);
+  }
+  return [];
+}
 
 /**
  * Lookup a product by barcode/SKU.
  * 1. Search local database by SKU (exact match first, then partial).
  * 2. If not found locally, try external APIs (Open Food Facts, UPC Item DB).
- * 3. If product info is found but no images, fallback to Google Image Search 
- *    (prioritizing transparent backgrounds, then normal images).
+ * 3. If product info is found but no images, fallback to web image search.
  * 4. Return whatever product info we find.
  */
 exports.barcodeLookup = asyncHandler(async (req, res) => {
@@ -106,62 +159,27 @@ exports.barcodeLookup = asyncHandler(async (req, res) => {
     }
   }
 
-  // 5. If still not found, search Google Web for the barcode string
+  // 5. If still not found, search Web for the barcode string
   if (!foundData) {
-    try {
-      const googleResults = await google.search(barcode, { page: 0, additional_params: { hl: 'ar' } });
-      if (googleResults.results && googleResults.results.length > 0) {
-        const firstResult = googleResults.results[0];
-        let name = firstResult.title;
-        // Clean up the title a bit
-        name = name.replace(barcode, '').replace(/\|.*/, '').replace(/-.*/, '').trim();
-        
-        if (name && name.length > 2) {
-          foundData = {
-            source: 'google',
-            data: {
-              name: name,
-              description: firstResult.description,
-              images: [], // Images will be fetched in the next step
-              sku: barcode,
-            },
-          };
-        }
-      }
-    } catch (err) {
-      console.error('Google Web Search fallback error:', err.message);
+    const webResult = await searchWebFallback(barcode);
+    if (webResult) {
+      foundData = {
+        source: 'web',
+        data: {
+          name: webResult.name,
+          description: webResult.description,
+          images: [],
+          sku: barcode,
+        },
+      };
     }
   }
 
-  // 6. If we found product info but NO images, try Google Image Search
+  // 6. If we found product info but NO images, try Image Search fallback
   if (foundData && (!foundData.data.images || foundData.data.images.length === 0)) {
-    try {
-      const query = foundData.data.name;
-      // First, search for transparent images
-      let googleImages = await google.image(query, { 
-        page: 0, 
-        safe: false, 
-        additional_params: { hl: 'en', tbs: 'ic:trans' } 
-      });
-
-      // If no transparent images found, search for normal images
-      if (!googleImages || googleImages.length === 0) {
-        googleImages = await google.image(query, { 
-          page: 0, 
-          safe: false, 
-          additional_params: { hl: 'en' } 
-        });
-      }
-
-      // If we found any images, take up to 3
-      if (googleImages && googleImages.length > 0) {
-        foundData.data.images = googleImages.slice(0, 3).map(img => ({
-          url: img.url,
-          alt: query,
-        }));
-      }
-    } catch (err) {
-      console.error('Google Image Search fallback error:', err.message);
+    const images = await searchImageFallback(foundData.data.name);
+    if (images && images.length > 0) {
+      foundData.data.images = images;
     }
   }
 

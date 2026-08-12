@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "node --max-old-space-size=2048 node_modules/next/dist/bin/next build",
-    "check": "node --max-old-space-size=2048 node_modules/next/dist/bin/next build",
+    "check": "npm run lint",
     "start": "next start",
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
@@ -26,7 +26,7 @@
   "devDependencies": {
     "autoprefixer": "^10.4.16",
     "eslint": "^9.39.4",
-    "eslint-config-next": "^16.2.10",
+    "eslint-config-next": "^15.2.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
     "postcss": "^8.4.31",

@@ -106,10 +106,7 @@ function safeParseJSON(text) {
   }
 }
 
-// Apply the same middleware chain as the main admin routes
-router.use(protect);
-router.use(admin);
-router.use(adminLimiter);
+
 
 // ──────────────────────────────────────────────────────────────────
 // @route   POST /api/admin/ai/vision-analyze

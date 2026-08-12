@@ -4,12 +4,7 @@ const User = require('../../../models/User');
 const Product = require('../../../models/Product');
 const mongoose = require('mongoose');
 
-// Mock googlethis to avoid actual network requests
-jest.mock('googlethis', () => ({
-  image: jest.fn(),
-  search: jest.fn()
-}));
-const google = require('googlethis');
+
 
 describe('Admin Barcode Routes Tests', () => {
   let adminToken;
@@ -151,7 +146,7 @@ describe('Admin Barcode Routes Tests', () => {
       expect(res.body.data.name).toBe('UPC Product');
     });
 
-    it('should fallback to google image search if no images found in APIs', async () => {
+    it('should fallback to image search if no images found in APIs', async () => {
       // Mock Open Food Facts with no image
       global.fetch.mockResolvedValueOnce({
         ok: true,
@@ -163,10 +158,11 @@ describe('Admin Barcode Routes Tests', () => {
         })
       });
 
-      // Mock google.image
-      google.image.mockResolvedValueOnce([
-        { url: 'http://google.jpg' }
-      ]);
+      // Mock image search fetch
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        text: async () => '<html><a href="http://img.jpg">http://testsite.com/image.jpg</a></html>'
+      });
 
       const res = await request(app)
         .get('/api/admin/barcode/99887766')
@@ -176,7 +172,7 @@ describe('Admin Barcode Routes Tests', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.source).toBe('openfoodfacts');
       expect(res.body.data.name).toBe('No Image Product');
-      expect(res.body.data.images[0].url).toBe('http://google.jpg');
+      expect(res.body.data.images[0].url).toBe('http://img.jpg');
     });
 
     it('should return 200 with success false if product not found anywhere', async () => {
@@ -184,8 +180,8 @@ describe('Admin Barcode Routes Tests', () => {
       global.fetch.mockResolvedValueOnce({ ok: false });
       // Mock UPC Item DB failure
       global.fetch.mockResolvedValueOnce({ ok: false });
-      // Mock Google Search failure
-      google.search.mockResolvedValueOnce({ results: [] });
+      // Mock Web Search failure
+      global.fetch.mockResolvedValueOnce({ ok: false });
 
       const res = await request(app)
         .get('/api/admin/barcode/00000000')

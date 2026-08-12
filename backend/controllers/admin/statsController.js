@@ -3,6 +3,7 @@ const Product = require('../../models/Product');
 const Order = require('../../models/Order');
 const AuditLog = require('../../models/AuditLog');
 const asyncHandler = require('../../utils/asyncHandler');
+const { buildPaginationMeta } = require('../../utils/helpers');
 
 // =====================================================
 // DASHBOARD STATS
@@ -162,20 +163,28 @@ exports.getAnalysis = asyncHandler(async (req, res) => {
 // AUDIT LOGS
 // =====================================================
 exports.getLogs = asyncHandler(async (req, res) => {
-  const { entityType, action, limit = 50 } = req.query;
+  const { entityType, action } = req.query;
+  const pageNum = parseInt(req.query.page) || 1;
+  const limitNum = Math.min(parseInt(req.query.limit) || 50, 100);
+  const skip = (pageNum - 1) * limitNum;
   const query = {};
   
   if (entityType) query.entityType = entityType;
   if (action) query.action = action;
 
-  const logs = await AuditLog.find(query)
-    .sort({ createdAt: -1 })
-    .limit(parseInt(limit))
-    .populate('adminId', 'firstName lastName email');
+  const [logs, total] = await Promise.all([
+    AuditLog.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .populate('adminId', 'firstName lastName email'),
+    AuditLog.countDocuments(query)
+  ]);
 
   res.json({
     success: true,
-    data: logs
+    data: logs,
+    pagination: buildPaginationMeta({ page: pageNum, limit: limitNum, total })
   });
 }, 'حدث خطأ أثناء جلب سجل النشاطات');
 

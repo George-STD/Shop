@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 const { CONFIG, MESSAGES } = require('../constants');
@@ -250,6 +251,9 @@ exports.getProductBySlug = asyncHandler(async (req, res) => {
  * Get single product by ID
  */
 exports.getProductById = asyncHandler(async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return sendNotFound(res, MESSAGES.PRODUCTS.NOT_FOUND);
+  }
   const product = await Product.findById(req.params.id)
     .populate('category', 'name slug');
   if (!product) return sendNotFound(res, MESSAGES.PRODUCTS.NOT_FOUND);
@@ -261,6 +265,9 @@ exports.getProductById = asyncHandler(async (req, res) => {
  * Get related products
  */
 exports.getRelatedProducts = asyncHandler(async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return sendNotFound(res, MESSAGES.PRODUCTS.NOT_FOUND);
+  }
   const product = await Product.findById(req.params.id);
   if (!product) return sendNotFound(res, MESSAGES.PRODUCTS.NOT_FOUND);
 
