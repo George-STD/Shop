@@ -101,6 +101,7 @@ export const STORAGE_KEYS = {
   CART: 'cart-storage',
   AUTH: 'auth-storage',
   WISHLIST: 'wishlist-storage',
+  BUILD_BOX: 'build-box-storage',
   TOKEN: 'token',
 };
 

@@ -25,6 +25,8 @@ afterAll(async () => {
         // ignore if already dropped or closed
       }
     }
-    await mongoose.disconnect();
+    try {
+      await mongoose.disconnect();
+    } catch (_) {}
   }
 });

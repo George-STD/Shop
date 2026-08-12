@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { BUSINESS_CONFIG } from '../constants';
+import { BUSINESS_CONFIG, STORAGE_KEYS } from '../constants';
 
 export const useBuildBoxStore = create(
   persist(
@@ -40,7 +40,7 @@ export const useBuildBoxStore = create(
       },
     }),
     {
-      name: 'build-box-storage',
+      name: STORAGE_KEYS.BUILD_BOX,
     }
   )
 );

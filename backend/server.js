@@ -196,8 +196,8 @@ const validateEnvironment = () => {
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
   }
-  if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32 && process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET must be at least 32 characters long in production for security.');
+  if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32 && process.env.NODE_ENV !== 'test') {
+    throw new Error('JWT_SECRET must be at least 32 characters long for security.');
   }
   if (!process.env.GEMINI_API_KEY) {
     console.warn('⚠️ NOTICE: GEMINI_API_KEY is not set. AI features will operate in fallback mode.');

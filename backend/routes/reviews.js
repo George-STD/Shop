@@ -300,19 +300,29 @@ router.post('/:id/helpful', protect, async (req, res) => {
   }
 });
 
+// Helper to mask email address for privacy (e.g. ma***@gmail.com)
+const maskEmail = (email) => {
+  if (!email || typeof email !== 'string' || !email.includes('@')) return '';
+  const [name, domain] = email.split('@');
+  if (name.length <= 2) return `${name[0] || '*'}***@${domain}`;
+  return `${name.slice(0, 2)}***@${domain}`;
+};
+
 // @route   GET /api/reviews/order-info/:orderNumber
-// @desc    Get order info for review page
+// @desc    Get order info for review page (with masked email for privacy)
 // @access  Public
 router.get('/order-info/:orderNumber', async (req, res) => {
   try {
     const { orderNumber } = req.params;
     const order = await Order.findOne({
       $or: [{ orderNumber: orderNumber }, { _id: mongoose.Types.ObjectId.isValid(orderNumber) ? orderNumber : null }]
-    }).populate('items.product', 'name images price slug');
+    }).populate('items.product', 'name images price slug').populate('user', 'email firstName');
 
     if (!order) {
       return sendNotFound(res, 'الطلب غير موجود');
     }
+
+    const rawEmail = order.guestEmail || order.shippingAddress?.email || order.user?.email || '';
 
     return res.json({
       success: true,
@@ -321,7 +331,7 @@ router.get('/order-info/:orderNumber', async (req, res) => {
         createdAt: order.createdAt,
         status: order.status,
         customerName: `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`.trim() || order.user?.firstName || 'عميلنا العزيز',
-        customerEmail: order.user?.email || '',
+        customerEmail: maskEmail(rawEmail),
         items: order.items.map(item => ({
           productId: item.product?._id || item.product,
           name: item.name || item.product?.name,
@@ -356,13 +366,28 @@ router.post('/batch-order-review', apiLimiter, [
 
     const order = await Order.findOne({
       $or: [{ orderNumber: orderNumber }, { _id: mongoose.Types.ObjectId.isValid(orderNumber) ? orderNumber : null }]
-    }).populate('items.product');
+    }).populate('items.product').populate('user', 'email firstName');
 
     if (!order) {
       return sendNotFound(res, 'الطلب غير موجود');
     }
 
-    const customerEmail = guestEmail || order.user?.email;
+    // Verify order ownership: must match logged-in user OR submitted guestEmail must match order's email
+    const orderEmails = [
+      order.guestEmail,
+      order.shippingAddress?.email,
+      order.user?.email
+    ].filter(Boolean).map(e => e.toLowerCase().trim());
+
+    const isUserOwner = userId && order.user && order.user.toString() === userId.toString();
+    const submittedEmail = (guestEmail || '').toLowerCase().trim();
+    const isEmailMatched = submittedEmail && orderEmails.includes(submittedEmail);
+
+    if (!isUserOwner && !isEmailMatched && orderEmails.length > 0) {
+      return sendForbidden(res, 'البريد الإلكتروني المكتوب لا يطابق بيانات صاحب الطلب');
+    }
+
+    const customerEmail = guestEmail || order.user?.email || order.guestEmail;
     const customerName = guestName || `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`.trim() || order.user?.firstName || 'عميل محدد';
 
     const createdReviews = [];

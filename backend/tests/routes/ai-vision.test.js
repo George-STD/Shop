@@ -77,7 +77,7 @@ describe('AI Vision Routes Tests', () => {
       const res = await request(app)
         .post('/api/admin/ai/vision-analyze')
         .set('Authorization', `Bearer ${adminToken}`)
-        .attach('images', Buffer.from('fake-image-data'), 'test.jpg');
+        .attach('images', Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]), 'test.jpg');
 
       expect(res.statusCode).toBe(200);
       expect(res.body.success).toBe(true);

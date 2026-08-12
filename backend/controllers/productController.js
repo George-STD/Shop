@@ -105,9 +105,14 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
   }
 
   if (minPrice || maxPrice) {
+    let min = minPrice ? Number(minPrice) : null;
+    let max = maxPrice ? Number(maxPrice) : null;
+    if (min !== null && max !== null && !isNaN(min) && !isNaN(max) && min > max) {
+      [min, max] = [max, min];
+    }
     query.price = {};
-    if (minPrice) query.price.$gte = Number(minPrice);
-    if (maxPrice) query.price.$lte = Number(maxPrice);
+    if (min !== null && !isNaN(min)) query.price.$gte = min;
+    if (max !== null && !isNaN(max)) query.price.$lte = max;
   }
 
   if (featured === 'true') query.isFeatured = true;

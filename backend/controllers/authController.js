@@ -17,6 +17,17 @@ const safeTimingEqual = (expected, actual) => {
   return crypto.timingSafeEqual(bufA, bufB);
 };
 
+// Helper to hash short-lived codes (SHA-256) before storing in DB
+const hashCode = (code) => {
+  if (!code) return null;
+  return crypto.createHash('sha256').update(String(code).trim()).digest('hex');
+};
+
+const verifyCodeMatch = (storedCode, incomingCode) => {
+  if (!storedCode || !incomingCode) return false;
+  return safeTimingEqual(storedCode, hashCode(incomingCode)) || safeTimingEqual(storedCode, incomingCode);
+};
+
 // Generate JWT Token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -39,7 +50,7 @@ exports.register = asyncHandler(async (req, res) => {
         $set: {
           firstName, lastName, phone,
           password: hashedPassword,
-          emailVerificationCode: code,
+          emailVerificationCode: hashCode(code),
           emailVerificationExpires: new Date(Date.now() + 10 * 60 * 1000)
         }
       });
@@ -64,7 +75,7 @@ exports.register = asyncHandler(async (req, res) => {
   const user = await User.create({
     firstName, lastName, email, phone, password,
     isVerified: false,
-    emailVerificationCode: code,
+    emailVerificationCode: hashCode(code),
     emailVerificationExpires: new Date(Date.now() + 10 * 60 * 1000)
   });
 
@@ -91,7 +102,7 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
 
   if (!user) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.USER_NOT_FOUND });
   if (user.isVerified) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_ALREADY_DONE });
-  if (!user.emailVerificationCode || !safeTimingEqual(user.emailVerificationCode, code)) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
+  if (!user.emailVerificationCode || !verifyCodeMatch(user.emailVerificationCode, code)) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
   if (user.emailVerificationExpires < new Date()) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_EXPIRED });
 
   await User.findByIdAndUpdate(user._id, {
@@ -126,7 +137,7 @@ exports.resendCode = asyncHandler(async (req, res) => {
   const code = generateVerificationCode();
   await User.findByIdAndUpdate(user._id, {
     $set: {
-      emailVerificationCode: code,
+      emailVerificationCode: hashCode(code),
       emailVerificationExpires: new Date(Date.now() + 10 * 60 * 1000)
     }
   });
@@ -160,7 +171,7 @@ exports.login = asyncHandler(async (req, res) => {
     const code = generateVerificationCode();
     await User.findByIdAndUpdate(user._id, {
       $set: {
-        emailVerificationCode: code,
+        emailVerificationCode: hashCode(code),
         emailVerificationExpires: new Date(Date.now() + 10 * 60 * 1000)
       }
     });
@@ -249,7 +260,7 @@ exports.requestEmailChange = asyncHandler(async (req, res) => {
 
   await User.findByIdAndUpdate(user._id, {
     pendingEmail: newEmail.toLowerCase(),
-    emailChangeCode: code,
+    emailChangeCode: hashCode(code),
     emailChangeExpires: expiry
   });
 
@@ -278,7 +289,7 @@ exports.verifyEmailChange = asyncHandler(async (req, res) => {
     return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_EXPIRED });
   }
 
-  if (!user.emailChangeCode || !safeTimingEqual(user.emailChangeCode, code)) {
+  if (!user.emailChangeCode || !verifyCodeMatch(user.emailChangeCode, code)) {
     return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_INVALID });
   }
 
@@ -316,7 +327,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
 
   const code = generateVerificationCode();
   await User.findByIdAndUpdate(user._id, {
-    $set: { resetPasswordToken: code, resetPasswordExpires: new Date(Date.now() + 10 * 60 * 1000) }
+    $set: { resetPasswordToken: hashCode(code), resetPasswordExpires: new Date(Date.now() + 10 * 60 * 1000) }
   });
 
   try {
@@ -337,7 +348,7 @@ exports.verifyResetCode = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
 
   if (!user) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.USER_NOT_FOUND });
-  if (!user.resetPasswordToken || !safeTimingEqual(user.resetPasswordToken, code)) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
+  if (!user.resetPasswordToken || !verifyCodeMatch(user.resetPasswordToken, code)) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
   if (user.resetPasswordExpires < new Date()) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.CODE_EXPIRED });
 
   sendSuccess(res, { message: MESSAGES.AUTH.CODE_VALID });
@@ -351,7 +362,7 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email }).select('+password');
 
   if (!user) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.USER_NOT_FOUND });
-  if (!user.resetPasswordToken || !safeTimingEqual(user.resetPasswordToken, code)) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
+  if (!user.resetPasswordToken || !verifyCodeMatch(user.resetPasswordToken, code)) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
   if (user.resetPasswordExpires < new Date()) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.CODE_EXPIRED });
 
   const hashedPassword = await bcrypt.hash(newPassword, 12);

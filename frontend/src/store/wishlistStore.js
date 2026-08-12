@@ -43,6 +43,35 @@ export const useWishlistStore = create(
         return get().items.some((item) => item.id === id);
       },
 
+      syncWishlist: (serverWishlist) => {
+        if (!Array.isArray(serverWishlist)) return;
+        const currentItems = get().items;
+        const map = new Map();
+        currentItems.forEach((item) => item.id && map.set(item.id, item));
+
+        serverWishlist.forEach((item) => {
+          if (!item) return;
+          const id = typeof item === 'string' ? item : (item._id || item.id);
+          if (!id) return;
+          const existing = map.get(id);
+          if (typeof item === 'object') {
+            map.set(id, {
+              id,
+              name: item.name || existing?.name,
+              slug: item.slug || existing?.slug,
+              price: item.price ?? existing?.price,
+              oldPrice: item.oldPrice ?? existing?.oldPrice,
+              image: item.images?.[0]?.url || item.image || existing?.image,
+              stock: parseStock(item.stock) ?? existing?.stock ?? null,
+            });
+          } else if (!existing) {
+            map.set(id, { id });
+          }
+        });
+
+        set({ items: Array.from(map.values()) });
+      },
+
       clearWishlist: () => set({ items: [] }),
     }),
     {

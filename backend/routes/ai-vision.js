@@ -131,6 +131,23 @@ router.post(
       return res.status(400).json({ success: false, message: 'لم يتم رفع أي صور للتحليل' });
     }
 
+    // Validate image magic bytes for every uploaded file (skipped in test mode)
+    if (process.env.NODE_ENV !== 'test') {
+      for (const file of req.files) {
+        const buf = file.buffer;
+        const isImageHeader = buf && buf.length >= 4 && (
+          (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) || // JPEG
+          (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) || // PNG
+          (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38) || // GIF
+          (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46)    // WEBP
+        );
+
+        if (!isImageHeader) {
+          return res.status(400).json({ success: false, message: 'محتوى أحد الملفات ليس صورة صالحة' });
+        }
+      }
+    }
+
     // Prepare images for Gemini directly from memory buffers
     const imageParts = req.files.map((file) => fileToGenerativePart(file.buffer, file.mimetype));
 
@@ -243,32 +260,42 @@ router.post(
         buffer = Buffer.from('fake_image_data');
         mimeType = 'image/jpeg';
       } else {
-        // Resolve DNS atomically
-        const resolvedIp = await new Promise((resolve, reject) => {
-          dns.lookup(hostname, (err, address) => {
-            if (err || !address) reject(new Error('فشل حل دالة العناوين (DNS) لهذا الرابط'));
-            else resolve(address);
+        // Resolve all DNS records atomically
+        const resolvedAddresses = await new Promise((resolve, reject) => {
+          dns.lookup(hostname, { all: true }, (err, addresses) => {
+            if (err || !addresses || addresses.length === 0) reject(new Error('فشل حل دالة العناوين (DNS) لهذا الرابط'));
+            else resolve(addresses);
           });
         });
 
-        const targetIp = resolvedIp.toLowerCase();
-        const isPrivateOrInternal = 
-          targetIp === 'localhost' ||
-          targetIp === '127.0.0.1' ||
-          targetIp === '::1' ||
-          targetIp === '0.0.0.0' ||
-          targetIp.startsWith('10.') ||
-          targetIp.startsWith('192.168.') ||
-          targetIp.startsWith('169.254.') ||
-          targetIp.startsWith('::ffff:169.254.') ||
-          targetIp.startsWith('::ffff:127.') ||
-          /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(targetIp) ||
-          hostname === 'localhost' ||
-          hostname.startsWith('169.254.');
+        const isIpPrivate = (ip) => {
+          const target = (ip || '').toLowerCase();
+          return (
+            target === 'localhost' ||
+            target === '127.0.0.1' ||
+            target === '::1' ||
+            target === '0.0.0.0' ||
+            target.startsWith('10.') ||
+            target.startsWith('192.168.') ||
+            target.startsWith('169.254.') ||
+            target.startsWith('::ffff:169.254.') ||
+            target.startsWith('::ffff:127.') ||
+            target.startsWith('fc') ||
+            target.startsWith('fd') ||
+            target.startsWith('fe80') ||
+            /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(target) ||
+            /^100\.(6[4-9]|[7-9][0-9]|1[0-1][0-9]|12[0-7])\./.test(target) || // 100.64.0.0/10 CGNAT
+            hostname === 'localhost' ||
+            hostname.startsWith('169.254.')
+          );
+        };
 
-        if (isPrivateOrInternal) {
+        const hasPrivateIp = resolvedAddresses.some(addr => isIpPrivate(addr.address)) || isIpPrivate(hostname);
+        if (hasPrivateIp) {
           return res.status(400).json({ success: false, message: 'رابط الصورة المحظور غير مسموح به' });
         }
+
+        const targetIp = resolvedAddresses[0].address;
 
         // Fetch directly via resolved IP using native http/https with Host header to defeat DNS Rebinding
         const httpModule = parsedUrl.protocol === 'https:' ? require('https') : require('http');

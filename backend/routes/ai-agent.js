@@ -516,6 +516,14 @@ router.post('/execute', asyncHandler(async (req, res) => {
   }
 
   // Ensure updates is using MongoDB operators safely.
+  // Whitelist allowed MongoDB operators
+  const ALLOWED_OPERATORS = ['$set', '$inc', '$push', '$pull', '$addToSet', '$unset'];
+  for (const key of Object.keys(updates)) {
+    if (key.startsWith('$') && !ALLOWED_OPERATORS.includes(key)) {
+      return res.status(400).json({ success: false, message: `المعامل ${key} غير مسموح به في التحديثات` });
+    }
+  }
+
   // If it doesn't contain any $ operator, we assume it's just raw fields and wrap it in $set for backwards compatibility
   const hasOperator = Object.keys(updates).some(k => k.startsWith('$'));
   let finalUpdate = hasOperator ? updates : { $set: updates };

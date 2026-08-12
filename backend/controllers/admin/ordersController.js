@@ -47,120 +47,179 @@ exports.getOrderById = asyncHandler(async (req, res) => {
 
 exports.updateOrderStatus = asyncHandler(async (req, res) => {
   const { status, trackingNumber } = req.body;
-  const order = await Order.findById(req.params.id);
-  if (!order) return res.status(404).json({ success: false, message: 'الطلب غير موجود' });
+  const mongoose = require('mongoose');
+  const session = await mongoose.startSession();
 
-  const previousStatus = order.status;
-  order.status = status;
-  order.statusHistory.push({ status, date: new Date(), note: 'تم تحديث الحالة بواسطة المسؤول' });
-  if (trackingNumber) order.trackingNumber = trackingNumber;
+  const processStatusChange = async (opts = {}) => {
+    const order = await Order.findById(req.params.id, null, opts);
+    if (!order) return { notFound: true };
 
-  // Handle loyalty points logic on status change
-  const Settings = require('../../models/Settings');
-  const settings = await Settings.getSettings();
+    const previousStatus = order.status;
+    order.status = status;
+    order.statusHistory.push({ status, date: new Date(), note: 'تم تحديث الحالة بواسطة المسؤول' });
+    if (trackingNumber) order.trackingNumber = trackingNumber;
 
-  if (status === 'delivered' && previousStatus !== 'delivered' && order.user) {
-    if (settings?.loyalty?.enabled && (order.pointsEarned || 0) === 0) {
-      const earned = Math.floor(order.total * (settings.loyalty.pointsPerEgpSpent || 1));
-      if (earned > 0) {
-        order.pointsEarned = earned;
-        await User.updateOne(
-          { _id: order.user },
-          {
-            $inc: { loyaltyPoints: earned },
-            $push: {
-              pointsHistory: {
-                points: earned,
-                reason: `مكافأة إتمام الطلب #${order.orderNumber || order._id}`,
-                type: 'EARNED'
+    const Settings = require('../../models/Settings');
+    const settings = await Settings.getSettings();
+
+    if (status === 'delivered' && previousStatus !== 'delivered' && order.user) {
+      if (settings?.loyalty?.enabled && (order.pointsEarned || 0) === 0) {
+        const earned = Math.floor(order.total * (settings.loyalty.pointsPerEgpSpent || 1));
+        if (earned > 0) {
+          order.pointsEarned = earned;
+          await User.updateOne(
+            { _id: order.user },
+            {
+              $inc: { loyaltyPoints: earned },
+              $push: {
+                pointsHistory: {
+                  points: earned,
+                  reason: `مكافأة إتمام الطلب #${order.orderNumber || order._id}`,
+                  type: 'EARNED'
+                }
               }
-            }
+            },
+            opts
+          );
+        }
+      }
+    } else if (status === 'cancelled' && previousStatus !== 'cancelled') {
+      const { handleOrderLoyaltyRefundOrDeduction } = require('../orderController');
+      await handleOrderLoyaltyRefundOrDeduction(order, opts.session);
+
+      const Product = require('../../models/Product');
+      for (const item of order.items) {
+        if (!item.product) continue;
+        if (item.isReadyBox && item.includedProducts && item.includedProducts.length > 0) {
+          for (const boxItem of item.includedProducts) {
+            const subQty = boxItem.quantity * item.quantity;
+            await Product.updateOne(
+              { _id: boxItem.product },
+              { $inc: { stock: subQty, salesCount: -subQty } },
+              opts
+            );
           }
-        );
-      }
-    }
-  } else if (status === 'cancelled' && previousStatus !== 'cancelled') {
-    const { handleOrderLoyaltyRefundOrDeduction } = require('../orderController');
-    await handleOrderLoyaltyRefundOrDeduction(order);
-
-    // Restore inventory stock for cancelled order items
-    const Product = require('../../models/Product');
-    for (const item of order.items) {
-      if (!item.product) continue;
-      if (item.isReadyBox && item.includedProducts && item.includedProducts.length > 0) {
-        // Restore stock to each component product
-        for (const boxItem of item.includedProducts) {
-          const subQty = boxItem.quantity * item.quantity;
           await Product.updateOne(
-            { _id: boxItem.product },
-            { $inc: { stock: subQty, salesCount: -subQty } }
+            { _id: item.product },
+            { $inc: { salesCount: -item.quantity } },
+            opts
+          );
+        } else {
+          await Product.updateOne(
+            { _id: item.product },
+            { $inc: { stock: item.quantity, salesCount: -item.quantity } },
+            opts
           );
         }
-        // Decrement box salesCount only
-        await Product.updateOne(
-          { _id: item.product },
-          { $inc: { salesCount: -item.quantity } }
-        );
-      } else {
-        await Product.updateOne(
-          { _id: item.product },
-          { $inc: { stock: item.quantity, salesCount: -item.quantity } }
-        );
       }
-    }
-  } else if (previousStatus === 'cancelled' && status !== 'cancelled') {
-    // Re-deduct inventory stock if order is un-cancelled
-    const Product = require('../../models/Product');
-    for (const item of order.items) {
-      if (!item.product) continue;
-      if (item.isReadyBox && item.includedProducts && item.includedProducts.length > 0) {
-        // Deduct stock from each component product
-        for (const boxItem of item.includedProducts) {
-          const subQty = boxItem.quantity * item.quantity;
+    } else if (previousStatus === 'cancelled' && status !== 'cancelled') {
+      const Product = require('../../models/Product');
+      for (const item of order.items) {
+        if (!item.product) continue;
+        if (item.isReadyBox && item.includedProducts && item.includedProducts.length > 0) {
+          for (const boxItem of item.includedProducts) {
+            const subQty = boxItem.quantity * item.quantity;
+            await Product.updateOne(
+              { _id: boxItem.product },
+              { $inc: { stock: -subQty, salesCount: subQty } },
+              opts
+            );
+          }
           await Product.updateOne(
-            { _id: boxItem.product },
-            { $inc: { stock: -subQty, salesCount: subQty } }
+            { _id: item.product },
+            { $inc: { salesCount: item.quantity } },
+            opts
+          );
+        } else {
+          await Product.updateOne(
+            { _id: item.product },
+            { $inc: { stock: -item.quantity, salesCount: item.quantity } },
+            opts
           );
         }
-        // Increment box salesCount only
-        await Product.updateOne(
-          { _id: item.product },
-          { $inc: { salesCount: item.quantity } }
-        );
-      } else {
-        await Product.updateOne(
-          { _id: item.product },
-          { $inc: { stock: -item.quantity, salesCount: item.quantity } }
-        );
       }
     }
+
+    await order.save(opts);
+    return { order, previousStatus };
+  };
+
+  try {
+    session.startTransaction();
+    const result = await processStatusChange({ session });
+    if (result.notFound) {
+      await session.abortTransaction();
+      return res.status(404).json({ success: false, message: 'الطلب غير موجود' });
+    }
+    await session.commitTransaction();
+
+    const { order, previousStatus } = result;
+    if (status === 'shipped' && (trackingNumber || order.trackingNumber)) {
+      try {
+        let emailTo = order.guestEmail || order.shippingAddress?.email;
+        if (!emailTo && order.user) {
+          const user = await User.findById(order.user);
+          emailTo = user?.email;
+        }
+        if (emailTo) await sendTrackingEmail(emailTo, order, trackingNumber || order.trackingNumber);
+      } catch (mailErr) {
+        console.error('Tracking email error:', mailErr);
+      }
+    } else if (status === 'delivered' && previousStatus !== 'delivered') {
+      try {
+        let emailTo = order.guestEmail || order.shippingAddress?.email;
+        if (!emailTo && order.user) {
+          const user = await User.findById(order.user);
+          emailTo = user?.email;
+        }
+        if (emailTo) await sendDeliveredReviewEmail(emailTo, order);
+      } catch (mailErr) {
+        console.error('Delivered review email error:', mailErr);
+      }
+    }
+
+    return res.json({ success: true, message: 'تم تحديث حالة الطلب', data: order });
+  } catch (error) {
+    if (session.inTransaction()) await session.abortTransaction();
+
+    // Only fallback to non-transactional mode if transactions aren't supported (standalone MongoDB)
+    const isTransactionError = error.codeName === 'IllegalOperation' ||
+      error.message?.includes('transaction') ||
+      error.message?.includes('replica set') ||
+      error.code === 263; // OperationNotSupportedInTransaction
+
+    if (!isTransactionError) throw error;
+
+    const result = await processStatusChange();
+    if (result.notFound) return res.status(404).json({ success: false, message: 'الطلب غير موجود' });
+
+    const { order, previousStatus } = result;
+    if (status === 'shipped' && (trackingNumber || order.trackingNumber)) {
+      try {
+        let emailTo = order.guestEmail || order.shippingAddress?.email;
+        if (!emailTo && order.user) {
+          const user = await User.findById(order.user);
+          emailTo = user?.email;
+        }
+        if (emailTo) await sendTrackingEmail(emailTo, order, trackingNumber || order.trackingNumber);
+      } catch (mailErr) {
+        console.error('Tracking email error:', mailErr);
+      }
+    } else if (status === 'delivered' && previousStatus !== 'delivered') {
+      try {
+        let emailTo = order.guestEmail || order.shippingAddress?.email;
+        if (!emailTo && order.user) {
+          const user = await User.findById(order.user);
+          emailTo = user?.email;
+        }
+        if (emailTo) await sendDeliveredReviewEmail(emailTo, order);
+      } catch (mailErr) {
+        console.error('Delivered review email error:', mailErr);
+      }
+    }
+
+    return res.json({ success: true, message: 'تم تحديث حالة الطلب', data: order });
+  } finally {
+    session.endSession();
   }
-
-  await order.save();
-
-  if (status === 'shipped' && (trackingNumber || order.trackingNumber)) {
-    try {
-      let emailTo = order.guestEmail || order.shippingAddress?.email;
-      if (!emailTo && order.user) {
-        const user = await User.findById(order.user);
-        emailTo = user?.email;
-      }
-      if (emailTo) await sendTrackingEmail(emailTo, order, trackingNumber || order.trackingNumber);
-    } catch (mailErr) {
-      console.error('Tracking email error:', mailErr);
-    }
-  } else if (status === 'delivered' && previousStatus !== 'delivered') {
-    try {
-      let emailTo = order.guestEmail || order.shippingAddress?.email;
-      if (!emailTo && order.user) {
-        const user = await User.findById(order.user);
-        emailTo = user?.email;
-      }
-      if (emailTo) await sendDeliveredReviewEmail(emailTo, order);
-    } catch (mailErr) {
-      console.error('Delivered review email error:', mailErr);
-    }
-  }
-
-  res.json({ success: true, message: 'تم تحديث حالة الطلب', data: order });
 }, 'حدث خطأ أثناء تحديث حالة الطلب');

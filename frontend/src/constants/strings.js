@@ -1148,37 +1148,6 @@ export const STRINGS = {
   },
 
   // =====================================================
-  // TRACK ORDER PAGE
-  // =====================================================
-  TRACK_ORDER_PAGE: {
-    HERO_TITLE: 'تتبع طلبك',
-    HERO_SUBTITLE: 'اعرف مكان شحنتك الآن',
-    ORDER_NUMBER_LABEL: 'رقم الطلب',
-    ORDER_NUMBER_PLACEHOLDER: 'أدخل رقم الطلب',
-    SEARCHING: 'جاري البحث...',
-    TRACK_BUTTON: 'تتبع الطلب',
-    TRACK_ERROR_NOT_FOUND: 'لم نتمكن من العثور على طلب بهذا الرقم. يرجى التحقق من البيانات المدخلة.',
-    ORDER_NUM_PREFIX: 'طلب رقم #',
-    ORDER_DATE: 'تاريخ الطلب: ',
-    PRODUCTS_TITLE: 'المنتجات',
-    QUANTITY_LABEL: 'الكمية: ',
-    SHIPMENT_STATUS_TITLE: 'حالة الشحنة',
-    COMING_SOON: 'قريباً',
-    HELP_TITLE: 'أين أجد رقم الطلب؟',
-    HELP_DESC: 'ستجد رقم الطلب في رسالة التأكيد التي أرسلناها لبريدك الإلكتروني بعد إتمام عملية الشراء. يمكنك أيضاً العثور عليه في صفحة "طلباتي" إذا كنت مسجلاً في الموقع.',
-    MY_ORDERS: 'طلباتي',
-    CONTACT_US: 'تواصل معنا',
-    STATUS: {
-      PENDING: 'في الانتظار',
-      CONFIRMED: 'تم التأكيد',
-      PROCESSING: 'جاري التجهيز',
-      SHIPPED: 'تم الشحن',
-      DELIVERED: 'تم التوصيل',
-      CANCELLED: 'ملغي',
-    },
-  },
-
-  // =====================================================
   // CHECKOUT
   // =====================================================
   CHECKOUT: {
@@ -1320,6 +1289,8 @@ export const STRINGS = {
   TRACK_ORDER_PAGE: {
     HERO_TITLE: 'تتبع حالة طلبك',
     HERO_SUBTITLE: 'أدخل رقم الطلب المكون من أرقام أو حروف لمعرفة حالة الشحنة لحظة بلحظة',
+    ORDER_NUMBER_LABEL: 'رقم الطلب',
+    ORDER_NUMBER_PLACEHOLDER: 'أدخل رقم الطلب',
     SEARCHING: 'جاري البحث...',
     TRACK_BUTTON: 'تتبع الشحنة',
     TRACK_ERROR_NOT_FOUND: 'لم نتمكن من العثور على طلب بهذا الرقم. تأكد من صحة الرقم وأعد المحاولة.',
