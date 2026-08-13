@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 
 export default function GlobalError({ error, reset }) {
   useEffect(() => {
@@ -25,12 +26,12 @@ export default function GlobalError({ error, reset }) {
             >
               إعادة التحميل
             </button>
-            <a
+            <Link
               href="/"
               className="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all"
             >
               العودة للرئيسية
-            </a>
+            </Link>
           </div>
         </div>
       </body>

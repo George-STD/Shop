@@ -22,12 +22,23 @@ export function Link({ to, href, children, ...props }) {
   );
 }
 
+// Browser History "state" passed via navigate(to, { state }) / location.state.
+// Next.js's router.push does not forward a custom state object, so we keep it
+// in module scope as a lightweight stand-in for react-router's location.state.
+let navigationState = null;
+
 export function useNavigate() {
   const router = useRouter();
   return (to, options = {}) => {
     if (typeof to === 'number') {
       if (to < 0) router.back();
       return;
+    }
+    if (options?.state !== undefined) {
+      navigationState = options.state;
+    } else {
+      // Navigating without explicit state resets any previously stored state.
+      navigationState = null;
     }
     if (options?.replace) {
       router.replace(to);
@@ -44,6 +55,7 @@ export function useLocation() {
     pathname,
     search,
     hash: '',
+    state: navigationState,
   };
 }
 

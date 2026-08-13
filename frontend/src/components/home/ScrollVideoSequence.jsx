@@ -83,7 +83,7 @@ function StoryCard({ chapter, reducedMotion, onCtaClick }) {
       return;
     }
     setState('exit');
-  }, [chapter.phase, displayChapter.phase, reducedMotion]);
+  }, [chapter, displayChapter.phase, reducedMotion]);
 
   const handleTransitionEnd = useCallback(
     (e) => {
@@ -259,6 +259,10 @@ export default function ScrollVideoSequence({
     return () => {
       window.removeEventListener('scroll', onScroll);
     };
+    // `runAnimationLoop` is a stable useCallback defined below; including it
+    // here would be a temporal-dead-zone error because the const is declared
+    // after this effect, so it is intentionally omitted from the deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reducedMotion]);
 
   /* ── 3c. Smooth rAF Animation Loop (Lerp + Video Scrubbing + Ambient Micro-Breathing) ── */

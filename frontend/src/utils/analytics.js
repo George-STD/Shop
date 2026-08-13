@@ -272,7 +272,7 @@ export const trackContact = (method) => {
   });
 };
 
-export default {
+const analytics = {
   trackEvent,
   trackPageView,
   trackProductView,
@@ -291,3 +291,5 @@ export default {
   EVENT_CATEGORIES,
   EVENT_ACTIONS,
 };
+
+export default analytics;

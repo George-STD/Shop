@@ -43,7 +43,7 @@ const ProductFormModal = ({
           });
       }
     });
-  }, [formData.includedProducts, formData.isReadyBox]);
+  }, [formData.includedProducts, formData.isReadyBox, productImagesCache]);
 
   const handleAIEnhance = async () => {
     const firstImageUrl = formData.images?.find(img => img.url)?.url;

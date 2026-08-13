@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FiSearch, FiPackage, FiTruck, FiCheckCircle } from 'react-icons/fi';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ordersAPI } from '../services/api';
 import { STRINGS } from '../constants';
 
@@ -24,7 +24,7 @@ const TrackOrderPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const fetchOrder = async (num) => {
+  const fetchOrder = useCallback(async (num) => {
     setLoading(true);
     setError('');
     setOrder(null);
@@ -40,7 +40,7 @@ const TrackOrderPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const orderParam = searchParams.get('order');
@@ -48,7 +48,7 @@ const TrackOrderPage = () => {
       setOrderNumber(orderParam);
       fetchOrder(orderParam);
     }
-  }, []);
+  }, [searchParams, fetchOrder]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -245,12 +245,12 @@ const TrackOrderPage = () => {
                 {STRINGS.TRACK_ORDER_PAGE.HELP_DESC}
               </p>
               <div className="flex justify-center gap-4">
-                <a href="/account/orders" className="btn-primary">
+                <Link to="/account/orders" className="btn-primary">
                   {STRINGS.TRACK_ORDER_PAGE.MY_ORDERS}
-                </a>
-                <a href="/contact" className="btn-secondary">
+                </Link>
+                <Link to="/contact" className="btn-secondary">
                   {STRINGS.TRACK_ORDER_PAGE.CONTACT_US}
-                </a>
+                </Link>
               </div>
             </div>
           )}

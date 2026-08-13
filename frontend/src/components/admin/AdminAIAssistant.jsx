@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { adminAPI } from '../../services/api';
 import { 
@@ -29,25 +29,7 @@ const AdminAIAssistant = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
-    if (isOpen) {
-      loadSessions();
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (currentSessionId) {
-      loadSessionMessages(currentSessionId);
-    } else {
-      setMessages([{ role: 'model', text: 'مرحباً بك! أنا مساعدك الذكي ذو الصلاحيات الكاملة. يمكنك أن تطلب مني أي شيء وسأقوم به لك بعد موافقتك.' }]);
-    }
-  }, [currentSessionId]);
-
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     try {
       const res = await adminAPI.agentGetSessions();
       if (res.data?.success) {
@@ -59,9 +41,9 @@ const AdminAIAssistant = () => {
     } catch (err) {
       console.error('Failed to load sessions', err);
     }
-  };
+  }, [currentSessionId]);
 
-  const loadSessionMessages = async (id) => {
+  const loadSessionMessages = useCallback(async (id) => {
     try {
       const res = await adminAPI.agentGetSession(id);
       if (res.data?.success) {
@@ -70,7 +52,25 @@ const AdminAIAssistant = () => {
     } catch (err) {
       console.error('Failed to load session messages', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadSessions();
+    }
+  }, [isOpen, loadSessions]);
+
+  useEffect(() => {
+    if (currentSessionId) {
+      loadSessionMessages(currentSessionId);
+    } else {
+      setMessages([{ role: 'model', text: 'مرحباً بك! أنا مساعدك الذكي ذو الصلاحيات الكاملة. يمكنك أن تطلب مني أي شيء وسأقوم به لك بعد موافقتك.' }]);
+    }
+  }, [currentSessionId, loadSessionMessages]);
 
   const startNewSession = async () => {
     try {

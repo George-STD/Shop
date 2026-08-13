@@ -9,10 +9,7 @@ beforeAll(async () => {
     await mongoose.disconnect();
   }
 
-  await mongoose.connect(mongoUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
+  await mongoose.connect(mongoUri);
 });
 
 // Clear DB and disconnect after all tests in the file

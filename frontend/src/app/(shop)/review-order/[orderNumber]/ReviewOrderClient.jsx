@@ -129,7 +129,7 @@ export default function ReviewOrderClient({ orderNumber }) {
               <span>رقم الطلب: #{order.orderNumber}</span>
               <span className="text-amber-600">{'★'.repeat(rating)}</span>
             </div>
-            <p className="text-gray-700 italic font-medium">"{comment}"</p>
+            <p className="text-gray-700 italic font-medium">&quot;{comment}&quot;</p>
           </div>
 
           <Link href="/" className="inline-flex items-center justify-center px-8 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold shadow-lg shadow-purple-500/25 hover:scale-105 transition-all">

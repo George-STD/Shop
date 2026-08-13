@@ -9,8 +9,6 @@ import toast from 'react-hot-toast';
 import { authAPI } from '../../services/api';
 
 const ProductCard = ({ product }) => {
-  if (!product) return null;
-
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -22,6 +20,8 @@ const ProductCard = ({ product }) => {
   } = useWishlistStore();
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
+
+  if (!product) return null;
 
   const inWishlist = mounted && isInWishlist(product._id);
 

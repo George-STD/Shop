@@ -69,7 +69,7 @@ const FAQPage = () => {
               <h2 className="text-xl font-bold mb-6">{STRINGS.FAQ_PAGE.SEARCH_RESULTS}</h2>
               {filteredFaqs.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-gray-500 mb-4">{STRINGS.FAQ_PAGE.NO_RESULTS_FOR} "{searchQuery}"</p>
+                  <p className="text-gray-500 mb-4">{STRINGS.FAQ_PAGE.NO_RESULTS_FOR} &quot;{searchQuery}&quot;</p>
                   <button
                     onClick={() => setSearchQuery('')}
                     className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline"
