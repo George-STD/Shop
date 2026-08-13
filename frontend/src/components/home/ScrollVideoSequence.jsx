@@ -83,7 +83,7 @@ function StoryCard({ chapter, reducedMotion, onCtaClick }) {
       return;
     }
     setState('exit');
-  }, [chapter.phase, displayChapter.phase, reducedMotion]);
+  }, [chapter, displayChapter.phase, reducedMotion]);
 
   const handleTransitionEnd = useCallback(
     (e) => {

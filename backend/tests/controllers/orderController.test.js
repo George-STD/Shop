@@ -2,7 +2,7 @@ const request = require('supertest');
 const app = require('../../server');
 const User = require('../../models/User');
 const Product = require('../../models/Product');
-const { BUSINESS_CONFIG } = require('../../constants');
+const { CONFIG } = require('../../constants');
 
 describe('Order Controller Tests', () => {
   let token;
@@ -71,7 +71,7 @@ describe('Order Controller Tests', () => {
 
     expect(res.statusCode).toBe(201);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.total).toBe(260); // (100 * 2) + 60 (shipping)
+    expect(res.body.data.total).toBe(200 + CONFIG.BUSINESS.SHIPPING_COST_EGP); // (100 * 2) + shipping
   });
 
   it('should fail to create box order with less than minimum items', async () => {

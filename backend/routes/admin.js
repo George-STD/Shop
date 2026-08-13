@@ -87,13 +87,15 @@ router.delete('/products/:id', [
   logAdminAction('DELETE_PRODUCT')
 ], adminController.deleteProduct);
 
+const { CONFIG } = require('../constants');
+
 // =====================================================
 // ORDERS MANAGEMENT
 // =====================================================
 router.get('/orders', [
   query('page').optional().isInt({ min: 1 }),
   query('limit').optional().isInt({ min: 1, max: 100 }),
-  query('status').optional().isIn(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']),
+  query('status').optional().isIn(CONFIG.ORDER_STATUSES),
   query('startDate').optional().isISO8601(),
   query('endDate').optional().isISO8601()
 ], adminController.getOrders);
@@ -103,7 +105,7 @@ router.get('/orders/:id', validateObjectId('id'), adminController.getOrderById);
 router.put('/orders/:id/status', [
   validateObjectId('id'),
   logAdminAction('UPDATE_ORDER_STATUS'),
-  body('status').isIn(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']),
+  body('status').isIn(CONFIG.ORDER_STATUSES),
   body('trackingNumber').optional().trim()
 ], adminController.updateOrderStatus);
 

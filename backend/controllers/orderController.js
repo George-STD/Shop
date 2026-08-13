@@ -220,31 +220,39 @@ const buildOrderData = async ({ userId, guestEmail, orderItems, subtotal, boxGro
  */
 const deductStock = async (orderItems, session) => {
   const opts = session ? { session } : {};
-  for (const item of orderItems) {
-    if (item.isReadyBox && item.includedProducts) {
-      for (const boxItem of item.includedProducts) {
-        const requiredSubQty = boxItem.quantity * item.quantity;
+  const deductedItems = [];
+  try {
+    for (const item of orderItems) {
+      if (item.isReadyBox && item.includedProducts) {
+        for (const boxItem of item.includedProducts) {
+          const requiredSubQty = boxItem.quantity * item.quantity;
+          const stockUpdate = await Product.updateOne(
+            { _id: (boxItem.product._id || boxItem.product), stock: { $gte: requiredSubQty } },
+            { $inc: { stock: -requiredSubQty, salesCount: requiredSubQty } },
+            opts
+          );
+          if (stockUpdate.modifiedCount !== 1) {
+            throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: (داخل البوكس)`);
+          }
+        }
+        await Product.updateOne({ _id: item.product }, { $inc: { salesCount: item.quantity } }, opts);
+        deductedItems.push(item);
+      } else {
         const stockUpdate = await Product.updateOne(
-          { _id: (boxItem.product._id || boxItem.product), stock: { $gte: requiredSubQty } },
-          { $inc: { stock: -requiredSubQty, salesCount: requiredSubQty } },
+          { _id: item.product, stock: { $gte: item.quantity } },
+          { $inc: { stock: -item.quantity, salesCount: item.quantity } },
           opts
         );
         if (stockUpdate.modifiedCount !== 1) {
-          throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: (داخل البوكس)`);
+          throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${item.name}`);
         }
-      }
-      // Also increment sales count for the box itself
-      await Product.updateOne({ _id: item.product }, { $inc: { salesCount: item.quantity } }, opts);
-    } else {
-      const stockUpdate = await Product.updateOne(
-        { _id: item.product, stock: { $gte: item.quantity } },
-        { $inc: { stock: -item.quantity, salesCount: item.quantity } },
-        opts
-      );
-      if (stockUpdate.modifiedCount !== 1) {
-        throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${item.name}`);
+        deductedItems.push(item);
       }
     }
+    return deductedItems;
+  } catch (err) {
+    err.deductedItems = deductedItems;
+    throw err;
   }
 };
 
@@ -420,11 +428,12 @@ const rollbackLoyaltyPoints = async (userId, pointsRedeemed) => {
     const orderData = await buildOrderData({ userId, guestEmail, orderItems, subtotal, boxGroups, req });
 
     // Deduct stock using unified function (handles ReadyBox logic)
+    let deductedItems = [];
     try {
-      await deductStock(orderItems);
+      deductedItems = await deductStock(orderItems);
     } catch (stockError) {
-      // On failure, rollback whatever was already deducted & refund points
-      await rollbackStock(orderItems);
+      // On failure, rollback ONLY whatever was already deducted & refund points
+      await rollbackStock(stockError.deductedItems || []);
       await rollbackLoyaltyPoints(userId, orderData.pointsRedeemed);
       throw stockError;
     }
@@ -432,7 +441,7 @@ const rollbackLoyaltyPoints = async (userId, pointsRedeemed) => {
     try {
       return await Order.create(orderData);
     } catch (error) {
-      await rollbackStock(orderItems);
+      await rollbackStock(deductedItems);
       await rollbackLoyaltyPoints(userId, orderData.pointsRedeemed);
       throw error;
     }
