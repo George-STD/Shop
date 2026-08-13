@@ -4,18 +4,17 @@ import { FiGift, FiStar, FiAward, FiArrowLeft, FiChevronDown } from 'react-icons
 import styles from './ScrollVideoSequence.module.css';
 
 /* ═══════════════════════════════════════════════════════════════
-   ScrollVideoSequence — Step-Scroll Segment Engine + Apple Showcase
+   ScrollVideoSequence — Apple-Grade 26 FPS Scroll-Scrubbed Cinematic
    ═══════════════════════════════════════════════════════════════ */
 
-const DEFAULT_SEGMENTS = Array.from(
-  { length: 8 },
-  (_, i) => `/videos/segment-${i + 1}.mp4`
-);
+const DEFAULT_VIDEO_SRC = '/videos/hero-sequence.mp4';
+const TARGET_FPS = 26; // Target 26 FPS frame scrubbing speed
+const FRAME_TIME = 1 / TARGET_FPS; // ~0.03846s per frame
 
 const CHAPTER_STEPS = [
   {
     phase: 0,
-    range: [0, 2],
+    range: [0, 0.33],
     chapterNum: '01',
     chapterLabel: 'الافتتاح',
     badge: '✨ دخول بصري هادئ وواضح',
@@ -26,7 +25,7 @@ const CHAPTER_STEPS = [
   },
   {
     phase: 1,
-    range: [3, 5],
+    range: [0.33, 0.66],
     chapterNum: '02',
     chapterLabel: 'القيمة',
     badge: '🎁 إبراز المنتج والتفاصيل',
@@ -37,7 +36,7 @@ const CHAPTER_STEPS = [
   },
   {
     phase: 2,
-    range: [6, 7],
+    range: [0.66, 1.0],
     chapterNum: '03',
     chapterLabel: 'التحويل',
     badge: '👑 انتقال طبيعي إلى الإجراء',
@@ -151,258 +150,290 @@ function StoryCard({ chapter, reducedMotion, onCtaClick }) {
   );
 }
 
-/* ── 3. Main Step-Scroll Component ─────────────────────────── */
+/* ── 3. Main 26 FPS Frame-Scrubbed Component ──────────────── */
 export default function ScrollVideoSequence({
-  segments = DEFAULT_SEGMENTS,
+  videoSrc = DEFAULT_VIDEO_SRC,
   poster = null,
-  ariaLabel = 'تجربة تفاعلية 3D لاستكشاف بوكس الهدايا',
-  scrollSpeed = 1.0, // Multiplier for scroll speed sensitivity (e.g. 0.5 = slower, 1.5 = faster)
-  scrollCooldown = 150, // Cooldown in ms between segment steps (lower = faster)
+  ariaLabel = 'تجربة تفاعلية سينمائية 3D لاستكشاف بوكس الهدايا',
+  fps = TARGET_FPS,
 }) {
-  const totalSegments = segments.length;
+  const trackRef = useRef(null);
+  const viewportRef = useRef(null);
+  const videoRef = useRef(null);
+  const timelineFillRef = useRef(null);
 
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [activePhase, setActivePhase] = useState(0);
   const [videoReady, setVideoReady] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
-
-  const trackRef = useRef(null);
-  const viewportRef = useRef(null);
-  const videoRefs = useRef([]);
-  const currentIndexRef = useRef(0);
-  const isActiveRef = useRef(true);
-  const cooldownRef = useRef(false);
-  const cooldownTimer = useRef(null);
-  const touchStartY = useRef(0);
+  const [videoDuration, setVideoDuration] = useState(0);
 
   const reducedMotion = useReducedMotion();
 
-  useEffect(() => {
-    currentIndexRef.current = currentIndex;
-    const currentChapter =
-      CHAPTER_STEPS.find(
-        (ch) => currentIndex >= ch.range[0] && currentIndex <= ch.range[1]
-      ) || CHAPTER_STEPS[0];
-    setActivePhase(currentChapter.phase);
-  }, [currentIndex]);
+  // Lerp & Frame Quantization Refs
+  const targetProgressRef = useRef(0);
+  const displayedProgressRef = useRef(0);
+  const lastSeekingTimeRef = useRef(-1);
+  const phaseRef = useRef(0);
+  const tickingRef = useRef(false);
+  const isIntersectingRef = useRef(false);
 
-  // Preload video segments
+  /* ── 3a. Video Preload & Metadata Setup ─────────────────── */
   useEffect(() => {
-    let loadedCount = 0;
-    const loadedSet = new Set();
+    const vid = videoRef.current;
+    if (!vid) return;
 
-    const checkLoaded = (index) => {
-      if (!loadedSet.has(index)) {
-        loadedSet.add(index);
-        loadedCount++;
-        const pct = Math.round((loadedCount / totalSegments) * 100);
+    const onLoadedMeta = () => {
+      if (vid.duration && !isNaN(vid.duration) && isFinite(vid.duration)) {
+        setVideoDuration(vid.duration);
+      }
+      vid.pause();
+      if (vid.readyState >= 3) {
+        setVideoReady(true);
+        setLoadProgress(100);
+      }
+    };
+
+    const onCanPlayThrough = () => {
+      vid.pause();
+      if (vid.duration && !isNaN(vid.duration) && isFinite(vid.duration)) {
+        setVideoDuration(vid.duration);
+      }
+      setVideoReady(true);
+      setLoadProgress(100);
+    };
+
+    const onProgress = () => {
+      if (vid.duration && vid.buffered.length > 0) {
+        const bufferedEnd = vid.buffered.end(vid.buffered.length - 1);
+        const pct = Math.min(100, Math.round((bufferedEnd / vid.duration) * 100));
         setLoadProgress(pct);
-        if (loadedCount >= Math.min(3, totalSegments)) {
+        if (pct >= 85 || vid.readyState >= 3) {
           setVideoReady(true);
         }
       }
     };
 
-    const timers = [];
+    if (vid.readyState >= 3) {
+      onLoadedMeta();
+    }
 
-    segments.forEach((_, idx) => {
-      const vid = videoRefs.current[idx];
-      if (vid) {
-        if (vid.readyState >= 3) {
-          checkLoaded(idx);
-        } else {
-          const onCanPlay = () => checkLoaded(idx);
-          vid.addEventListener('canplaythrough', onCanPlay, { once: true });
-          vid.addEventListener('loadeddata', onCanPlay, { once: true });
-
-          const t = setTimeout(() => checkLoaded(idx), 2000);
-          timers.push(t);
-        }
-      } else {
-        checkLoaded(idx);
-      }
-    });
+    vid.addEventListener('loadedmetadata', onLoadedMeta);
+    vid.addEventListener('canplaythrough', onCanPlayThrough);
+    vid.addEventListener('progress', onProgress);
 
     return () => {
-      timers.forEach(clearTimeout);
+      vid.removeEventListener('loadedmetadata', onLoadedMeta);
+      vid.removeEventListener('canplaythrough', onCanPlayThrough);
+      vid.removeEventListener('progress', onProgress);
     };
-  }, [segments, totalSegments]);
+  }, [videoSrc]);
 
-  // Play target video segment
-  const playSegment = useCallback(
-    (targetIndex) => {
-      if (targetIndex < 0 || targetIndex >= totalSegments) return;
-
-      videoRefs.current.forEach((v, idx) => {
-        if (v && idx !== targetIndex) {
-          v.pause();
-        }
-      });
-
-      setCurrentIndex(targetIndex);
-      currentIndexRef.current = targetIndex;
-
-      const vid = videoRefs.current[targetIndex];
-      if (vid) {
-        try {
-          vid.currentTime = 0;
-          vid.play().catch(() => {});
-        } catch (_) {}
-      }
-    },
-    [totalSegments]
-  );
-
-  const jumpToPhase = useCallback(
-    (phaseIndex) => {
-      const targetStep = CHAPTER_STEPS[phaseIndex];
-      const targetIdx = targetStep.range[0];
-      playSegment(targetIdx);
-    },
-    [playSegment]
-  );
-
-  const scrollToHeroContent = useCallback(() => {
-    const heroElem = document.getElementById('main-hero-content');
-    if (heroElem) {
-      heroElem.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, []);
-
-  // Step-scroll handler with configurable scrollSpeed & cooldown
-  const handleStepScroll = useCallback(
-    (direction, e) => {
-      if (cooldownRef.current) {
-        if (e && e.cancelable) e.preventDefault();
-        return;
-      }
-
-      const cIdx = currentIndexRef.current;
-      const effectiveCooldown = Math.max(50, Math.round(scrollCooldown / scrollSpeed));
-
-      if (direction === 'down') {
-        if (cIdx < totalSegments - 1) {
-          if (e && e.cancelable) e.preventDefault();
-          playSegment(cIdx + 1);
-
-          cooldownRef.current = true;
-          if (cooldownTimer.current) clearTimeout(cooldownTimer.current);
-          cooldownTimer.current = setTimeout(() => {
-            cooldownRef.current = false;
-          }, effectiveCooldown);
-        } else {
-          setIsActive(false);
-          isActiveRef.current = false;
-        }
-      } else if (direction === 'up') {
-        if (cIdx > 0) {
-          if (e && e.cancelable) e.preventDefault();
-          playSegment(cIdx - 1);
-
-          cooldownRef.current = true;
-          if (cooldownTimer.current) clearTimeout(cooldownTimer.current);
-          cooldownTimer.current = setTimeout(() => {
-            cooldownRef.current = false;
-          }, effectiveCooldown);
-        } else {
-          setIsActive(false);
-          isActiveRef.current = false;
-        }
-      }
-    },
-    [totalSegments, playSegment, scrollSpeed, scrollCooldown]
-  );
-
-  // Wheel listener
+  /* ── 3b. Scroll Listener (Tracks raw scroll progress) ────── */
   useEffect(() => {
-    if (!videoReady || reducedMotion) return;
+    if (typeof window === 'undefined' || reducedMotion) return;
 
-    const onWheel = (e) => {
-      if (!isActiveRef.current) return;
-
+    const onScroll = () => {
       const track = trackRef.current;
       if (!track) return;
 
       const rect = track.getBoundingClientRect();
-      const inView =
-        rect.top <= window.innerHeight * 0.4 &&
-        rect.bottom >= window.innerHeight * 0.6;
+      const winH = window.innerHeight;
 
-      if (!inView) return;
+      const scrollableDistance = rect.height - winH;
+      if (scrollableDistance <= 0) return;
 
-      const threshold = 10 / scrollSpeed;
-      if (Math.abs(e.deltaY) < threshold) return;
+      const currentScroll = -rect.top;
+      const rawProgress = currentScroll / scrollableDistance;
 
-      const dir = e.deltaY > 0 ? 'down' : 'up';
-      handleStepScroll(dir, e);
-    };
+      targetProgressRef.current = Math.max(0, Math.min(1, rawProgress));
 
-    window.addEventListener('wheel', onWheel, { passive: false });
-    return () => window.removeEventListener('wheel', onWheel);
-  }, [videoReady, reducedMotion, handleStepScroll, scrollSpeed]);
-
-  // Touch listener for mobile
-  useEffect(() => {
-    if (!videoReady || reducedMotion) return;
-
-    const track = trackRef.current;
-    if (!track) return;
-
-    const onTouchStart = (e) => {
-      touchStartY.current = e.touches[0].clientY;
-    };
-
-    const onTouchMove = (e) => {
-      if (isActiveRef.current) {
-        const deltaY = touchStartY.current - e.touches[0].clientY;
-        if (Math.abs(deltaY) > 8 && e.cancelable) {
-          e.preventDefault();
-        }
+      if (!tickingRef.current && isIntersectingRef.current) {
+        tickingRef.current = true;
+        requestAnimationFrame(runAnimationLoop);
       }
     };
 
-    const onTouchEnd = (e) => {
-      if (!isActiveRef.current) return;
-
-      const deltaY = touchStartY.current - e.changedTouches[0].clientY;
-      const threshold = 25 / scrollSpeed;
-
-      if (Math.abs(deltaY) < threshold) return;
-
-      const dir = deltaY > 0 ? 'down' : 'up';
-      handleStepScroll(dir, e);
-    };
-
-    track.addEventListener('touchstart', onTouchStart, { passive: true });
-    track.addEventListener('touchmove', onTouchMove, { passive: false });
-    track.addEventListener('touchend', onTouchEnd, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
 
     return () => {
-      track.removeEventListener('touchstart', onTouchStart);
-      track.removeEventListener('touchmove', onTouchMove);
-      track.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('scroll', onScroll);
     };
-  }, [videoReady, reducedMotion, handleStepScroll, scrollSpeed]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reducedMotion]);
 
-  // IntersectionObserver to re-engage active scroll lock when entering view
+  /* ── 3c. 26 FPS Frame Scrubbing rAF Animation Loop ───────── */
+  const runAnimationLoop = useCallback(() => {
+    if (
+      !isIntersectingRef.current &&
+      Math.abs(targetProgressRef.current - displayedProgressRef.current) < 0.0005
+    ) {
+      tickingRef.current = false;
+      return;
+    }
+
+    const vid = videoRef.current;
+    const target = targetProgressRef.current;
+    let current = displayedProgressRef.current;
+
+    // Smooth Lerp factor for Apple-style spring inertia (0.14)
+    const lerpFactor = 0.14;
+    const diff = target - current;
+
+    if (Math.abs(diff) > 0.0001) {
+      current += diff * lerpFactor;
+    } else {
+      current = target;
+    }
+
+    displayedProgressRef.current = current;
+
+    // Organic ambient breathing oscillation when idle
+    const now = Date.now() / 1000;
+    const ambientBreath = Math.sin(now * 1.5) * 0.002;
+    const effectiveProgress = Math.max(0, Math.min(1, current + ambientBreath));
+
+    const eased =
+      effectiveProgress < 0.5
+        ? 2 * effectiveProgress * effectiveProgress
+        : 1 - Math.pow(-2 * effectiveProgress + 2, 2) / 2;
+
+    // 1. Scrub Video currentTime quantized to exact 26 FPS frames
+    if (
+      vid &&
+      vid.readyState >= 2 &&
+      vid.duration &&
+      !isNaN(vid.duration) &&
+      isFinite(vid.duration)
+    ) {
+      const rawTargetTime = effectiveProgress * vid.duration;
+      // Quantize to 26 FPS frame intervals (1 / 26 = ~0.03846s)
+      const frameInterval = 1 / fps;
+      const quantizedTime = Math.round(rawTargetTime / frameInterval) * frameInterval;
+      const targetTime = Math.max(0, Math.min(vid.duration, quantizedTime));
+
+      if (Math.abs(targetTime - lastSeekingTimeRef.current) >= frameInterval * 0.5) {
+        lastSeekingTimeRef.current = targetTime;
+        if (typeof vid.fastSeek === 'function') {
+          vid.fastSeek(targetTime);
+        } else {
+          vid.currentTime = targetTime;
+        }
+      }
+    }
+
+    // 2. Synchronize Chapter Pill & Text Card
+    const currentChapter =
+      CHAPTER_STEPS.find((ch) => current >= ch.range[0] && current <= ch.range[1]) ||
+      CHAPTER_STEPS[0];
+
+    if (currentChapter.phase !== phaseRef.current) {
+      phaseRef.current = currentChapter.phase;
+      setActivePhase(currentChapter.phase);
+    }
+
+    // 3. Update Progress Bar
+    if (timelineFillRef.current) {
+      timelineFillRef.current.style.width = `${(current * 100).toFixed(2)}%`;
+    }
+
+    // 4. Update Viewport CSS Variables for Pan & Zoom
+    if (viewportRef.current) {
+      const idleFloatX = Math.sin(now * 1.2) * 6;
+      const idleFloatY = Math.cos(now * 1.4) * 4;
+
+      viewportRef.current.style.setProperty('--story-progress', current.toFixed(3));
+      viewportRef.current.style.setProperty('--story-eased', eased.toFixed(3));
+      viewportRef.current.style.setProperty(
+        '--camera-scale',
+        (1.02 + current * 0.08 + Math.sin(now) * 0.006).toFixed(3)
+      );
+      viewportRef.current.style.setProperty(
+        '--camera-x',
+        `${((current - 0.5) * 24 + idleFloatX).toFixed(1)}px`
+      );
+      viewportRef.current.style.setProperty(
+        '--camera-y',
+        `${((0.5 - current) * 16 + idleFloatY).toFixed(1)}px`
+      );
+      viewportRef.current.style.setProperty(
+        '--overlay-strength',
+        (0.72 - current * 0.18).toFixed(3)
+      );
+    }
+
+    if (isIntersectingRef.current) {
+      requestAnimationFrame(runAnimationLoop);
+    } else {
+      tickingRef.current = false;
+    }
+  }, [fps]);
+
+  /* ── 3d. IntersectionObserver for Loop Control ─────────────── */
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const trackEl = trackRef.current;
+    if (!trackEl) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          isIntersectingRef.current = entry.isIntersecting;
+          if (entry.isIntersecting && !tickingRef.current && !reducedMotion) {
+            tickingRef.current = true;
+            requestAnimationFrame(runAnimationLoop);
+          }
+        });
+      },
+      { threshold: 0.01, rootMargin: '200px 0px 200px 0px' }
+    );
+
+    observer.observe(trackEl);
+    return () => observer.disconnect();
+  }, [runAnimationLoop, reducedMotion]);
+
+  /* ── 3e. Jump-to-phase helper (chapter pills / CTA) ──────── */
+  const jumpToPhase = useCallback((phaseIndex) => {
     const track = trackRef.current;
     if (!track) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          isActiveRef.current = true;
-        }
-      },
-      { threshold: 0.5 }
-    );
+    const targetStep = CHAPTER_STEPS[phaseIndex];
+    const targetProgress = (targetStep.range[0] + targetStep.range[1]) / 2;
+    const trackTop = track.offsetTop;
+    const scrollableDistance = track.offsetHeight - window.innerHeight;
+    const targetScroll = trackTop + targetProgress * scrollableDistance;
 
-    observer.observe(track);
-    return () => observer.disconnect();
+    window.scrollTo({ top: targetScroll, behavior: 'smooth' });
   }, []);
 
   const activeChapter = CHAPTER_STEPS[activePhase];
+
+  /* ── 3f. Card Entrance Observer ───────────────────────────── */
+  const cardWrapRef = useRef(null);
+  const [cardInView, setCardInView] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.IntersectionObserver) {
+      setCardInView(true);
+      return;
+    }
+
+    const el = cardWrapRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setCardInView(true);
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -5% 0px' }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div
@@ -410,7 +441,9 @@ export default function ScrollVideoSequence({
       className={styles.scrollTrack}
       aria-label={ariaLabel}
       id="video-scroll-sequence"
-      style={{ height: '300vh' }}
+      style={{
+        height: videoDuration > 0 ? `${Math.max(240, Math.round(videoDuration * 22))}vh` : '300vh',
+      }}
     >
       {/* Pinned Sticky Viewport (100vh) */}
       <div ref={viewportRef} className={styles.stickyViewport}>
@@ -438,37 +471,32 @@ export default function ScrollVideoSequence({
           </div>
         )}
 
-        {/* Video Segments Layer */}
+        {/* Single Full-Screen Video Layer */}
         <div className={styles.videoWrapper}>
-          {segments.map((src, idx) => (
-            <video
-              key={idx}
-              ref={(el) => {
-                videoRefs.current[idx] = el;
-              }}
-              src={src}
-              className={styles.video}
-              style={{
-                opacity: idx === currentIndex ? 0.92 : 0,
-                pointerEvents: 'none',
-                transition: 'opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-              }}
-              muted
-              playsInline
-              preload="auto"
-              poster={poster}
-              aria-hidden={idx !== currentIndex}
-            />
-          ))}
+          <video
+            ref={videoRef}
+            src={videoSrc}
+            className={styles.video}
+            muted
+            playsInline
+            preload="auto"
+            poster={poster}
+            aria-hidden="false"
+          />
         </div>
 
-        {/* Glassmorphic Story Card */}
+        {/* Glassmorphic Story Card — transitionend-driven */}
         {videoReady && (
-          <div className={`${styles.cardViewport} ${styles.cardViewportVisible}`}>
+          <div
+            ref={cardWrapRef}
+            className={`${styles.cardViewport} ${
+              cardInView ? styles.cardViewportVisible : ''
+            }`}
+          >
             <StoryCard
               chapter={activeChapter}
               reducedMotion={reducedMotion}
-              onCtaClick={scrollToHeroContent}
+              onCtaClick={() => jumpToPhase(2)}
             />
           </div>
         )}
@@ -493,16 +521,13 @@ export default function ScrollVideoSequence({
 
         {/* Scroll Hint Indicator */}
         <div className={styles.scrollHint}>
-          <span>مرّر لأسفل للاستكشاف ({currentIndex + 1} / {totalSegments})</span>
+          <span>مرّر لأسفل للاستكشاف</span>
           <FiChevronDown className="w-4 h-4 animate-bounce" />
         </div>
 
-        {/* Progress Timeline Track */}
+        {/* Progress Timeline Track at Bottom Edge */}
         <div className={styles.timelineTrack}>
-          <div
-            className={styles.timelineFill}
-            style={{ width: `${((currentIndex + 1) / totalSegments) * 100}%` }}
-          />
+          <div ref={timelineFillRef} className={styles.timelineFill} />
         </div>
       </div>
     </div>
