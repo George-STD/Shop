@@ -109,7 +109,7 @@ const buildOrderItems = (items, productMap) => {
       finalPrice = finalPrice * (1 - discountPercent / 100);
     }
 
-    const itemSubtotal = finalPrice * quantity + addonsTotal;
+    const itemSubtotal = (finalPrice + addonsTotal) * quantity;
 
     orderItems.push({
       product: product._id,
@@ -382,7 +382,32 @@ exports.createOrder = asyncHandler(async (req, res) => {
     return createdOrder;
   };
 
-  // --- Fallback without transaction ---
+/**
+ * Rollback loyalty points redeemed during order construction if non-transactional order fails.
+ */
+const rollbackLoyaltyPoints = async (userId, pointsRedeemed) => {
+  if (!userId || !pointsRedeemed || pointsRedeemed <= 0) return;
+  const User = require('../models/User');
+  try {
+    await User.updateOne(
+      { _id: userId },
+      {
+        $inc: { loyaltyPoints: pointsRedeemed },
+        $push: {
+          pointsHistory: {
+            points: pointsRedeemed,
+            reason: 'استرجاع نقاط بسبب فشل إنشاء الطلب',
+            type: 'REFUNDED'
+          }
+        }
+      }
+    );
+  } catch (err) {
+    console.error('Failed to refund loyalty points on order rollback:', err.message);
+  }
+};
+
+// --- Fallback without transaction ---
   const createWithoutSession = async () => {
     const uniqueProductIds = [...new Set(items.map((i) => String(i.productId)))];
     let products = await Product.find({ _id: { $in: uniqueProductIds } })
@@ -398,8 +423,9 @@ exports.createOrder = asyncHandler(async (req, res) => {
     try {
       await deductStock(orderItems);
     } catch (stockError) {
-      // On failure, rollback whatever was already deducted
+      // On failure, rollback whatever was already deducted & refund points
       await rollbackStock(orderItems);
+      await rollbackLoyaltyPoints(userId, orderData.pointsRedeemed);
       throw stockError;
     }
 
@@ -407,6 +433,7 @@ exports.createOrder = asyncHandler(async (req, res) => {
       return await Order.create(orderData);
     } catch (error) {
       await rollbackStock(orderItems);
+      await rollbackLoyaltyPoints(userId, orderData.pointsRedeemed);
       throw error;
     }
   };
@@ -454,19 +481,21 @@ exports.createOrder = asyncHandler(async (req, res) => {
 
 exports.getOrders = asyncHandler(async (req, res) => {
   const { page = 1, limit = CONFIG.PAGINATION.ORDERS_LIMIT, status } = req.query;
+  const pageNum = Math.max(1, Math.floor(Number(page) || 1));
+  const finalLimit = Math.min(Math.max(1, Math.floor(Number(limit) || CONFIG.PAGINATION.ORDERS_LIMIT)), 100);
+
   const query = { user: req.user._id };
   if (status && CONFIG.ORDER_STATUSES.includes(String(status))) {
     query.status = String(status);
   }
 
-  const finalLimit = Math.min(Number(limit) || CONFIG.PAGINATION.ORDERS_LIMIT, 100);
   const orders = await Order.find(query)
     .sort({ createdAt: -1 })
-    .skip((page - 1) * finalLimit)
+    .skip((pageNum - 1) * finalLimit)
     .limit(finalLimit);
   const total = await Order.countDocuments(query);
 
-  return sendPaginated(res, { data: orders, page, limit: finalLimit, total });
+  return sendPaginated(res, { data: orders, page: pageNum, limit: finalLimit, total });
 }, MESSAGES.ORDERS.GENERIC_ERROR);
 
 exports.getOrderById = asyncHandler(async (req, res) => {

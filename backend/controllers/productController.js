@@ -186,11 +186,23 @@ exports.getBestsellers = asyncHandler(async (req, res) => {
  */
 exports.getNewArrivals = asyncHandler(async (req, res) => {
   const { limit = CONFIG.LIMITS.NEW_ARRIVALS } = req.query;
-  const products = await Product.find({ isActive: true })
+  const limitNum = Number(limit);
+  let products = await Product.find({ isActive: true, isNewArrival: true })
     .populate('category', 'name slug')
     .sort({ createdAt: -1 })
-    .limit(Number(limit))
+    .limit(limitNum)
     .lean();
+
+  if (products.length < limitNum) {
+    const existingIds = products.map((p) => p._id);
+    const fallbackProducts = await Product.find({ isActive: true, _id: { $nin: existingIds } })
+      .populate('category', 'name slug')
+      .sort({ createdAt: -1 })
+      .limit(limitNum - products.length)
+      .lean();
+    products = [...products, ...fallbackProducts];
+  }
+
   const processedProducts = await processReadyBoxes(products);
   return sendSuccess(res, { data: processedProducts });
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);

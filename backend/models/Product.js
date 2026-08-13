@@ -179,7 +179,6 @@ const productSchema = new mongoose.Schema({
 });
 
 // Index for search & high-performance queries
-productSchema.index({ slug: 1 }, { unique: true });
 productSchema.index({ name: 'text', description: 'text', tags: 'text' });
 productSchema.index({ price: 1 });
 productSchema.index({ category: 1 });

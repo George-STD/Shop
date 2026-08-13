@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const rateLimit = require('express-rate-limit');
-const { protect, apiLimiter } = require('../middleware/auth');
+const { protect, apiLimiter, validateObjectId } = require('../middleware/auth');
 const { CONFIG, MESSAGES } = require('../constants');
 const orderController = require('../controllers/orderController');
 
@@ -28,7 +28,7 @@ router.get('/', protect, orderController.getOrders);
 // @route   GET /api/orders/:id
 // @desc    Get order by ID
 // @access  Private
-router.get('/:id', protect, orderController.getOrderById);
+router.get('/:id', protect, validateObjectId('id'), orderController.getOrderById);
 
 // Strict rate limiter for order tracking (prevent brute-force enumeration)
 const trackOrderLimiter = rateLimit({
@@ -47,6 +47,6 @@ router.get('/track/:orderNumber', trackOrderLimiter, orderController.trackOrder)
 // @route   PUT /api/orders/:id/cancel
 // @desc    Cancel order
 // @access  Private
-router.put('/:id/cancel', protect, orderController.cancelOrder);
+router.put('/:id/cancel', protect, validateObjectId('id'), orderController.cancelOrder);
 
 module.exports = router;

@@ -90,12 +90,14 @@ const CONFIG = {
     CONFIRMED: 'confirmed',
     PROCESSING: 'processing',
     SHIPPED: 'shipped',
+    OUT_FOR_DELIVERY: 'out_for_delivery',
     DELIVERED: 'delivered',
     CANCELLED: 'cancelled',
+    RETURNED: 'returned',
   },
 
   // Statuses array for validation
-  ORDER_STATUSES: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
+  ORDER_STATUSES: ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'returned'],
 
   // =====================================================
   // ALLOWED ORDER STATUSES FOR CANCELLATION

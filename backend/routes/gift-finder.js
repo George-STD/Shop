@@ -32,7 +32,7 @@ router.post('/ai-recommend', aiLimiter, sanitizeInput, asyncHandler(async (req, 
   // Fallback: If fewer than 5 explicit ready boxes exist, fetch active products with canBeAddedToBox
   if (!readyBoxes || readyBoxes.length < 5) {
     const existingIds = (readyBoxes || []).map(b => b._id);
-    const additional = await Product.find({ isActive: true, _id: { $nin: existingIds } })
+    const additional = await Product.find({ isActive: true, canBeAddedToBox: true, _id: { $nin: existingIds } })
       .populate('category', 'name')
       .limit(30)
       .lean();

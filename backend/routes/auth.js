@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const { loginLimiter, verifyLimiter, registerLimiter, protect } = require('../middleware/auth');
+const { loginLimiter, verifyLimiter, registerLimiter, protect, validateObjectId } = require('../middleware/auth');
 const { MESSAGES } = require('../constants');
 const authController = require('../controllers/authController');
 
@@ -78,12 +78,12 @@ router.post('/verify-email-change', protect, [
 // @route   POST /api/auth/wishlist/:productId
 // @desc    Add product to wishlist
 // @access  Private
-router.post('/wishlist/:productId', protect, authController.addToWishlist);
+router.post('/wishlist/:productId', protect, validateObjectId('productId'), authController.addToWishlist);
 
 // @route   DELETE /api/auth/wishlist/:productId
 // @desc    Remove product from wishlist
 // @access  Private
-router.delete('/wishlist/:productId', protect, authController.removeFromWishlist);
+router.delete('/wishlist/:productId', protect, validateObjectId('productId'), authController.removeFromWishlist);
 
 // @route   POST /api/auth/forgot-password
 // @desc    Send password reset code to email

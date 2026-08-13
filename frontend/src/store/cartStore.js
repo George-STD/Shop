@@ -175,10 +175,11 @@ export const useCartStore = create(
             priceToUse = item.price * (1 - discountPercent / 100);
           }
 
-          let itemTotal = priceToUse * item.quantity;
+          let unitPrice = priceToUse;
           if (item.addons) {
-            itemTotal += item.addons.reduce((sum, addon) => sum + addon.price, 0);
+            unitPrice += item.addons.reduce((sum, addon) => sum + (addon.price || 0), 0);
           }
+          const itemTotal = unitPrice * item.quantity;
           return total + itemTotal;
         }, 0);
 
