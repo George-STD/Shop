@@ -118,11 +118,11 @@ const CONFIG = {
   // USER ROLES
   // =====================================================
   USER_ROLE: {
-    CUSTOMER: 'customer',
+    CUSTOMER: 'user',
     ADMIN: 'admin',
   },
 
-  USER_ROLES: ['customer', 'admin'],
+  USER_ROLES: ['user', 'admin'],
 
   // =====================================================
   // RECIPIENTS (Gift recipients)

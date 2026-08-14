@@ -83,7 +83,7 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
           );
         }
       }
-    } else if (status === 'cancelled' && previousStatus !== 'cancelled') {
+    } else if ((status === 'cancelled' || status === 'returned') && previousStatus !== 'cancelled' && previousStatus !== 'returned') {
       const { handleOrderLoyaltyRefundOrDeduction } = require('../orderController');
       await handleOrderLoyaltyRefundOrDeduction(order, opts.session);
 
@@ -112,7 +112,7 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
           );
         }
       }
-    } else if (previousStatus === 'cancelled' && status !== 'cancelled') {
+    } else if ((previousStatus === 'cancelled' || previousStatus === 'returned') && status !== 'cancelled' && status !== 'returned') {
       const Product = require('../../models/Product');
       for (const item of order.items) {
         if (!item.product) continue;

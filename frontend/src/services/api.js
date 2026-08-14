@@ -33,8 +33,22 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (typeof window !== 'undefined' && error.response?.status === 401) {
-      clearStoredAuthSession();
-      window.location.href = ROUTES.ACCOUNT;
+      const url = error.config?.url || '';
+      const isAuthAttempt =
+        url.includes('/auth/login') ||
+        url.includes('/auth/register') ||
+        url.includes('/auth/verify-email') ||
+        url.includes('/auth/resend-code') ||
+        url.includes('/auth/forgot-password') ||
+        url.includes('/auth/verify-reset-code') ||
+        url.includes('/auth/reset-password');
+
+      if (!isAuthAttempt) {
+        clearStoredAuthSession();
+        if (window.location.pathname !== ROUTES.ACCOUNT) {
+          window.location.href = ROUTES.ACCOUNT;
+        }
+      }
     }
     return Promise.reject(error);
   }

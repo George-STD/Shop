@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, query } = require('express-validator');
+const { CONFIG } = require('../constants');
 
 // Controllers (split into focused modules, re-exported from index)
 const adminController = require('../controllers/admin');
@@ -28,7 +29,7 @@ router.get('/users', [
   query('page').optional().isInt({ min: 1 }),
   query('limit').optional().isInt({ min: 1, max: 100 }),
   query('search').optional().trim(),
-  query('role').optional().isIn(['user', 'admin']),
+  query('role').optional().isIn(CONFIG.USER_ROLES),
   query('isActive').optional().isBoolean()
 ], adminController.getUsers);
 
@@ -41,7 +42,7 @@ router.put('/users/:id', [
   body('lastName').optional().trim().notEmpty(),
   body('email').optional().isEmail(),
   body('phone').optional().trim().notEmpty(),
-  body('role').optional().isIn(['user', 'admin']),
+  body('role').optional().isIn(CONFIG.USER_ROLES),
   body('isActive').optional().isBoolean()
 ], adminController.updateUser);
 
@@ -86,8 +87,6 @@ router.delete('/products/:id', [
   validateObjectId('id'),
   logAdminAction('DELETE_PRODUCT')
 ], adminController.deleteProduct);
-
-const { CONFIG } = require('../constants');
 
 // =====================================================
 // ORDERS MANAGEMENT

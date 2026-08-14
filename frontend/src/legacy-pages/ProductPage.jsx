@@ -278,8 +278,16 @@ const ProductPage = () => {
       }
     }
 
-    const result = addItem(product, quantity, {
-      selectedSize,
+    const selectedSizeObj = Array.isArray(product.sizes)
+      ? product.sizes.find((s) => (s?.name || s) === selectedSize)
+      : null;
+    const effectivePrice =
+      selectedSizeObj && selectedSizeObj.price != null
+        ? Number(selectedSizeObj.price)
+        : product.price;
+
+    const result = addItem({ ...product, price: effectivePrice }, quantity, {
+      selectedSize: typeof selectedSize === 'object' ? selectedSize?.name : selectedSize,
       selectedColor,
       selectedShape,
       selectedVariants: product.variantGroups?.length > 0 ? selectedVariants : undefined,
@@ -420,9 +428,18 @@ const ProductPage = () => {
 
   const calculateTotal = () => {
     if (!product) return 0;
-    let total = product.price * quantity;
-    selectedAddons.forEach((addon) => (total += addon.price));
-    return total;
+    const selectedSizeObj = Array.isArray(product.sizes)
+      ? product.sizes.find((s) => (s?.name || s) === selectedSize)
+      : null;
+    const basePrice =
+      selectedSizeObj && selectedSizeObj.price != null
+        ? Number(selectedSizeObj.price)
+        : product.price;
+    const addonsTotal = selectedAddons.reduce(
+      (sum, addon) => sum + (Number(addon.price) || 0),
+      0
+    );
+    return (basePrice + addonsTotal) * quantity;
   };
 
   if (isLoading) {
@@ -775,7 +792,14 @@ const ProductPage = () => {
               {/* Price */}
               <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
                 <span className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 whitespace-nowrap">
-                  <bdi>{product.price}</bdi> {STRINGS.PRODUCT.CURRENCY}
+                  <bdi>
+                    {(() => {
+                      const selectedSizeObj = Array.isArray(product.sizes)
+                        ? product.sizes.find((s) => (s?.name || s) === selectedSize)
+                        : null;
+                      return (selectedSizeObj && selectedSizeObj.price != null) ? Number(selectedSizeObj.price) : product.price;
+                    })()}
+                  </bdi> {STRINGS.PRODUCT.CURRENCY}
                 </span>
                 {product.oldPrice && (
                   <>
@@ -883,19 +907,28 @@ const ProductPage = () => {
                 <div>
                   <h3 className="font-medium text-gray-800 mb-3">{STRINGS.PRODUCT.SIZE}</h3>
                   <div className="flex flex-wrap gap-2">
-                    {product.sizes.map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`px-4 py-2 rounded-lg border-2 transition-colors ${
-                          selectedSize === size
-                            ? 'border-purple-500 bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 text-transparent'
-                            : 'border-gray-300 hover:border-purple-500'
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
+                    {product.sizes.map((size) => {
+                      const sizeName = typeof size === 'object' ? size.name : size;
+                      const sizePrice = typeof size === 'object' && size.price != null ? size.price : null;
+                      return (
+                        <button
+                          key={sizeName}
+                          onClick={() => setSelectedSize(sizeName)}
+                          className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                            selectedSize === sizeName
+                              ? 'border-purple-500 bg-purple-50 text-purple-700 font-bold'
+                              : 'border-gray-300 hover:border-purple-500 text-gray-700'
+                          }`}
+                        >
+                          {sizeName}
+                          {sizePrice !== null && sizePrice !== product.price && (
+                            <span className="text-xs text-gray-500 mr-1.5 font-normal">
+                              ({sizePrice} {STRINGS.PRODUCT.CURRENCY})
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
