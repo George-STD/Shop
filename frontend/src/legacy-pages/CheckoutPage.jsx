@@ -149,9 +149,17 @@ const CheckoutPage = () => {
       const response = await ordersAPI.create(orderData);
 
       if (response.data.success) {
+        const finalOrder = response.data.data;
         clearCart();
-        toast.success(STRINGS.CHECKOUT.ORDER_SUCCESS);
-        navigate(`/account/orders?success=true&order=${response.data.data.orderNumber}`);
+        if (typeof finalOrder?.total === 'number' && Math.abs(finalOrder.total - total) > 0.01) {
+          toast(
+            `تم تأكيد طلبك بنجاح بإجمالي ${finalOrder.total} ج.م (تحديث تلقائي وفق أحدث الأسعار)`,
+            { icon: 'ℹ️', duration: 5000 }
+          );
+        } else {
+          toast.success(STRINGS.CHECKOUT.ORDER_SUCCESS);
+        }
+        navigate(`/account/orders?success=true&order=${finalOrder.orderNumber}`);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || STRINGS.CHECKOUT.ORDER_ERROR);

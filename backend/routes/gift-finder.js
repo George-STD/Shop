@@ -3,7 +3,7 @@ const router = express.Router();
 const Product = require('../models/Product');
 const asyncHandler = require('../utils/asyncHandler');
 const { generateWithFallback } = require('../utils/geminiModelManager');
-const { sanitizeInput, aiLimiter } = require('../middleware/auth');
+const { sanitizeInput, publicAiLimiter } = require('../middleware/auth');
 
 const { processReadyBoxes } = require('../controllers/productController');
 
@@ -21,7 +21,7 @@ function getAiClient() {
 // @desc    Analyze recipient personality & recommend top 5 ready gift boxes using Gemini AI
 // @access  Public
 // ============================================================================
-router.post('/ai-recommend', aiLimiter, sanitizeInput, asyncHandler(async (req, res) => {
+router.post('/ai-recommend', publicAiLimiter, sanitizeInput, asyncHandler(async (req, res) => {
   const { recipient, occasion, personality, interests, mood, budgetRange, customNotes } = req.body;
 
   // 1. Fetch Active Ready Gift Boxes strictly

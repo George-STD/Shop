@@ -4,6 +4,11 @@ const { validationResult } = require('express-validator');
 const asyncHandler = require('../../utils/asyncHandler');
 const { escapeRegex, parsePagination, buildPaginationMeta } = require('../../utils/helpers');
 
+const ADMIN_USER_EXCLUDED_FIELDS =
+  '-password -resetPasswordToken -resetPasswordExpires ' +
+  '-emailVerificationCode -emailVerificationExpires ' +
+  '-emailChangeCode -emailChangeExpires -pendingEmail';
+
 // =====================================================
 // USERS MANAGEMENT
 // =====================================================
@@ -25,7 +30,7 @@ exports.getUsers = asyncHandler(async (req, res) => {
 
   const [users, total] = await Promise.all([
     User.find(queryObj)
-      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .select(ADMIN_USER_EXCLUDED_FIELDS)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
@@ -41,7 +46,7 @@ exports.getUsers = asyncHandler(async (req, res) => {
 
 exports.getUserById = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id)
-    .select('-password -resetPasswordToken -resetPasswordExpires');
+    .select(ADMIN_USER_EXCLUDED_FIELDS);
   if (!user) return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
 
   const orders = await Order.find({ user: user._id })

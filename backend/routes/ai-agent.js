@@ -469,7 +469,7 @@ router.post('/execute', asyncHandler(async (req, res) => {
   }
 
   // Verify that the execution request strictly matches a stored proposedAction in the session
-  const session = await AiChatSession.findOne({ _id: sessionId, 'messages._id': messageId });
+  const session = await AiChatSession.findOne({ _id: sessionId, adminId: req.user._id, 'messages._id': messageId });
   if (!session) {
     return res.status(404).json({ success: false, message: 'لم يتم العثور على الجلسة أو الرسالة المحددة' });
   }

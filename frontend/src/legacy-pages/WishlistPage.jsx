@@ -8,12 +8,20 @@ import toast from 'react-hot-toast';
 const WishlistPage = () => {
   const { items, removeItem, clearWishlist } = useWishlistStore();
   const { addItem } = useCartStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
 
   const handleRemove = (id) => {
     removeItem(id);
     authAPI.removeFromWishlist(id).catch(() => {});
   };
+
+  if (!_hasHydrated) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/account" replace />;

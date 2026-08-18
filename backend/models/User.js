@@ -76,14 +76,40 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  emailVerificationCode: String,
-  emailVerificationExpires: Date,
+  emailVerificationCode: {
+    type: String,
+    select: false
+  },
+  emailVerificationExpires: {
+    type: Date,
+    select: false
+  },
   lastLogin: Date,
-  resetPasswordToken: String,
-  resetPasswordExpires: Date,
-  pendingEmail: String,
-  emailChangeCode: String,
-  emailChangeExpires: Date,
+  resetPasswordToken: {
+    type: String,
+    select: false
+  },
+  resetPasswordExpires: {
+    type: Date,
+    select: false
+  },
+  pendingEmail: {
+    type: String,
+    select: false
+  },
+  emailChangeCode: {
+    type: String,
+    select: false
+  },
+  emailChangeExpires: {
+    type: Date,
+    select: false
+  },
+  tokenVersion: {
+    type: Number,
+    default: 0
+  },
+  passwordChangedAt: Date,
   loyaltyPoints: {
     type: Number,
     default: 0,
@@ -99,10 +125,13 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Hash password before saving
+// Hash password before saving & update passwordChangedAt
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);
+  if (!this.isNew) {
+    this.passwordChangedAt = new Date(Date.now() - 1000);
+  }
   next();
 });
 

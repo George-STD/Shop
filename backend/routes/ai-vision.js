@@ -266,7 +266,10 @@ router.post(
         });
 
         const isIpPrivate = (ip) => {
-          const target = (ip || '').toLowerCase();
+          let target = (ip || '').toLowerCase();
+          const mapped = target.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+          if (mapped) target = mapped[1];
+
           return (
             target === 'localhost' ||
             target === '127.0.0.1' ||
@@ -275,8 +278,8 @@ router.post(
             target.startsWith('10.') ||
             target.startsWith('192.168.') ||
             target.startsWith('169.254.') ||
-            target.startsWith('::ffff:169.254.') ||
-            target.startsWith('::ffff:127.') ||
+            target.startsWith('127.') ||
+            target.startsWith('0.') ||
             target.startsWith('fc') ||
             target.startsWith('fd') ||
             target.startsWith('fe80') ||

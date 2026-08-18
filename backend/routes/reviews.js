@@ -167,7 +167,7 @@ router.post('/', apiLimiter, [
       cons,
       images,
       isVerifiedPurchase,
-      isApproved: true
+      isApproved: isVerifiedPurchase
     });
 
     if (userId) await review.populate('user', 'firstName lastName avatar');
@@ -199,7 +199,11 @@ router.post('/', apiLimiter, [
       }
     }
 
-    return sendCreated(res, { data: review, message: MESSAGES.REVIEWS.CREATED });
+    const reviewSuccessMessage = isVerifiedPurchase
+      ? MESSAGES.REVIEWS.CREATED
+      : 'تم استلام تقييمك بنجاح وسيتم نشره بعد مراجعة الإدارة.';
+
+    return sendCreated(res, { data: review, message: reviewSuccessMessage });
   } catch (error) {
     if (error?.code === 11000) {
       return sendBadRequest(res, MESSAGES.REVIEWS.ALREADY_REVIEWED);

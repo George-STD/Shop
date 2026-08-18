@@ -103,6 +103,9 @@ const buildOrderItems = (items, productMap) => {
 
     // Apply box logic
     if (item.boxId) {
+      if (!product.canBeAddedToBox) {
+        throw createClientError(`المنتج "${product.name}" غير متاح للإضافة إلى بوكس هدايا`);
+      }
       boxGroups.add(item.boxId);
       boxCounts.set(item.boxId, (boxCounts.get(item.boxId) || 0) + quantity);
       const discountPercent = product.boxDiscount !== undefined ? product.boxDiscount : 25;
@@ -557,18 +560,36 @@ exports.cancelOrder = async (req, res) => {
 
     if (isTransactionNotSupportedError(error)) {
       try {
-        const order = await Order.findById(req.params.id);
-        if (!order) return sendNotFound(res, MESSAGES.ORDERS.NOT_FOUND);
-        if (order.user.toString() !== req.user._id.toString()) return sendForbidden(res, MESSAGES.ORDERS.UNAUTHORIZED);
-        if (!CONFIG.CANCELLABLE_STATUSES.includes(order.status)) return sendBadRequest(res, MESSAGES.ORDERS.CANNOT_CANCEL);
+        const order = await Order.findOneAndUpdate(
+          {
+            _id: req.params.id,
+            user: req.user._id,
+            status: { $in: CONFIG.CANCELLABLE_STATUSES }
+          },
+          {
+            $set: {
+              status: CONFIG.ORDER_STATUS.CANCELLED,
+              cancellationReason: req.body.reason,
+              cancelledAt: new Date()
+            },
+            $push: {
+              statusHistory: {
+                status: CONFIG.ORDER_STATUS.CANCELLED,
+                note: req.body.reason || MESSAGES.ORDERS.CANCELLED_BY_CUSTOMER
+              }
+            }
+          },
+          { new: true }
+        );
 
-        order.status = CONFIG.ORDER_STATUS.CANCELLED;
-        order.cancellationReason = req.body.reason;
-        order.cancelledAt = new Date();
-        order.statusHistory.push({ status: CONFIG.ORDER_STATUS.CANCELLED, note: req.body.reason || MESSAGES.ORDERS.CANCELLED_BY_CUSTOMER });
-        
+        if (!order) {
+          const existingOrder = await Order.findById(req.params.id);
+          if (!existingOrder) return sendNotFound(res, MESSAGES.ORDERS.NOT_FOUND);
+          if (existingOrder.user?.toString() !== req.user._id.toString()) return sendForbidden(res, MESSAGES.ORDERS.UNAUTHORIZED);
+          return sendBadRequest(res, MESSAGES.ORDERS.CANNOT_CANCEL);
+        }
+
         await handleOrderLoyaltyRefundOrDeduction(order);
-        await order.save();
 
         // Restore stock for cancelled order items using rollbackStock
         await rollbackStock(order.items);

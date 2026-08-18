@@ -185,7 +185,8 @@ const orderSchema = new mongoose.Schema({
   returnReason: String,
   returnedAt: Date
 }, {
-  timestamps: true
+  timestamps: true,
+  optimisticConcurrency: true
 });
 
 // Generate order number before saving

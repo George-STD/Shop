@@ -6,6 +6,8 @@ export const useBuildBoxStore = create(
   persist(
     (set, get) => ({
       items: [],
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       get maxItems() {
         return BUSINESS_CONFIG.BOX_MAX_ITEMS;
@@ -41,6 +43,9 @@ export const useBuildBoxStore = create(
     }),
     {
       name: STORAGE_KEYS.BUILD_BOX,
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

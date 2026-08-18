@@ -44,6 +44,25 @@ const protect = async (req, res, next) => {
         });
       }
 
+      // Check token version (session invalidation on password change / reset)
+      if (decoded.v !== undefined && user.tokenVersion !== undefined && decoded.v !== user.tokenVersion) {
+        return res.status(401).json({
+          success: false,
+          message: MESSAGES.AUTH.SESSION_INVALID
+        });
+      }
+
+      // Check if password changed after token was issued
+      if (user.passwordChangedAt && decoded.iat) {
+        const changedTimestamp = parseInt(user.passwordChangedAt.getTime() / 1000, 10);
+        if (decoded.iat < changedTimestamp) {
+          return res.status(401).json({
+            success: false,
+            message: MESSAGES.AUTH.SESSION_INVALID
+          });
+        }
+      }
+
       // Add user to request object
       req.user = user;
       next();
@@ -163,6 +182,18 @@ const aiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Dedicated Public Rate Limiter for Gift Finder AI routes (Prevents quota exhaustion by anonymous users)
+const publicAiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 6, // 6 requests per 15 min per IP
+  message: {
+    success: false,
+    message: MESSAGES.RATE_LIMIT.AI
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // =====================================================
 // VALIDATE OBJECT ID - Prevent NoSQL injection
 // =====================================================
@@ -253,6 +284,7 @@ module.exports = {
   verifyLimiter,
   registerLimiter,
   aiLimiter,
+  publicAiLimiter,
   validateObjectId,
   sanitizeInput,
   logAdminAction
