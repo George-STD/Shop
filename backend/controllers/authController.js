@@ -49,7 +49,7 @@ exports.register = asyncHandler(async (req, res) => {
       await User.findByIdAndUpdate(existingUser._id, {
         $set: {
           firstName, lastName, phone,
-          password: hashedPassword,
+          pendingPassword: hashedPassword,
           emailVerificationCode: hashCode(code),
           emailVerificationExpires: new Date(Date.now() + 10 * 60 * 1000)
         }
@@ -98,16 +98,22 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   if (!errors.isEmpty()) return sendError(res, { statusCode: 400, message: MESSAGES.GENERAL.VALIDATION_ERROR, errors: errors.array() });
 
   const { email, code } = req.body;
-  const user = await User.findOne({ email }).select('+emailVerificationCode +emailVerificationExpires +tokenVersion');
+  const user = await User.findOne({ email }).select('+emailVerificationCode +emailVerificationExpires +tokenVersion +pendingPassword');
 
   if (!user) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.USER_NOT_FOUND });
   if (user.isVerified) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_ALREADY_DONE });
   if (!user.emailVerificationCode || !verifyCodeMatch(user.emailVerificationCode, code)) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
   if (user.emailVerificationExpires < new Date()) return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_EXPIRED });
 
+  const updateFields = {
+    isVerified: true,
+    lastLogin: new Date(),
+    ...(user.pendingPassword ? { password: user.pendingPassword } : {})
+  };
+
   await User.findByIdAndUpdate(user._id, {
-    $set: { isVerified: true, lastLogin: new Date() },
-    $unset: { emailVerificationCode: 1, emailVerificationExpires: 1 }
+    $set: updateFields,
+    $unset: { emailVerificationCode: 1, emailVerificationExpires: 1, pendingPassword: 1 }
   });
 
   const token = generateToken(user._id, user.tokenVersion || 0);
@@ -307,10 +313,16 @@ exports.verifyEmailChange = asyncHandler(async (req, res) => {
 }, MESSAGES.GENERAL.ERROR);
 
 exports.addToWishlist = asyncHandler(async (req, res) => {
-  if (req.user.wishlist.includes(req.params.productId)) {
+  const productIdStr = String(req.params.productId);
+  const alreadyExists = req.user.wishlist?.some(
+    (item) => item && item.toString() === productIdStr
+  );
+
+  if (alreadyExists) {
     return sendError(res, { statusCode: 400, message: MESSAGES.WISHLIST.ALREADY_EXISTS });
   }
-  await User.findByIdAndUpdate(req.user._id, { $addToSet: { wishlist: req.params.productId } });
+
+  await User.findByIdAndUpdate(req.user._id, { $addToSet: { wishlist: productIdStr } });
   sendSuccess(res, { message: MESSAGES.WISHLIST.ADDED });
 }, MESSAGES.GENERAL.ERROR);
 

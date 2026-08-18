@@ -84,60 +84,12 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
         }
       }
     } else if ((status === 'cancelled' || status === 'returned') && previousStatus !== 'cancelled' && previousStatus !== 'returned') {
-      const { handleOrderLoyaltyRefundOrDeduction } = require('../orderController');
+      const { handleOrderLoyaltyRefundOrDeduction, rollbackStock } = require('../orderController');
       await handleOrderLoyaltyRefundOrDeduction(order, opts.session);
-
-      const Product = require('../../models/Product');
-      for (const item of order.items) {
-        if (!item.product) continue;
-        if (item.isReadyBox && item.includedProducts && item.includedProducts.length > 0) {
-          for (const boxItem of item.includedProducts) {
-            const subQty = boxItem.quantity * item.quantity;
-            await Product.updateOne(
-              { _id: boxItem.product },
-              { $inc: { stock: subQty, salesCount: -subQty } },
-              opts
-            );
-          }
-          await Product.updateOne(
-            { _id: item.product },
-            { $inc: { salesCount: -item.quantity } },
-            opts
-          );
-        } else {
-          await Product.updateOne(
-            { _id: item.product },
-            { $inc: { stock: item.quantity, salesCount: -item.quantity } },
-            opts
-          );
-        }
-      }
+      await rollbackStock(order.items, opts.session);
     } else if ((previousStatus === 'cancelled' || previousStatus === 'returned') && status !== 'cancelled' && status !== 'returned') {
-      const Product = require('../../models/Product');
-      for (const item of order.items) {
-        if (!item.product) continue;
-        if (item.isReadyBox && item.includedProducts && item.includedProducts.length > 0) {
-          for (const boxItem of item.includedProducts) {
-            const subQty = boxItem.quantity * item.quantity;
-            await Product.updateOne(
-              { _id: boxItem.product },
-              { $inc: { stock: -subQty, salesCount: subQty } },
-              opts
-            );
-          }
-          await Product.updateOne(
-            { _id: item.product },
-            { $inc: { salesCount: item.quantity } },
-            opts
-          );
-        } else {
-          await Product.updateOne(
-            { _id: item.product },
-            { $inc: { stock: -item.quantity, salesCount: item.quantity } },
-            opts
-          );
-        }
-      }
+      const { deductStock } = require('../orderController');
+      await deductStock(order.items, opts.session);
     }
 
     await order.save(opts);

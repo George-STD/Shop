@@ -128,8 +128,14 @@ mongoose.connection.on('error', (error) => {
 });
 
 registerProcessHandlers();
-// Allow Express to trust proxy (for correct IP detection behind Render)
-app.set('trust proxy', 1);
+// Allow Express to trust proxy safely (for correct IP detection behind Render / Reverse Proxies)
+if (process.env.TRUSTED_PROXIES) {
+  app.set('trust proxy', process.env.TRUSTED_PROXIES.split(',').map((ip) => ip.trim()));
+} else if (process.env.TRUST_PROXY_HOPS) {
+  app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS));
+} else {
+  app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
+}
 
 // Middleware
 app.use(helmet({

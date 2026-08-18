@@ -383,11 +383,12 @@ router.post('/batch-order-review', apiLimiter, [
       order.user?.email
     ].filter(Boolean).map(e => e.toLowerCase().trim());
 
-    const isUserOwner = userId && order.user && order.user.toString() === userId.toString();
+    const orderUserId = order.user?._id ? order.user._id.toString() : order.user ? order.user.toString() : null;
+    const isUserOwner = userId && orderUserId && orderUserId === userId.toString();
     const submittedEmail = (guestEmail || '').toLowerCase().trim();
     const isEmailMatched = submittedEmail && orderEmails.includes(submittedEmail);
 
-    if (!isUserOwner && !isEmailMatched && orderEmails.length > 0) {
+    if (!isUserOwner && !isEmailMatched) {
       return sendForbidden(res, 'البريد الإلكتروني المكتوب لا يطابق بيانات صاحب الطلب');
     }
 

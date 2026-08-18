@@ -105,7 +105,7 @@ router.post('/verify-reset-code', verifyLimiter, [
 // @access  Public
 router.post('/reset-password', verifyLimiter, [
   body('email').isEmail().withMessage(MESSAGES.VALIDATION.EMAIL_INVALID),
-  body('code').isLength({ min: 6, max: 6 }).withMessage(MESSAGES.VALIDATION.CODE_INVALID),
+  body('code').isLength({ min: 6, max: 6 }).withMessage(MESSAGES.VALIDATION.CODE_LENGTH),
   body('newPassword').isLength({ min: 6 }).withMessage(MESSAGES.VALIDATION.PASSWORD_MIN_LENGTH)
 ], authController.resetPassword);
 

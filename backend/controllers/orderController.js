@@ -350,8 +350,10 @@ const handleOrderLoyaltyRefundOrDeduction = async (order, session) => {
   }
 };
 
-// Export helper for use in admin controllers
+// Export helpers for use in admin controllers
 exports.handleOrderLoyaltyRefundOrDeduction = handleOrderLoyaltyRefundOrDeduction;
+exports.rollbackStock = rollbackStock;
+exports.deductStock = deductStock;
 
 // =====================================================
 // ROUTE HANDLERS

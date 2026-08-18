@@ -48,6 +48,10 @@ const userSchema = new mongoose.Schema({
     minlength: 6,
     select: false
   },
+  pendingPassword: {
+    type: String,
+    select: false
+  },
   avatar: String,
   role: {
     type: String,

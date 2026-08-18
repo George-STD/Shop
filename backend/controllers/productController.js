@@ -138,8 +138,9 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
   if (sort === 'bestselling') sortOption = { salesCount: -1 };
   if (sort === 'newest') sortOption = { createdAt: -1 };
 
-  const finalLimit = Math.min(Number(limit) || 12, 100);
-  const skip = (Number(page) - 1) * finalLimit;
+  const finalLimit = Math.min(CONFIG.PAGINATION.MAX_LIMIT, Math.max(1, Number(limit) || CONFIG.PAGINATION.PRODUCTS_LIMIT));
+  const pageNumber = Math.max(1, Number(page) || CONFIG.PAGINATION.DEFAULT_PAGE);
+  const skip = (pageNumber - 1) * finalLimit;
 
   const products = await Product.find(query)
     .populate('category', 'name slug')
@@ -151,7 +152,7 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
   const processedProducts = await processReadyBoxes(products);
   const total = await Product.countDocuments(query);
 
-  return sendPaginated(res, { data: processedProducts, page, limit: finalLimit, total });
+  return sendPaginated(res, { data: processedProducts, page: pageNumber, limit: finalLimit, total });
 }, MESSAGES.PRODUCTS.FETCH_ERROR);
 
 /**
