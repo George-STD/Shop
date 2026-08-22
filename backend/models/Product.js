@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 
+/**
+ * Master Product Schema
+ * Represents standalone gift items, pre-assembled ready boxes (isReadyBox), and customizable boxes (isCustomBox).
+ */
 const productSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -10,14 +14,17 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    lowercase: true
+    lowercase: true,
+    trim: true
   },
   description: {
     type: String,
-    required: [true, 'وصف المنتج مطلوب']
+    required: [true, 'وصف المنتج مطلوب'],
+    trim: true
   },
   shortDescription: {
-    type: String
+    type: String,
+    trim: true
   },
   price: {
     type: Number,

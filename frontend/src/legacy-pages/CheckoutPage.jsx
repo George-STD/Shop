@@ -35,6 +35,7 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [idempotencyKey] = useState(() => `chk_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`);
 
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -143,6 +144,7 @@ const CheckoutPage = () => {
         deliveryType: formData.deliveryType,
         customerNote: formData.customerNote,
         guestEmail: formData.email,
+        idempotencyKey,
         pointsToRedeem: pointsToRedeem > 0 ? pointsToRedeem : undefined,
       };
 

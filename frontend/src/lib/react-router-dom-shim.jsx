@@ -4,16 +4,28 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import NextLink from 'next/link';
 import { useRouter, usePathname, useParams as useNextParams } from 'next/navigation';
 
+/**
+ * Context for nested Route outlets
+ */
 const OutletContext = createContext(null);
 
+/**
+ * Provider for Outlet context
+ */
 export function OutletProvider({ value, children }) {
   return <OutletContext.Provider value={value}>{children}</OutletContext.Provider>;
 }
 
+/**
+ * Renders matching child component within a parent layout
+ */
 export function Outlet() {
   return useContext(OutletContext);
 }
 
+/**
+ * React Router compatible Link component wrapping Next.js Link
+ */
 export function Link({ to, href, children, ...props }) {
   return (
     <NextLink href={href || to || '#'} {...props}>

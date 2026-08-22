@@ -2,12 +2,21 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { BUSINESS_CONFIG, STORAGE_KEYS } from '../constants';
 
+/**
+ * Safely parse numerical stock with floor at 0
+ * @param {any} value - Raw stock candidate
+ * @returns {number|null} Safe stock number or null
+ */
 const parseStock = (value) => {
   const stock = Number(value);
   if (!Number.isFinite(stock)) return null;
   return Math.max(0, Math.floor(stock));
 };
 
+/**
+ * Shopping Cart State Store (Zustand)
+ * Manages customer cart items, custom box groupings, quantity capping against inventory, and subtotal aggregation.
+ */
 export const useCartStore = create(
   persist(
     (set, get) => ({
@@ -15,6 +24,13 @@ export const useCartStore = create(
       _hasHydrated: false,
       setHasHydrated: (state) => set({ _hasHydrated: state }),
 
+      /**
+       * Adds a product with options into the shopping cart
+       * @param {Object} product - Product entity
+       * @param {number} quantity - Quantity to add
+       * @param {Object} options - Customizations (variants, boxId, boxDiscount, addons)
+       * @returns {{ success: boolean, quantity?: number, capped?: boolean, maxStock?: number|null, reason?: string }}
+       */
       addItem: (product, quantity = 1, options = {}) => {
         const items = get().items;
         const requestedQuantity = Math.max(1, Math.floor(Number(quantity) || 1));

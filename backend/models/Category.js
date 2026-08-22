@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 
+/**
+ * Product Category Schema
+ * Supports hierarchical tree structures (parent-child), box filtering (showInBox), and SEO metadata.
+ */
 const categorySchema = new mongoose.Schema({
   name: {
     type: String,
@@ -10,7 +14,8 @@ const categorySchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    lowercase: true
+    lowercase: true,
+    trim: true
   },
   description: String,
   image: String,

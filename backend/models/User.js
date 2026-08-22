@@ -1,22 +1,48 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+/**
+ * Address Sub-schema for customer shipping and billing
+ */
 const addressSchema = new mongoose.Schema({
   label: { type: String, default: 'المنزل', maxlength: 50 },
-  firstName: { type: String, maxlength: 50 },
-  lastName: { type: String, maxlength: 50 },
-  phone: { type: String, maxlength: 20 },
-  governorate: { type: String, maxlength: 100 },
-  city: { type: String, maxlength: 100 },
-  area: { type: String, maxlength: 100 },
-  street: { type: String, maxlength: 200 },
-  building: { type: String, maxlength: 50 },
-  floor: { type: String, maxlength: 50 },
-  apartment: { type: String, maxlength: 50 },
-  landmark: { type: String, maxlength: 200 },
+  firstName: { type: String, maxlength: 50, trim: true },
+  lastName: { type: String, maxlength: 50, trim: true },
+  phone: { type: String, maxlength: 20, trim: true },
+  governorate: { type: String, maxlength: 100, trim: true },
+  city: { type: String, maxlength: 100, trim: true },
+  area: { type: String, maxlength: 100, trim: true },
+  street: { type: String, maxlength: 200, trim: true },
+  building: { type: String, maxlength: 50, trim: true },
+  floor: { type: String, maxlength: 50, trim: true },
+  apartment: { type: String, maxlength: 50, trim: true },
+  landmark: { type: String, maxlength: 200, trim: true },
   isDefault: { type: Boolean, default: false }
-});
+}, { _id: true });
 
+/**
+ * Wallet Transaction Sub-schema
+ */
+const walletTransactionSchema = new mongoose.Schema({
+  type: { type: String, enum: ['credit', 'debit'], required: true },
+  amount: { type: Number, required: true, min: 0 },
+  description: { type: String, maxlength: 250 },
+  date: { type: Date, default: Date.now }
+}, { _id: true });
+
+/**
+ * Points History Sub-schema (Append-only audit trail for loyalty points)
+ */
+const pointsHistorySchema = new mongoose.Schema({
+  points: { type: Number, required: true },
+  reason: { type: String, required: true, maxlength: 250 },
+  type: { type: String, enum: ['EARNED', 'REDEEMED', 'REFUNDED', 'DEDUCTED'], required: true },
+  createdAt: { type: Date, default: Date.now }
+}, { _id: true });
+
+/**
+ * Master User Schema
+ */
 const userSchema = new mongoose.Schema({
   firstName: {
     type: String,
@@ -35,11 +61,13 @@ const userSchema = new mongoose.Schema({
     required: [true, 'البريد الإلكتروني مطلوب'],
     unique: true,
     lowercase: true,
+    trim: true,
     maxlength: 100
   },
   phone: {
     type: String,
     required: [true, 'رقم الهاتف مطلوب'],
+    trim: true,
     maxlength: 20
   },
   password: {
@@ -52,7 +80,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     select: false
   },
-  avatar: String,
+  avatar: {
+    type: String,
+    trim: true
+  },
   role: {
     type: String,
     enum: ['user', 'admin'],
@@ -64,14 +95,19 @@ const userSchema = new mongoose.Schema({
     ref: 'Product'
   }],
   wallet: {
-    balance: { type: Number, default: 0 },
-    transactions: [{
-      type: { type: String, enum: ['credit', 'debit'] },
-      amount: Number,
-      description: String,
-      date: { type: Date, default: Date.now }
-    }]
+    balance: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    transactions: [walletTransactionSchema]
   },
+  loyaltyPoints: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  pointsHistory: [pointsHistorySchema],
   isActive: {
     type: Boolean,
     default: true
@@ -88,7 +124,9 @@ const userSchema = new mongoose.Schema({
     type: Date,
     select: false
   },
-  lastLogin: Date,
+  lastLogin: {
+    type: Date
+  },
   resetPasswordToken: {
     type: String,
     select: false
@@ -99,6 +137,8 @@ const userSchema = new mongoose.Schema({
   },
   pendingEmail: {
     type: String,
+    lowercase: true,
+    trim: true,
     select: false
   },
   emailChangeCode: {
@@ -113,30 +153,16 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  passwordChangedAt: Date,
-  loyaltyPoints: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  wallet: {
-    balance: {
-      type: Number,
-      default: 0,
-      min: 0
-    }
-  },
-  pointsHistory: [{
-    points: { type: Number, required: true },
-    reason: { type: String, required: true },
-    type: { type: String, enum: ['EARNED', 'REDEEMED', 'REFUNDED', 'DEDUCTED'], required: true },
-    createdAt: { type: Date, default: Date.now }
-  }]
+  passwordChangedAt: {
+    type: Date
+  }
 }, {
   timestamps: true
 });
 
-// Hash password before saving & update passwordChangedAt
+/**
+ * Pre-save Middleware: Hash password before persistence and track passwordChangedAt
+ */
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);
@@ -146,16 +172,25 @@ userSchema.pre('save', async function(next) {
   next();
 });
 
-// Compare password method
+/**
+ * Instance Method: Compare candidate password with stored hash
+ * @param {string} candidatePassword
+ * @returns {Promise<boolean>}
+ */
 userSchema.methods.comparePassword = async function(candidatePassword) {
+  if (!this.password) return false;
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Get full name
+/**
+ * Virtual: Full Name of User
+ */
 userSchema.virtual('fullName').get(function() {
-  return `${this.firstName} ${this.lastName}`;
+  return `${this.firstName || ''} ${this.lastName || ''}`.trim();
 });
 
-userSchema.index({ role: 1 });
+// Primary compound indices for performance
+userSchema.index({ role: 1, isActive: 1 });
+userSchema.index({ 'pointsHistory.reason': 1 });
 
 module.exports = mongoose.model('User', userSchema);

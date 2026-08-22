@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 
+/**
+ * Immutable Audit Log Schema
+ * Records administrative system operations, inventory changes, status updates, and AI bulk mutations.
+ * Configured with an automatic 365-day TTL expiration index.
+ */
 const auditLogSchema = new mongoose.Schema({
   entityType: {
     type: String,

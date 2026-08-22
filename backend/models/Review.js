@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 
+/**
+ * Customer Review Schema
+ * Captures product ratings, verified purchase status, moderation approvals, and helpfulness upvotes.
+ */
 const reviewSchema = new mongoose.Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,

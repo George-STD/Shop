@@ -108,7 +108,7 @@ const buildOrderItems = (items, productMap) => {
       }
       boxGroups.add(item.boxId);
       boxCounts.set(item.boxId, (boxCounts.get(item.boxId) || 0) + quantity);
-      const discountPercent = product.boxDiscount !== undefined ? product.boxDiscount : 25;
+      const discountPercent = product.boxDiscount !== undefined ? product.boxDiscount : CONFIG.BUSINESS.BOX_DISCOUNT_PERCENTAGE;
       finalPrice = finalPrice * (1 - discountPercent / 100);
     }
 

@@ -1,14 +1,17 @@
 /**
- * Smart Gemini Model Manager with automatic fallback.
+ * Smart Gemini Model Manager with automatic multi-tier fallback.
  *
- * Models are ordered from best quality to most generous limits.
- * - RPD (daily) exhausted  → automatically falls back to the next model
- * - RPM (per-minute) exhausted on ALL models → returns retryAfter for client-side retry
- * - Model not found / no access → silently skips to next model
+ * Models are arranged in quality order with graceful degradation:
+ * - RPD (Requests Per Day) exhausted  → automatically falls back to next available model
+ * - RPM (Requests Per Minute) exhausted on ALL models → returns retryAfterSeconds for client-side backoff
+ * - Model not found / 403 / 503 → gracefully handles and continues down the tier cascade
  *
- * Total free-tier capacity: ~580 requests/day across all models.
+ * Total free-tier capacity: ~580+ requests/day across all models.
  */
 
+/**
+ * Model Tiers configuration with strict RPM and RPD quotas
+ */
 const MODEL_TIERS = [
   { id: 'gemini-3.6-flash', realId: 'gemini-3.6-flash', rpm: 5, rpd: 20 },
   { id: 'gemini-3.5-flash-lite', realId: 'gemini-3.5-flash-lite', rpm: 15, rpd: 500 },
@@ -16,16 +19,25 @@ const MODEL_TIERS = [
   { id: 'gemini-3.5-flash', realId: 'gemini-3.5-flash', rpm: 5, rpd: 20 },
 ];
 
-// In-memory usage tracking (resets on server restart, which is fine)
+/** In-memory usage tracking per model */
 const modelUsage = {};
 
-// Concurrency lock to prevent burst 429/503 errors from Google API
+/** Concurrency queue promise chain to serialize bursts and prevent 503 rate collisions */
 let generateQueue = Promise.resolve();
 
+/**
+ * Returns current UTC date formatted as YYYY-MM-DD
+ * @returns {string}
+ */
 function getToday() {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * Gets or initializes model quota counters for the current day
+ * @param {string} modelId
+ * @returns {{ date: string, dailyCount: number, minuteTimestamps: number[] }}
+ */
 function getUsage(modelId) {
   const today = getToday();
   if (!modelUsage[modelId] || modelUsage[modelId].date !== today) {
@@ -34,6 +46,10 @@ function getUsage(modelId) {
   return modelUsage[modelId];
 }
 
+/**
+ * Clears timestamps older than 60 seconds from the rolling minute window
+ * @param {{ minuteTimestamps: number[] }} usage
+ */
 function cleanMinuteWindow(usage) {
   const cutoff = Date.now() - 60_000;
   usage.minuteTimestamps = usage.minuteTimestamps.filter((t) => t > cutoff);

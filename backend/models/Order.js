@@ -1,16 +1,20 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 
+/**
+ * Order Line Item Sub-schema
+ * Captures point-in-time snapshot of product details, variants, packaging, and bundle sub-components.
+ */
 const orderItemSchema = new mongoose.Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
     required: true
   },
-  name: String,
-  slug: String,
-  image: String,
-  price: Number,
+  name: { type: String, trim: true },
+  slug: { type: String, trim: true },
+  image: { type: String, trim: true },
+  price: { type: Number, min: 0 },
   quantity: {
     type: Number,
     required: true,
@@ -33,14 +37,18 @@ const orderItemSchema = new mongoose.Schema({
     image: String
   }],
   boxId: String,
-  subtotal: Number,
+  subtotal: { type: Number, min: 0 },
   isReadyBox: Boolean,
   includedProducts: [{
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
     quantity: Number
   }]
-});
+}, { _id: true });
 
+/**
+ * Master Order Schema
+ * Represents the customer purchase contract, payment lifecycle, fulfillment tracking, and loyalty settlement.
+ */
 const orderSchema = new mongoose.Schema({
   orderNumber: {
     type: String,

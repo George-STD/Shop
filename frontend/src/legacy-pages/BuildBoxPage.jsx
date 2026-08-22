@@ -289,7 +289,7 @@ const BuildBoxPage = () => {
                           </span>
                           <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 font-bold text-lg">
                             {formatPrice(
-                              product.price * (1 - (product.boxDiscount !== undefined ? product.boxDiscount : 25) / 100)
+                              product.price * (1 - (product.boxDiscount !== undefined ? product.boxDiscount : BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE) / 100)
                             )}{' '}
                             {STRINGS.PRODUCT.CURRENCY}
                           </p>
