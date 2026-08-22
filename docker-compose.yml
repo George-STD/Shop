@@ -1,0 +1,163 @@
+# ==============================================================================
+# Docker Compose Orchestration — Hadaya Gift Shop Platform
+# Supports: Local Development, CI/CD Staging, and Production Container Clusters
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Frontend: Next.js Standalone Production Container
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5000/api}
+    container_name: hadaya-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - NEXT_TELEMETRY_DISABLED=1
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5000/api}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - hadaya-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1024M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # ----------------------------------------------------------------------------
+  # 2. Backend: Node.js / Express Scalable API Service
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hadaya-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:27017/hadaya_db}
+      - JWT_SECRET=${JWT_SECRET:-production_jwt_secret_key_minimum_32_characters_long_12345}
+      - JWT_EXPIRE=${JWT_EXPIRE:-7d}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:-}
+      - TRUST_PROXY_HOPS=${TRUST_PROXY_HOPS:-1}
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - hadaya-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1536M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ----------------------------------------------------------------------------
+  # 3. Redis: Distributed Caching, Session & Rate-Limiter Store
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: hadaya-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - hadaya-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 384M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  # ----------------------------------------------------------------------------
+  # 4. MongoDB: Local / Staging Database Engine
+  # ----------------------------------------------------------------------------
+  mongo:
+    image: mongo:7.0-jammy
+    container_name: hadaya-mongo
+    restart: unless-stopped
+    command: ["mongod", "--wiredTigerCacheSizeGB", "1.0"]
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=hadaya_db
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - hadaya-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+# ------------------------------------------------------------------------------
+# Networks & Persistent Volume Declarations
+# ------------------------------------------------------------------------------
+networks:
+  hadaya-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local
+  redis_data:
+    driver: local

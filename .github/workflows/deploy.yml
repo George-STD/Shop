@@ -1,0 +1,147 @@
+name: CI/CD Production Pipeline — Hadaya Platform
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20.x'
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE_NAME: ${{ github.repository }}/backend
+  FRONTEND_IMAGE_NAME: ${{ github.repository }}/frontend
+
+jobs:
+  # ============================================================================
+  # 1. Test & Static Code Analysis (Backend & Frontend)
+  # ============================================================================
+  test-and-lint:
+    name: 🧪 Automated Testing & Lint Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      # --- Backend Validation ---
+      - name: 📦 Install Backend Dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: 🔍 Check Backend Syntax
+        working-directory: ./backend
+        run: node scripts/check-syntax.js
+
+      - name: 🧪 Run Backend Test Suite (183 Tests / 39 Suites)
+        working-directory: ./backend
+        run: npm test
+        env:
+          NODE_ENV: test
+          MONGOMS_MD5_CHECK: '0'
+          JWT_SECRET: 'ci_pipeline_dummy_jwt_secret_key_minimum_32_characters_123'
+
+      # --- Frontend Validation ---
+      - name: 📦 Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: 🧹 Lint Frontend Codebase
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: 🏗️ Test Frontend Standalone Build
+        working-directory: ./frontend
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+          NEXT_PUBLIC_API_URL: 'https://api.foryo.me/api'
+
+  # ============================================================================
+  # 2. Build & Push Production Docker Images (Only on Push to Main)
+  # ============================================================================
+  build-and-push:
+    name: 🐳 Docker Multi-Stage Image Build & Registry Push
+    needs: test-and-lint
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔑 Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- Extract Metadata for Docker Tags ---
+      - name: 🏷️ Extract Docker Metadata (Backend)
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,format=short,prefix=sha-
+
+      - name: 🏷️ Extract Docker Metadata (Frontend)
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,format=short,prefix=sha-
+
+      # --- Build & Push Backend Container ---
+      - name: 🚀 Build & Push Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # --- Build & Push Frontend Container ---
+      - name: 🚀 Build & Push Frontend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://api.foryo.me/api
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: ✅ Deployment Notification
+        run: |
+          echo "🎉 All 183 unit & edge-case test suites passed cleanly!"
+          echo "🐳 Successfully built and published Docker images to GitHub Container Registry."

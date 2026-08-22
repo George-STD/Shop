@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "check": "node scripts/check-syntax.js",
-    "test": "cross-env NODE_ENV=test MONGOMS_MD5_CHECK=0 jest --runInBand"
+    "test": "cross-env NODE_ENV=test MONGOMS_MD5_CHECK=0 jest --runInBand --forceExit"
   },
   "dependencies": {
     "@google/genai": "^2.12.0",
