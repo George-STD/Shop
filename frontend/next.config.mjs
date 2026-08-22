@@ -23,6 +23,7 @@ const contentSecurityPolicy = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
   outputFileTracingRoot: path.join(__dirname, '..'),
   images: {
     remotePatterns: [
@@ -60,6 +61,7 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Server', value: 'Foryo-Web-Server' },
         ],
       },
     ]
