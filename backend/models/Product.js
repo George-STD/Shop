@@ -26,7 +26,8 @@ const productSchema = new mongoose.Schema({
   },
   oldPrice: {
     type: Number,
-    default: null
+    default: null,
+    min: [0, 'السعر الأصلي لا يمكن أن يكون سالباً']
   },
   discount: {
     type: Number,
@@ -93,7 +94,10 @@ const productSchema = new mongoose.Schema({
   },
   sizes: [{
     name: String,
-    price: Number
+    price: {
+      type: Number,
+      min: [0, 'سعر المقاس لا يمكن أن يكون سالباً']
+    }
   }],
   colors: [{
     name: String,
@@ -106,7 +110,10 @@ const productSchema = new mongoose.Schema({
   }],
   addons: [{
     name: String,
-    price: Number,
+    price: {
+      type: Number,
+      min: [0, 'سعر الإضافة لا يمكن أن يكون سالباً']
+    },
     image: String
   }],
   variantGroups: [{

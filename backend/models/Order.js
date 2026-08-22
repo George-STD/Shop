@@ -46,6 +46,10 @@ const orderSchema = new mongoose.Schema({
     type: String,
     unique: true
   },
+  idempotencyKey: {
+    type: String,
+    index: { unique: true, sparse: true }
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
@@ -84,36 +88,43 @@ const orderSchema = new mongoose.Schema({
   // Pricing
   subtotal: {
     type: Number,
-    required: true
+    required: true,
+    min: [0, 'المجموع الفرعي لا يمكن أن يكون سالباً']
   },
   shippingCost: {
     type: Number,
-    default: 0
+    default: 0,
+    min: [0, 'تكلفة الشحن لا يمكن أن تكون سالبة']
   },
   discount: {
     code: String,
-    amount: { type: Number, default: 0 },
+    amount: { type: Number, default: 0, min: 0 },
     type: { type: String, enum: ['percentage', 'fixed'] }
   },
   tax: {
     type: Number,
-    default: 0
+    default: 0,
+    min: 0
   },
   total: {
     type: Number,
-    required: true
+    required: true,
+    min: [0, 'الإجمالي لا يمكن أن يكون سالباً']
   },
   pointsEarned: {
     type: Number,
-    default: 0
+    default: 0,
+    min: 0
   },
   pointsRedeemed: {
     type: Number,
-    default: 0
+    default: 0,
+    min: 0
   },
   pointsDiscount: {
     type: Number,
-    default: 0
+    default: 0,
+    min: 0
   },
   
   // Payment
@@ -189,13 +200,13 @@ const orderSchema = new mongoose.Schema({
   optimisticConcurrency: true
 });
 
-// Generate order number before saving
+// Generate order number before saving with high entropy (~30 bits)
 orderSchema.pre('save', async function(next) {
   if (!this.orderNumber) {
     const date = new Date();
     const year = date.getFullYear().toString().slice(-2);
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const random = crypto.randomInt(100000, 999999).toString();
+    const random = crypto.randomInt(100000000, 999999999).toString();
     this.orderNumber = `HD${year}${month}${random}`;
   }
   next();

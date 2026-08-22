@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const { loginLimiter, verifyLimiter, registerLimiter, protect, validateObjectId } = require('../middleware/auth');
+const { loginLimiter, forgotPasswordLimiter, verifyLimiter, registerLimiter, protect, validateObjectId } = require('../middleware/auth');
 const { MESSAGES } = require('../constants');
 const authController = require('../controllers/authController');
 
@@ -38,6 +38,11 @@ router.post('/login', loginLimiter, [
   body('email').isEmail().withMessage(MESSAGES.VALIDATION.EMAIL_INVALID),
   body('password').notEmpty().withMessage(MESSAGES.VALIDATION.PASSWORD_REQUIRED)
 ], authController.login);
+
+// @route   POST /api/auth/logout
+// @desc    Logout user (invalidates all active JWT tokens)
+// @access  Private
+router.post('/logout', protect, authController.logout);
 
 // @route   GET /api/auth/me
 // @desc    Get current user
@@ -88,7 +93,7 @@ router.delete('/wishlist/:productId', protect, validateObjectId('productId'), au
 // @route   POST /api/auth/forgot-password
 // @desc    Send password reset code to email
 // @access  Public
-router.post('/forgot-password', loginLimiter, [
+router.post('/forgot-password', forgotPasswordLimiter, [
   body('email').isEmail().withMessage(MESSAGES.VALIDATION.EMAIL_INVALID)
 ], authController.forgotPassword);
 

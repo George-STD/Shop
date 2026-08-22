@@ -10,10 +10,10 @@ const settingsSchema = new mongoose.Schema(
     },
     loyalty: {
       enabled: { type: Boolean, default: true },
-      pointsPerEgpSpent: { type: Number, default: 1, min: 0 },
-      pointsPerReview: { type: Number, default: 50, min: 0 },
-      egpPerPointRedeemed: { type: Number, default: 0.1, min: 0 }, // 100 points = 10 EGP
-      minPointsToRedeem: { type: Number, default: 100, min: 0 }
+      pointsPerEgpSpent: { type: Number, default: 1, min: 0, max: 100 },
+      pointsPerReview: { type: Number, default: 50, min: 0, max: 10000 },
+      egpPerPointRedeemed: { type: Number, default: 0.1, min: 0, max: 10 }, // 100 points = 10 EGP
+      minPointsToRedeem: { type: Number, default: 100, min: 0, max: 100000 }
     }
   },
   { timestamps: true }

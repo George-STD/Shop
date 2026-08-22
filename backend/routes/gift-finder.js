@@ -11,7 +11,8 @@ let _aiClient = null;
 function getAiClient() {
   if (!_aiClient) {
     const { GoogleGenAI } = require('@google/genai');
-    _aiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const apiKey = process.env.GEMINI_PUBLIC_API_KEY || process.env.GEMINI_API_KEY;
+    _aiClient = new GoogleGenAI({ apiKey });
   }
   return _aiClient;
 }

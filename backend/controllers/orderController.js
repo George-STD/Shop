@@ -136,6 +136,10 @@ const buildOrderItems = (items, productMap) => {
     subtotal += itemSubtotal;
   }
 
+  if (subtotal < 0) {
+    throw createClientError('حدث خطأ في حساب السعر. يرجى التواصل مع الدعم الفني.');
+  }
+
   // Validate box constraints
   for (const count of boxCounts.values()) {
     if (count < CONFIG.BUSINESS.BOX_MIN_ITEMS) {
@@ -156,8 +160,12 @@ const buildOrderData = async ({ userId, guestEmail, orderItems, subtotal, boxGro
   const {
     shippingAddress, billingAddress, paymentMethod, deliveryType,
     scheduledDate, scheduledTime, isGift, giftMessage, giftRecipient,
-    hidePrice, customerNote, pointsToRedeem
+    hidePrice, customerNote, pointsToRedeem, idempotencyKey
   } = req.body;
+
+  const scopedIdempotencyKey = idempotencyKey
+    ? `${userId || guestEmail || 'guest'}:${String(idempotencyKey).trim()}`
+    : undefined;
 
   const totalBoxPrice = boxGroups.size * CONFIG.BUSINESS.BOX_BASE_PRICE_EGP;
   subtotal += totalBoxPrice;
@@ -209,6 +217,7 @@ const buildOrderData = async ({ userId, guestEmail, orderItems, subtotal, boxGro
   return {
     user: userId,
     guestEmail: req.user?.email || guestEmail || undefined,
+    idempotencyKey: scopedIdempotencyKey,
     items: orderItems,
     shippingAddress, billingAddress, subtotal, shippingCost, total,
     pointsRedeemed, pointsDiscount,
@@ -366,13 +375,25 @@ exports.createOrder = asyncHandler(async (req, res) => {
   }
 
   const userId = req.user._id;
-  const { items, guestEmail } = req.body;
+  const { items, guestEmail, idempotencyKey } = req.body;
 
   if (!items || items.length === 0) {
     return sendBadRequest(res, MESSAGES.ORDERS.NO_ITEMS);
   }
   if (guestEmail && req.user?.email && guestEmail.toLowerCase() !== req.user.email.toLowerCase()) {
     return sendBadRequest(res, MESSAGES.ORDERS.EMAIL_MISMATCH);
+  }
+
+  // Check idempotency upfront to avoid re-running order creation / deducting stock twice
+  const scopedIdempotencyKey = idempotencyKey
+    ? `${userId || guestEmail || 'guest'}:${String(idempotencyKey).trim()}`
+    : null;
+
+  if (scopedIdempotencyKey) {
+    const existingOrder = await Order.findOne({ idempotencyKey: scopedIdempotencyKey });
+    if (existingOrder) {
+      return sendSuccess(res, { data: existingOrder, message: MESSAGES.ORDERS.CREATED });
+    }
   }
 
   // --- Attempt with transaction ---
@@ -464,12 +485,29 @@ const rollbackLoyaltyPoints = async (userId, pointsRedeemed) => {
       return sendError(res, { message: error.message, statusCode: error.statusCode, errors: error.errors });
     }
 
+    if (error?.code === 11000 && (error.keyPattern?.idempotencyKey || error.message?.includes('idempotencyKey'))) {
+      if (scopedIdempotencyKey) {
+        const existingOrder = await Order.findOne({ idempotencyKey: scopedIdempotencyKey });
+        if (existingOrder) {
+          return sendSuccess(res, { data: existingOrder, message: MESSAGES.ORDERS.CREATED });
+        }
+      }
+    }
+
     if (isTransactionNotSupportedError(error)) {
       try {
         order = await createWithoutSession();
       } catch (fallbackError) {
         if (fallbackError?.isClientError) {
           return sendError(res, { message: fallbackError.message, statusCode: fallbackError.statusCode, errors: fallbackError.errors });
+        }
+        if (fallbackError?.code === 11000 && (fallbackError.keyPattern?.idempotencyKey || fallbackError.message?.includes('idempotencyKey'))) {
+          if (scopedIdempotencyKey) {
+            const existingOrder = await Order.findOne({ idempotencyKey: scopedIdempotencyKey });
+            if (existingOrder) {
+              return sendSuccess(res, { data: existingOrder, message: MESSAGES.ORDERS.CREATED });
+            }
+          }
         }
         console.error('Order creation error:', fallbackError);
         return sendError(res, { message: MESSAGES.ORDERS.CREATE_ERROR });

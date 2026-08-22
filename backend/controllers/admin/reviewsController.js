@@ -1,4 +1,5 @@
 const Review = require('../../models/Review');
+const { logAudit } = require('../../utils/auditLogger');
 const asyncHandler = require('../../utils/asyncHandler');
 const { parsePagination, buildPaginationMeta } = require('../../utils/helpers');
 
@@ -29,15 +30,31 @@ exports.getReviews = asyncHandler(async (req, res) => {
 }, 'حدث خطأ أثناء جلب التقييمات');
 
 exports.approveReview = asyncHandler(async (req, res) => {
+  const existingReview = await Review.findById(req.params.id);
+  if (!existingReview) return res.status(404).json({ success: false, message: 'التقييم غير موجود' });
+
+  const isApproved = Boolean(req.body.isApproved);
   const review = await Review.findByIdAndUpdate(
     req.params.id,
-    { isApproved: req.body.isApproved },
+    { isApproved },
     { new: true }
   );
-  if (!review) return res.status(404).json({ success: false, message: 'التقييم غير موجود' });
+
+  if (req.user?._id) {
+    logAudit({
+      entityType: 'Product',
+      entityId: review.product?._id || review.product,
+      entityName: `Review #${review._id}`,
+      action: 'STATUS_CHANGE',
+      adminId: req.user._id,
+      changes: { isApproved: { old: existingReview.isApproved, new: isApproved } },
+      reason: isApproved ? 'Admin approved review' : 'Admin unapproved review'
+    });
+  }
+
   res.json({
     success: true,
-    message: req.body.isApproved ? 'تم اعتماد التقييم' : 'تم رفض التقييم',
+    message: isApproved ? 'تم اعتماد التقييم' : 'تم إلغاء اعتماد التقييم',
     data: review
   });
 }, 'حدث خطأ أثناء تحديث التقييم');
@@ -45,5 +62,18 @@ exports.approveReview = asyncHandler(async (req, res) => {
 exports.deleteReview = asyncHandler(async (req, res) => {
   const review = await Review.findByIdAndDelete(req.params.id);
   if (!review) return res.status(404).json({ success: false, message: 'التقييم غير موجود' });
+
+  if (req.user?._id) {
+    logAudit({
+      entityType: 'Product',
+      entityId: review.product?._id || review.product,
+      entityName: `Review #${review._id}`,
+      action: 'DELETE',
+      adminId: req.user._id,
+      changes: { deleted: true },
+      reason: 'Admin deleted review'
+    });
+  }
+
   res.json({ success: true, message: 'تم حذف التقييم' });
 }, 'حدث خطأ أثناء حذف التقييم');

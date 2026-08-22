@@ -45,4 +45,11 @@ const categorySchema = new mongoose.Schema({
   timestamps: true
 });
 
+categorySchema.pre('save', function(next) {
+  if (this.parent && this._id && this.parent.equals(this._id)) {
+    return next(new Error('لا يمكن أن تكون الفئة أباً لنفسها'));
+  }
+  next();
+});
+
 module.exports = mongoose.model('Category', categorySchema);

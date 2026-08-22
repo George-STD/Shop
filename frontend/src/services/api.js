@@ -86,6 +86,7 @@ export const categoriesAPI = {
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
+  logout: () => api.post('/auth/logout'),
   verifyEmail: (data) => api.post('/auth/verify-email', data),
   resendCode: (data) => api.post('/auth/resend-code', data),
   forgotPassword: (data) => api.post('/auth/forgot-password', data),

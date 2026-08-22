@@ -17,3 +17,5 @@ const logAudit = async ({ entityType, entityId, entityName, action, adminId, cha
 };
 
 module.exports = logAudit;
+module.exports.logAudit = logAudit;
+module.exports.default = logAudit;

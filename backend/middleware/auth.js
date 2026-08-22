@@ -146,6 +146,18 @@ const loginLimiter = rateLimit({
   skipSuccessfulRequests: true, // Don't count successful logins
 });
 
+// Dedicated rate limiter for forgot-password requests (no skipSuccessfulRequests)
+const forgotPasswordLimiter = rateLimit({
+  windowMs: CONFIG.RATE_LIMIT.LOGIN.WINDOW_MS,
+  max: CONFIG.RATE_LIMIT.LOGIN.MAX_REQUESTS,
+  message: {
+    success: false,
+    message: MESSAGES.RATE_LIMIT.LOGIN
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Rate limiter for verification code attempts (brute-force protection)
 const verifyLimiter = rateLimit({
   windowMs: CONFIG.RATE_LIMIT.VERIFY.WINDOW_MS,
@@ -182,13 +194,25 @@ const aiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Dedicated Public Rate Limiter for Gift Finder AI routes (Prevents quota exhaustion by anonymous users)
+// Public rate limiter for Gift Finder AI
 const publicAiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 6, // 6 requests per 15 min per IP
+  windowMs: CONFIG.RATE_LIMIT.AI.WINDOW_MS,
+  max: 6, // 6 requests per 15 minutes for public users
   message: {
     success: false,
-    message: MESSAGES.RATE_LIMIT.AI
+    message: 'تم تجاوز الحد المسموح به لطلبات الذكاء الاصطناعي. يرجى المحاولة بعد 15 دقيقة.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Strict rate limiter for image uploads (Cloudinary protection)
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  message: {
+    success: false,
+    message: 'تم تجاوز الحد الأقصى لعمليات رفع الصور. حاول لاحقاً.'
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -215,8 +239,10 @@ const validateObjectId = (paramName = 'id') => {
 // =====================================================
 // SANITIZE INPUT - XSS & NoSQL Injection prevention
 // Strips dangerous HTML tags/attributes while preserving
-// plain-text angle brackets (e.g. "هدية <3", "price <500")
+// plain-text angle brackets and keeping secrets unmutated
 // =====================================================
+const CREDENTIAL_FIELDS = new Set(['password', 'currentPassword', 'newPassword', 'confirmPassword']);
+
 const sanitizeInput = (req, res, next) => {
   const sanitize = (obj) => {
     if (!obj || typeof obj !== 'object') return;
@@ -226,6 +252,9 @@ const sanitizeInput = (req, res, next) => {
         delete obj[key];
         continue;
       }
+      // Never mutate raw passwords or secrets before hashing
+      if (CREDENTIAL_FIELDS.has(key)) continue;
+
       if (typeof obj[key] === 'string') {
         obj[key] = obj[key]
           // Strip dangerous tag blocks (script, style, iframe, object, embed) and their contents
@@ -281,10 +310,12 @@ module.exports = {
   apiLimiter,
   adminLimiter,
   loginLimiter,
+  forgotPasswordLimiter,
   verifyLimiter,
   registerLimiter,
   aiLimiter,
   publicAiLimiter,
+  uploadLimiter,
   validateObjectId,
   sanitizeInput,
   logAdminAction

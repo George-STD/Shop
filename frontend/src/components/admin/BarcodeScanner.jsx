@@ -7,8 +7,9 @@ const BarcodeScanner = ({ onScan, onClose }) => {
   useEffect(() => {
     if (typeof window !== 'undefined' && !window.BarcodeDetector) {
       const script = document.createElement('script');
-      script.src = 'https://fastly.jsdelivr.net/npm/barcode-detector@3/dist/iife/polyfill.min.js';
+      script.src = 'https://fastly.jsdelivr.net/npm/barcode-detector@3.0.6/dist/iife/polyfill.min.js';
       script.async = true;
+      script.crossOrigin = 'anonymous';
       document.body.appendChild(script);
     }
   }, []);

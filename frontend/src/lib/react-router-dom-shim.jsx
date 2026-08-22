@@ -51,11 +51,21 @@ export function useNavigate() {
 export function useLocation() {
   const pathname = usePathname() || '/';
   const search = typeof window !== 'undefined' ? window.location.search || '' : '';
+  
+  // Read and consume navigationState so it doesn't linger across unrelated future routes
+  const state = navigationState;
+  
+  useEffect(() => {
+    if (navigationState !== null) {
+      navigationState = null;
+    }
+  }, [pathname]);
+
   return {
     pathname,
     search,
     hash: '',
-    state: navigationState,
+    state,
   };
 }
 
@@ -131,13 +141,16 @@ export function useSearchParams() {
   return [current, setSearchParams];
 }
 
-export function Navigate({ to, replace }) {
+export function Navigate({ to, replace, state }) {
   const router = useRouter();
 
   useEffect(() => {
+    if (state !== undefined) {
+      navigationState = state;
+    }
     if (replace) router.replace(to);
     else router.push(to);
-  }, [router, to, replace]);
+  }, [router, to, replace, state]);
 
   return null;
 }

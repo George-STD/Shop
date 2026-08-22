@@ -3,14 +3,24 @@
  * All configurable values should be defined here
  */
 
+const parseCorsOrigins = () => {
+  const raw = process.env.CORS_ORIGINS;
+  const origins = raw 
+    ? raw.split(',').map(s => s.trim()).filter(Boolean) 
+    : ['https://www.foryo.me', 'https://foryo.me'];
+
+  if (origins.includes('*')) {
+    throw new Error('SECURITY ERROR: Wildcard origin (*) is strictly forbidden in CORS when credentials are enabled.');
+  }
+  return origins;
+};
+
 const CONFIG = {
   // =====================================================
   // CORS SETTINGS
   // =====================================================
   CORS: {
-    ALLOWED_ORIGINS: process.env.CORS_ORIGINS 
-      ? process.env.CORS_ORIGINS.split(',') 
-      : ['https://www.foryo.me', 'https://foryo.me'],
+    ALLOWED_ORIGINS: parseCorsOrigins(),
     METHODS: ['GET', 'POST', 'PUT', 'DELETE'],
     CREDENTIALS: true,
   },

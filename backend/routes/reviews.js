@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 const Review = require('../models/Review');
 const Order = require('../models/Order');
@@ -9,6 +10,17 @@ const Product = require('../models/Product');
 const { protect, apiLimiter } = require('../middleware/auth');
 const { MESSAGES, CONFIG } = require('../constants');
 const { sendSuccess, sendError, sendNotFound, sendForbidden, sendBadRequest, sendCreated } = require('../utils/response');
+
+const orderInfoLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: {
+    success: false,
+    message: 'تم تجاوز الحد المسموح به لطلبات الاستعلام عن الطلب'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Optional auth helper — returns userId or null (for guest reviews)
 const getOptionalUserId = (req) => {
@@ -179,20 +191,29 @@ router.post('/', apiLimiter, [
         const User = require('../models/User');
         const settings = await Settings.getSettings();
         if (settings?.loyalty?.enabled && settings?.loyalty?.pointsPerReview > 0) {
-          const pointsAwarded = settings.loyalty.pointsPerReview;
-          await User.updateOne(
-            { _id: userId },
-            {
-              $inc: { loyaltyPoints: pointsAwarded },
-              $push: {
-                pointsHistory: {
-                  points: pointsAwarded,
-                  reason: `مكافأة تقييم منتج موثوق`,
-                  type: 'EARNED'
+          const rewardReason = `مكافأة تقييم موثوق للمنتج ${productId}`;
+          // Check immutable pointsHistory to prevent point farming via delete/recreate cycles
+          const alreadyAwarded = await User.exists({
+            _id: userId,
+            'pointsHistory.reason': rewardReason
+          });
+
+          if (!alreadyAwarded) {
+            const pointsAwarded = settings.loyalty.pointsPerReview;
+            await User.updateOne(
+              { _id: userId },
+              {
+                $inc: { loyaltyPoints: pointsAwarded },
+                $push: {
+                  pointsHistory: {
+                    points: pointsAwarded,
+                    reason: rewardReason,
+                    type: 'EARNED'
+                  }
                 }
               }
-            }
-          );
+            );
+          }
         }
       } catch (loyaltyErr) {
         console.error('Loyalty points for review error:', loyaltyErr);
@@ -232,11 +253,12 @@ router.put('/:id', protect, async (req, res) => {
     const { rating, title, comment, pros, cons } = req.body;
 
     review.rating = rating || review.rating;
-    review.title = title || review.title;
+    review.title = title !== undefined ? title : review.title;
     review.comment = comment || review.comment;
-    review.pros = pros || review.pros;
-    review.cons = cons || review.cons;
+    review.pros = pros !== undefined ? pros : review.pros;
+    review.cons = cons !== undefined ? cons : review.cons;
     review.isEdited = true;
+    review.isApproved = false; // Re-moderation required after content edit
 
     await review.save();
 
@@ -315,7 +337,7 @@ const maskEmail = (email) => {
 // @route   GET /api/reviews/order-info/:orderNumber
 // @desc    Get order info for review page (with masked email for privacy)
 // @access  Public
-router.get('/order-info/:orderNumber', async (req, res) => {
+router.get('/order-info/:orderNumber', orderInfoLimiter, async (req, res) => {
   try {
     const { orderNumber } = req.params;
     const order = await Order.findOne({

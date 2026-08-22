@@ -119,6 +119,13 @@ const userSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  wallet: {
+    balance: {
+      type: Number,
+      default: 0,
+      min: 0
+    }
+  },
   pointsHistory: [{
     points: { type: Number, required: true },
     reason: { type: String, required: true },

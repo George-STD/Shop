@@ -1,5 +1,7 @@
 const Order = require('../../models/Order');
 const User = require('../../models/User');
+const Product = require('../../models/Product');
+const { logAudit } = require('../../utils/auditLogger');
 const { sendTrackingEmail, sendDeliveredReviewEmail } = require('../../utils/mailer');
 const asyncHandler = require('../../utils/asyncHandler');
 const { escapeRegex, parsePagination, buildPaginationMeta } = require('../../utils/helpers');
@@ -63,24 +65,32 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
     const settings = await Settings.getSettings();
 
     if (status === 'delivered' && previousStatus !== 'delivered' && order.user) {
-      if (settings?.loyalty?.enabled && (order.pointsEarned || 0) === 0) {
+      if (settings?.loyalty?.enabled) {
         const earned = Math.floor(order.total * (settings.loyalty.pointsPerEgpSpent || 1));
         if (earned > 0) {
-          order.pointsEarned = earned;
-          await User.updateOne(
-            { _id: order.user },
-            {
-              $inc: { loyaltyPoints: earned },
-              $push: {
-                pointsHistory: {
-                  points: earned,
-                  reason: `مكافأة إتمام الطلب #${order.orderNumber || order._id}`,
-                  type: 'EARNED'
-                }
-              }
-            },
+          // Atomic claim to prevent double-awarding loyalty points on concurrent status updates
+          const claim = await Order.updateOne(
+            { _id: order._id, pointsEarned: { $in: [0, null] } },
+            { $set: { pointsEarned: earned } },
             opts
           );
+          if (claim.modifiedCount === 1) {
+            order.pointsEarned = earned;
+            await User.updateOne(
+              { _id: order.user },
+              {
+                $inc: { loyaltyPoints: earned },
+                $push: {
+                  pointsHistory: {
+                    points: earned,
+                    reason: `مكافأة إتمام الطلب #${order.orderNumber || order._id}`,
+                    type: 'EARNED'
+                  }
+                }
+              },
+              opts
+            );
+          }
         }
       }
     } else if ((status === 'cancelled' || status === 'returned') && previousStatus !== 'cancelled' && previousStatus !== 'returned') {
@@ -88,8 +98,33 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
       await handleOrderLoyaltyRefundOrDeduction(order, opts.session);
       await rollbackStock(order.items, opts.session);
     } else if ((previousStatus === 'cancelled' || previousStatus === 'returned') && status !== 'cancelled' && status !== 'returned') {
-      const { deductStock } = require('../orderController');
-      await deductStock(order.items, opts.session);
+      // Un-cancelling/un-returning: decrement stock with floor at 0 using atomic aggregation
+      for (const item of order.items) {
+        if (!item.product) continue;
+        if (item.isReadyBox && item.includedProducts && item.includedProducts.length > 0) {
+          for (const boxItem of item.includedProducts) {
+            const subQty = (boxItem.quantity || 1) * item.quantity;
+            await Product.updateOne(
+              { _id: boxItem.product?._id || boxItem.product },
+              [{ $set: {
+                  stock: { $max: [0, { $subtract: ['$stock', subQty] }] },
+                  salesCount: { $add: ['$salesCount', subQty] }
+              }}],
+              opts
+            );
+          }
+          await Product.updateOne({ _id: item.product }, { $inc: { salesCount: item.quantity } }, opts);
+        } else {
+          await Product.updateOne(
+            { _id: item.product },
+            [{ $set: {
+                stock: { $max: [0, { $subtract: ['$stock', item.quantity] }] },
+                salesCount: { $add: ['$salesCount', item.quantity] }
+            }}],
+            opts
+          );
+        }
+      }
     }
 
     await order.save(opts);

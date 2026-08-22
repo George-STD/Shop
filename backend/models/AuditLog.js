@@ -33,9 +33,9 @@ const auditLogSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for faster queries & 30-day automatic TTL expiration
+// Index for faster queries & 365-day (1 year) automatic retention
 auditLogSchema.index({ entityType: 1, action: 1, createdAt: -1 });
 auditLogSchema.index({ entityId: 1, createdAt: -1 });
-auditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
+auditLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 365 * 24 * 60 * 60 });
 
 module.exports = mongoose.model('AuditLog', auditLogSchema);

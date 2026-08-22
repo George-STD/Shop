@@ -1,6 +1,7 @@
 const User = require('../../models/User');
 const Order = require('../../models/Order');
 const { validationResult } = require('express-validator');
+const { logAudit } = require('../../utils/auditLogger');
 const asyncHandler = require('../../utils/asyncHandler');
 const { escapeRegex, parsePagination, buildPaginationMeta } = require('../../utils/helpers');
 
@@ -68,15 +69,36 @@ exports.updateUser = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'لا يمكنك تعطيل حسابك' });
   }
 
+  const existingUser = await User.findById(req.params.id);
+  if (!existingUser) return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+
   const allowedUpdates = ['firstName', 'lastName', 'email', 'phone', 'role', 'isActive'];
   const updates = {};
+  const changes = {};
+
   allowedUpdates.forEach(field => {
-    if (req.body[field] !== undefined) updates[field] = req.body[field];
+    if (req.body[field] !== undefined) {
+      updates[field] = req.body[field];
+      if (req.body[field] !== existingUser[field]) {
+        changes[field] = { old: existingUser[field], new: req.body[field] };
+      }
+    }
   });
 
   const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true })
     .select('-password -resetPasswordToken -resetPasswordExpires');
-  if (!user) return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+
+  if (Object.keys(changes).length > 0 && req.user?._id) {
+    logAudit({
+      entityType: 'User',
+      entityId: user._id,
+      entityName: `${user.firstName} ${user.lastName}`,
+      action: 'UPDATE',
+      adminId: req.user._id,
+      changes,
+      reason: req.body.reason || 'Admin user update'
+    });
+  }
 
   res.json({ success: true, message: 'تم تحديث بيانات المستخدم', data: user });
 }, 'حدث خطأ أثناء تحديث بيانات المستخدم');
@@ -85,7 +107,22 @@ exports.deleteUser = asyncHandler(async (req, res) => {
   if (req.params.id === req.user._id.toString()) {
     return res.status(400).json({ success: false, message: 'لا يمكنك حذف حسابك' });
   }
+  const existingUser = await User.findById(req.params.id);
+  if (!existingUser) return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+
   const user = await User.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
-  if (!user) return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+
+  if (req.user?._id) {
+    logAudit({
+      entityType: 'User',
+      entityId: user._id,
+      entityName: `${user.firstName} ${user.lastName}`,
+      action: 'DELETE',
+      adminId: req.user._id,
+      changes: { isActive: { old: existingUser.isActive, new: false } },
+      reason: req.body.reason || 'Admin user deactivation'
+    });
+  }
+
   res.json({ success: true, message: 'تم تعطيل حساب المستخدم' });
 }, 'حدث خطأ أثناء حذف المستخدم');

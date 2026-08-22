@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const cloudinary = require('../config/cloudinary');
-const { protect, admin } = require('../middleware/auth');
+const { protect, admin, uploadLimiter } = require('../middleware/auth');
 
 // Setup multer memory storage
 const storage = multer.memoryStorage();
@@ -31,7 +31,7 @@ const upload = multer({
 // @route   POST /api/upload
 // @desc    Upload an image
 // @access  Private/Admin
-router.post('/', protect, admin, (req, res, next) => {
+router.post('/', uploadLimiter, protect, admin, (req, res, next) => {
   upload.single('image')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {

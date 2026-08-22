@@ -4,6 +4,14 @@ const RESEND_API_KEY = process.env.SMTP_PASS; // Resend API key
 const FROM_EMAIL = process.env.SMTP_FROM || 'For You <no-reply@foryo.me>';
 const BRAND_NAME = 'For You - فور يو';
 
+// Helper to escape HTML characters in dynamic user content embedded in emails
+const escapeHtml = (str) => String(str ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
 /**
  * Send email via Resend HTTP API
  */
@@ -58,6 +66,10 @@ async function sendEmail({ to, subject, html }) {
 async function sendOrderConfirmationEmail(to, order) {
   const subject = `تأكيد طلبك من ${BRAND_NAME}`;
   const isInstaPay = order.paymentMethod === 'instapay';
+  const safeOrderNum = escapeHtml(order.orderNumber || order._id);
+  const safeTotal = escapeHtml(order.total);
+  const safeInstaPayNum = escapeHtml(process.env.INSTAPAY_NUMBER || '+201286153004');
+
   const html = `
     <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #eee;">
       <div style="background: linear-gradient(135deg, #a855f7, #ec4899); padding: 24px; text-align: center;">
@@ -65,15 +77,15 @@ async function sendOrderConfirmationEmail(to, order) {
       </div>
       <div style="padding: 32px 24px;">
         <h2 style="color: #1f2937; margin-top: 0;">شكرًا لطلبك! 🎁</h2>
-        <p style="color: #6b7280; font-size: 15px;">رقم الطلب: <b style="color: #1f2937;">${order.orderNumber || order._id}</b></p>
-        <p style="color: #6b7280; font-size: 15px;">المجموع الإجمالي: <b style="color: #a855f7;">${order.total} ج.م</b></p>
+        <p style="color: #6b7280; font-size: 15px;">رقم الطلب: <b style="color: #1f2937;">${safeOrderNum}</b></p>
+        <p style="color: #6b7280; font-size: 15px;">المجموع الإجمالي: <b style="color: #a855f7;">${safeTotal} ج.م</b></p>
         <p style="color: #6b7280; font-size: 15px;">طريقة الدفع: <b>${isInstaPay ? 'إنستاباي (InstaPay)' : 'الدفع عند الاستلام (كاش)'}</b></p>
         
         ${isInstaPay ? `
           <div style="margin: 20px 0; padding: 20px; background-color: #fdf4ff; border: 2px dashed #c084fc; border-radius: 12px; text-align: center;">
             <p style="margin: 0 0 6px 0; color: #7e22ce; font-weight: bold; font-size: 16px;">📱 تفاصيل الدفع عبر إنستاباي (InstaPay)</p>
-            <p style="margin: 8px 0; color: #581c87; font-size: 22px; font-weight: 800; letter-spacing: 1px; direction: ltr;">${process.env.INSTAPAY_NUMBER || '+201286153004'}</p>
-            <p style="margin: 6px 0 0 0; color: #6b21a8; font-size: 13px; line-height: 1.5;">يرجى تحويل المبلغ الإجمالي (<b>${order.total} ج.م</b>) إلى هذا الرقم عبر تطبيق InstaPay لإتمام ومعالجة الطلب.</p>
+            <p style="margin: 8px 0; color: #581c87; font-size: 22px; font-weight: 800; letter-spacing: 1px; direction: ltr;">${safeInstaPayNum}</p>
+            <p style="margin: 6px 0 0 0; color: #6b21a8; font-size: 13px; line-height: 1.5;">يرجى تحويل المبلغ الإجمالي (<b>${safeTotal} ج.م</b>) إلى هذا الرقم عبر تطبيق InstaPay لإتمام ومعالجة الطلب.</p>
           </div>
         ` : ''}
 
@@ -88,7 +100,8 @@ async function sendOrderConfirmationEmail(to, order) {
  * Send email verification code
  */
 async function sendVerificationEmail(to, code) {
-  const subject = `${code} - كود تأكيد حسابك في ${BRAND_NAME}`;
+  const safeCode = escapeHtml(code);
+  const subject = `${safeCode} - كود تأكيد حسابك في ${BRAND_NAME}`;
   const html = `
     <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #eee;">
       <div style="background: linear-gradient(135deg, #a855f7, #ec4899); padding: 24px; text-align: center;">
@@ -98,7 +111,7 @@ async function sendVerificationEmail(to, code) {
         <h2 style="color: #1f2937; margin-top: 0;">تأكيد البريد الإلكتروني</h2>
         <p style="color: #6b7280; font-size: 16px;">أدخل الكود التالي لتأكيد حسابك:</p>
         <div style="background: linear-gradient(135deg, #f3e8ff, #fce7f3); border-radius: 12px; padding: 20px; margin: 24px 0;">
-          <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #7c3aed;">${code}</span>
+          <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #7c3aed;">${safeCode}</span>
         </div>
         <p style="color: #9ca3af; font-size: 14px;">الكود صالح لمدة 10 دقائق</p>
         <p style="color: #9ca3af; font-size: 13px;">إذا لم تقم بإنشاء حساب، تجاهل هذا البريد.</p>
@@ -112,7 +125,8 @@ async function sendVerificationEmail(to, code) {
  * Send password reset code
  */
 async function sendPasswordResetEmail(to, code) {
-  const subject = `${code} - إعادة تعيين كلمة المرور في ${BRAND_NAME}`;
+  const safeCode = escapeHtml(code);
+  const subject = `${safeCode} - إعادة تعيين كلمة المرور في ${BRAND_NAME}`;
   const html = `
     <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #eee;">
       <div style="background: linear-gradient(135deg, #a855f7, #ec4899); padding: 24px; text-align: center;">
@@ -122,7 +136,7 @@ async function sendPasswordResetEmail(to, code) {
         <h2 style="color: #1f2937; margin-top: 0;">إعادة تعيين كلمة المرور</h2>
         <p style="color: #6b7280; font-size: 16px;">أدخل الكود التالي لإعادة تعيين كلمة المرور:</p>
         <div style="background: linear-gradient(135deg, #f3e8ff, #fce7f3); border-radius: 12px; padding: 20px; margin: 24px 0;">
-          <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #7c3aed;">${code}</span>
+          <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #7c3aed;">${safeCode}</span>
         </div>
         <p style="color: #9ca3af; font-size: 14px;">الكود صالح لمدة 10 دقائق</p>
         <p style="color: #9ca3af; font-size: 13px;">إذا لم تطلب إعادة تعيين كلمة المرور، تجاهل هذا البريد.</p>
@@ -145,6 +159,9 @@ function generateVerificationCode() {
  */
 async function sendTrackingEmail(to, order, trackingNumber) {
   const subject = `طلبك في الطريق إليك! - ${BRAND_NAME}`;
+  const safeOrderNum = escapeHtml(order.orderNumber || order._id);
+  const safeTracking = escapeHtml(trackingNumber);
+
   const html = `
     <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #eee;">
       <div style="background: linear-gradient(135deg, #a855f7, #ec4899); padding: 24px; text-align: center;">
@@ -152,10 +169,10 @@ async function sendTrackingEmail(to, order, trackingNumber) {
       </div>
       <div style="padding: 32px 24px;">
         <h2 style="color: #1f2937; margin-top: 0;">طلبك تم شحنه! 🚚</h2>
-        <p style="color: #6b7280;">رقم الطلب: <b>${order.orderNumber || order._id}</b></p>
+        <p style="color: #6b7280;">رقم الطلب: <b>${safeOrderNum}</b></p>
         <div style="background: linear-gradient(135deg, #f3e8ff, #fce7f3); border-radius: 12px; padding: 20px; margin: 24px 0; text-align: center;">
           <p style="color: #6b7280; margin: 0 0 8px 0;">رمز التتبع الخاص بك:</p>
-          <span style="font-size: 24px; font-weight: bold; color: #7c3aed;">${trackingNumber}</span>
+          <span style="font-size: 24px; font-weight: bold; color: #7c3aed;">${safeTracking}</span>
         </div>
         <p style="color: #6b7280;">يمكنك استخدام رمز التتبع لمتابعة حالة شحنتك من خلال صفحة <a href="https://foryo.me/track-order" style="color: #7c3aed;">تتبع الطلب</a>.</p>
         <p style="color: #6b7280;">سنقوم بتوصيل طلبك في أقرب وقت ممكن.</p>
@@ -169,9 +186,10 @@ async function sendTrackingEmail(to, order, trackingNumber) {
  * Send order delivered review request email
  */
 async function sendDeliveredReviewEmail(to, order) {
-  const customerName = order.shippingAddress?.firstName || order.user?.firstName || 'عميلنا العزيز';
-  const orderNum = order.orderNumber || order._id;
-  const reviewUrl = `https://www.foryo.me/review-order/${orderNum}`;
+  const rawCustomerName = order.shippingAddress?.firstName || order.user?.firstName || 'عميلنا العزيز';
+  const customerName = escapeHtml(rawCustomerName);
+  const orderNum = escapeHtml(order.orderNumber || order._id);
+  const reviewUrl = `https://www.foryo.me/review-order/${encodeURIComponent(order.orderNumber || order._id)}`;
   const subject = `أهلاً ${customerName}، شاركنا رأيك في تجربتك وبوكس الهدايا 🎁 - ${BRAND_NAME}`;
 
   const html = `
@@ -216,6 +234,7 @@ async function sendDeliveredReviewEmail(to, order) {
 }
 
 module.exports = { 
+  escapeHtml,
   sendOrderConfirmationEmail, 
   sendTrackingEmail,
   sendDeliveredReviewEmail,
