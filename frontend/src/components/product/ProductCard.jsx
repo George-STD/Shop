@@ -13,6 +13,7 @@ import { authAPI } from '../../services/api';
  */
 const ProductCard = ({ product, priority = false }) => {
   const [mounted, setMounted] = useState(false);
+  const [wishlistPending, setWishlistPending] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,10 +33,8 @@ const ProductCard = ({ product, priority = false }) => {
     )
   );
 
-  if (!product) return null;
-
   // 2. Stable Action Handlers
-  const handleAddToCart = (e) => {
+  const handleAddToCart = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -51,9 +50,9 @@ const ProductCard = ({ product, priority = false }) => {
     }
 
     toast.success(STRINGS.PRODUCT.ADDED_TO_CART);
-  };
+  }, [addItem, product]);
 
-  const handleToggleWishlist = (e) => {
+  const handleToggleWishlist = useCallback(async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -62,17 +61,25 @@ const ProductCard = ({ product, priority = false }) => {
       navigate('/account');
       return;
     }
+    if (wishlistPending) return;
 
-    if (inWishlist) {
-      removeFromWishlist(product._id);
-      authAPI.removeFromWishlist(product._id).catch(() => {});
-      toast.success(STRINGS.PRODUCT.REMOVED_FROM_WISHLIST);
-    } else {
-      addToWishlist(product);
-      authAPI.addToWishlist(product._id).catch(() => {});
-      toast.success(STRINGS.PRODUCT.ADDED_TO_WISHLIST);
+    const wasInWishlist = inWishlist;
+    setWishlistPending(true);
+    if (wasInWishlist) removeFromWishlist(product._id);
+    else addToWishlist(product);
+
+    try {
+      if (wasInWishlist) await authAPI.removeFromWishlist(product._id);
+      else await authAPI.addToWishlist(product._id);
+      toast.success(wasInWishlist ? STRINGS.PRODUCT.REMOVED_FROM_WISHLIST : STRINGS.PRODUCT.ADDED_TO_WISHLIST);
+    } catch (_) {
+      if (wasInWishlist) addToWishlist(product);
+      else removeFromWishlist(product._id);
+      toast.error('تعذر تحديث المفضلة. تمت استعادة حالتها السابقة.');
+    } finally {
+      setWishlistPending(false);
     }
-  };
+  }, [addToWishlist, inWishlist, isAuthenticated, navigate, product, removeFromWishlist, wishlistPending]);
 
   const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
   const isOutOfStock = Number(product.stock) === 0;
@@ -82,9 +89,11 @@ const ProductCard = ({ product, priority = false }) => {
   };
 
   const imageUrl =
-    optimizeCloudinaryUrl(product.images?.[0]?.url, 400) ||
-    product.images?.[0]?.url ||
+    optimizeCloudinaryUrl(product?.images?.[0]?.url, 400) ||
+    product?.images?.[0]?.url ||
     '/placeholder-gift.png';
+
+  if (!product) return null;
 
   return (
     <article
@@ -137,6 +146,8 @@ const ProductCard = ({ product, priority = false }) => {
             }`}
             title={inWishlist ? STRINGS.PRODUCT.REMOVE_FROM_WISHLIST : STRINGS.PRODUCT.ADD_TO_WISHLIST}
             aria-label={inWishlist ? STRINGS.PRODUCT.REMOVE_FROM_WISHLIST : STRINGS.PRODUCT.ADD_TO_WISHLIST}
+            aria-busy={wishlistPending}
+            disabled={wishlistPending}
           >
             <FiHeart className={inWishlist ? 'fill-current' : ''} size={18} aria-hidden="true" />
           </button>

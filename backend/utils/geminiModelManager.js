@@ -1,12 +1,7 @@
 /**
- * Smart Gemini Model Manager with automatic multi-tier fallback.
+ * Smart Gemini Model Manager with multi-tier fallback, concurrency limits, and queue bounds.
  *
- * Models are arranged in quality order with graceful degradation:
- * - RPD (Requests Per Day) exhausted  → automatically falls back to next available model
- * - RPM (Requests Per Minute) exhausted on ALL models → returns retryAfterSeconds for client-side backoff
- * - Model not found / 403 / 503 → gracefully handles and continues down the tier cascade
- *
- * Total free-tier capacity: ~580+ requests/day across all models.
+ * Prevents event-loop starvation, unbounded promise closures, and Google 503 rate collisions.
  */
 
 /**
@@ -22,8 +17,13 @@ const MODEL_TIERS = [
 /** In-memory usage tracking per model */
 const modelUsage = {};
 
-/** Concurrency queue promise chain to serialize bursts and prevent 503 rate collisions */
-let generateQueue = Promise.resolve();
+/**
+ * Queue and concurrency control
+ */
+const MAX_CONCURRENT_CALLS = 2;
+const MAX_QUEUE_DEPTH = 20;
+let activeCalls = 0;
+const pendingQueue = [];
 
 /**
  * Returns current UTC date formatted as YYYY-MM-DD
@@ -47,12 +47,21 @@ function getUsage(modelId) {
 }
 
 /**
- * Clears timestamps older than 60 seconds from the rolling minute window
+ * In-place cleanup of expired timestamps older than 60 seconds
  * @param {{ minuteTimestamps: number[] }} usage
  */
 function cleanMinuteWindow(usage) {
   const cutoff = Date.now() - 60_000;
-  usage.minuteTimestamps = usage.minuteTimestamps.filter((t) => t > cutoff);
+  const timestamps = usage.minuteTimestamps;
+  let firstValidIndex = 0;
+
+  while (firstValidIndex < timestamps.length && timestamps[firstValidIndex] <= cutoff) {
+    firstValidIndex++;
+  }
+
+  if (firstValidIndex > 0) {
+    usage.minuteTimestamps = timestamps.slice(firstValidIndex);
+  }
 }
 
 function recordSuccess(modelId) {
@@ -91,107 +100,135 @@ function getModelStatus(tier) {
 }
 
 /**
+ * Executes a single AI generation with concurrency and queue bounds
+ */
+function executeWithQueue(taskFn) {
+  if (activeCalls + pendingQueue.length >= MAX_QUEUE_DEPTH) {
+    const err = new Error('الخادم مشغول حالياً بمعالجة طلبات ذكاء اصطناعي أخرى. يرجى المحاولة بعد لحظات.');
+    err.statusCode = 503;
+    err.retryAfterSeconds = 5;
+    return Promise.reject(err);
+  }
+
+  return new Promise((resolve, reject) => {
+    pendingQueue.push({ taskFn, resolve, reject });
+    processNext();
+  });
+}
+
+function processNext() {
+  if (activeCalls >= MAX_CONCURRENT_CALLS || pendingQueue.length === 0) {
+    return;
+  }
+
+  const { taskFn, resolve, reject } = pendingQueue.shift();
+  activeCalls++;
+
+  const isTest = process.env.NODE_ENV === 'test';
+  const interCallDelay = isTest ? 0 : 200;
+
+  const run = async () => {
+    try {
+      if (interCallDelay > 0) {
+        await new Promise((r) => setTimeout(r, interCallDelay));
+      }
+      const res = await taskFn();
+      resolve(res);
+    } catch (err) {
+      reject(err);
+    } finally {
+      activeCalls--;
+      processNext();
+    }
+  };
+
+  run();
+}
+
+/**
  * Try generating content with automatic model fallback.
  *
  * @param {object} aiClient  – GoogleGenAI instance
  * @param {object} options   – { contents, config } (do NOT include `model`)
- * @returns {{ text: string, modelUsed: string }}
- * @throws Error with `.retryAfterSeconds` (RPM) or `.allDailyExhausted` (RPD)
+ * @returns {Promise<{ text: string, modelUsed: string }>}
  */
 async function generateWithFallback(aiClient, { contents, config }) {
-  let rpmBlockedCount = 0;
-  let rpdExhaustedCount = 0;
+  return executeWithQueue(async () => {
+    let rpmBlockedCount = 0;
+    let rpdExhaustedCount = 0;
 
-  for (const tier of MODEL_TIERS) {
-    const status = getModelStatus(tier);
+    for (const tier of MODEL_TIERS) {
+      const status = getModelStatus(tier);
 
-    if (!status.available) {
-      if (status.reason === 'rpd') rpdExhaustedCount++;
-      if (status.reason === 'rpm') rpmBlockedCount++;
-      continue;
-    }
-
-    try {
-      const response = await new Promise((resolve, reject) => {
-        generateQueue = generateQueue.then(async () => {
-          try {
-            // Add a small 500ms delay between consecutive requests to prevent Google 503s
-            await new Promise(r => setTimeout(r, 500));
-            const res = await aiClient.models.generateContent({
-              model: tier.realId || tier.id,
-              contents,
-              config,
-            });
-            resolve(res);
-          } catch (err) {
-            reject(err);
-          }
-        }).catch(err => reject(err));
-      });
-
-      recordSuccess(tier.id);
-      console.log(`[GeminiManager] ✅ Success with ${tier.id} (daily: ${getUsage(tier.id).dailyCount}/${tier.rpd})`);
-      return { text: response.text, modelUsed: tier.id };
-    } catch (error) {
-      console.log(`[GeminiManager] Error with ${tier.id}:`, error.status, error.message);
-      const is429 =
-        error.status === 429 ||
-        (error.message && error.message.includes('429')) ||
-        (error.message && error.message.toLowerCase().includes('resource_exhausted')) ||
-        (error.status === 503) || // Handle Google 503 Overloaded as a retryable 429
-        (error.status === 400 && error.message && error.message.toLowerCase().includes('quota'));
-
-      // Model not found or no access → skip silently
-      if (error.status === 404 || error.status === 403) {
-        console.log(`[GeminiManager] ⚠️ Model ${tier.id} not available (${error.status}). Skipping...`);
+      if (!status.available) {
+        if (status.reason === 'rpd') rpdExhaustedCount++;
+        if (status.reason === 'rpm') rpmBlockedCount++;
         continue;
       }
 
-      if (is429) {
-        const usage = getUsage(tier.id);
-        // If our daily tracker is close to RPD, assume RPD exhausted
-        if (usage.dailyCount >= tier.rpd - 1) {
-          markRpdExhausted(tier.id, tier);
-          rpdExhaustedCount++;
-          console.log(`[GeminiManager] 🔴 ${tier.id} RPD exhausted (${usage.dailyCount}/${tier.rpd}). Falling back...`);
-        } else {
-          markRpmExhausted(tier.id, tier);
-          rpmBlockedCount++;
-          console.log(`[GeminiManager] 🟡 ${tier.id} RPM exhausted (daily: ${usage.dailyCount}/${tier.rpd}). Falling back...`);
+      try {
+        const response = await aiClient.models.generateContent({
+          model: tier.realId || tier.id,
+          contents,
+          config,
+        });
+
+        recordSuccess(tier.id);
+        console.log(`[GeminiManager] ✅ Success with ${tier.id} (daily: ${getUsage(tier.id).dailyCount}/${tier.rpd})`);
+        return { text: response.text, modelUsed: tier.id };
+      } catch (error) {
+        console.log(`[GeminiManager] Error with ${tier.id}:`, error.status, error.message);
+        const is429 =
+          error.status === 429 ||
+          (error.message && error.message.includes('429')) ||
+          (error.message && error.message.toLowerCase().includes('resource_exhausted')) ||
+          (error.status === 503) ||
+          (error.status === 400 && error.message && error.message.toLowerCase().includes('quota'));
+
+        if (error.status === 404 || error.status === 403) {
+          console.log(`[GeminiManager] ⚠️ Model ${tier.id} not available (${error.status}). Skipping...`);
+          continue;
         }
-        continue;
+
+        if (is429) {
+          const usage = getUsage(tier.id);
+          if (usage.dailyCount >= tier.rpd - 1) {
+            markRpdExhausted(tier.id, tier);
+            rpdExhaustedCount++;
+            console.log(`[GeminiManager] 🔴 ${tier.id} RPD exhausted (${usage.dailyCount}/${tier.rpd}). Falling back...`);
+          } else {
+            markRpmExhausted(tier.id, tier);
+            rpmBlockedCount++;
+            console.log(`[GeminiManager] 🟡 ${tier.id} RPM exhausted (daily: ${usage.dailyCount}/${tier.rpd}). Falling back...`);
+          }
+          continue;
+        }
+
+        throw error;
       }
-
-      // Non-rate-limit error → rethrow immediately
-      throw error;
     }
-  }
 
-  // ── All models failed ──
+    const allRpd = MODEL_TIERS.every((tier) => {
+      const usage = getUsage(tier.id);
+      return usage.dailyCount >= tier.rpd;
+    });
 
-  // Check if ALL models are RPD-exhausted (no point retrying today)
-  const allRpd = MODEL_TIERS.every((tier) => {
-    const usage = getUsage(tier.id);
-    return usage.dailyCount >= tier.rpd;
+    if (allRpd) {
+      const err = new Error('تم استنفاد جميع الموديلات المتاحة لليوم. يرجى المحاولة غداً.');
+      err.allDailyExhausted = true;
+      err.statusCode = 429;
+      throw err;
+    }
+
+    if (rpmBlockedCount > 0) {
+      const err = new Error('تم تجاوز عدد الطلبات في الدقيقة لجميع الموديلات. سيتم إعادة المحاولة تلقائياً...');
+      err.retryAfterSeconds = 60;
+      err.statusCode = 429;
+      throw err;
+    }
+
+    throw new Error('لم يتمكن أي من الموديلات المتاحة من إتمام الطلب.');
   });
-
-  if (allRpd) {
-    const err = new Error('تم استنفاد جميع الموديلات المتاحة لليوم. يرجى المحاولة غداً.');
-    err.allDailyExhausted = true;
-    err.statusCode = 429;
-    throw err;
-  }
-
-  // Some models are just RPM-limited → they'll reset within ~60s
-  if (rpmBlockedCount > 0) {
-    const err = new Error('تم تجاوز عدد الطلبات في الدقيقة لجميع الموديلات. سيتم إعادة المحاولة تلقائياً...');
-    err.retryAfterSeconds = 60;
-    err.statusCode = 429;
-    throw err;
-  }
-
-  // Fallthrough: no model worked (e.g., all returned 404)
-  throw new Error('لم يتمكن أي من الموديلات المتاحة من إتمام الطلب.');
 }
 
 module.exports = {
@@ -200,5 +237,5 @@ module.exports = {
   getModelStatus,
   recordSuccess,
   markRpmExhausted,
-  markRpdExhausted
+  markRpdExhausted,
 };

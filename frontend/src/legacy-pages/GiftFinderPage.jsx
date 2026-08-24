@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -303,8 +304,10 @@ const GiftFinderPage = () => {
 
                       <div className={`p-6 flex-1 flex flex-col ${isTopMatch ? 'md:flex-row md:items-center md:gap-8' : ''}`}>
                         {/* Image & Match Score */}
-                        <div className={`relative shrink-0 mb-4 ${isTopMatch ? 'md:mb-0 md:w-64' : 'w-full h-52'} overflow-hidden rounded-2xl bg-gray-50`}>
-                          <img
+                        <div className={`relative shrink-0 mb-4 ${isTopMatch ? 'md:mb-0 md:w-64 md:h-64 h-52' : 'w-full h-52'} overflow-hidden rounded-2xl bg-gray-50`}>
+                          <Image
+                            fill
+                            sizes="(max-width: 768px) 100vw, 256px"
                             src={box.images?.[0]?.url || '/placeholder-box.png'}
                             alt={box.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

@@ -2,6 +2,7 @@ const Occasion = require('../../models/Occasion');
 const { validationResult } = require('express-validator');
 const { logAudit } = require('../../utils/auditLogger');
 const asyncHandler = require('../../utils/asyncHandler');
+const { bustCatalog } = require('../../middleware/cache');
 
 // =====================================================
 // OCCASIONS MANAGEMENT
@@ -21,6 +22,8 @@ exports.createOccasion = asyncHandler(async (req, res) => {
 
   try {
     const occasion = await Occasion.create({ name, icon, color, isActive, order });
+    bustCatalog('occasions');
+    bustCatalog('products');
 
     if (req.user?._id) {
       logAudit({
@@ -62,6 +65,9 @@ exports.updateOccasion = asyncHandler(async (req, res) => {
   if (order !== undefined) occasion.order = order;
   await occasion.save();
 
+  bustCatalog('occasions');
+  bustCatalog('products');
+
   if (Object.keys(changes).length > 0 && req.user?._id) {
     logAudit({
       entityType: 'Occasion',
@@ -80,6 +86,9 @@ exports.updateOccasion = asyncHandler(async (req, res) => {
 exports.deleteOccasion = asyncHandler(async (req, res) => {
   const occasion = await Occasion.findByIdAndDelete(req.params.id);
   if (!occasion) return res.status(404).json({ success: false, message: 'المناسبة غير موجودة' });
+
+  bustCatalog('occasions');
+  bustCatalog('products');
 
   if (req.user?._id) {
     logAudit({

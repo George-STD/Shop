@@ -3,6 +3,7 @@ const Product = require('../../models/Product');
 const { validationResult } = require('express-validator');
 const { logAudit } = require('../../utils/auditLogger');
 const asyncHandler = require('../../utils/asyncHandler');
+const { bustCatalog } = require('../../middleware/cache');
 
 // =====================================================
 // CATEGORIES MANAGEMENT
@@ -24,6 +25,9 @@ exports.createCategory = asyncHandler(async (req, res) => {
 
   const filteredData = filterAllowedCategoryFields(req.body);
   const category = await Category.create(filteredData);
+
+  bustCatalog('categories');
+  bustCatalog('products');
 
   if (req.user?._id) {
     logAudit({
@@ -54,6 +58,9 @@ exports.updateCategory = asyncHandler(async (req, res) => {
 
   const category = await Category.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
 
+  bustCatalog('categories');
+  bustCatalog('products');
+
   if (Object.keys(changes).length > 0 && req.user?._id) {
     logAudit({
       entityType: 'Category',
@@ -80,6 +87,9 @@ exports.deleteCategory = asyncHandler(async (req, res) => {
 
   const category = await Category.findByIdAndDelete(req.params.id);
   if (!category) return res.status(404).json({ success: false, message: 'الفئة غير موجودة' });
+
+  bustCatalog('categories');
+  bustCatalog('products');
 
   if (req.user?._id) {
     logAudit({

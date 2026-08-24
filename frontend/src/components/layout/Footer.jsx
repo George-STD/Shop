@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import Image from 'next/image';
 import {
   FiFacebook,
   FiInstagram,
@@ -61,16 +62,14 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-center md:text-right">
           {/* About */}
           <div className="flex flex-col items-center md:items-start">
-            <picture>
-              <source srcSet="/images/logo.webp" type="image/webp" />
-              <img
-                src="/images/logo.jpeg"
-                alt="For You Gift Shop"
-                className="h-20 sm:h-24 w-auto mb-5 bg-white rounded-2xl p-2.5 sm:p-3 object-contain"
-                width={105}
-                height={105}
-              />
-            </picture>
+<Image
+              src="/images/logo.jpeg"
+              alt="For You Gift Shop"
+              className="h-20 sm:h-24 w-auto mb-5 bg-white rounded-2xl p-2.5 sm:p-3 object-contain"
+              width={105}
+              height={105}
+              sizes="105px"
+            />
             <p className="text-gray-400 mb-6 leading-relaxed text-sm">
               {STRINGS.FOOTER.ABOUT_DESC}
             </p>
@@ -204,19 +203,21 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-gray-400 text-xs uppercase tracking-wider">{STRINGS.FOOTER.PAYMENT_METHODS}</p>
             <div className="flex items-center gap-4">
-              <img
+<Image
                 src="/images/payments/cash.svg"
                 alt="Cash on Delivery"
                 className="h-7 opacity-60 hover:opacity-100 transition-opacity"
                 width={28}
                 height={28}
+                sizes="28px"
               />
-              <img
+<Image
                 src="/images/payments/instapay.svg"
                 alt="InstaPay"
                 className="h-7 opacity-60 hover:opacity-100 transition-opacity"
                 width={28}
                 height={28}
+                sizes="28px"
               />
             </div>
           </div>

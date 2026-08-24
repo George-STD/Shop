@@ -25,9 +25,10 @@ function getAiClient() {
 router.post('/ai-recommend', publicAiLimiter, sanitizeInput, asyncHandler(async (req, res) => {
   const { recipient, occasion, personality, interests, mood, budgetRange, customNotes } = req.body;
 
-  // 1. Fetch Active Ready Gift Boxes strictly
+  // 1. Fetch Active Ready Gift Boxes strictly (capped to prevent heap saturation)
   let readyBoxes = await Product.find({ isActive: true, isReadyBox: true })
     .populate('category', 'name')
+    .limit(80)
     .lean();
 
   // Fallback: If fewer than 5 explicit ready boxes exist, fetch active products with canBeAddedToBox

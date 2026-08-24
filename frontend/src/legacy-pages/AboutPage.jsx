@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { Link } from 'react-router-dom';
 import { FiGift, FiHeart, FiTruck, FiAward, FiUsers, FiStar } from 'react-icons/fi';
 import { STRINGS } from '../constants';
@@ -62,12 +63,18 @@ const AboutPage = () => {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <img
+              <Image
+                    width={400}
+                    height={400}
+                    sizes="(max-width: 768px) 100vw, 400px"
                 src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400"
                 alt={STRINGS.ABOUT_PAGE.OUR_STORY_TITLE}
                 className="rounded-2xl shadow-lg"
               />
-              <img
+              <Image
+                    width={400}
+                    height={400}
+                    sizes="(max-width: 768px) 100vw, 400px"
                 src="https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=400"
                 alt={STRINGS.ABOUT_PAGE.OUR_STORY_LABEL}
                 className="rounded-2xl shadow-lg mt-8"
@@ -115,11 +122,13 @@ const AboutPage = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {team.map((member, idx) => (
               <div key={idx} className="text-center group">
-                <div className="relative mb-4 overflow-hidden rounded-2xl">
-                  <img
+                <div className="relative mb-4 overflow-hidden rounded-2xl aspect-square w-full">
+                  <Image
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
                     src={member.image}
                     alt={member.name}
-                    className="w-full aspect-square object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                 </div>
                 <h3 className="font-bold text-lg">{member.name}</h3>

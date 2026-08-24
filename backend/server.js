@@ -3,65 +3,14 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const compression = require('compression');
 require('dotenv').config();
 
 const { CONFIG, MESSAGES } = require('./constants');
+const { connectToDatabase, mongoHealthFence, getMongoStateLabel } = require('./config/mongo');
 
 const app = express();
 let server;
-
-const MONGO_MAX_RETRIES = Math.max(1, Number(process.env.MONGO_CONNECT_MAX_RETRIES) || 5);
-const MONGO_RETRY_DELAY_MS = Math.max(250, Number(process.env.MONGO_CONNECT_RETRY_DELAY_MS) || 5000);
-const MONGO_SERVER_SELECTION_TIMEOUT_MS =
-  Math.max(1000, Number(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS) || 10000);
-
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const getMongoStateLabel = (state) => {
-  switch (state) {
-    case 0:
-      return 'disconnected';
-    case 1:
-      return 'connected';
-    case 2:
-      return 'connecting';
-    case 3:
-      return 'disconnecting';
-    default:
-      return 'unknown';
-  }
-};
-
-const connectToDatabase = async () => {
-  const mongoUri = process.env.MONGODB_URI;
-
-  if (!mongoUri) {
-    throw new Error('MONGODB_URI is not configured');
-  }
-
-  let lastError;
-
-  for (let attempt = 1; attempt <= MONGO_MAX_RETRIES; attempt += 1) {
-    try {
-      await mongoose.connect(mongoUri, {
-        serverSelectionTimeoutMS: MONGO_SERVER_SELECTION_TIMEOUT_MS,
-      });
-      console.log('MongoDB connected');
-      return;
-    } catch (error) {
-      lastError = error;
-      console.error(
-        `MongoDB connection attempt ${attempt}/${MONGO_MAX_RETRIES} failed: ${error.message}`
-      );
-
-      if (attempt < MONGO_MAX_RETRIES) {
-        await wait(MONGO_RETRY_DELAY_MS);
-      }
-    }
-  }
-
-  throw lastError;
-};
 
 const closeServer = async () => {
   if (!server) return;
@@ -128,7 +77,8 @@ mongoose.connection.on('error', (error) => {
 });
 
 registerProcessHandlers();
-// Allow Express to trust proxy safely (for correct IP detection behind Render / Reverse Proxies)
+
+// Allow Express to trust proxy safely (for correct IP detection behind Reverse Proxies / Load Balancers)
 if (process.env.TRUSTED_PROXIES) {
   app.set('trust proxy', process.env.TRUSTED_PROXIES.split(',').map((ip) => ip.trim()));
 } else if (process.env.TRUST_PROXY_HOPS) {
@@ -137,29 +87,69 @@ if (process.env.TRUSTED_PROXIES) {
   app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
 }
 
-// Middleware
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+// ── Compression Middleware (Async gzip for payloads >= 1KB) ──
+app.use(compression({
+  threshold: 1024,
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  }
 }));
+
+// ── Security Headers (Helmet) ──
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  hidePoweredBy: true,
+}));
+
+// ── Cross-Origin Resource Sharing (CORS) ──
 app.use(cors({
   origin: CONFIG.CORS.ALLOWED_ORIGINS,
   methods: CONFIG.CORS.METHODS,
-  credentials: CONFIG.CORS.CREDENTIALS
+  credentials: CONFIG.CORS.CREDENTIALS,
+  maxAge: CONFIG.CORS.MAX_AGE,
+  allowedHeaders: CONFIG.CORS.ALLOWED_HEADERS,
+  exposedHeaders: CONFIG.CORS.EXPOSED_HEADERS,
 }));
-app.use(morgan('dev'));
 
-// Webhook routes (must be before express.json() to get raw body for signature verification)
+// ── Request Logging (Morgan) ──
+if (process.env.NODE_ENV !== 'test') {
+  const morganFormat = process.env.NODE_ENV === 'production' ? 'tiny' : 'dev';
+  app.use(morgan(morganFormat, {
+    skip: (req) => req.path === '/health' || req.path === '/api/health'
+  }));
+}
+
+// ── Webhooks (must be mounted before express.json() to preserve raw body) ──
 app.use('/api/webhooks', require('./routes/webhooks'));
 
+// ── Body Parsers ──
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// Input Sanitization Middleware (XSS & NoSQL Operator Neutralizer)
+// ── Input Sanitization Middleware (ReDoS & NoSQL neutralizer) ──
 const { sanitizeInput, apiLimiter } = require('./middleware/auth');
 app.use(sanitizeInput);
 app.use('/api', apiLimiter);
 
-// Routes
+// ── UptimeRobot / Orchestrator Lightweight Health Check ──
+app.get('/health', (req, res) => {
+  res.status(200).send('Server is awake');
+});
+
+// ── Full System Health Check ──
+app.get('/api/health', (req, res) => {
+  const database = getMongoStateLabel(mongoose.connection.readyState);
+  const status = database === 'connected' ? 'ok' : 'degraded';
+  res.status(status === 'ok' ? 200 : 503).json({ status, database, message: MESSAGES.HEALTH.OK });
+});
+
+// ── Database 503 Fence (Fails fast in <1ms if MongoDB is disconnected) ──
+app.use('/api', mongoHealthFence);
+
+// ── API Routes ──
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/products', require('./routes/products'));
 app.use('/api/categories', require('./routes/categories'));
@@ -173,25 +163,13 @@ app.use('/api/admin/ai', require('./routes/ai-vision'));
 app.use('/api/admin/ai-agent', require('./routes/ai-agent'));
 app.use('/api/admin', require('./routes/admin'));
 
-// UptimeRobot lightweight health check (No DB/rate-limit hit)
-app.get('/health', (req, res) => {
-  res.status(200).send('Server is awake');
-});
-
-// Health check
-app.get('/api/health', (req, res) => {
-  const database = getMongoStateLabel(mongoose.connection.readyState);
-  const status = database === 'connected' ? 'ok' : 'degraded';
-  res.status(status === 'ok' ? 200 : 503).json({ status, database, message: MESSAGES.HEALTH.OK });
-});
-
-// Error handling middleware
+// ── Error Handling Middleware ──
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ success: false, message: MESSAGES.GENERAL.SERVER_ERROR });
 });
 
-// 404 handler
+// ── 404 Handler ──
 app.use((req, res) => {
   res.status(404).json({ success: false, message: MESSAGES.GENERAL.NOT_FOUND });
 });
@@ -219,11 +197,19 @@ const startServer = async () => {
     server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
+
+    // ── Keep-Alive & ELB Timeout Configuration ──
+    // Node.js keepAliveTimeout must exceed Load Balancer / Reverse Proxy idle timeout (60s) to prevent 502s
+    server.keepAliveTimeout = 65000; // 65 seconds
+    server.headersTimeout = 66000;   // 66 seconds (headersTimeout > keepAliveTimeout)
+    server.maxHeadersCount = 50;
+
   } catch (error) {
     console.error('Failed to start server:', error.message);
     process.exit(1);
   }
 };
+
 if (process.env.NODE_ENV !== 'test') {
   startServer();
 }

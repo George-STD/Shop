@@ -1,0 +1,1928 @@
+diff --git a/frontend/package-lock.json b/frontend/package-lock.json
+index 7870f67..fef01e3 100644
+--- a/frontend/package-lock.json
++++ b/frontend/package-lock.json
+@@ -21,6 +21,7 @@
+         "zustand": "^4.4.7"
+       },
+       "devDependencies": {
++        "@playwright/test": "^1.62.1",
+         "autoprefixer": "^10.4.16",
+         "eslint": "^9.39.4",
+         "eslint-config-next": "^15.5.15",
+@@ -1062,6 +1063,22 @@
+         "url": "https://opencollective.com/pkgr"
+       }
+     },
++    "node_modules/@playwright/test": {
++      "version": "1.62.1",
++      "resolved": "https://registry.npmjs.org/@playwright/test/-/test-1.62.1.tgz",
++      "integrity": "sha512-DTcUc8qii+cpHvtOwggMtBRMjKZHXYWdw8syRYu2vtzuq4Wxphqq4NfCs5Zt44L6mA8rfDfj+PHnxFc/FeK6mQ==",
++      "devOptional": true,
++      "license": "Apache-2.0",
++      "dependencies": {
++        "playwright": "1.62.1"
++      },
++      "bin": {
++        "playwright": "cli.js"
++      },
++      "engines": {
++        "node": ">=20"
++      }
++    },
+     "node_modules/@reduxjs/toolkit": {
+       "version": "2.12.0",
+       "resolved": "https://registry.npmjs.org/@reduxjs/toolkit/-/toolkit-2.12.0.tgz",
+@@ -5332,6 +5349,52 @@
+         "node": ">= 6"
+       }
+     },
++    "node_modules/playwright": {
++      "version": "1.62.1",
++      "resolved": "https://registry.npmjs.org/playwright/-/playwright-1.62.1.tgz",
++      "integrity": "sha512-0M+L3LAD8/nm554LOla9Ayx0j0tmFZ0FBcoQ7F1VuVHpM/XpiC8RcDzBQB8W5+hA8L22THxELzeF+2WcUzvcLg==",
++      "devOptional": true,
++      "license": "Apache-2.0",
++      "dependencies": {
++        "playwright-core": "1.62.1"
++      },
++      "bin": {
++        "playwright": "cli.js"
++      },
++      "engines": {
++        "node": ">=20"
++      },
++      "optionalDependencies": {
++        "fsevents": "2.3.2"
++      }
++    },
++    "node_modules/playwright-core": {
++      "version": "1.62.1",
++      "resolved": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.62.1.tgz",
++      "integrity": "sha512-wPYSwEBJY9GHraISXqyqtx0na0LpO3XEX7jNDhntbex7tzUS7kLnZsOlFruFJB4Hi/rhDMjXGqHewDZ68nYZVw==",
++      "devOptional": true,
++      "license": "Apache-2.0",
++      "bin": {
++        "playwright-core": "cli.js"
++      },
++      "engines": {
++        "node": ">=20"
++      }
++    },
++    "node_modules/playwright/node_modules/fsevents": {
++      "version": "2.3.2",
++      "resolved": "https://registry.npmjs.org/fsevents/-/fsevents-2.3.2.tgz",
++      "integrity": "sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==",
++      "hasInstallScript": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^8.16.0 || ^10.6.0 || >=11.0.0"
++      }
++    },
+     "node_modules/possible-typed-array-names": {
+       "version": "1.1.0",
+       "resolved": "https://registry.npmjs.org/possible-typed-array-names/-/possible-typed-array-names-1.1.0.tgz",
+diff --git a/frontend/package.json b/frontend/package.json
+index bbd4c78..1764865 100644
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -8,6 +8,8 @@
+     "check": "npm run lint",
+     "start": "next start",
+     "lint": "eslint .",
++    "test:e2e": "playwright test",
++    "test:e2e:ui": "playwright test --ui",
+     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
+   },
+   "dependencies": {
+@@ -24,6 +26,7 @@
+     "zustand": "^4.4.7"
+   },
+   "devDependencies": {
++    "@playwright/test": "^1.62.1",
+     "autoprefixer": "^10.4.16",
+     "eslint": "^9.39.4",
+     "eslint-config-next": "^15.5.15",
+diff --git a/frontend/src/app/(shop)/HomePageClient.jsx b/frontend/src/app/(shop)/HomePageClient.jsx
+index 07b28a5..c77c53a 100644
+--- a/frontend/src/app/(shop)/HomePageClient.jsx
++++ b/frontend/src/app/(shop)/HomePageClient.jsx
+@@ -1,6 +1,11 @@
+ 'use client';
+ 
+-import HomePage from '../../legacy-pages/HomePage';
++import dynamic from 'next/dynamic';
++
++const HomePage = dynamic(() => import('../../legacy-pages/HomePage'), {
++  ssr: true,
++  loading: () => <div className="min-h-screen bg-white" aria-label="Loading home page" />,
++});
+ 
+ export default function HomePageClient() {
+   return <HomePage />;
+diff --git a/frontend/src/app/(shop)/product/[slug]/ProductPageClient.jsx b/frontend/src/app/(shop)/product/[slug]/ProductPageClient.jsx
+index 7509a6e..66cb541 100644
+--- a/frontend/src/app/(shop)/product/[slug]/ProductPageClient.jsx
++++ b/frontend/src/app/(shop)/product/[slug]/ProductPageClient.jsx
+@@ -1,6 +1,11 @@
+ 'use client';
+ 
+-import ProductPage from '../../../../legacy-pages/ProductPage';
++import dynamic from 'next/dynamic';
++
++const ProductPage = dynamic(() => import('../../../../legacy-pages/ProductPage'), {
++  ssr: true,
++  loading: () => <div className="container-custom min-h-[800px] py-8" aria-label="Loading product" />,
++});
+ 
+ export default function ProductPageClient() {
+   return <ProductPage />;
+diff --git a/frontend/src/app/(shop)/review-order/[orderNumber]/ReviewOrderClient.jsx b/frontend/src/app/(shop)/review-order/[orderNumber]/ReviewOrderClient.jsx
+index 2164d3a..d061f6a 100644
+--- a/frontend/src/app/(shop)/review-order/[orderNumber]/ReviewOrderClient.jsx
++++ b/frontend/src/app/(shop)/review-order/[orderNumber]/ReviewOrderClient.jsx
+@@ -1,5 +1,7 @@
+ 'use client';
+ 
++import Image from 'next/image';
++
+ import React, { useState, useEffect } from 'react';
+ import Link from 'next/link';
+ import { FiStar, FiCheckCircle, FiPackage, FiHeart, FiGift, FiAlertCircle } from 'react-icons/fi';
+@@ -175,7 +177,10 @@ export default function ReviewOrderClient({ orderNumber }) {
+             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+               {order.items.map((item, idx) => (
+                 <div key={idx} className="flex items-center gap-2 p-2.5 rounded-2xl bg-gray-50 border border-gray-100">
+-                  <img
++                  <Image
++                    width={48}
++                    height={48}
++                    sizes="48px"
+                     src={item.image}
+                     alt={item.name}
+                     className="w-12 h-12 object-cover rounded-xl shrink-0"
+diff --git a/frontend/src/app/admin/analysis/page.jsx b/frontend/src/app/admin/analysis/page.jsx
+index 556d451..a960a2c 100644
+--- a/frontend/src/app/admin/analysis/page.jsx
++++ b/frontend/src/app/admin/analysis/page.jsx
+@@ -1,7 +1,7 @@
+ 'use client';
+ 
+-import AdminAnalysis from '../../../legacy-pages/admin/AdminAnalysis';
++import AdminAnalysisClient from '../AdminAnalysisClient';
+ 
+ export default function Page() {
+-  return <AdminAnalysis />;
++  return <AdminAnalysisClient />;
+ }
+diff --git a/frontend/src/app/admin/page.jsx b/frontend/src/app/admin/page.jsx
+index ed79460..86cc294 100644
+--- a/frontend/src/app/admin/page.jsx
++++ b/frontend/src/app/admin/page.jsx
+@@ -1,7 +1,7 @@
+ 'use client';
+ 
+-import AdminDashboard from '../../legacy-pages/admin/AdminDashboard';
++import AdminDashboardClient from './AdminDashboardClient';
+ 
+ export default function Page() {
+-  return <AdminDashboard />;
++  return <AdminDashboardClient />;
+ }
+diff --git a/frontend/src/app/providers.jsx b/frontend/src/app/providers.jsx
+index 1d77b46..0f733a8 100644
+--- a/frontend/src/app/providers.jsx
++++ b/frontend/src/app/providers.jsx
+@@ -2,9 +2,12 @@
+ 
+ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+ import { Toaster } from 'react-hot-toast';
+-import { useState } from 'react';
++import { useEffect, useState } from 'react';
+ 
+ import ErrorBoundary from '../components/common/ErrorBoundary';
++import { useAuthStore, useBuildBoxStore, useCartStore, useWishlistStore } from '../store';
++
++const persistedStores = [useAuthStore, useCartStore, useWishlistStore, useBuildBoxStore];
+ 
+ export default function Providers({ children }) {
+   const [queryClient] = useState(
+@@ -20,18 +23,20 @@ export default function Providers({ children }) {
+       })
+   );
+ 
++  useEffect(() => {
++    // Delaying all persisted reads until after the first client paint makes the
++    // server HTML and the first client render deterministic.
++    persistedStores.forEach((store) => store.persist?.rehydrate());
++  }, []);
++
+   return (
+     <QueryClientProvider client={queryClient}>
+-      <ErrorBoundary>
+-        {children}
+-      </ErrorBoundary>
++      <ErrorBoundary>{children}</ErrorBoundary>
+       <Toaster
+         position="top-center"
+         toastOptions={{
+           duration: 3000,
+-          style: {
+-            fontFamily: 'Tajawal, sans-serif',
+-          },
++          style: { fontFamily: 'Tajawal, sans-serif' },
+         }}
+       />
+     </QueryClientProvider>
+diff --git a/frontend/src/components/admin/AdminAIAssistant.jsx b/frontend/src/components/admin/AdminAIAssistant.jsx
+index df0a22b..360d7aa 100644
+--- a/frontend/src/components/admin/AdminAIAssistant.jsx
++++ b/frontend/src/components/admin/AdminAIAssistant.jsx
+@@ -1,4 +1,5 @@
+ import React, { useState, useRef, useEffect, useCallback } from 'react';
++import Image from 'next/image';
+ import toast from 'react-hot-toast';
+ import { adminAPI } from '../../services/api';
+ import { 
+@@ -197,7 +198,7 @@ const AdminAIAssistant = () => {
+           <>
+             <td className="px-3 py-2 whitespace-nowrap">
+               {item.images?.[0]?.url ? (
+-                <img src={item.images[0].url} alt="" className="w-8 h-8 rounded object-cover" />
++                <Image src={item.images[0].url} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded object-cover" />
+               ) : (
+                 <div className="w-8 h-8 rounded bg-gray-200" />
+               )}
+@@ -248,7 +249,7 @@ const AdminAIAssistant = () => {
+           <>
+             <td className="px-3 py-2 whitespace-nowrap">
+               {item.image?.url ? (
+-                <img src={item.image.url} alt="" className="w-8 h-8 rounded object-cover" />
++                <Image src={item.image.url} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded object-cover" />
+               ) : (
+                 <div className="w-8 h-8 rounded bg-gray-200" />
+               )}
+diff --git a/frontend/src/components/admin/BulkVisionUploader.jsx b/frontend/src/components/admin/BulkVisionUploader.jsx
+index 7156610..0e97689 100644
+--- a/frontend/src/components/admin/BulkVisionUploader.jsx
++++ b/frontend/src/components/admin/BulkVisionUploader.jsx
+@@ -1,5 +1,6 @@
+ import { useState, useRef, useCallback, useEffect } from 'react';
+ import { FiUploadCloud, FiX, FiCheck, FiCpu, FiImage, FiSave, FiAlertCircle } from 'react-icons/fi';
++import Image from 'next/image';
+ import toast from 'react-hot-toast';
+ import { adminAPI } from '../../services/api';
+ 
+@@ -299,7 +300,7 @@ const BulkVisionUploader = ({ isOpen, onClose, categories = [], occasionsList =
+                   >
+                     {/* Item Image */}
+                     <div className="relative h-48 bg-gray-100 border-b border-gray-100">
+-                      <img src={item.preview} alt="preview" className="w-full h-full object-contain" />
++                      <Image src={item.preview} alt="preview" fill sizes="(max-width: 768px) 100vw, 33vw" unoptimized className="object-contain" />
+                       <button
+                         onClick={() => handleRemove(item.id)}
+                         disabled={isProcessing}
+diff --git a/frontend/src/components/admin/categories/AdminCategoriesGrid.jsx b/frontend/src/components/admin/categories/AdminCategoriesGrid.jsx
+index 6b9c457..54c7d87 100644
+--- a/frontend/src/components/admin/categories/AdminCategoriesGrid.jsx
++++ b/frontend/src/components/admin/categories/AdminCategoriesGrid.jsx
+@@ -1,4 +1,5 @@
+ import React from 'react';
++import Image from 'next/image';
+ import { FiEdit2, FiTrash2, FiImage } from 'react-icons/fi';
+ import { STRINGS } from '../../../constants';
+ 
+@@ -21,10 +22,12 @@ const AdminCategoriesGrid = ({ categories, isLoading, handleEdit, handleDelete }
+               {/* Category Image */}
+               <div className="h-40 bg-gray-100 relative">
+                 {category.image ? (
+-                  <img
++                  <Image
+                     src={category.image}
+                     alt={category.name}
+-                    className="w-full h-full object-cover"
++                    fill
++                    sizes="(max-width: 768px) 100vw, 33vw"
++                    className="object-cover"
+                   />
+                 ) : (
+                   <div className="w-full h-full flex items-center justify-center text-gray-400">
+diff --git a/frontend/src/components/admin/categories/CategoryFormModal.jsx b/frontend/src/components/admin/categories/CategoryFormModal.jsx
+index 7a408df..78761ca 100644
+--- a/frontend/src/components/admin/categories/CategoryFormModal.jsx
++++ b/frontend/src/components/admin/categories/CategoryFormModal.jsx
+@@ -1,4 +1,5 @@
+ import React from 'react';
++import Image from 'next/image';
+ import { STRINGS } from '../../../constants';
+ import Modal from '../../ui/Modal';
+ 
+@@ -82,10 +83,13 @@ const CategoryFormModal = ({
+               dir="ltr"
+             />
+             {formData.image && (
+-              <img
++<Image
+                 src={formData.image}
+                 alt="Preview"
+-                className="mt-2 h-20 object-cover rounded-lg"
++                width={80}
++                height={80}
++                sizes="80px"
++                className="mt-2 h-20 w-20 object-cover rounded-lg"
+               />
+             )}
+           </div>
+diff --git a/frontend/src/components/admin/dashboard/TopProducts.jsx b/frontend/src/components/admin/dashboard/TopProducts.jsx
+index eaa5905..e010aa8 100644
+--- a/frontend/src/components/admin/dashboard/TopProducts.jsx
++++ b/frontend/src/components/admin/dashboard/TopProducts.jsx
+@@ -1,3 +1,4 @@
++import Image from 'next/image';
+ import React from 'react';
+ import { FiPackage, FiTrendingUp } from 'react-icons/fi';
+ import { STRINGS } from '../../../constants';
+@@ -13,7 +14,10 @@ const TopProducts = ({ stats, formatCurrency }) => {
+               {index + 1}
+             </span>
+             {product.images?.[0] && (
+-              <img
++              <Image
++                    width={32}
++                    height={32}
++                    sizes="32px"
+                 src={product.images[0].url}
+                 alt={product.name}
+                 className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded-lg"
+diff --git a/frontend/src/components/admin/orders/OrderDetailsModal.jsx b/frontend/src/components/admin/orders/OrderDetailsModal.jsx
+index 2b45cef..6cb6fd2 100644
+--- a/frontend/src/components/admin/orders/OrderDetailsModal.jsx
++++ b/frontend/src/components/admin/orders/OrderDetailsModal.jsx
+@@ -1,3 +1,4 @@
++import Image from 'next/image';
+ import React from 'react';
+ import { FiCheck, FiTruck, FiPackage, FiX } from 'react-icons/fi';
+ import { STRINGS } from '../../../constants';
+@@ -75,7 +76,10 @@ const OrderDetailsModal = ({
+               {selectedOrder.items?.map((item, index) => (
+                 <div key={index} className="flex items-center gap-3">
+                   {item.product?.images?.[0] && (
+-                    <img
++                    <Image
++                    width={48}
++                    height={48}
++                    sizes="48px"
+                       src={item.product.images[0].url}
+                       alt={item.product.name}
+                       className="w-12 h-12 object-cover rounded-lg"
+diff --git a/frontend/src/components/admin/products/AdminProductsTable.jsx b/frontend/src/components/admin/products/AdminProductsTable.jsx
+index 4780d82..d00d474 100644
+--- a/frontend/src/components/admin/products/AdminProductsTable.jsx
++++ b/frontend/src/components/admin/products/AdminProductsTable.jsx
+@@ -1,3 +1,4 @@
++import Image from 'next/image';
+ import { LoadingSpinner } from '../../common/LoadingSpinner';
+ import React from 'react';
+ import { FiEdit2, FiTrash2 } from 'react-icons/fi';
+@@ -74,7 +75,10 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
+                 <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6">
+                   <div className="flex items-center gap-3">
+                     {product.images?.[0] && (
+-                      <img
++                      <Image
++                    width={32}
++                    height={32}
++                    sizes="32px"
+                         src={product.images[0].url}
+                         alt={product.name}
+                         className="w-8 h-8 sm:w-12 sm:h-12 object-cover rounded-lg"
+diff --git a/frontend/src/components/admin/products/ProductFormModal.jsx b/frontend/src/components/admin/products/ProductFormModal.jsx
+index 0704cc9..b649b56 100644
+--- a/frontend/src/components/admin/products/ProductFormModal.jsx
++++ b/frontend/src/components/admin/products/ProductFormModal.jsx
+@@ -1,3 +1,4 @@
++import Image from 'next/image';
+ import React, { useRef } from 'react';
+ import toast from 'react-hot-toast';
+ import { adminAPI, productsAPI } from '../../../services/api';
+@@ -465,7 +466,10 @@ const ProductFormModal = ({
+                           className="flex-1 border rounded px-2 py-1 text-xs"
+                         />
+                         {imgUrl && (
+-                          <img
++                          <Image
++                    width={32}
++                    height={32}
++                    sizes="32px"
+                             src={imgUrl}
+                             alt=""
+                             className="w-8 h-8 object-cover rounded border"
+@@ -690,7 +694,10 @@ const ProductFormModal = ({
+                       </button>
+                     </div>
+                     {img.url && (
+-                      <img src={img.url.startsWith('/') ? `${API_URL.replace('/api', '')}${img.url}` : img.url} alt="" className="w-10 h-10 object-cover rounded border" />
++                      <Image
++                    width={40}
++                    height={40}
++                    sizes="40px" src={img.url.startsWith('/') ? `${API_URL.replace('/api', '')}${img.url}` : img.url} alt="" className="w-10 h-10 object-cover rounded border" />
+                     )}
+                     {formData.images.length > 1 && (
+                       <button
+@@ -750,7 +757,10 @@ const ProductFormModal = ({
+                   <h4 className="text-sm font-medium text-blue-800 mb-2">جاري الرفع ({uploadingImages.length})...</h4>
+                   {uploadingImages.map((img) => (
+                     <div key={img.id} className="flex items-center gap-3 bg-white p-2 rounded border shadow-sm">
+-                      <img src={img.preview} alt="preview" className="w-10 h-10 object-cover rounded" />
++                      <Image
++                    width={40}
++                    height={40}
++                    sizes="40px" src={img.preview} alt="preview" className="w-10 h-10 object-cover rounded" />
+                       <div className="flex-1">
+                         <div className="flex justify-between text-xs mb-1">
+                           <span className="text-gray-600 truncate max-w-[150px]">{img.file.name}</span>
+@@ -909,7 +919,10 @@ const ProductFormModal = ({
+                           className="flex-1 border rounded px-2 py-1 text-xs"
+                         />
+                         {opt.thumbnail && (
+-                          <img
++                          <Image
++                    width={32}
++                    height={32}
++                    sizes="32px"
+                             src={opt.thumbnail}
+                             alt=""
+                             className="w-8 h-8 object-cover rounded border"
+@@ -1335,7 +1348,10 @@ const ProductFormModal = ({
+                     {(item.product?._id || item.product)?.length === 24 && productImagesCache[item.product?._id || item.product] && (
+                       <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                         {productImagesCache[item.product?._id || item.product].img ? (
+-                          <img 
++                          <Image
++                    width={40}
++                    height={40}
++                    sizes="40px" 
+                             src={productImagesCache[item.product?._id || item.product].img} 
+                             alt="preview" 
+                             className="w-10 h-10 object-cover rounded-md shadow-sm"
+diff --git a/frontend/src/components/admin/reviews/AdminReviewsList.jsx b/frontend/src/components/admin/reviews/AdminReviewsList.jsx
+index 0e7021f..a90ba3d 100644
+--- a/frontend/src/components/admin/reviews/AdminReviewsList.jsx
++++ b/frontend/src/components/admin/reviews/AdminReviewsList.jsx
+@@ -1,3 +1,4 @@
++import Image from 'next/image';
+ import React from 'react';
+ import { FiCheck, FiX, FiTrash2, FiStar } from 'react-icons/fi';
+ import { STRINGS } from '../../../constants';
+@@ -48,7 +49,10 @@ const AdminReviewsList = ({
+           <div className="flex flex-wrap gap-4">
+             {/* Product Image */}
+             {review.product?.images?.[0] && (
+-              <img
++              <Image
++                    width={64}
++                    height={64}
++                    sizes="64px"
+                 src={review.product.images[0].url}
+                 alt={review.product.name}
+                 className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+diff --git a/frontend/src/components/home/CategoryCard.jsx b/frontend/src/components/home/CategoryCard.jsx
+index 273d74e..40f1739 100644
+--- a/frontend/src/components/home/CategoryCard.jsx
++++ b/frontend/src/components/home/CategoryCard.jsx
+@@ -1,4 +1,5 @@
+ import { Link } from 'react-router-dom';
++import Image from 'next/image';
+ import { STRINGS } from '../../constants';
+ import { optimizeCloudinaryUrl } from '../../utils/optimizeImage';
+ 
+@@ -8,13 +9,13 @@ const CategoryCard = ({ category }) => {
+     <Link to={`/products?category=${category.slug}`} className="group block">
+       <div className="relative overflow-hidden rounded-2xl aspect-square bg-gradient-to-br from-purple-100 to-pink-100">
+         {category.image ? (
+-          <img
++          <Image
+             src={optimizeCloudinaryUrl(category.image, 400)}
+             alt={category.name}
+             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+             width={400}
+             height={400}
+-            loading="lazy"
++            sizes="(max-width: 768px) 50vw, 20vw"
+           />
+         ) : (
+           <div className="w-full h-full flex items-center justify-center">
+diff --git a/frontend/src/components/layout/CartSidebar.jsx b/frontend/src/components/layout/CartSidebar.jsx
+index 04ff825..f0d0cc5 100644
+--- a/frontend/src/components/layout/CartSidebar.jsx
++++ b/frontend/src/components/layout/CartSidebar.jsx
+@@ -1,4 +1,4 @@
+-import React, { useEffect, useRef, useMemo, useCallback, memo } from 'react';
++import React, { memo, useEffect, useMemo, useCallback, useRef, useState } from 'react';
+ import Image from 'next/image';
+ import { Link } from 'react-router-dom';
+ import { FiX, FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi';
+@@ -9,8 +9,11 @@ import toast from 'react-hot-toast';
+ /**
+  * Hardware-Accelerated, Memoized, and Accessible Real-Time Cart Drawer
+  */
++const formatPrice = (price) => new Intl.NumberFormat('ar-EG').format(price);
++
+ const CartSidebar = () => {
+   const panelRef = useRef(null);
++  const [isOnline, setIsOnline] = useState(true);
+   const closeButtonRef = useRef(null);
+ 
+   // 1. Atomic Zustand Selectors
+@@ -47,10 +50,16 @@ const CartSidebar = () => {
+     return items.reduce((acc, item) => acc + (item.quantity || 1), 0);
+   }, [items]);
+ 
+-  const formatPrice = useCallback(
+-    (price) => new Intl.NumberFormat('ar-EG').format(price),
+-    []
+-  );
++  useEffect(() => {
++    const updateOnlineState = () => setIsOnline(navigator.onLine);
++    updateOnlineState();
++    window.addEventListener('online', updateOnlineState);
++    window.addEventListener('offline', updateOnlineState);
++    return () => {
++      window.removeEventListener('online', updateOnlineState);
++      window.removeEventListener('offline', updateOnlineState);
++    };
++  }, []);
+ 
+   // 3. Stable Handlers
+   const handleIncreaseQuantity = useCallback(
+@@ -161,6 +170,11 @@ const CartSidebar = () => {
+         ref={panelRef}
+         className="absolute top-0 left-0 h-full w-[85vw] sm:w-96 max-w-full bg-white shadow-2xl flex flex-col panel-slide-left transform-gpu will-change-transform"
+       >
++        {!isOnline && (
++          <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs font-semibold text-amber-800" role="status">
++            أنت غير متصل. ستظل تغييرات السلة محفوظة على هذا الجهاز.
++          </div>
++        )}
+         {/* Header */}
+         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-100 bg-gradient-to-r from-purple-50/40 to-white">
+           <div className="flex items-center gap-3">
+@@ -212,7 +226,7 @@ const CartSidebar = () => {
+ 
+                 return (
+                   <div
+-                    key={`${item.id}-${item.selectedSize}-${item.selectedColor}-${item.selectedShape}-${item._variantsKey}-${item.boxId}-${index}`}
++                    key={`${item.id}-${item.selectedSize || ''}-${item.selectedColor || ''}-${item.selectedShape || ''}-${item._variantsKey || ''}-${item.boxId || ''}`}
+                     className="flex gap-3 bg-gray-50/70 p-3 rounded-2xl border border-gray-100 hover:border-purple-200 transition-colors"
+                   >
+                     {/* Zero-CLS Next.js Image Container */}
+diff --git a/frontend/src/components/layout/Footer.jsx b/frontend/src/components/layout/Footer.jsx
+index bc7642a..38f97f5 100644
+--- a/frontend/src/components/layout/Footer.jsx
++++ b/frontend/src/components/layout/Footer.jsx
+@@ -1,4 +1,5 @@
+ import { Link } from 'react-router-dom';
++import Image from 'next/image';
+ import {
+   FiFacebook,
+   FiInstagram,
+@@ -61,16 +62,14 @@ const Footer = () => {
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-center md:text-right">
+           {/* About */}
+           <div className="flex flex-col items-center md:items-start">
+-            <picture>
+-              <source srcSet="/images/logo.webp" type="image/webp" />
+-              <img
+-                src="/images/logo.jpeg"
+-                alt="For You Gift Shop"
+-                className="h-20 sm:h-24 w-auto mb-5 bg-white rounded-2xl p-2.5 sm:p-3 object-contain"
+-                width={105}
+-                height={105}
+-              />
+-            </picture>
++<Image
++              src="/images/logo.jpeg"
++              alt="For You Gift Shop"
++              className="h-20 sm:h-24 w-auto mb-5 bg-white rounded-2xl p-2.5 sm:p-3 object-contain"
++              width={105}
++              height={105}
++              sizes="105px"
++            />
+             <p className="text-gray-400 mb-6 leading-relaxed text-sm">
+               {STRINGS.FOOTER.ABOUT_DESC}
+             </p>
+@@ -204,19 +203,21 @@ const Footer = () => {
+           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+             <p className="text-gray-400 text-xs uppercase tracking-wider">{STRINGS.FOOTER.PAYMENT_METHODS}</p>
+             <div className="flex items-center gap-4">
+-              <img
++<Image
+                 src="/images/payments/cash.svg"
+                 alt="Cash on Delivery"
+                 className="h-7 opacity-60 hover:opacity-100 transition-opacity"
+                 width={28}
+                 height={28}
++                sizes="28px"
+               />
+-              <img
++<Image
+                 src="/images/payments/instapay.svg"
+                 alt="InstaPay"
+                 className="h-7 opacity-60 hover:opacity-100 transition-opacity"
+                 width={28}
+                 height={28}
++                sizes="28px"
+               />
+             </div>
+           </div>
+diff --git a/frontend/src/components/layout/Header.jsx b/frontend/src/components/layout/Header.jsx
+index ee0043e..cc55e68 100644
+--- a/frontend/src/components/layout/Header.jsx
++++ b/frontend/src/components/layout/Header.jsx
+@@ -13,14 +13,16 @@ const Header = () => {
+   const [searchQuery, setSearchQuery] = useState('');
+   const [isSearchVisible, setIsSearchVisible] = useState(false);
+   const [isScrolled, setIsScrolled] = useState(false);
+-  const [isMounted, setIsMounted] = useState(false);
+   const scrolledRef = useRef(false);
+ 
+   // 1. Atomic Zustand Selectors (Prevents re-renders across the entire navbar tree on unrelated state changes)
+   const cartCount = useCartStore((state) =>
+     state.items.reduce((total, item) => total + (item.quantity || 1), 0)
+   );
++  const cartHydrated = useCartStore((state) => state._hasHydrated);
+   const wishlistCount = useWishlistStore((state) => state.items.length);
++  const wishlistHydrated = useWishlistStore((state) => state._hasHydrated);
++  const countsReady = cartHydrated && wishlistHydrated;
+   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+   const isAdmin = useAuthStore((state) => state.user?.role === 'admin');
+ 
+@@ -29,10 +31,6 @@ const Header = () => {
+   const toggleMobileMenu = useUIStore((state) => state.toggleMobileMenu);
+   const toggleCart = useUIStore((state) => state.toggleCart);
+ 
+-  useEffect(() => {
+-    setIsMounted(true);
+-  }, []);
+-
+   // 2. High-performance scroll hysteresis using passive listeners
+   useEffect(() => {
+     let ticking = false;
+@@ -216,11 +214,11 @@ const Header = () => {
+               to="/wishlist"
+               className="p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl relative focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors text-gray-700"
+               aria-label={`${STRINGS.NAV.WISHLIST}${
+-                isMounted && wishlistCount > 0 ? ` (${wishlistCount} ${STRINGS.PRODUCT.ITEMS})` : ''
++                countsReady && wishlistCount > 0 ? ` (${wishlistCount} ${STRINGS.PRODUCT.ITEMS})` : ''
+               }`}
+             >
+               <FiHeart size={20} aria-hidden="true" />
+-              {isMounted && wishlistCount > 0 && (
++              {countsReady && wishlistCount > 0 && (
+                 <span
+                   className="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
+                   aria-hidden="true"
+@@ -235,13 +233,13 @@ const Header = () => {
+               onClick={toggleCart}
+               className="p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl relative focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors text-gray-700"
+               aria-label={`${STRINGS.NAV.CART}${
+-                isMounted && cartCount > 0 ? ` (${cartCount} ${STRINGS.PRODUCT.ITEMS})` : ''
++                countsReady && cartCount > 0 ? ` (${cartCount} ${STRINGS.PRODUCT.ITEMS})` : ''
+               }`}
+               aria-expanded={isCartOpen}
+               aria-controls="cart-sidebar"
+             >
+               <FiShoppingBag size={20} aria-hidden="true" />
+-              {isMounted && cartCount > 0 && (
++              {countsReady && cartCount > 0 && (
+                 <span
+                   className="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
+                   aria-hidden="true"
+diff --git a/frontend/src/components/layout/Layout.jsx b/frontend/src/components/layout/Layout.jsx
+index b043289..7be22cb 100644
+--- a/frontend/src/components/layout/Layout.jsx
++++ b/frontend/src/components/layout/Layout.jsx
+@@ -7,7 +7,8 @@ import ContactFab from './ContactFab';
+ import { useUIStore } from '../../store';
+ 
+ const Layout = ({ children }) => {
+-  const { isMobileMenuOpen, isCartOpen } = useUIStore();
++  const isMobileMenuOpen = useUIStore((state) => state.isMobileMenuOpen);
++  const isCartOpen = useUIStore((state) => state.isCartOpen);
+ 
+   return (
+     <div className="min-h-screen flex flex-col">
+diff --git a/frontend/src/components/product/ProductCard.jsx b/frontend/src/components/product/ProductCard.jsx
+index 737f8c7..65a1c8a 100644
+--- a/frontend/src/components/product/ProductCard.jsx
++++ b/frontend/src/components/product/ProductCard.jsx
+@@ -13,6 +13,7 @@ import { authAPI } from '../../services/api';
+  */
+ const ProductCard = ({ product, priority = false }) => {
+   const [mounted, setMounted] = useState(false);
++  const [wishlistPending, setWishlistPending] = useState(false);
+   const navigate = useNavigate();
+ 
+   useEffect(() => {
+@@ -32,10 +33,8 @@ const ProductCard = ({ product, priority = false }) => {
+     )
+   );
+ 
+-  if (!product) return null;
+-
+   // 2. Stable Action Handlers
+-  const handleAddToCart = (e) => {
++  const handleAddToCart = useCallback((e) => {
+     e.preventDefault();
+     e.stopPropagation();
+ 
+@@ -51,9 +50,9 @@ const ProductCard = ({ product, priority = false }) => {
+     }
+ 
+     toast.success(STRINGS.PRODUCT.ADDED_TO_CART);
+-  };
++  }, [addItem, product]);
+ 
+-  const handleToggleWishlist = (e) => {
++  const handleToggleWishlist = useCallback(async (e) => {
+     e.preventDefault();
+     e.stopPropagation();
+ 
+@@ -62,17 +61,25 @@ const ProductCard = ({ product, priority = false }) => {
+       navigate('/account');
+       return;
+     }
++    if (wishlistPending) return;
++
++    const wasInWishlist = inWishlist;
++    setWishlistPending(true);
++    if (wasInWishlist) removeFromWishlist(product._id);
++    else addToWishlist(product);
+ 
+-    if (inWishlist) {
+-      removeFromWishlist(product._id);
+-      authAPI.removeFromWishlist(product._id).catch(() => {});
+-      toast.success(STRINGS.PRODUCT.REMOVED_FROM_WISHLIST);
+-    } else {
+-      addToWishlist(product);
+-      authAPI.addToWishlist(product._id).catch(() => {});
+-      toast.success(STRINGS.PRODUCT.ADDED_TO_WISHLIST);
++    try {
++      if (wasInWishlist) await authAPI.removeFromWishlist(product._id);
++      else await authAPI.addToWishlist(product._id);
++      toast.success(wasInWishlist ? STRINGS.PRODUCT.REMOVED_FROM_WISHLIST : STRINGS.PRODUCT.ADDED_TO_WISHLIST);
++    } catch (_) {
++      if (wasInWishlist) addToWishlist(product);
++      else removeFromWishlist(product._id);
++      toast.error('تعذر تحديث المفضلة. تمت استعادة حالتها السابقة.');
++    } finally {
++      setWishlistPending(false);
+     }
+-  };
++  }, [addToWishlist, inWishlist, isAuthenticated, navigate, product, removeFromWishlist, wishlistPending]);
+ 
+   const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
+   const isOutOfStock = Number(product.stock) === 0;
+@@ -82,10 +89,12 @@ const ProductCard = ({ product, priority = false }) => {
+   };
+ 
+   const imageUrl =
+-    optimizeCloudinaryUrl(product.images?.[0]?.url, 400) ||
+-    product.images?.[0]?.url ||
++    optimizeCloudinaryUrl(product?.images?.[0]?.url, 400) ||
++    product?.images?.[0]?.url ||
+     '/placeholder-gift.png';
+ 
++  if (!product) return null;
++
+   return (
+     <article
+       className="card product-card group min-w-0 flex flex-col h-full overflow-hidden w-full bg-white rounded-2xl border border-gray-100/80 hover:border-purple-200 hover:shadow-xl hover:shadow-purple-500/5 transition-all duration-300"
+@@ -137,6 +146,8 @@ const ProductCard = ({ product, priority = false }) => {
+             }`}
+             title={inWishlist ? STRINGS.PRODUCT.REMOVE_FROM_WISHLIST : STRINGS.PRODUCT.ADD_TO_WISHLIST}
+             aria-label={inWishlist ? STRINGS.PRODUCT.REMOVE_FROM_WISHLIST : STRINGS.PRODUCT.ADD_TO_WISHLIST}
++            aria-busy={wishlistPending}
++            disabled={wishlistPending}
+           >
+             <FiHeart className={inWishlist ? 'fill-current' : ''} size={18} aria-hidden="true" />
+           </button>
+diff --git a/frontend/src/legacy-pages/AboutPage.jsx b/frontend/src/legacy-pages/AboutPage.jsx
+index a005ab1..1a39790 100644
+--- a/frontend/src/legacy-pages/AboutPage.jsx
++++ b/frontend/src/legacy-pages/AboutPage.jsx
+@@ -1,3 +1,4 @@
++import Image from 'next/image';
+ import { Link } from 'react-router-dom';
+ import { FiGift, FiHeart, FiTruck, FiAward, FiUsers, FiStar } from 'react-icons/fi';
+ import { STRINGS } from '../constants';
+@@ -62,12 +63,18 @@ const AboutPage = () => {
+               </div>
+             </div>
+             <div className="grid grid-cols-2 gap-4">
+-              <img
++              <Image
++                    width={400}
++                    height={400}
++                    sizes="(max-width: 768px) 100vw, 400px"
+                 src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400"
+                 alt={STRINGS.ABOUT_PAGE.OUR_STORY_TITLE}
+                 className="rounded-2xl shadow-lg"
+               />
+-              <img
++              <Image
++                    width={400}
++                    height={400}
++                    sizes="(max-width: 768px) 100vw, 400px"
+                 src="https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=400"
+                 alt={STRINGS.ABOUT_PAGE.OUR_STORY_LABEL}
+                 className="rounded-2xl shadow-lg mt-8"
+@@ -116,7 +123,9 @@ const AboutPage = () => {
+             {team.map((member, idx) => (
+               <div key={idx} className="text-center group">
+                 <div className="relative mb-4 overflow-hidden rounded-2xl">
+-                  <img
++                  <Image
++                    fill
++                    sizes="100vw"
+                     src={member.image}
+                     alt={member.name}
+                     className="w-full aspect-square object-cover group-hover:scale-110 transition-transform duration-500"
+diff --git a/frontend/src/legacy-pages/AccountPage.jsx b/frontend/src/legacy-pages/AccountPage.jsx
+index 4878fa9..3cc743f 100644
+--- a/frontend/src/legacy-pages/AccountPage.jsx
++++ b/frontend/src/legacy-pages/AccountPage.jsx
+@@ -1,3 +1,4 @@
++import Image from 'next/image';
+ import { useState, useEffect, useRef } from 'react';
+ import { Routes, Route, Link, useLocation, Navigate, useNavigate } from 'react-router-dom';
+ import {
+@@ -679,7 +680,10 @@ const OrdersPage = () => {
+                     className="flex items-center gap-2 border rounded p-2 bg-white w-full sm:w-auto"
+                   >
+                     {item.image && (
+-                      <img
++                      <Image
++                    width={48}
++                    height={48}
++                    sizes="48px"
+                         src={item.image}
+                         alt={item.name}
+                         className="w-12 h-12 object-cover rounded flex-shrink-0"
+diff --git a/frontend/src/legacy-pages/BuildBoxPage.jsx b/frontend/src/legacy-pages/BuildBoxPage.jsx
+index f3774a2..cfa64e2 100644
+--- a/frontend/src/legacy-pages/BuildBoxPage.jsx
++++ b/frontend/src/legacy-pages/BuildBoxPage.jsx
+@@ -1,3 +1,4 @@
++import Image from 'next/image';
+ import { useState } from 'react';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { useQuery } from '@tanstack/react-query';
+@@ -208,7 +209,10 @@ const BuildBoxPage = () => {
+                       }`}
+                     >
+                       {cat.image ? (
+-                        <img src={cat.image} alt={cat.name} className="w-5 h-5 object-cover rounded-md" />
++                        <Image
++                    width={20}
++                    height={20}
++                    sizes="20px" src={cat.image} alt={cat.name} className="w-5 h-5 object-cover rounded-md" />
+                       ) : (
+                         <FiLayers className="w-4 h-4 opacity-70" />
+                       )}
+@@ -262,7 +266,9 @@ const BuildBoxPage = () => {
+                         target="_blank"
+                         className="relative h-48 overflow-hidden block"
+                       >
+-                        <img
++                        <Image
++                    fill
++                    sizes="100vw"
+                           src={product.images[0]?.url}
+                           alt={product.name}
+                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+@@ -369,7 +375,9 @@ const BuildBoxPage = () => {
+                   }}
+                 >
+                   {/* Empty Box Image */}
+-                  <img
++                  <Image
++                    fill
++                    sizes="100vw"
+                     src="/images/empty_box.png"
+                     alt="Empty Box"
+                     className="absolute inset-0 w-full h-full object-contain mix-blend-multiply opacity-90 drop-shadow-xl"
+@@ -396,7 +404,9 @@ const BuildBoxPage = () => {
+                           aspectRatio: '1/1',
+                         }}
+                       >
+-                        <img
++                        <Image
++                    fill
++                    sizes="100vw"
+                           src={item.image}
+                           alt={item.name}
+                           className="w-full h-full object-cover rounded-lg border-2 border-white/50 bg-white"
+@@ -429,7 +439,10 @@ const BuildBoxPage = () => {
+                       key={index}
+                       className="flex gap-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm relative group"
+                     >
+-                      <img
++                      <Image
++                    width={64}
++                    height={64}
++                    sizes="64px"
+                         src={item.image}
+                         alt={item.name}
+                         className="w-16 h-16 object-cover rounded-xl"
+diff --git a/frontend/src/legacy-pages/CartPage.jsx b/frontend/src/legacy-pages/CartPage.jsx
+index 744bf3b..753d7d4 100644
+--- a/frontend/src/legacy-pages/CartPage.jsx
++++ b/frontend/src/legacy-pages/CartPage.jsx
+@@ -1,3 +1,4 @@
++import Image from 'next/image';
+ import { Link } from 'react-router-dom';
+ import { FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi';
+ import { useCartStore } from '../store';
+@@ -63,7 +64,9 @@ const CartPage = () => {
+               {items.map((item, index) => (
+                 <div key={`${item.id}-${index}`} className="bg-white rounded-2xl p-6 flex gap-6">
+                   <Link to={`/product/${item.slug}`} className="w-24 h-24 flex-shrink-0">
+-                    <img
++                    <Image
++                    fill
++                    sizes="100vw"
+                       src={item.image || '/images/placeholder.jpg'}
+                       alt={item.name}
+                       className="w-full h-full object-cover rounded-lg"
+diff --git a/frontend/src/legacy-pages/CheckoutPage.jsx b/frontend/src/legacy-pages/CheckoutPage.jsx
+index 43c6a3e..d08f452 100644
+--- a/frontend/src/legacy-pages/CheckoutPage.jsx
++++ b/frontend/src/legacy-pages/CheckoutPage.jsx
+@@ -478,9 +478,25 @@ const OrderReviewStep = memo(function OrderReviewStep({
+ /**
+  * Highly Optimized Multi-Step Checkout Funnel
+  */
++const getCheckoutIdempotencyKey = () => {
++  if (typeof window === 'undefined') return 'checkout-server-render';
++  const storageKey = 'hadaya:checkout:idempotency-key';
++  try {
++    const existing = sessionStorage.getItem(storageKey);
++    if (existing) return existing;
++    const generated = `chk_${crypto.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`}`;
++    sessionStorage.setItem(storageKey, generated);
++    return generated;
++  } catch (_) {
++    return `chk_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
++  }
++};
++
+ const CheckoutPage = () => {
+   const navigate = useNavigate();
+   const submitLockRef = useRef(false);
++  const orderCompletedRef = useRef(false);
++  const [isOnline, setIsOnline] = useState(true);
+ 
+   // 1. Atomic Zustand Selectors
+   const items = useCartStore((state) => state.items);
+@@ -495,6 +511,7 @@ const CheckoutPage = () => {
+ 
+   // 2. Authentication and Empty Cart Redirection
+   useEffect(() => {
++    if (orderCompletedRef.current) return;
+     if (isHydrated) {
+       if (!isAuthenticated) {
+         toast(STRINGS.CHECKOUT.LOGIN_REQUIRED, { icon: '🔐' });
+@@ -516,9 +533,18 @@ const CheckoutPage = () => {
+   const [loading, setLoading] = useState(false);
+   const [errors, setErrors] = useState({});
+   const [pointsToRedeem, setPointsToRedeem] = useState(0);
+-  const [idempotencyKey] = useState(
+-    () => `chk_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+-  );
++  const [idempotencyKey] = useState(getCheckoutIdempotencyKey);
++
++  useEffect(() => {
++    const updateOnlineState = () => setIsOnline(navigator.onLine);
++    updateOnlineState();
++    window.addEventListener('online', updateOnlineState);
++    window.addEventListener('offline', updateOnlineState);
++    return () => {
++      window.removeEventListener('online', updateOnlineState);
++      window.removeEventListener('offline', updateOnlineState);
++    };
++  }, []);
+ 
+   const [formData, setFormData] = useState({
+     firstName: user?.firstName || '',
+@@ -537,6 +563,17 @@ const CheckoutPage = () => {
+     customerNote: '',
+   });
+ 
++  useEffect(() => {
++    if (!authHydrated || !user) return;
++    setFormData((previous) => ({
++      ...previous,
++      firstName: previous.firstName || user.firstName || '',
++      lastName: previous.lastName || user.lastName || '',
++      email: previous.email || user.email || '',
++      phone: previous.phone || user.phone || '',
++    }));
++  }, [authHydrated, user]);
++
+   // 4. Stable Subtotal & Discount Calculations
+   const subtotal = useMemo(() => {
+     const boxGroups = new Set();
+@@ -615,11 +652,22 @@ const CheckoutPage = () => {
+     }
+   }, [validateStep1]);
+ 
+-  // 6. Network Idempotent Order Submission with Hardware Lock
+-  const handleSubmit = async (e) => {
++  const handleBackToStep1 = useCallback(() => setStep(1), []);
++  const handleBackToStep2 = useCallback(() => setStep(2), []);
++  const handleNextStep2 = useCallback(() => {
++    setStep(3);
++    window.scrollTo({ top: 0, behavior: 'smooth' });
++  }, []);
++
++  // 6. Network-idempotent order submission with a hardware lock.
++  const handleSubmit = useCallback(async (e) => {
+     e.preventDefault();
+ 
+     if (submitLockRef.current) return;
++    if (!isOnline) {
++      toast.error('لا يمكن تأكيد الطلب أثناء انقطاع الإنترنت. ستبقى بياناتك محفوظة، حاول مرة أخرى عند عودة الاتصال.');
++      return;
++    }
+     submitLockRef.current = true;
+     setLoading(true);
+ 
+@@ -660,6 +708,7 @@ const CheckoutPage = () => {
+ 
+       if (response.data.success) {
+         const finalOrder = response.data.data;
++        orderCompletedRef.current = true;
+         clearCart();
+         if (typeof finalOrder?.total === 'number' && Math.abs(finalOrder.total - total) > 0.01) {
+           toast(
+@@ -669,6 +718,9 @@ const CheckoutPage = () => {
+         } else {
+           toast.success(STRINGS.CHECKOUT.ORDER_SUCCESS);
+         }
++        try {
++          sessionStorage.removeItem('hadaya:checkout:idempotency-key');
++        } catch (_) {}
+         navigate(`/account/orders?success=true&order=${finalOrder.orderNumber}`);
+       }
+     } catch (error) {
+@@ -677,7 +729,7 @@ const CheckoutPage = () => {
+     } finally {
+       setLoading(false);
+     }
+-  };
++  }, [clearCart, formData, idempotencyKey, isOnline, items, navigate, pointsToRedeem, total]);
+ 
+   if (!isHydrated) {
+     return (
+@@ -704,6 +756,13 @@ const CheckoutPage = () => {
+ 
+   return (
+     <div className="bg-gray-50 min-h-screen py-8">
++      {!isOnline && (
++        <div className="container-custom mb-4">
++          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm font-semibold text-amber-800" role="alert">
++            أنت غير متصل. يمكنك مراجعة طلبك، لكن تأكيده متاح عند عودة الاتصال.
++          </div>
++        </div>
++      )}
+       <div className="container-custom">
+         {/* Step Progress Indicators */}
+         <nav aria-label="مراحل إتمام الطلب" className="flex items-center justify-center mb-8">
+@@ -762,11 +821,8 @@ const CheckoutPage = () => {
+                 <PaymentMethodStep
+                   formData={formData}
+                   onChange={handleChange}
+-                  onBack={() => setStep(1)}
+-                  onNext={() => {
+-                    setStep(3);
+-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+-                  }}
++                  onBack={handleBackToStep1}
++                  onNext={handleNextStep2}
+                 />
+               )}
+ 
+@@ -775,7 +831,7 @@ const CheckoutPage = () => {
+                   formData={formData}
+                   items={items}
+                   loading={loading}
+-                  onBack={() => setStep(2)}
++                  onBack={handleBackToStep2}
+                 />
+               )}
+             </div>
+diff --git a/frontend/src/legacy-pages/GiftFinderPage.jsx b/frontend/src/legacy-pages/GiftFinderPage.jsx
+index ff15e31..5fef6d3 100644
+--- a/frontend/src/legacy-pages/GiftFinderPage.jsx
++++ b/frontend/src/legacy-pages/GiftFinderPage.jsx
+@@ -1,3 +1,4 @@
++import Image from 'next/image';
+ import { useState } from 'react';
+ import { Link } from 'react-router-dom';
+ import {
+@@ -304,7 +305,9 @@ const GiftFinderPage = () => {
+                       <div className={`p-6 flex-1 flex flex-col ${isTopMatch ? 'md:flex-row md:items-center md:gap-8' : ''}`}>
+                         {/* Image & Match Score */}
+                         <div className={`relative shrink-0 mb-4 ${isTopMatch ? 'md:mb-0 md:w-64' : 'w-full h-52'} overflow-hidden rounded-2xl bg-gray-50`}>
+-                          <img
++                          <Image
++                    fill
++                    sizes="100vw"
+                             src={box.images?.[0]?.url || '/placeholder-box.png'}
+                             alt={box.name}
+                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+diff --git a/frontend/src/legacy-pages/ProductPage.jsx b/frontend/src/legacy-pages/ProductPage.jsx
+index bda8eda..f17e0a8 100644
+--- a/frontend/src/legacy-pages/ProductPage.jsx
++++ b/frontend/src/legacy-pages/ProductPage.jsx
+@@ -17,7 +17,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
+ import { Autoplay, Pagination } from 'swiper/modules';
+ import 'swiper/css';
+ import 'swiper/css/pagination';
+-import { productsAPI, reviewsAPI, settingsAPI } from '../services/api';
++import { productsAPI, reviewsAPI, settingsAPI, authAPI } from '../services/api';
+ import { useCartStore, useWishlistStore, useAuthStore } from '../store';
+ import ProductCard from '../components/product/ProductCard';
+ import toast from 'react-hot-toast';
+@@ -187,6 +187,7 @@ const ProductPage = () => {
+ 
+   // Local interaction states
+   const [quantity, setQuantity] = useState(1);
++  const [wishlistPending, setWishlistPending] = useState(false);
+   const [isZooming, setIsZooming] = useState(false);
+   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
+   const [activeImageIdx, setActiveImageIdx] = useState(0);
+@@ -356,14 +357,13 @@ const ProductPage = () => {
+       : product.price;
+   }, [product, selectedSize]);
+ 
+-  const calculateTotal = useCallback(() => {
+-    if (!product) return 0;
++  const totalPrice = useMemo(() => {
+     const addonsTotal = selectedAddons.reduce(
+       (sum, addon) => sum + (Number(addon.price) || 0),
+       0
+     );
+     return (effectiveBasePrice + addonsTotal) * quantity;
+-  }, [product, effectiveBasePrice, selectedAddons, quantity]);
++  }, [effectiveBasePrice, quantity, selectedAddons]);
+ 
+   // Dynamic JSON-LD structured data for Google Crawlers
+   const jsonLd = useMemo(() => {
+@@ -381,10 +381,9 @@ const ProductPage = () => {
+       },
+       offers: {
+         '@type': 'Offer',
+-        url: typeof window !== 'undefined' ? window.location.href : '',
+-        priceCurrency: 'EGP',
+-        price: product.price,
+-        priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
++      url: slug ? `/product/${slug}` : '',
++      priceCurrency: 'EGP',
++      price: product.price,
+         itemCondition: 'https://schema.org/NewCondition',
+         availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+       },
+@@ -396,7 +395,7 @@ const ProductPage = () => {
+         },
+       }),
+     };
+-  }, [product]);
++  }, [product, slug]);
+ 
+   // Add to cart handler
+   const handleAddToCart = useCallback(() => {
+@@ -473,20 +472,31 @@ const ProductPage = () => {
+     quantity,
+   ]);
+ 
+-  const handleToggleWishlist = useCallback(() => {
++  const handleToggleWishlist = useCallback(async () => {
+     if (!isAuthenticated) {
+       toast.error(STRINGS.PRODUCT.LOGIN_TO_ADD_WISHLIST);
+       navigate('/account');
+       return;
+     }
+-    if (inWishlist) {
+-      removeFromWishlist(product._id);
+-      toast.success(STRINGS.PRODUCT.REMOVED_FROM_WISHLIST);
+-    } else {
+-      addToWishlist(product);
+-      toast.success(STRINGS.PRODUCT.ADDED_TO_WISHLIST);
++    if (!product || wishlistPending) return;
++
++    const wasInWishlist = inWishlist;
++    setWishlistPending(true);
++    if (wasInWishlist) removeFromWishlist(product._id);
++    else addToWishlist(product);
++
++    try {
++      if (wasInWishlist) await authAPI.removeFromWishlist(product._id);
++      else await authAPI.addToWishlist(product._id);
++      toast.success(wasInWishlist ? STRINGS.PRODUCT.REMOVED_FROM_WISHLIST : STRINGS.PRODUCT.ADDED_TO_WISHLIST);
++    } catch (_) {
++      if (wasInWishlist) addToWishlist(product);
++      else removeFromWishlist(product._id);
++      toast.error('تعذر تحديث المفضلة. تمت استعادة حالتها السابقة.');
++    } finally {
++      setWishlistPending(false);
+     }
+-  }, [isAuthenticated, inWishlist, product, navigate, removeFromWishlist, addToWishlist]);
++  }, [addToWishlist, inWishlist, isAuthenticated, navigate, product, removeFromWishlist, wishlistPending]);
+ 
+   const handleShare = useCallback(async () => {
+     if (!product) return;
+@@ -502,6 +512,11 @@ const ProductPage = () => {
+     }
+   }, [product]);
+ 
++  const refreshReviews = useCallback(
++    () => queryClient.invalidateQueries({ queryKey: ['reviews', product?._id] }),
++    [product?._id, queryClient]
++  );
++
+   const toggleAddon = useCallback((addon) => {
+     setSelectedAddons((prev) => {
+       const exists = prev.find((a) => a.name === addon.name);
+@@ -1276,7 +1291,7 @@ const ProductPage = () => {
+                 >
+                   {product.stock === 0
+                     ? STRINGS.PRODUCT.OUT_OF_STOCK
+-                    : `${STRINGS.PRODUCT.ADD_TO_CART_TOTAL}${calculateTotal()} ${STRINGS.PRODUCT.CURRENCY}`}
++                    : `${STRINGS.PRODUCT.ADD_TO_CART_TOTAL}${totalPrice} ${STRINGS.PRODUCT.CURRENCY}`}
+                 </button>
+               </div>
+ 
+@@ -1290,6 +1305,8 @@ const ProductPage = () => {
+               <div className="flex items-center gap-4 pt-4 border-t">
+                 <button
+                   onClick={handleToggleWishlist}
++                  disabled={wishlistPending}
++                  aria-busy={wishlistPending}
+                   className={`flex items-center gap-2 ${
+                     inWishlist ? 'text-red-500 font-semibold' : 'text-gray-600'
+                   } hover:text-red-500 transition-colors text-sm`}
+@@ -1372,7 +1389,7 @@ const ProductPage = () => {
+                 <div>
+                   <ReviewForm
+                     productId={product._id}
+-                    refreshReviews={() => queryClient.invalidateQueries({ queryKey: ['reviews', product._id] })}
++                    refreshReviews={refreshReviews}
+                   />
+ 
+                   {reviewsData?.data?.length > 0 ? (
+diff --git a/frontend/src/legacy-pages/TrackOrderPage.jsx b/frontend/src/legacy-pages/TrackOrderPage.jsx
+index 61fd7d2..4c08f79 100644
+--- a/frontend/src/legacy-pages/TrackOrderPage.jsx
++++ b/frontend/src/legacy-pages/TrackOrderPage.jsx
+@@ -1,3 +1,4 @@
++import Image from 'next/image';
+ import { useState, useEffect, useCallback } from 'react';
+ import { FiSearch, FiPackage, FiTruck, FiCheckCircle } from 'react-icons/fi';
+ import { Link, useSearchParams } from 'react-router-dom';
+@@ -178,7 +179,10 @@ const TrackOrderPage = () => {
+                     {order.items.map((item, idx) => (
+                       <div key={idx} className="flex items-center gap-4">
+                         {item.image && (
+-                          <img
++                          <Image
++                    width={64}
++                    height={64}
++                    sizes="64px"
+                             src={item.image}
+                             alt={item.name}
+                             className="w-16 h-16 rounded-lg object-cover"
+diff --git a/frontend/src/legacy-pages/WishlistPage.jsx b/frontend/src/legacy-pages/WishlistPage.jsx
+index bd35952..fac9f87 100644
+--- a/frontend/src/legacy-pages/WishlistPage.jsx
++++ b/frontend/src/legacy-pages/WishlistPage.jsx
+@@ -1,3 +1,4 @@
++import Image from 'next/image';
+ import { Link, Navigate } from 'react-router-dom';
+ import { FiHeart, FiTrash2, FiShoppingCart } from 'react-icons/fi';
+ import { useWishlistStore, useCartStore, useAuthStore } from '../store';
+@@ -90,7 +91,9 @@ const WishlistPage = () => {
+                   className="bg-white rounded-2xl overflow-hidden shadow-sm group"
+                 >
+                   <div className="relative aspect-square overflow-hidden">
+-                    <img
++                    <Image
++                    fill
++                    sizes="100vw"
+                       src={product.image || '/images/placeholder.jpg'}
+                       alt={product.name}
+                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+diff --git a/frontend/src/legacy-pages/admin/AdminAnalysis.jsx b/frontend/src/legacy-pages/admin/AdminAnalysis.jsx
+index 01cb049..606ad56 100644
+--- a/frontend/src/legacy-pages/admin/AdminAnalysis.jsx
++++ b/frontend/src/legacy-pages/admin/AdminAnalysis.jsx
+@@ -1,3 +1,4 @@
++import Image from 'next/image';
+ import React, { useState } from 'react';
+ import { useQuery } from '@tanstack/react-query';
+ import { adminAPI } from '../../services/api';
+@@ -309,7 +310,10 @@ const AdminAnalysis = () => {
+                       <tr key={item._id} className="hover:bg-red-50/50 transition-colors">
+                         <td className="p-3 font-semibold text-gray-800 flex items-center gap-2">
+                           {item.images?.[0]?.url && (
+-                            <img src={item.images[0].url} alt={item.name} className="w-8 h-8 rounded-lg object-cover" />
++                            <Image
++                    width={32}
++                    height={32}
++                    sizes="32px" src={item.images[0].url} alt={item.name} className="w-8 h-8 rounded-lg object-cover" />
+                           )}
+                           {item.name}
+                         </td>
+diff --git a/frontend/src/store/authStore.js b/frontend/src/store/authStore.js
+index 2d73d59..7aeda6a 100644
+--- a/frontend/src/store/authStore.js
++++ b/frontend/src/store/authStore.js
+@@ -7,7 +7,9 @@ const clearStoredAuthSession = () => {
+   try {
+     localStorage.removeItem(STORAGE_KEYS.TOKEN);
+     localStorage.removeItem(STORAGE_KEYS.AUTH);
+-  } catch (_) {}
++  } catch (_) {
++    // Storage can be unavailable in privacy-restricted contexts.
++  }
+ };
+ 
+ export const useAuthStore = create(
+@@ -17,10 +19,7 @@ export const useAuthStore = create(
+       token: null,
+       isAuthenticated: false,
+       _hasHydrated: false,
+-
+-      setHasHydrated: (state) => {
+-        set({ _hasHydrated: state });
+-      },
++      setHasHydrated: (state) => set({ _hasHydrated: Boolean(state) }),
+ 
+       setAuth: (user, token) => {
+         if (typeof window !== 'undefined') {
+@@ -28,7 +27,7 @@ export const useAuthStore = create(
+             if (token) localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+           } catch (_) {}
+         }
+-        set({ user, token: token || null, isAuthenticated: true });
++        set({ user, token: token || null, isAuthenticated: Boolean(user && token) });
+       },
+ 
+       logout: async () => {
+@@ -53,29 +52,29 @@ export const useAuthStore = create(
+         } catch (_) {}
+       },
+ 
+-      updateUser: (userData) => {
+-        set({ user: { ...get().user, ...userData } });
+-      },
+-
+-      isAdmin: () => {
+-        return get().user?.role === 'admin';
+-      },
++      updateUser: (userData) => set((state) => ({ user: { ...state.user, ...userData } })),
++      isAdmin: () => get().user?.role === 'admin',
+     }),
+     {
+       name: STORAGE_KEYS.AUTH,
++      skipHydration: true,
++      version: 1,
+       partialize: (state) => ({
+         user: state.user,
+-        isAuthenticated: state.isAuthenticated
++        isAuthenticated: state.isAuthenticated,
+       }),
+       onRehydrateStorage: () => (state) => {
++        let token = null;
+         if (typeof window !== 'undefined') {
+           try {
+-            const savedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
+-            if (savedToken && state?.isAuthenticated) {
+-              state.token = savedToken;
+-            }
++            token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+           } catch (_) {}
+         }
++        if (state?.isAuthenticated && token) {
++          state.setAuth(state.user, token);
++        } else if (state?.isAuthenticated) {
++          state.setAuth(null, null);
++        }
+         state?.setHasHydrated(true);
+       },
+     }
+diff --git a/frontend/src/store/buildBoxStore.js b/frontend/src/store/buildBoxStore.js
+index 3710772..4bff0c3 100644
+--- a/frontend/src/store/buildBoxStore.js
++++ b/frontend/src/store/buildBoxStore.js
+@@ -2,72 +2,49 @@ import { create } from 'zustand';
+ import { persist } from 'zustand/middleware';
+ import { BUSINESS_CONFIG, STORAGE_KEYS } from '../constants';
+ 
+-/**
+- * Custom Gift Box Builder State Store (Zustand)
+- * Manages staging items for customized multi-product gift boxes.
+- */
+ export const useBuildBoxStore = create(
+   persist(
+     (set, get) => ({
+       items: [],
+       _hasHydrated: false,
+-      setHasHydrated: (state) => set({ _hasHydrated: state }),
+-
+-      /** Maximum number of items allowed per custom gift box */
++      setHasHydrated: (state) => set({ _hasHydrated: Boolean(state) }),
+       get maxItems() {
+         return BUSINESS_CONFIG.BOX_MAX_ITEMS;
+       },
+-      /** Minimum number of items required to seal a custom gift box */
+       get minItems() {
+         return BUSINESS_CONFIG.BOX_MIN_ITEMS;
+       },
+ 
+-      /**
+-       * Adds a single product into the staged custom box
+-       * @param {Object} product - Product candidate
+-       * @returns {{ success: boolean, reason?: string }}
+-       */
+       addItem: (product) => {
+-        const items = get().items;
+-        if (items.length >= BUSINESS_CONFIG.BOX_MAX_ITEMS) {
++        if (!product || get().items.length >= BUSINESS_CONFIG.BOX_MAX_ITEMS) {
+           return { success: false, reason: 'max_limit_reached' };
+         }
+-        set({ items: [...items, { ...product }] });
++        set((state) => ({ items: [...state.items, { ...product }] }));
+         return { success: true };
+       },
+ 
+-      /**
+-       * Removes an item by index from the staged box
+-       * @param {number} index - Index of item to remove
+-       */
+       removeItem: (index) => {
+-        const items = [...get().items];
+-        items.splice(index, 1);
+-        set({ items });
++        set((state) => {
++          if (index < 0 || index >= state.items.length) return state;
++          return { items: state.items.filter((_, itemIndex) => itemIndex !== index) };
++        });
+       },
+ 
+-      /**
+-       * Clears all items currently in the staged box
+-       */
+-      clearBox: () => set({ items: [] }),
++      clearBox: () => set((state) => (state.items.length ? { items: [] } : state)),
+ 
+-      /**
+-       * Calculates the total discounted price of the staged custom box
+-       * @returns {number} Subtotal including base packaging price
+-       */
+       getTotal: () => {
+         const itemsTotal = get().items.reduce((total, item) => {
+           const discountPercent = item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE;
+-          return total + item.price * (1 - discountPercent / 100);
++          return total + (Number(item.price) || 0) * (1 - discountPercent / 100);
+         }, 0);
+         return itemsTotal > 0 ? itemsTotal + BUSINESS_CONFIG.BOX_BASE_PRICE_EGP : 0;
+       },
+     }),
+     {
+       name: STORAGE_KEYS.BUILD_BOX,
+-      onRehydrateStorage: () => (state) => {
+-        state?.setHasHydrated(true);
+-      },
++      skipHydration: true,
++      version: 1,
++      onRehydrateStorage: () => (state) => state?.setHasHydrated(true),
+     }
+   )
+ );
+diff --git a/frontend/src/store/cartStore.js b/frontend/src/store/cartStore.js
+index c7103af..c3c6274 100644
+--- a/frontend/src/store/cartStore.js
++++ b/frontend/src/store/cartStore.js
+@@ -2,216 +2,151 @@ import { create } from 'zustand';
+ import { persist } from 'zustand/middleware';
+ import { BUSINESS_CONFIG, STORAGE_KEYS } from '../constants';
+ 
+-/**
+- * Safely parse numerical stock with floor at 0
+- * @param {any} value - Raw stock candidate
+- * @returns {number|null} Safe stock number or null
+- */
+ const parseStock = (value) => {
+   const stock = Number(value);
+   if (!Number.isFinite(stock)) return null;
+   return Math.max(0, Math.floor(stock));
+ };
+ 
++const getItemKey = ({ id, selectedSize, selectedColor, selectedShape, _variantsKey, boxId }) =>
++  [id, selectedSize, selectedColor, selectedShape, _variantsKey || '', boxId || ''].join('::');
++
++const getPrice = (item) => {
++  const discountPercent = item.boxId
++    ? item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE
++    : 0;
++  const basePrice = Number(item.price) || 0;
++  const addonsTotal = Array.isArray(item.addons)
++    ? item.addons.reduce((sum, addon) => sum + (Number(addon?.price) || 0), 0)
++    : 0;
++  return basePrice * (1 - discountPercent / 100) + addonsTotal;
++};
++
++export const calculateCartTotal = (items) => {
++  const boxGroups = new Set();
++  const itemsTotal = items.reduce((total, item) => {
++    if (item.boxId) boxGroups.add(item.boxId);
++    return total + getPrice(item) * (Number(item.quantity) || 0);
++  }, 0);
++  return itemsTotal + boxGroups.size * BUSINESS_CONFIG.BOX_BASE_PRICE_EGP;
++};
++
+ /**
+- * Shopping Cart State Store (Zustand)
+- * Manages customer cart items, custom box groupings, quantity capping against inventory, and subtotal aggregation.
++ * Client cart state. Persistence is explicitly rehydrated by Providers after mount so
++ * the server render and the first client render always use the same empty baseline.
+  */
+ export const useCartStore = create(
+   persist(
+     (set, get) => ({
+       items: [],
+       _hasHydrated: false,
+-      setHasHydrated: (state) => set({ _hasHydrated: state }),
+-
+-      /**
+-       * Adds a product with options into the shopping cart
+-       * @param {Object} product - Product entity
+-       * @param {number} quantity - Quantity to add
+-       * @param {Object} options - Customizations (variants, boxId, boxDiscount, addons)
+-       * @returns {{ success: boolean, quantity?: number, capped?: boolean, maxStock?: number|null, reason?: string }}
+-       */
++      setHasHydrated: (state) => set({ _hasHydrated: Boolean(state) }),
++
+       addItem: (product, quantity = 1, options = {}) => {
+-        const items = get().items;
+         const requestedQuantity = Math.max(1, Math.floor(Number(quantity) || 1));
+         const stockLimit = parseStock(product?.stock);
+         const maxAllowed = stockLimit ?? Number.MAX_SAFE_INTEGER;
+ 
+-        if (stockLimit === 0) {
+-          return { success: false, reason: 'out_of_stock', maxStock: 0 };
+-        }
++        if (!product?._id) return { success: false, reason: 'invalid_product' };
++        if (stockLimit === 0) return { success: false, reason: 'out_of_stock', maxStock: 0 };
+ 
+         const variantsKey = options.selectedVariants
+           ? JSON.stringify(options.selectedVariants)
+           : '';
+-        const existingIndex = items.findIndex(
+-          (item) =>
+-            item.id === product._id &&
+-            item.selectedSize === options.selectedSize &&
+-            item.selectedColor === options.selectedColor &&
+-            item.selectedShape === options.selectedShape &&
+-            (item._variantsKey || '') === variantsKey &&
+-            (item.boxId || '') === (options.boxId || '')
+-        );
+-
+-        if (existingIndex > -1) {
+-          const newItems = [...items];
+-          const currentQuantity = newItems[existingIndex].quantity;
+-          const nextQuantity = Math.min(currentQuantity + requestedQuantity, maxAllowed);
+-
+-          if (nextQuantity === currentQuantity) {
+-            return { success: false, reason: 'stock_limit_reached', maxStock: stockLimit };
+-          }
+-
+-          newItems[existingIndex].quantity = nextQuantity;
+-          if (stockLimit !== null) {
+-            newItems[existingIndex].stock = stockLimit;
+-          }
+-
+-          set({ items: newItems });
+-          return {
+-            success: true,
++        const incoming = {
++          id: product._id,
++          name: product.name,
++          slug: product.slug,
++          price: product.price,
++          oldPrice: product.oldPrice,
++          image: product.images?.[0]?.url,
++          quantity: Math.min(requestedQuantity, maxAllowed),
++          stock: stockLimit,
++          selectedSize: options.selectedSize,
++          selectedColor: options.selectedColor,
++          selectedShape: options.selectedShape,
++          selectedVariants: options.selectedVariants,
++          _variantsKey: variantsKey,
++          addons: options.addons || [],
++          boxSelections: options.boxSelections || [],
++          boxId: options.boxId,
++          boxDiscount: options.boxDiscount,
++        };
++        const itemKey = getItemKey(incoming);
++        let result = { success: true, quantity: incoming.quantity, capped: incoming.quantity < requestedQuantity, maxStock: stockLimit };
++
++        set((state) => {
++          const existingIndex = state.items.findIndex((item) => getItemKey(item) === itemKey);
++          if (existingIndex === -1) return { items: [...state.items, incoming] };
++
++          const currentItem = state.items[existingIndex];
++          const nextQuantity = Math.min((Number(currentItem.quantity) || 0) + requestedQuantity, maxAllowed);
++          result = {
++            success: nextQuantity > currentItem.quantity,
+             quantity: nextQuantity,
+-            capped: nextQuantity < currentQuantity + requestedQuantity,
++            capped: nextQuantity < (Number(currentItem.quantity) || 0) + requestedQuantity,
+             maxStock: stockLimit,
++            reason: nextQuantity === currentItem.quantity ? 'stock_limit_reached' : undefined,
+           };
+-        } else {
+-          const finalQuantity = Math.min(requestedQuantity, maxAllowed);
+-
+-          set({
+-            items: [
+-              ...items,
+-              {
+-                id: product._id,
+-                name: product.name,
+-                slug: product.slug,
+-                price: product.price,
+-                oldPrice: product.oldPrice,
+-                image: product.images?.[0]?.url,
+-                quantity: finalQuantity,
+-                stock: stockLimit,
+-                selectedSize: options.selectedSize,
+-                selectedColor: options.selectedColor,
+-                selectedShape: options.selectedShape,
+-                selectedVariants: options.selectedVariants,
+-                _variantsKey: variantsKey,
+-                addons: options.addons || [],
+-                boxSelections: options.boxSelections || [],
+-                boxId: options.boxId,
+-                boxDiscount: options.boxDiscount,
+-              },
+-            ],
+-          });
++          if (nextQuantity === currentItem.quantity) return state;
+ 
+-          return {
+-            success: true,
+-            quantity: finalQuantity,
+-            capped: finalQuantity < requestedQuantity,
+-            maxStock: stockLimit,
++          const items = state.items.slice();
++          items[existingIndex] = {
++            ...currentItem,
++            quantity: nextQuantity,
++            ...(stockLimit !== null ? { stock: stockLimit } : {}),
+           };
+-        }
++          return { items };
++        });
++
++        return result;
+       },
+ 
+       removeItem: (id, selectedSize, selectedColor, selectedShape, _variantsKey, boxId) => {
+-        set({
+-          items: get().items.filter(
+-            (item) =>
+-              !(
+-                item.id === id &&
+-                item.selectedSize === selectedSize &&
+-                item.selectedColor === selectedColor &&
+-                item.selectedShape === selectedShape &&
+-                (item._variantsKey || '') === (_variantsKey || '') &&
+-                (item.boxId || '') === (boxId || '')
+-              )
+-          ),
++        const targetKey = getItemKey({ id, selectedSize, selectedColor, selectedShape, _variantsKey, boxId });
++        set((state) => {
++          const items = state.items.filter((item) => getItemKey(item) !== targetKey);
++          return items.length === state.items.length ? state : { items };
+         });
+       },
+ 
+-      updateQuantity: (
+-        id,
+-        quantity,
+-        selectedSize,
+-        selectedColor,
+-        selectedShape,
+-        _variantsKey,
+-        boxId
+-      ) => {
++      updateQuantity: (id, quantity, selectedSize, selectedColor, selectedShape, _variantsKey, boxId) => {
+         const requestedQuantity = Math.max(1, Math.floor(Number(quantity) || 1));
++        const targetKey = getItemKey({ id, selectedSize, selectedColor, selectedShape, _variantsKey, boxId });
+         let result = { success: false, reason: 'not_found' };
+-        let changed = false;
+-
+-        const items = get().items.map((item) => {
+-          if (
+-            item.id === id &&
+-            item.selectedSize === selectedSize &&
+-            item.selectedColor === selectedColor &&
+-            item.selectedShape === selectedShape &&
+-            (item._variantsKey || '') === (_variantsKey || '') &&
+-            (item.boxId || '') === (boxId || '')
+-          ) {
+-            const stockLimit = parseStock(item.stock);
+-            const maxAllowed = stockLimit ?? Number.MAX_SAFE_INTEGER;
+-            const nextQuantity = Math.min(requestedQuantity, maxAllowed);
+ 
++        set((state) => {
++          let changed = false;
++          const items = state.items.map((item) => {
++            if (getItemKey(item) !== targetKey) return item;
++            const stockLimit = parseStock(item.stock);
++            const nextQuantity = Math.min(requestedQuantity, stockLimit ?? Number.MAX_SAFE_INTEGER);
+             result = {
+               success: true,
+               quantity: nextQuantity,
+               capped: nextQuantity < requestedQuantity,
+               maxStock: stockLimit,
+             };
+-
+-            if (nextQuantity === item.quantity) {
+-              return item;
+-            }
+-
++            if (nextQuantity === item.quantity) return item;
+             changed = true;
+             return { ...item, quantity: nextQuantity };
+-          }
+-          return item;
++          });
++          return changed ? { items } : state;
+         });
+-
+-        if (changed) {
+-          set({ items });
+-        }
+-
+         return result;
+       },
+ 
+-      clearCart: () => set({ items: [] }),
+-
+-      getTotal: () => {
+-        const boxGroups = new Set();
+-        const itemsTotal = get().items.reduce((total, item) => {
+-          let priceToUse = item.price;
+-
+-          if (item.boxId) {
+-            boxGroups.add(item.boxId);
+-            const discountPercent = item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE;
+-            priceToUse = item.price * (1 - discountPercent / 100);
+-          }
+-
+-          let unitPrice = priceToUse;
+-          if (item.addons) {
+-            unitPrice += item.addons.reduce((sum, addon) => sum + (addon.price || 0), 0);
+-          }
+-          const itemTotal = unitPrice * item.quantity;
+-          return total + itemTotal;
+-        }, 0);
+-
+-        const boxesTotal = boxGroups.size * BUSINESS_CONFIG.BOX_BASE_PRICE_EGP;
+-        return itemsTotal + boxesTotal;
+-      },
+-
+-      getItemsCount: () => {
+-        return get().items.reduce((count, item) => count + item.quantity, 0);
+-      },
++      clearCart: () => set((state) => (state.items.length ? { items: [] } : state)),
++      getTotal: () => calculateCartTotal(get().items),
++      getItemsCount: () => get().items.reduce((count, item) => count + (Number(item.quantity) || 0), 0),
+     }),
+     {
+       name: STORAGE_KEYS.CART,
+-      onRehydrateStorage: () => (state) => {
+-        state?.setHasHydrated(true);
+-      }
++      skipHydration: true,
++      version: 1,
++      onRehydrateStorage: () => (state) => state?.setHasHydrated(true),
+     }
+   )
+ );
++
++export { getItemKey };
+diff --git a/frontend/src/store/wishlistStore.js b/frontend/src/store/wishlistStore.js
+index 3ce6c2e..e75f5ee 100644
+--- a/frontend/src/store/wishlistStore.js
++++ b/frontend/src/store/wishlistStore.js
+@@ -13,45 +13,42 @@ export const useWishlistStore = create(
+     (set, get) => ({
+       items: [],
+       _hasHydrated: false,
+-      setHasHydrated: (state) => set({ _hasHydrated: state }),
++      setHasHydrated: (state) => set({ _hasHydrated: Boolean(state) }),
+ 
+       addItem: (product) => {
+-        const items = get().items;
+-        if (!items.find((item) => item.id === product._id)) {
+-          set({
+-            items: [
+-              ...items,
+-              {
+-                id: product._id,
+-                name: product.name,
+-                slug: product.slug,
+-                price: product.price,
+-                oldPrice: product.oldPrice,
+-                image: product.images?.[0]?.url,
+-                stock: parseStock(product.stock),
+-              },
+-            ],
+-          });
+-        }
++        if (!product?._id || get().items.some((item) => item.id === product._id)) return false;
++        set((state) => ({
++          items: [
++            ...state.items,
++            {
++              id: product._id,
++              name: product.name,
++              slug: product.slug,
++              price: product.price,
++              oldPrice: product.oldPrice,
++              image: product.images?.[0]?.url,
++              stock: parseStock(product.stock),
++            },
++          ],
++        }));
++        return true;
+       },
+ 
+       removeItem: (id) => {
+-        set({ items: get().items.filter((item) => item.id !== id) });
++        set((state) => {
++          const items = state.items.filter((item) => item.id !== id);
++          return items.length === state.items.length ? state : { items };
++        });
+       },
+ 
+-      isInWishlist: (id) => {
+-        return get().items.some((item) => item.id === id);
+-      },
++      isInWishlist: (id) => Boolean(id && get().items.some((item) => item.id === id)),
+ 
+       syncWishlist: (serverWishlist) => {
+         if (!Array.isArray(serverWishlist)) return;
+-        const currentItems = get().items;
+-        const map = new Map();
+-        currentItems.forEach((item) => item.id && map.set(item.id, item));
+-
++        const map = new Map(get().items.filter((item) => item?.id).map((item) => [item.id, item]));
+         serverWishlist.forEach((item) => {
+           if (!item) return;
+-          const id = typeof item === 'string' ? item : (item._id || item.id);
++          const id = typeof item === 'string' ? item : item._id || item.id;
+           if (!id) return;
+           const existing = map.get(id);
+           if (typeof item === 'object') {
+@@ -68,17 +65,16 @@ export const useWishlistStore = create(
+             map.set(id, { id });
+           }
+         });
+-
+         set({ items: Array.from(map.values()) });
+       },
+ 
+-      clearWishlist: () => set({ items: [] }),
++      clearWishlist: () => set((state) => (state.items.length ? { items: [] } : state)),
+     }),
+     {
+       name: STORAGE_KEYS.WISHLIST,
+-      onRehydrateStorage: () => (state) => {
+-        state?.setHasHydrated(true);
+-      }
++      skipHydration: true,
++      version: 1,
++      onRehydrateStorage: () => (state) => state?.setHasHydrated(true),
+     }
+   )
+ );

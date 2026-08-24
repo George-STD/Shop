@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { FiUploadCloud, FiX, FiCheck, FiCpu, FiImage, FiSave, FiAlertCircle } from 'react-icons/fi';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { adminAPI } from '../../services/api';
 
@@ -299,7 +300,7 @@ const BulkVisionUploader = ({ isOpen, onClose, categories = [], occasionsList = 
                   >
                     {/* Item Image */}
                     <div className="relative h-48 bg-gray-100 border-b border-gray-100">
-                      <img src={item.preview} alt="preview" className="w-full h-full object-contain" />
+                      <Image src={item.preview} alt="preview" fill sizes="(max-width: 768px) 100vw, 33vw" unoptimized className="object-contain" />
                       <button
                         onClick={() => handleRemove(item.id)}
                         disabled={isProcessing}

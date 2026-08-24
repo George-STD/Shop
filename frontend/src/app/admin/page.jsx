@@ -1,7 +1,7 @@
 'use client';
 
-import AdminDashboard from '../../legacy-pages/admin/AdminDashboard';
+import AdminDashboardClient from './AdminDashboardClient';
 
 export default function Page() {
-  return <AdminDashboard />;
+  return <AdminDashboardClient />;
 }

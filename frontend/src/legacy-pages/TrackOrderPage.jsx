@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
 import { FiSearch, FiPackage, FiTruck, FiCheckCircle } from 'react-icons/fi';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -178,7 +179,10 @@ const TrackOrderPage = () => {
                     {order.items.map((item, idx) => (
                       <div key={idx} className="flex items-center gap-4">
                         {item.image && (
-                          <img
+                          <Image
+                    width={64}
+                    height={64}
+                    sizes="64px"
                             src={item.image}
                             alt={item.name}
                             className="w-16 h-16 rounded-lg object-cover"

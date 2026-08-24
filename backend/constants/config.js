@@ -21,8 +21,11 @@ const CONFIG = {
   // =====================================================
   CORS: {
     ALLOWED_ORIGINS: parseCorsOrigins(),
-    METHODS: ['GET', 'POST', 'PUT', 'DELETE'],
+    METHODS: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     CREDENTIALS: true,
+    MAX_AGE: 86400,
+    ALLOWED_HEADERS: ['Content-Type', 'Authorization', 'If-None-Match', 'X-Requested-With'],
+    EXPOSED_HEADERS: ['ETag', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset', 'Retry-After', 'X-Cache'],
   },
 
   // =====================================================

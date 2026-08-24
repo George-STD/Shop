@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
@@ -309,7 +310,10 @@ const AdminAnalysis = () => {
                       <tr key={item._id} className="hover:bg-red-50/50 transition-colors">
                         <td className="p-3 font-semibold text-gray-800 flex items-center gap-2">
                           {item.images?.[0]?.url && (
-                            <img src={item.images[0].url} alt={item.name} className="w-8 h-8 rounded-lg object-cover" />
+                            <Image
+                    width={32}
+                    height={32}
+                    sizes="32px" src={item.images[0].url} alt={item.name} className="w-8 h-8 rounded-lg object-cover" />
                           )}
                           {item.name}
                         </td>

@@ -478,9 +478,25 @@ const OrderReviewStep = memo(function OrderReviewStep({
 /**
  * Highly Optimized Multi-Step Checkout Funnel
  */
+const getCheckoutIdempotencyKey = () => {
+  if (typeof window === 'undefined') return 'checkout-server-render';
+  const storageKey = 'hadaya:checkout:idempotency-key';
+  try {
+    const existing = sessionStorage.getItem(storageKey);
+    if (existing) return existing;
+    const generated = `chk_${crypto.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`}`;
+    sessionStorage.setItem(storageKey, generated);
+    return generated;
+  } catch (_) {
+    return `chk_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  }
+};
+
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const submitLockRef = useRef(false);
+  const orderCompletedRef = useRef(false);
+  const [isOnline, setIsOnline] = useState(true);
 
   // 1. Atomic Zustand Selectors
   const items = useCartStore((state) => state.items);
@@ -495,6 +511,7 @@ const CheckoutPage = () => {
 
   // 2. Authentication and Empty Cart Redirection
   useEffect(() => {
+    if (orderCompletedRef.current) return;
     if (isHydrated) {
       if (!isAuthenticated) {
         toast(STRINGS.CHECKOUT.LOGIN_REQUIRED, { icon: '🔐' });
@@ -516,9 +533,18 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
-  const [idempotencyKey] = useState(
-    () => `chk_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
-  );
+  const [idempotencyKey] = useState(getCheckoutIdempotencyKey);
+
+  useEffect(() => {
+    const updateOnlineState = () => setIsOnline(navigator.onLine);
+    updateOnlineState();
+    window.addEventListener('online', updateOnlineState);
+    window.addEventListener('offline', updateOnlineState);
+    return () => {
+      window.removeEventListener('online', updateOnlineState);
+      window.removeEventListener('offline', updateOnlineState);
+    };
+  }, []);
 
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -536,6 +562,17 @@ const CheckoutPage = () => {
     deliveryType: 'standard',
     customerNote: '',
   });
+
+  useEffect(() => {
+    if (!authHydrated || !user) return;
+    setFormData((previous) => ({
+      ...previous,
+      firstName: previous.firstName || user.firstName || '',
+      lastName: previous.lastName || user.lastName || '',
+      email: previous.email || user.email || '',
+      phone: previous.phone || user.phone || '',
+    }));
+  }, [authHydrated, user]);
 
   // 4. Stable Subtotal & Discount Calculations
   const subtotal = useMemo(() => {
@@ -615,11 +652,22 @@ const CheckoutPage = () => {
     }
   }, [validateStep1]);
 
-  // 6. Network Idempotent Order Submission with Hardware Lock
-  const handleSubmit = async (e) => {
+  const handleBackToStep1 = useCallback(() => setStep(1), []);
+  const handleBackToStep2 = useCallback(() => setStep(2), []);
+  const handleNextStep2 = useCallback(() => {
+    setStep(3);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  // 6. Network-idempotent order submission with a hardware lock.
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
 
     if (submitLockRef.current) return;
+    if (!isOnline) {
+      toast.error('لا يمكن تأكيد الطلب أثناء انقطاع الإنترنت. ستبقى بياناتك محفوظة، حاول مرة أخرى عند عودة الاتصال.');
+      return;
+    }
     submitLockRef.current = true;
     setLoading(true);
 
@@ -660,6 +708,7 @@ const CheckoutPage = () => {
 
       if (response.data.success) {
         const finalOrder = response.data.data;
+        orderCompletedRef.current = true;
         clearCart();
         if (typeof finalOrder?.total === 'number' && Math.abs(finalOrder.total - total) > 0.01) {
           toast(
@@ -669,6 +718,9 @@ const CheckoutPage = () => {
         } else {
           toast.success(STRINGS.CHECKOUT.ORDER_SUCCESS);
         }
+        try {
+          sessionStorage.removeItem('hadaya:checkout:idempotency-key');
+        } catch (_) {}
         navigate(`/account/orders?success=true&order=${finalOrder.orderNumber}`);
       }
     } catch (error) {
@@ -677,7 +729,7 @@ const CheckoutPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [clearCart, formData, idempotencyKey, isOnline, items, navigate, pointsToRedeem, total]);
 
   if (!isHydrated) {
     return (
@@ -704,6 +756,13 @@ const CheckoutPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
+      {!isOnline && (
+        <div className="container-custom mb-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm font-semibold text-amber-800" role="alert">
+            أنت غير متصل. يمكنك مراجعة طلبك، لكن تأكيده متاح عند عودة الاتصال.
+          </div>
+        </div>
+      )}
       <div className="container-custom">
         {/* Step Progress Indicators */}
         <nav aria-label="مراحل إتمام الطلب" className="flex items-center justify-center mb-8">
@@ -762,11 +821,8 @@ const CheckoutPage = () => {
                 <PaymentMethodStep
                   formData={formData}
                   onChange={handleChange}
-                  onBack={() => setStep(1)}
-                  onNext={() => {
-                    setStep(3);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
+                  onBack={handleBackToStep1}
+                  onNext={handleNextStep2}
                 />
               )}
 
@@ -775,7 +831,7 @@ const CheckoutPage = () => {
                   formData={formData}
                   items={items}
                   loading={loading}
-                  onBack={() => setStep(2)}
+                  onBack={handleBackToStep2}
                 />
               )}
             </div>

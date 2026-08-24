@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import React from 'react';
 import { FiCheck, FiX, FiTrash2, FiStar } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
@@ -48,7 +49,10 @@ const AdminReviewsList = ({
           <div className="flex flex-wrap gap-4">
             {/* Product Image */}
             {review.product?.images?.[0] && (
-              <img
+              <Image
+                    width={64}
+                    height={64}
+                    sizes="64px"
                 src={review.product.images[0].url}
                 alt={review.product.name}
                 className="w-16 h-16 object-cover rounded-lg flex-shrink-0"

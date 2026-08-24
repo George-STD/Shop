@@ -4,13 +4,50 @@ const User = require('../models/User');
 const { CONFIG, MESSAGES } = require('../constants');
 
 // =====================================================
-// PROTECT MIDDLEWARE - Verify JWT Token
+// CLIENT IP EXTRACTION & IPV6 /64 AGGREGATION
+// =====================================================
+const clientIp = (req) => {
+  let ip = req.ip || req.connection?.remoteAddress || '127.0.0.1';
+  if (ip.startsWith('::ffff:')) {
+    ip = ip.substring(7);
+  }
+  // Aggregate IPv6 to /64 subnet (first 4 segments) to prevent 2^64 free identities
+  if (ip.includes(':')) {
+    const parts = ip.split(':');
+    ip = parts.slice(0, 4).join(':') + '::/64';
+  }
+  return ip;
+};
+
+const emailFromBody = (req) => {
+  return req.body && req.body.email ? String(req.body.email).toLowerCase().trim() : '';
+};
+
+// =====================================================
+// AUTHZ CACHE (10s TTL in-memory cache to reduce Mongo QPS)
+// =====================================================
+const authzCache = new Map();
+const AUTHZ_CACHE_TTL_MS = 10_000;
+const MAX_AUTHZ_CACHE_SIZE = 50_000;
+
+const cleanAuthzCache = () => {
+  const now = Date.now();
+  for (const [token, entry] of authzCache.entries()) {
+    if (now - entry.cachedAt > AUTHZ_CACHE_TTL_MS) {
+      authzCache.delete(token);
+    }
+  }
+};
+
+setInterval(cleanAuthzCache, 30_000).unref();
+
+// =====================================================
+// PROTECT MIDDLEWARE - Verify JWT Token with HS256 & Cache
 // =====================================================
 const protect = async (req, res, next) => {
   try {
     let token;
 
-    // Check for token in Authorization header
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     }
@@ -18,13 +55,22 @@ const protect = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: MESSAGES.AUTH.LOGIN_REQUIRED
+        message: MESSAGES.AUTH.LOGIN_REQUIRED,
       });
     }
 
+    // In production/dev (bypassed in test env for strict state isolation), check authz cache
+    if (process.env.NODE_ENV !== 'test') {
+      const cached = authzCache.get(token);
+      if (cached && Date.now() - cached.cachedAt < AUTHZ_CACHE_TTL_MS) {
+        req.user = cached.user;
+        return next();
+      }
+    }
+
     try {
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      // Strictly pin algorithm to HS256 to prevent algorithm confusion attacks
+      const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
 
       // Get user from token (exclude password)
       const user = await User.findById(decoded.id).select('-password');
@@ -32,23 +78,23 @@ const protect = async (req, res, next) => {
       if (!user) {
         return res.status(401).json({
           success: false,
-          message: MESSAGES.AUTH.USER_NOT_FOUND
+          message: MESSAGES.AUTH.USER_NOT_FOUND,
         });
       }
 
-      // Check if user is active
       if (!user.isActive) {
         return res.status(401).json({
           success: false,
-          message: MESSAGES.AUTH.ACCOUNT_DISABLED
+          message: MESSAGES.AUTH.ACCOUNT_DISABLED,
         });
       }
 
       // Check token version (session invalidation on password change / reset)
       if (decoded.v !== undefined && user.tokenVersion !== undefined && decoded.v !== user.tokenVersion) {
+        authzCache.delete(token);
         return res.status(401).json({
           success: false,
-          message: MESSAGES.AUTH.SESSION_INVALID
+          message: MESSAGES.AUTH.SESSION_INVALID,
         });
       }
 
@@ -56,27 +102,32 @@ const protect = async (req, res, next) => {
       if (user.passwordChangedAt && decoded.iat) {
         const changedTimestamp = parseInt(user.passwordChangedAt.getTime() / 1000, 10);
         if (decoded.iat < changedTimestamp) {
+          authzCache.delete(token);
           return res.status(401).json({
             success: false,
-            message: MESSAGES.AUTH.SESSION_INVALID
+            message: MESSAGES.AUTH.SESSION_INVALID,
           });
         }
       }
 
-      // Add user to request object
+      // Add to authz cache
+      if (authzCache.size < MAX_AUTHZ_CACHE_SIZE) {
+        authzCache.set(token, { user, cachedAt: Date.now() });
+      }
+
       req.user = user;
       next();
     } catch (error) {
       return res.status(401).json({
         success: false,
-        message: MESSAGES.AUTH.SESSION_INVALID
+        message: MESSAGES.AUTH.SESSION_INVALID,
       });
     }
   } catch (error) {
     console.error('Auth middleware error:', error);
     res.status(500).json({
       success: false,
-      message: MESSAGES.AUTH.AUTH_ERROR
+      message: MESSAGES.AUTH.AUTH_ERROR,
     });
   }
 };
@@ -88,17 +139,15 @@ const admin = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({
       success: false,
-      message: MESSAGES.GENERAL.UNAUTHORIZED
+      message: MESSAGES.GENERAL.UNAUTHORIZED,
     });
   }
 
   if (req.user.role !== CONFIG.USER_ROLE.ADMIN) {
-    // Log unauthorized admin access attempt
     console.warn(`⚠️ Unauthorized admin access attempt by user: ${req.user._id} (${req.user.email})`);
-    
     return res.status(403).json({
       success: false,
-      message: MESSAGES.ADMIN.UNAUTHORIZED
+      message: MESSAGES.ADMIN.UNAUTHORIZED,
     });
   }
 
@@ -106,116 +155,148 @@ const admin = (req, res, next) => {
 };
 
 // =====================================================
-// RATE LIMITERS - Prevent brute force attacks
+// RATE LIMITERS BASE CONFIGURATION (Draft-7 & Health Skip)
 // =====================================================
+const limiterBase = {
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  validate: false,
+  skip: (req) =>
+    req.method === 'OPTIONS' ||
+    req.method === 'HEAD' ||
+    req.path === '/health' ||
+    req.path === '/api/health',
+};
 
 // General API rate limiter
 const apiLimiter = rateLimit({
+  ...limiterBase,
   windowMs: CONFIG.RATE_LIMIT.API.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.API.MAX_REQUESTS,
+  limit: CONFIG.RATE_LIMIT.API.MAX_REQUESTS,
+  keyGenerator: (req) => clientIp(req),
   message: {
     success: false,
-    message: MESSAGES.RATE_LIMIT.API
+    message: MESSAGES.RATE_LIMIT.API,
   },
-  standardHeaders: true,
-  legacyHeaders: false,
 });
 
 // Strict rate limiter for admin routes
 const adminLimiter = rateLimit({
+  ...limiterBase,
   windowMs: CONFIG.RATE_LIMIT.ADMIN.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.ADMIN.MAX_REQUESTS,
+  limit: CONFIG.RATE_LIMIT.ADMIN.MAX_REQUESTS,
+  keyGenerator: (req) => (req.user?._id ? `admin:usr:${req.user._id}` : `admin:ip:${clientIp(req)}`),
   message: {
     success: false,
-    message: MESSAGES.RATE_LIMIT.ADMIN
+    message: MESSAGES.RATE_LIMIT.ADMIN,
   },
-  standardHeaders: true,
-  legacyHeaders: false,
 });
 
-// Very strict rate limiter for login attempts
+// Very strict rate limiter for login attempts (IP + Email key generator)
 const loginLimiter = rateLimit({
+  ...limiterBase,
   windowMs: CONFIG.RATE_LIMIT.LOGIN.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.LOGIN.MAX_REQUESTS,
+  limit: CONFIG.RATE_LIMIT.LOGIN.MAX_REQUESTS,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => `login:${clientIp(req)}:${emailFromBody(req) || 'unknown'}`,
   message: {
     success: false,
-    message: MESSAGES.RATE_LIMIT.LOGIN
+    message: MESSAGES.RATE_LIMIT.LOGIN,
   },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true, // Don't count successful logins
 });
 
-// Dedicated rate limiter for forgot-password requests (no skipSuccessfulRequests)
+// Dedicated rate limiter for forgot-password requests (IP + Email key generator)
 const forgotPasswordLimiter = rateLimit({
+  ...limiterBase,
   windowMs: CONFIG.RATE_LIMIT.LOGIN.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.LOGIN.MAX_REQUESTS,
+  limit: CONFIG.RATE_LIMIT.LOGIN.MAX_REQUESTS,
+  keyGenerator: (req) => `forgot:${clientIp(req)}:${emailFromBody(req) || 'unknown'}`,
   message: {
     success: false,
-    message: MESSAGES.RATE_LIMIT.LOGIN
+    message: MESSAGES.RATE_LIMIT.LOGIN,
   },
-  standardHeaders: true,
-  legacyHeaders: false,
 });
 
-// Rate limiter for verification code attempts (brute-force protection)
+// Rate limiter for verification code attempts
 const verifyLimiter = rateLimit({
+  ...limiterBase,
   windowMs: CONFIG.RATE_LIMIT.VERIFY.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.VERIFY.MAX_REQUESTS,
+  limit: CONFIG.RATE_LIMIT.VERIFY.MAX_REQUESTS,
+  keyGenerator: (req) => clientIp(req),
   message: {
     success: false,
-    message: MESSAGES.RATE_LIMIT.VERIFY
+    message: MESSAGES.RATE_LIMIT.VERIFY,
   },
-  standardHeaders: true,
-  legacyHeaders: false,
 });
 
-// Rate limiter for registration (prevent mass account creation)
+// Rate limiter for registration
 const registerLimiter = rateLimit({
+  ...limiterBase,
   windowMs: CONFIG.RATE_LIMIT.REGISTER.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.REGISTER.MAX_REQUESTS,
+  limit: CONFIG.RATE_LIMIT.REGISTER.MAX_REQUESTS,
+  keyGenerator: (req) => clientIp(req),
   message: {
     success: false,
-    message: MESSAGES.RATE_LIMIT.REGISTER
+    message: MESSAGES.RATE_LIMIT.REGISTER,
   },
-  standardHeaders: true,
-  legacyHeaders: false,
 });
 
-// Rate limiter for AI routes (Gemini API protection)
+// Rate limiter for AI routes
 const aiLimiter = rateLimit({
+  ...limiterBase,
   windowMs: CONFIG.RATE_LIMIT.AI.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.AI.MAX_REQUESTS,
+  limit: CONFIG.RATE_LIMIT.AI.MAX_REQUESTS,
+  keyGenerator: (req) => (req.user?._id ? `ai:usr:${req.user._id}` : `ai:ip:${clientIp(req)}`),
   message: {
     success: false,
-    message: MESSAGES.RATE_LIMIT.AI
+    message: MESSAGES.RATE_LIMIT.AI,
   },
-  standardHeaders: true,
-  legacyHeaders: false,
 });
 
 // Public rate limiter for Gift Finder AI
 const publicAiLimiter = rateLimit({
+  ...limiterBase,
   windowMs: CONFIG.RATE_LIMIT.AI.WINDOW_MS,
-  max: 6, // 6 requests per 15 minutes for public users
+  max: 6,
+  limit: 6,
+  keyGenerator: (req) => clientIp(req),
   message: {
     success: false,
-    message: 'تم تجاوز الحد المسموح به لطلبات الذكاء الاصطناعي. يرجى المحاولة بعد 15 دقيقة.'
+    message: 'تم تجاوز الحد المسموح به لطلبات الذكاء الاصطناعي. يرجى المحاولة بعد 15 دقيقة.',
   },
-  standardHeaders: true,
-  legacyHeaders: false,
 });
 
-// Strict rate limiter for image uploads (Cloudinary protection)
+// Rate limiter for image uploads
 const uploadLimiter = rateLimit({
+  ...limiterBase,
   windowMs: 15 * 60 * 1000,
   max: 60,
+  limit: 60,
+  keyGenerator: (req) => (req.user?._id ? `upload:usr:${req.user._id}` : `upload:ip:${clientIp(req)}`),
   message: {
     success: false,
-    message: 'تم تجاوز الحد الأقصى لعمليات رفع الصور. حاول لاحقاً.'
+    message: 'تم تجاوز الحد الأقصى لعمليات رفع الصور. حاول لاحقاً.',
   },
-  standardHeaders: true,
-  legacyHeaders: false,
+});
+
+// Rate limiter for Webhooks (120 req / minute)
+const webhookLimiter = rateLimit({
+  ...limiterBase,
+  windowMs: 60 * 1000,
+  max: 120,
+  limit: 120,
+  keyGenerator: (req) => clientIp(req),
+  message: {
+    success: false,
+    message: 'Webhook rate limit exceeded',
+  },
 });
 
 // =====================================================
@@ -224,51 +305,72 @@ const uploadLimiter = rateLimit({
 const validateObjectId = (paramName = 'id') => {
   return (req, res, next) => {
     const id = req.params[paramName];
-    
     if (!CONFIG.PATTERNS.MONGODB_ID.test(id)) {
       return res.status(400).json({
         success: false,
-        message: MESSAGES.GENERAL.INVALID_ID
+        message: MESSAGES.GENERAL.INVALID_ID,
       });
     }
-    
     next();
   };
 };
 
 // =====================================================
-// SANITIZE INPUT - XSS & NoSQL Injection prevention
-// Strips dangerous HTML tags/attributes while preserving
-// plain-text angle brackets and keeping secrets unmutated
+// SANITIZE INPUT - ReDoS-Safe & NoSQL Injection Neutralizer
+// Max depth 8, max 400 keys, max 20,000 chars per string
+// Bounded tag stripping regex: /<\/?[a-z][^>]{0,200}>/gi
 // =====================================================
-const CREDENTIAL_FIELDS = new Set(['password', 'currentPassword', 'newPassword', 'confirmPassword']);
+const CREDENTIAL_FIELDS = new Set([
+  'password',
+  'currentPassword',
+  'newPassword',
+  'confirmPassword',
+  'pendingPassword',
+]);
+
+const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 const sanitizeInput = (req, res, next) => {
-  const sanitize = (obj) => {
-    if (!obj || typeof obj !== 'object') return;
-    for (let key in obj) {
-      // NoSQL injection: delete any keys starting with $
-      if (key.startsWith('$')) {
+  let keysInspected = 0;
+  const MAX_KEYS = 400;
+  const MAX_DEPTH = 8;
+  const MAX_STRING_LEN = 20_000;
+
+  const sanitize = (obj, depth = 0) => {
+    if (!obj || typeof obj !== 'object' || depth > MAX_DEPTH) return;
+
+    for (const key of Object.keys(obj)) {
+      keysInspected += 1;
+      if (keysInspected > MAX_KEYS) {
         delete obj[key];
         continue;
       }
-      // Never mutate raw passwords or secrets before hashing
+
+      // Drop NoSQL injection operators ($) or prototype pollutions
+      if (key.startsWith('$') || DANGEROUS_KEYS.has(key)) {
+        delete obj[key];
+        continue;
+      }
+
+      // Never touch raw passwords
       if (CREDENTIAL_FIELDS.has(key)) continue;
 
       if (typeof obj[key] === 'string') {
-        obj[key] = obj[key]
-          // Strip dangerous tag blocks (script, style, iframe, object, embed) and their contents
-          .replace(/<(script|style|iframe|object|embed|form)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
-          // Strip self-closing or unclosed dangerous tags
-          .replace(/<\/?(script|style|iframe|object|embed|link|meta)\b[^>]*\/?>/gi, '')
-          // Strip all HTML tags that look like real tags (tag name starts with a letter)
-          .replace(/<\/?[a-z][a-z0-9]*\b[^>]*\/?>/gi, '')
-          // Strip javascript: URIs
+        let str = obj[key];
+        if (str.length > MAX_STRING_LEN) {
+          str = str.slice(0, MAX_STRING_LEN);
+        }
+
+        // Bounded, ReDoS-free linear stripping
+        obj[key] = str
+          .replace(/<script[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[\s\S]*?<\/style>/gi, '')
+          .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+          .replace(/<\/?[a-z][^>]{0,200}>/gi, '')
           .replace(/javascript\s*:/gi, '')
-          // Strip inline event handlers (onerror=, onclick=, etc.)
           .replace(/\bon\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '');
       } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-        sanitize(obj[key]);
+        sanitize(obj[key], depth + 1);
       }
     }
   };
@@ -286,20 +388,18 @@ const sanitizeInput = (req, res, next) => {
 const logAdminAction = (action) => {
   return (req, res, next) => {
     const originalJson = res.json.bind(res);
-    
-    res.json = function(data) {
-      // Log successful admin actions
+
+    res.json = function (data) {
       if (res.statusCode >= 200 && res.statusCode < 300) {
         console.log(`📝 Admin Action: ${action}`);
         console.log(`   User: ${req.user?.email || 'Unknown'}`);
-        console.log(`   IP: ${req.ip}`);
+        console.log(`   IP: ${clientIp(req)}`);
         console.log(`   Time: ${new Date().toISOString()}`);
         console.log(`   Resource ID: ${req.params?.id || 'N/A'}`);
       }
-      
       return originalJson(data);
     };
-    
+
     next();
   };
 };
@@ -316,7 +416,9 @@ module.exports = {
   aiLimiter,
   publicAiLimiter,
   uploadLimiter,
+  webhookLimiter,
   validateObjectId,
   sanitizeInput,
-  logAdminAction
+  logAdminAction,
+  clientIp,
 };

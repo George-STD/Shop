@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { STRINGS } from '../../../constants';
 import Modal from '../../ui/Modal';
 
@@ -82,10 +83,13 @@ const CategoryFormModal = ({
               dir="ltr"
             />
             {formData.image && (
-              <img
+<Image
                 src={formData.image}
                 alt="Preview"
-                className="mt-2 h-20 object-cover rounded-lg"
+                width={80}
+                height={80}
+                sizes="80px"
+                className="mt-2 h-20 w-20 object-cover rounded-lg"
               />
             )}
           </div>

@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -208,7 +209,10 @@ const BuildBoxPage = () => {
                       }`}
                     >
                       {cat.image ? (
-                        <img src={cat.image} alt={cat.name} className="w-5 h-5 object-cover rounded-md" />
+                        <Image
+                    width={20}
+                    height={20}
+                    sizes="20px" src={cat.image} alt={cat.name} className="w-5 h-5 object-cover rounded-md" />
                       ) : (
                         <FiLayers className="w-4 h-4 opacity-70" />
                       )}
@@ -262,7 +266,9 @@ const BuildBoxPage = () => {
                         target="_blank"
                         className="relative h-48 overflow-hidden block"
                       >
-                        <img
+                        <Image
+                    fill
+                    sizes="100vw"
                           src={product.images[0]?.url}
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -369,7 +375,9 @@ const BuildBoxPage = () => {
                   }}
                 >
                   {/* Empty Box Image */}
-                  <img
+                  <Image
+                    fill
+                    sizes="100vw"
                     src="/images/empty_box.png"
                     alt="Empty Box"
                     className="absolute inset-0 w-full h-full object-contain mix-blend-multiply opacity-90 drop-shadow-xl"
@@ -396,7 +404,9 @@ const BuildBoxPage = () => {
                           aspectRatio: '1/1',
                         }}
                       >
-                        <img
+                        <Image
+                    fill
+                    sizes="100vw"
                           src={item.image}
                           alt={item.name}
                           className="w-full h-full object-cover rounded-lg border-2 border-white/50 bg-white"
@@ -429,7 +439,10 @@ const BuildBoxPage = () => {
                       key={index}
                       className="flex gap-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm relative group"
                     >
-                      <img
+                      <Image
+                    width={64}
+                    height={64}
+                    sizes="64px"
                         src={item.image}
                         alt={item.name}
                         className="w-16 h-16 object-cover rounded-xl"

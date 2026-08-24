@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { Routes, Route, Link, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import {
@@ -679,7 +680,10 @@ const OrdersPage = () => {
                     className="flex items-center gap-2 border rounded p-2 bg-white w-full sm:w-auto"
                   >
                     {item.image && (
-                      <img
+                      <Image
+                    width={48}
+                    height={48}
+                    sizes="48px"
                         src={item.image}
                         alt={item.name}
                         className="w-12 h-12 object-cover rounded flex-shrink-0"

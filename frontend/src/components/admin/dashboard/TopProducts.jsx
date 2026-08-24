@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import React from 'react';
 import { FiPackage, FiTrendingUp } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
@@ -13,7 +14,10 @@ const TopProducts = ({ stats, formatCurrency }) => {
               {index + 1}
             </span>
             {product.images?.[0] && (
-              <img
+              <Image
+                    width={32}
+                    height={32}
+                    sizes="32px"
                 src={product.images[0].url}
                 alt={product.name}
                 className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded-lg"

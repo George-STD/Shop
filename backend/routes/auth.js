@@ -2,8 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const { loginLimiter, forgotPasswordLimiter, verifyLimiter, registerLimiter, protect, validateObjectId } = require('../middleware/auth');
+const { noStoreCache } = require('../middleware/cache');
 const { MESSAGES } = require('../constants');
 const authController = require('../controllers/authController');
+
+router.use(noStoreCache);
 
 // @route   POST /api/auth/register
 // @desc    Register new user (sends verification code to email)

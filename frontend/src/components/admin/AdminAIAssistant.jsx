@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { adminAPI } from '../../services/api';
 import { 
@@ -197,7 +198,7 @@ const AdminAIAssistant = () => {
           <>
             <td className="px-3 py-2 whitespace-nowrap">
               {item.images?.[0]?.url ? (
-                <img src={item.images[0].url} alt="" className="w-8 h-8 rounded object-cover" />
+                <Image src={item.images[0].url} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded object-cover" />
               ) : (
                 <div className="w-8 h-8 rounded bg-gray-200" />
               )}
@@ -248,7 +249,7 @@ const AdminAIAssistant = () => {
           <>
             <td className="px-3 py-2 whitespace-nowrap">
               {item.image?.url ? (
-                <img src={item.image.url} alt="" className="w-8 h-8 rounded object-cover" />
+                <Image src={item.image.url} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded object-cover" />
               ) : (
                 <div className="w-8 h-8 rounded bg-gray-200" />
               )}

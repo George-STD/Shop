@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import React, { useRef } from 'react';
 import toast from 'react-hot-toast';
 import { adminAPI, productsAPI } from '../../../services/api';
@@ -465,7 +466,10 @@ const ProductFormModal = ({
                           className="flex-1 border rounded px-2 py-1 text-xs"
                         />
                         {imgUrl && (
-                          <img
+                          <Image
+                    width={32}
+                    height={32}
+                    sizes="32px"
                             src={imgUrl}
                             alt=""
                             className="w-8 h-8 object-cover rounded border"
@@ -690,7 +694,10 @@ const ProductFormModal = ({
                       </button>
                     </div>
                     {img.url && (
-                      <img src={img.url.startsWith('/') ? `${API_URL.replace('/api', '')}${img.url}` : img.url} alt="" className="w-10 h-10 object-cover rounded border" />
+                      <Image
+                    width={40}
+                    height={40}
+                    sizes="40px" src={img.url.startsWith('/') ? `${API_URL.replace('/api', '')}${img.url}` : img.url} alt="" className="w-10 h-10 object-cover rounded border" />
                     )}
                     {formData.images.length > 1 && (
                       <button
@@ -750,7 +757,10 @@ const ProductFormModal = ({
                   <h4 className="text-sm font-medium text-blue-800 mb-2">جاري الرفع ({uploadingImages.length})...</h4>
                   {uploadingImages.map((img) => (
                     <div key={img.id} className="flex items-center gap-3 bg-white p-2 rounded border shadow-sm">
-                      <img src={img.preview} alt="preview" className="w-10 h-10 object-cover rounded" />
+                      <Image
+                    width={40}
+                    height={40}
+                    sizes="40px" src={img.preview} alt="preview" className="w-10 h-10 object-cover rounded" />
                       <div className="flex-1">
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-gray-600 truncate max-w-[150px]">{img.file.name}</span>
@@ -909,7 +919,10 @@ const ProductFormModal = ({
                           className="flex-1 border rounded px-2 py-1 text-xs"
                         />
                         {opt.thumbnail && (
-                          <img
+                          <Image
+                    width={32}
+                    height={32}
+                    sizes="32px"
                             src={opt.thumbnail}
                             alt=""
                             className="w-8 h-8 object-cover rounded border"
@@ -1335,7 +1348,10 @@ const ProductFormModal = ({
                     {(item.product?._id || item.product)?.length === 24 && productImagesCache[item.product?._id || item.product] && (
                       <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-lg border border-gray-100">
                         {productImagesCache[item.product?._id || item.product].img ? (
-                          <img 
+                          <Image
+                    width={40}
+                    height={40}
+                    sizes="40px" 
                             src={productImagesCache[item.product?._id || item.product].img} 
                             alt="preview" 
                             className="w-10 h-10 object-cover rounded-md shadow-sm"

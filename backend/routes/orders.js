@@ -3,8 +3,11 @@ const router = express.Router();
 const { body } = require('express-validator');
 const rateLimit = require('express-rate-limit');
 const { protect, apiLimiter, validateObjectId } = require('../middleware/auth');
+const { noStoreCache } = require('../middleware/cache');
 const { CONFIG, MESSAGES } = require('../constants');
 const orderController = require('../controllers/orderController');
+
+router.use(noStoreCache);
 
 // @route   POST /api/orders
 // @desc    Create new order

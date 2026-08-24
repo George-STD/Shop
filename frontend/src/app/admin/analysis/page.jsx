@@ -1,7 +1,7 @@
 'use client';
 
-import AdminAnalysis from '../../../legacy-pages/admin/AdminAnalysis';
+import AdminAnalysisClient from '../AdminAnalysisClient';
 
 export default function Page() {
-  return <AdminAnalysis />;
+  return <AdminAnalysisClient />;
 }

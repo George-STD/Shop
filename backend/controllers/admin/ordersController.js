@@ -82,11 +82,17 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
                 $inc: { loyaltyPoints: earned },
                 $push: {
                   pointsHistory: {
-                    points: earned,
-                    reason: `مكافأة إتمام الطلب #${order.orderNumber || order._id}`,
-                    type: 'EARNED'
-                  }
-                }
+                    $each: [
+                      {
+                        points: earned,
+                        reason: `مكافأة إتمام الطلب #${order.orderNumber || order._id}`,
+                        type: 'EARNED',
+                        createdAt: new Date(),
+                      },
+                    ],
+                    $slice: -50,
+                  },
+                },
               },
               opts
             );

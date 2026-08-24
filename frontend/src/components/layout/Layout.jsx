@@ -7,7 +7,8 @@ import ContactFab from './ContactFab';
 import { useUIStore } from '../../store';
 
 const Layout = ({ children }) => {
-  const { isMobileMenuOpen, isCartOpen } = useUIStore();
+  const isMobileMenuOpen = useUIStore((state) => state.isMobileMenuOpen);
+  const isCartOpen = useUIStore((state) => state.isCartOpen);
 
   return (
     <div className="min-h-screen flex flex-col">

@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import React from 'react';
 import { FiCheck, FiTruck, FiPackage, FiX } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
@@ -75,7 +76,10 @@ const OrderDetailsModal = ({
               {selectedOrder.items?.map((item, index) => (
                 <div key={index} className="flex items-center gap-3">
                   {item.product?.images?.[0] && (
-                    <img
+                    <Image
+                    width={48}
+                    height={48}
+                    sizes="48px"
                       src={item.product.images[0].url}
                       alt={item.product.name}
                       className="w-12 h-12 object-cover rounded-lg"

@@ -7,6 +7,7 @@ const { CONFIG, MESSAGES } = require('../constants');
 const { sendSuccess, sendError, sendCreated, sendNotFound, sendForbidden, sendBadRequest, sendPaginated } = require('../utils/response');
 const asyncHandler = require('../utils/asyncHandler');
 const { processReadyBoxes } = require('./productController');
+const { addEgp, subEgp, mulEgp, applyPercentDiscount, roundTo2Decimals } = require('../utils/money');
 
 // =====================================================
 // HELPERS
@@ -109,10 +110,10 @@ const buildOrderItems = (items, productMap) => {
       boxGroups.add(item.boxId);
       boxCounts.set(item.boxId, (boxCounts.get(item.boxId) || 0) + quantity);
       const discountPercent = product.boxDiscount !== undefined ? product.boxDiscount : CONFIG.BUSINESS.BOX_DISCOUNT_PERCENTAGE;
-      finalPrice = finalPrice * (1 - discountPercent / 100);
+      finalPrice = applyPercentDiscount(finalPrice, discountPercent);
     }
 
-    const itemSubtotal = (finalPrice + addonsTotal) * quantity;
+    const itemSubtotal = mulEgp(addEgp(finalPrice, addonsTotal), quantity);
 
     orderItems.push({
       product: product._id,
@@ -133,7 +134,7 @@ const buildOrderItems = (items, productMap) => {
       includedProducts: product.includedProducts
     });
 
-    subtotal += itemSubtotal;
+    subtotal = addEgp(subtotal, itemSubtotal);
   }
 
   if (subtotal < 0) {
@@ -167,10 +168,10 @@ const buildOrderData = async ({ userId, guestEmail, orderItems, subtotal, boxGro
     ? `${userId || guestEmail || 'guest'}:${String(idempotencyKey).trim()}`
     : undefined;
 
-  const totalBoxPrice = boxGroups.size * CONFIG.BUSINESS.BOX_BASE_PRICE_EGP;
-  subtotal += totalBoxPrice;
+  const totalBoxPrice = mulEgp(boxGroups.size, CONFIG.BUSINESS.BOX_BASE_PRICE_EGP);
+  subtotal = addEgp(subtotal, totalBoxPrice);
   const shippingCost = CONFIG.BUSINESS.SHIPPING_COST_EGP;
-  let total = subtotal + shippingCost;
+  let total = addEgp(subtotal, shippingCost);
 
   let pointsRedeemed = 0;
   let pointsDiscount = 0;
@@ -195,11 +196,17 @@ const buildOrderData = async ({ userId, guestEmail, orderItems, subtotal, boxGro
           $inc: { loyaltyPoints: -redeemAmount },
           $push: {
             pointsHistory: {
-              points: redeemAmount,
-              reason: 'استبدال نقاط لخصم في طلب جديد',
-              type: 'REDEEMED'
-            }
-          }
+              $each: [
+                {
+                  points: redeemAmount,
+                  reason: 'استبدال نقاط لخصم في طلب جديد',
+                  type: 'REDEEMED',
+                  createdAt: new Date(),
+                },
+              ],
+              $slice: -50,
+            },
+          },
         },
         opts
       );
@@ -209,8 +216,8 @@ const buildOrderData = async ({ userId, guestEmail, orderItems, subtotal, boxGro
       }
 
       pointsRedeemed = redeemAmount;
-      pointsDiscount = redeemAmount * settings.loyalty.egpPerPointRedeemed;
-      total = Math.max(0, total - pointsDiscount);
+      pointsDiscount = mulEgp(redeemAmount, settings.loyalty.egpPerPointRedeemed);
+      total = Math.max(0, subEgp(total, pointsDiscount));
     }
   }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo, useCallback, memo } from 'react';
+import React, { memo, useEffect, useMemo, useCallback, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Link } from 'react-router-dom';
 import { FiX, FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi';
@@ -9,8 +9,11 @@ import toast from 'react-hot-toast';
 /**
  * Hardware-Accelerated, Memoized, and Accessible Real-Time Cart Drawer
  */
+const formatPrice = (price) => new Intl.NumberFormat('ar-EG').format(price);
+
 const CartSidebar = () => {
   const panelRef = useRef(null);
+  const [isOnline, setIsOnline] = useState(true);
   const closeButtonRef = useRef(null);
 
   // 1. Atomic Zustand Selectors
@@ -47,10 +50,16 @@ const CartSidebar = () => {
     return items.reduce((acc, item) => acc + (item.quantity || 1), 0);
   }, [items]);
 
-  const formatPrice = useCallback(
-    (price) => new Intl.NumberFormat('ar-EG').format(price),
-    []
-  );
+  useEffect(() => {
+    const updateOnlineState = () => setIsOnline(navigator.onLine);
+    updateOnlineState();
+    window.addEventListener('online', updateOnlineState);
+    window.addEventListener('offline', updateOnlineState);
+    return () => {
+      window.removeEventListener('online', updateOnlineState);
+      window.removeEventListener('offline', updateOnlineState);
+    };
+  }, []);
 
   // 3. Stable Handlers
   const handleIncreaseQuantity = useCallback(
@@ -161,6 +170,11 @@ const CartSidebar = () => {
         ref={panelRef}
         className="absolute top-0 left-0 h-full w-[85vw] sm:w-96 max-w-full bg-white shadow-2xl flex flex-col panel-slide-left transform-gpu will-change-transform"
       >
+        {!isOnline && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs font-semibold text-amber-800" role="status">
+            أنت غير متصل. ستظل تغييرات السلة محفوظة على هذا الجهاز.
+          </div>
+        )}
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-100 bg-gradient-to-r from-purple-50/40 to-white">
           <div className="flex items-center gap-3">
@@ -212,7 +226,7 @@ const CartSidebar = () => {
 
                 return (
                   <div
-                    key={`${item.id}-${item.selectedSize}-${item.selectedColor}-${item.selectedShape}-${item._variantsKey}-${item.boxId}-${index}`}
+                    key={`${item.id}-${item.selectedSize || ''}-${item.selectedColor || ''}-${item.selectedShape || ''}-${item._variantsKey || ''}-${item.boxId || ''}`}
                     className="flex gap-3 bg-gray-50/70 p-3 rounded-2xl border border-gray-100 hover:border-purple-200 transition-colors"
                   >
                     {/* Zero-CLS Next.js Image Container */}

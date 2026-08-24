@@ -5,9 +5,10 @@ const {
   getLoyaltySettings,
   updateLoyaltySettings
 } = require('../controllers/admin/settingsController');
+const { rememberGet } = require('../middleware/cache');
 
 // Public / User endpoint to fetch current loyalty settings
-router.get('/loyalty', getLoyaltySettings);
+router.get('/loyalty', rememberGet('settings', 60_000), getLoyaltySettings);
 
 // Admin endpoint to update loyalty settings
 router.put('/admin/loyalty', protect, admin, updateLoyaltySettings);

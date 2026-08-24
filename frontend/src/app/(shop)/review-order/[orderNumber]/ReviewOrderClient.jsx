@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FiStar, FiCheckCircle, FiPackage, FiHeart, FiGift, FiAlertCircle } from 'react-icons/fi';
@@ -175,7 +177,10 @@ export default function ReviewOrderClient({ orderNumber }) {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {order.items.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-2 p-2.5 rounded-2xl bg-gray-50 border border-gray-100">
-                  <img
+                  <Image
+                    width={48}
+                    height={48}
+                    sizes="48px"
                     src={item.image}
                     alt={item.name}
                     className="w-12 h-12 object-cover rounded-xl shrink-0"

@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { LoadingSpinner } from '../../common/LoadingSpinner';
 import React from 'react';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
@@ -74,7 +75,10 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
                 <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6">
                   <div className="flex items-center gap-3">
                     {product.images?.[0] && (
-                      <img
+                      <Image
+                    width={32}
+                    height={32}
+                    sizes="32px"
                         src={product.images[0].url}
                         alt={product.name}
                         className="w-8 h-8 sm:w-12 sm:h-12 object-cover rounded-lg"

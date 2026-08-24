@@ -2,6 +2,7 @@ const Settings = require('../../models/Settings');
 const { logAudit } = require('../../utils/auditLogger');
 const asyncHandler = require('../../utils/asyncHandler');
 const { sendSuccess } = require('../../utils/response');
+const { bustCatalog } = require('../../middleware/cache');
 
 /**
  * Get Loyalty Settings (Admin & Public)
@@ -33,6 +34,7 @@ exports.updateLoyaltySettings = asyncHandler(async (req, res) => {
   if (typeof minPointsToRedeem === 'number') settings.loyalty.minPointsToRedeem = Math.min(100000, Math.max(0, minPointsToRedeem));
 
   await settings.save();
+  bustCatalog('settings');
 
   if (req.user?._id) {
     logAudit({

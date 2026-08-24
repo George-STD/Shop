@@ -11,6 +11,10 @@ describe('Reviews Routes Tests', () => {
   let reviewId;
 
   beforeAll(async () => {
+    await Review.deleteMany({});
+    await User.deleteMany({});
+    await Product.deleteMany({});
+
     // Create a product
     product = new Product({
       name: 'Test Review Product',

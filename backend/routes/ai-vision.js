@@ -43,7 +43,7 @@ const upload = multer({
   fileFilter: function (req, file, cb) {
     checkFileType(file, cb);
   },
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 });
 
 /**
@@ -323,7 +323,17 @@ router.post(
             }
 
             const chunks = [];
-            response.on('data', (chunk) => chunks.push(chunk));
+            let totalBytes = 0;
+            const MAX_DOWNLOAD_BYTES = 5 * 1024 * 1024; // 5MB hard limit
+
+            response.on('data', (chunk) => {
+              totalBytes += chunk.length;
+              if (totalBytes > MAX_DOWNLOAD_BYTES) {
+                request.destroy(new Error('حجم الصورة المحملة يتجاوز الحد الأقصى (5MB)'));
+                return;
+              }
+              chunks.push(chunk);
+            });
             response.on('end', () => {
               const buf = Buffer.concat(chunks);
               const contentType = response.headers['content-type'] || 'image/jpeg';

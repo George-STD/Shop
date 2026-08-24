@@ -1,0 +1,1134 @@
+diff --git a/frontend/src/app/providers.jsx b/frontend/src/app/providers.jsx
+index 1d77b46..0f733a8 100644
+--- a/frontend/src/app/providers.jsx
++++ b/frontend/src/app/providers.jsx
+@@ -2,9 +2,12 @@
+ 
+ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+ import { Toaster } from 'react-hot-toast';
+-import { useState } from 'react';
++import { useEffect, useState } from 'react';
+ 
+ import ErrorBoundary from '../components/common/ErrorBoundary';
++import { useAuthStore, useBuildBoxStore, useCartStore, useWishlistStore } from '../store';
++
++const persistedStores = [useAuthStore, useCartStore, useWishlistStore, useBuildBoxStore];
+ 
+ export default function Providers({ children }) {
+   const [queryClient] = useState(
+@@ -20,18 +23,20 @@ export default function Providers({ children }) {
+       })
+   );
+ 
++  useEffect(() => {
++    // Delaying all persisted reads until after the first client paint makes the
++    // server HTML and the first client render deterministic.
++    persistedStores.forEach((store) => store.persist?.rehydrate());
++  }, []);
++
+   return (
+     <QueryClientProvider client={queryClient}>
+-      <ErrorBoundary>
+-        {children}
+-      </ErrorBoundary>
++      <ErrorBoundary>{children}</ErrorBoundary>
+       <Toaster
+         position="top-center"
+         toastOptions={{
+           duration: 3000,
+-          style: {
+-            fontFamily: 'Tajawal, sans-serif',
+-          },
++          style: { fontFamily: 'Tajawal, sans-serif' },
+         }}
+       />
+     </QueryClientProvider>
+diff --git a/frontend/src/components/layout/CartSidebar.jsx b/frontend/src/components/layout/CartSidebar.jsx
+index 04ff825..262ef61 100644
+--- a/frontend/src/components/layout/CartSidebar.jsx
++++ b/frontend/src/components/layout/CartSidebar.jsx
+@@ -9,8 +9,11 @@ import toast from 'react-hot-toast';
+ /**
+  * Hardware-Accelerated, Memoized, and Accessible Real-Time Cart Drawer
+  */
++const formatPrice = (price) => new Intl.NumberFormat('ar-EG').format(price);
++
+ const CartSidebar = () => {
+   const panelRef = useRef(null);
++  const [isOnline, setIsOnline] = useState(true);
+   const closeButtonRef = useRef(null);
+ 
+   // 1. Atomic Zustand Selectors
+@@ -47,10 +50,16 @@ const CartSidebar = () => {
+     return items.reduce((acc, item) => acc + (item.quantity || 1), 0);
+   }, [items]);
+ 
+-  const formatPrice = useCallback(
+-    (price) => new Intl.NumberFormat('ar-EG').format(price),
+-    []
+-  );
++  useEffect(() => {
++    const updateOnlineState = () => setIsOnline(navigator.onLine);
++    updateOnlineState();
++    window.addEventListener('online', updateOnlineState);
++    window.addEventListener('offline', updateOnlineState);
++    return () => {
++      window.removeEventListener('online', updateOnlineState);
++      window.removeEventListener('offline', updateOnlineState);
++    };
++  }, []);
+ 
+   // 3. Stable Handlers
+   const handleIncreaseQuantity = useCallback(
+@@ -161,6 +170,11 @@ const CartSidebar = () => {
+         ref={panelRef}
+         className="absolute top-0 left-0 h-full w-[85vw] sm:w-96 max-w-full bg-white shadow-2xl flex flex-col panel-slide-left transform-gpu will-change-transform"
+       >
++        {!isOnline && (
++          <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs font-semibold text-amber-800" role="status">
++            ╪ú┘å╪¬ ╪║┘è╪▒ ┘à╪¬╪╡┘ä. ╪│╪¬╪╕┘ä ╪¬╪║┘è┘è╪▒╪º╪¬ ╪º┘ä╪│┘ä╪⌐ ┘à╪¡┘ü┘ê╪╕╪⌐ ╪╣┘ä┘ë ┘ç╪░╪º ╪º┘ä╪¼┘ç╪º╪▓.
++          </div>
++        )}
+         {/* Header */}
+         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-100 bg-gradient-to-r from-purple-50/40 to-white">
+           <div className="flex items-center gap-3">
+@@ -212,7 +226,7 @@ const CartSidebar = () => {
+ 
+                 return (
+                   <div
+-                    key={`${item.id}-${item.selectedSize}-${item.selectedColor}-${item.selectedShape}-${item._variantsKey}-${item.boxId}-${index}`}
++                    key={`${item.id}-${item.selectedSize || ''}-${item.selectedColor || ''}-${item.selectedShape || ''}-${item._variantsKey || ''}-${item.boxId || ''}`}
+                     className="flex gap-3 bg-gray-50/70 p-3 rounded-2xl border border-gray-100 hover:border-purple-200 transition-colors"
+                   >
+                     {/* Zero-CLS Next.js Image Container */}
+diff --git a/frontend/src/components/layout/Header.jsx b/frontend/src/components/layout/Header.jsx
+index ee0043e..cc55e68 100644
+--- a/frontend/src/components/layout/Header.jsx
++++ b/frontend/src/components/layout/Header.jsx
+@@ -13,14 +13,16 @@ const Header = () => {
+   const [searchQuery, setSearchQuery] = useState('');
+   const [isSearchVisible, setIsSearchVisible] = useState(false);
+   const [isScrolled, setIsScrolled] = useState(false);
+-  const [isMounted, setIsMounted] = useState(false);
+   const scrolledRef = useRef(false);
+ 
+   // 1. Atomic Zustand Selectors (Prevents re-renders across the entire navbar tree on unrelated state changes)
+   const cartCount = useCartStore((state) =>
+     state.items.reduce((total, item) => total + (item.quantity || 1), 0)
+   );
++  const cartHydrated = useCartStore((state) => state._hasHydrated);
+   const wishlistCount = useWishlistStore((state) => state.items.length);
++  const wishlistHydrated = useWishlistStore((state) => state._hasHydrated);
++  const countsReady = cartHydrated && wishlistHydrated;
+   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+   const isAdmin = useAuthStore((state) => state.user?.role === 'admin');
+ 
+@@ -29,10 +31,6 @@ const Header = () => {
+   const toggleMobileMenu = useUIStore((state) => state.toggleMobileMenu);
+   const toggleCart = useUIStore((state) => state.toggleCart);
+ 
+-  useEffect(() => {
+-    setIsMounted(true);
+-  }, []);
+-
+   // 2. High-performance scroll hysteresis using passive listeners
+   useEffect(() => {
+     let ticking = false;
+@@ -216,11 +214,11 @@ const Header = () => {
+               to="/wishlist"
+               className="p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl relative focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors text-gray-700"
+               aria-label={`${STRINGS.NAV.WISHLIST}${
+-                isMounted && wishlistCount > 0 ? ` (${wishlistCount} ${STRINGS.PRODUCT.ITEMS})` : ''
++                countsReady && wishlistCount > 0 ? ` (${wishlistCount} ${STRINGS.PRODUCT.ITEMS})` : ''
+               }`}
+             >
+               <FiHeart size={20} aria-hidden="true" />
+-              {isMounted && wishlistCount > 0 && (
++              {countsReady && wishlistCount > 0 && (
+                 <span
+                   className="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
+                   aria-hidden="true"
+@@ -235,13 +233,13 @@ const Header = () => {
+               onClick={toggleCart}
+               className="p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl relative focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors text-gray-700"
+               aria-label={`${STRINGS.NAV.CART}${
+-                isMounted && cartCount > 0 ? ` (${cartCount} ${STRINGS.PRODUCT.ITEMS})` : ''
++                countsReady && cartCount > 0 ? ` (${cartCount} ${STRINGS.PRODUCT.ITEMS})` : ''
+               }`}
+               aria-expanded={isCartOpen}
+               aria-controls="cart-sidebar"
+             >
+               <FiShoppingBag size={20} aria-hidden="true" />
+-              {isMounted && cartCount > 0 && (
++              {countsReady && cartCount > 0 && (
+                 <span
+                   className="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
+                   aria-hidden="true"
+diff --git a/frontend/src/components/layout/Layout.jsx b/frontend/src/components/layout/Layout.jsx
+index b043289..7be22cb 100644
+--- a/frontend/src/components/layout/Layout.jsx
++++ b/frontend/src/components/layout/Layout.jsx
+@@ -7,7 +7,8 @@ import ContactFab from './ContactFab';
+ import { useUIStore } from '../../store';
+ 
+ const Layout = ({ children }) => {
+-  const { isMobileMenuOpen, isCartOpen } = useUIStore();
++  const isMobileMenuOpen = useUIStore((state) => state.isMobileMenuOpen);
++  const isCartOpen = useUIStore((state) => state.isCartOpen);
+ 
+   return (
+     <div className="min-h-screen flex flex-col">
+diff --git a/frontend/src/components/product/ProductCard.jsx b/frontend/src/components/product/ProductCard.jsx
+index 737f8c7..65a1c8a 100644
+--- a/frontend/src/components/product/ProductCard.jsx
++++ b/frontend/src/components/product/ProductCard.jsx
+@@ -13,6 +13,7 @@ import { authAPI } from '../../services/api';
+  */
+ const ProductCard = ({ product, priority = false }) => {
+   const [mounted, setMounted] = useState(false);
++  const [wishlistPending, setWishlistPending] = useState(false);
+   const navigate = useNavigate();
+ 
+   useEffect(() => {
+@@ -32,10 +33,8 @@ const ProductCard = ({ product, priority = false }) => {
+     )
+   );
+ 
+-  if (!product) return null;
+-
+   // 2. Stable Action Handlers
+-  const handleAddToCart = (e) => {
++  const handleAddToCart = useCallback((e) => {
+     e.preventDefault();
+     e.stopPropagation();
+ 
+@@ -51,9 +50,9 @@ const ProductCard = ({ product, priority = false }) => {
+     }
+ 
+     toast.success(STRINGS.PRODUCT.ADDED_TO_CART);
+-  };
++  }, [addItem, product]);
+ 
+-  const handleToggleWishlist = (e) => {
++  const handleToggleWishlist = useCallback(async (e) => {
+     e.preventDefault();
+     e.stopPropagation();
+ 
+@@ -62,17 +61,25 @@ const ProductCard = ({ product, priority = false }) => {
+       navigate('/account');
+       return;
+     }
++    if (wishlistPending) return;
++
++    const wasInWishlist = inWishlist;
++    setWishlistPending(true);
++    if (wasInWishlist) removeFromWishlist(product._id);
++    else addToWishlist(product);
+ 
+-    if (inWishlist) {
+-      removeFromWishlist(product._id);
+-      authAPI.removeFromWishlist(product._id).catch(() => {});
+-      toast.success(STRINGS.PRODUCT.REMOVED_FROM_WISHLIST);
+-    } else {
+-      addToWishlist(product);
+-      authAPI.addToWishlist(product._id).catch(() => {});
+-      toast.success(STRINGS.PRODUCT.ADDED_TO_WISHLIST);
++    try {
++      if (wasInWishlist) await authAPI.removeFromWishlist(product._id);
++      else await authAPI.addToWishlist(product._id);
++      toast.success(wasInWishlist ? STRINGS.PRODUCT.REMOVED_FROM_WISHLIST : STRINGS.PRODUCT.ADDED_TO_WISHLIST);
++    } catch (_) {
++      if (wasInWishlist) addToWishlist(product);
++      else removeFromWishlist(product._id);
++      toast.error('╪¬╪╣╪░╪▒ ╪¬╪¡╪»┘è╪½ ╪º┘ä┘à┘ü╪╢┘ä╪⌐. ╪¬┘à╪¬ ╪º╪│╪¬╪╣╪º╪»╪⌐ ╪¡╪º┘ä╪¬┘ç╪º ╪º┘ä╪│╪º╪¿┘é╪⌐.');
++    } finally {
++      setWishlistPending(false);
+     }
+-  };
++  }, [addToWishlist, inWishlist, isAuthenticated, navigate, product, removeFromWishlist, wishlistPending]);
+ 
+   const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
+   const isOutOfStock = Number(product.stock) === 0;
+@@ -82,10 +89,12 @@ const ProductCard = ({ product, priority = false }) => {
+   };
+ 
+   const imageUrl =
+-    optimizeCloudinaryUrl(product.images?.[0]?.url, 400) ||
+-    product.images?.[0]?.url ||
++    optimizeCloudinaryUrl(product?.images?.[0]?.url, 400) ||
++    product?.images?.[0]?.url ||
+     '/placeholder-gift.png';
+ 
++  if (!product) return null;
++
+   return (
+     <article
+       className="card product-card group min-w-0 flex flex-col h-full overflow-hidden w-full bg-white rounded-2xl border border-gray-100/80 hover:border-purple-200 hover:shadow-xl hover:shadow-purple-500/5 transition-all duration-300"
+@@ -137,6 +146,8 @@ const ProductCard = ({ product, priority = false }) => {
+             }`}
+             title={inWishlist ? STRINGS.PRODUCT.REMOVE_FROM_WISHLIST : STRINGS.PRODUCT.ADD_TO_WISHLIST}
+             aria-label={inWishlist ? STRINGS.PRODUCT.REMOVE_FROM_WISHLIST : STRINGS.PRODUCT.ADD_TO_WISHLIST}
++            aria-busy={wishlistPending}
++            disabled={wishlistPending}
+           >
+             <FiHeart className={inWishlist ? 'fill-current' : ''} size={18} aria-hidden="true" />
+           </button>
+diff --git a/frontend/src/legacy-pages/CheckoutPage.jsx b/frontend/src/legacy-pages/CheckoutPage.jsx
+index 43c6a3e..5fd772c 100644
+--- a/frontend/src/legacy-pages/CheckoutPage.jsx
++++ b/frontend/src/legacy-pages/CheckoutPage.jsx
+@@ -478,9 +478,24 @@ const OrderReviewStep = memo(function OrderReviewStep({
+ /**
+  * Highly Optimized Multi-Step Checkout Funnel
+  */
++const getCheckoutIdempotencyKey = () => {
++  if (typeof window === 'undefined') return 'checkout-server-render';
++  const storageKey = 'hadaya:checkout:idempotency-key';
++  try {
++    const existing = sessionStorage.getItem(storageKey);
++    if (existing) return existing;
++    const generated = `chk_${crypto.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`}`;
++    sessionStorage.setItem(storageKey, generated);
++    return generated;
++  } catch (_) {
++    return `chk_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
++  }
++};
++
+ const CheckoutPage = () => {
+   const navigate = useNavigate();
+   const submitLockRef = useRef(false);
++  const [isOnline, setIsOnline] = useState(true);
+ 
+   // 1. Atomic Zustand Selectors
+   const items = useCartStore((state) => state.items);
+@@ -516,9 +531,18 @@ const CheckoutPage = () => {
+   const [loading, setLoading] = useState(false);
+   const [errors, setErrors] = useState({});
+   const [pointsToRedeem, setPointsToRedeem] = useState(0);
+-  const [idempotencyKey] = useState(
+-    () => `chk_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+-  );
++  const [idempotencyKey] = useState(getCheckoutIdempotencyKey);
++
++  useEffect(() => {
++    const updateOnlineState = () => setIsOnline(navigator.onLine);
++    updateOnlineState();
++    window.addEventListener('online', updateOnlineState);
++    window.addEventListener('offline', updateOnlineState);
++    return () => {
++      window.removeEventListener('online', updateOnlineState);
++      window.removeEventListener('offline', updateOnlineState);
++    };
++  }, []);
+ 
+   const [formData, setFormData] = useState({
+     firstName: user?.firstName || '',
+@@ -537,6 +561,17 @@ const CheckoutPage = () => {
+     customerNote: '',
+   });
+ 
++  useEffect(() => {
++    if (!authHydrated || !user) return;
++    setFormData((previous) => ({
++      ...previous,
++      firstName: previous.firstName || user.firstName || '',
++      lastName: previous.lastName || user.lastName || '',
++      email: previous.email || user.email || '',
++      phone: previous.phone || user.phone || '',
++    }));
++  }, [authHydrated, user]);
++
+   // 4. Stable Subtotal & Discount Calculations
+   const subtotal = useMemo(() => {
+     const boxGroups = new Set();
+@@ -615,11 +650,22 @@ const CheckoutPage = () => {
+     }
+   }, [validateStep1]);
+ 
+-  // 6. Network Idempotent Order Submission with Hardware Lock
+-  const handleSubmit = async (e) => {
++  const handleBackToStep1 = useCallback(() => setStep(1), []);
++  const handleBackToStep2 = useCallback(() => setStep(2), []);
++  const handleNextStep2 = useCallback(() => {
++    setStep(3);
++    window.scrollTo({ top: 0, behavior: 'smooth' });
++  }, []);
++
++  // 6. Network-idempotent order submission with a hardware lock.
++  const handleSubmit = useCallback(async (e) => {
+     e.preventDefault();
+ 
+     if (submitLockRef.current) return;
++    if (!isOnline) {
++      toast.error('┘ä╪º ┘è┘à┘â┘å ╪¬╪ú┘â┘è╪» ╪º┘ä╪╖┘ä╪¿ ╪ú╪½┘å╪º╪í ╪º┘å┘é╪╖╪º╪╣ ╪º┘ä╪Ñ┘å╪¬╪▒┘å╪¬. ╪│╪¬╪¿┘é┘ë ╪¿┘è╪º┘å╪º╪¬┘â ┘à╪¡┘ü┘ê╪╕╪⌐╪î ╪¡╪º┘ê┘ä ┘à╪▒╪⌐ ╪ú╪«╪▒┘ë ╪╣┘å╪» ╪╣┘ê╪»╪⌐ ╪º┘ä╪º╪¬╪╡╪º┘ä.');
++      return;
++    }
+     submitLockRef.current = true;
+     setLoading(true);
+ 
+@@ -669,6 +715,9 @@ const CheckoutPage = () => {
+         } else {
+           toast.success(STRINGS.CHECKOUT.ORDER_SUCCESS);
+         }
++        try {
++          sessionStorage.removeItem('hadaya:checkout:idempotency-key');
++        } catch (_) {}
+         navigate(`/account/orders?success=true&order=${finalOrder.orderNumber}`);
+       }
+     } catch (error) {
+@@ -677,7 +726,7 @@ const CheckoutPage = () => {
+     } finally {
+       setLoading(false);
+     }
+-  };
++  }, [clearCart, formData, idempotencyKey, isOnline, items, navigate, pointsToRedeem, total]);
+ 
+   if (!isHydrated) {
+     return (
+@@ -704,6 +753,13 @@ const CheckoutPage = () => {
+ 
+   return (
+     <div className="bg-gray-50 min-h-screen py-8">
++      {!isOnline && (
++        <div className="container-custom mb-4">
++          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm font-semibold text-amber-800" role="alert">
++            ╪ú┘å╪¬ ╪║┘è╪▒ ┘à╪¬╪╡┘ä. ┘è┘à┘â┘å┘â ┘à╪▒╪º╪¼╪╣╪⌐ ╪╖┘ä╪¿┘â╪î ┘ä┘â┘å ╪¬╪ú┘â┘è╪»┘ç ┘à╪¬╪º╪¡ ╪╣┘å╪» ╪╣┘ê╪»╪⌐ ╪º┘ä╪º╪¬╪╡╪º┘ä.
++          </div>
++        </div>
++      )}
+       <div className="container-custom">
+         {/* Step Progress Indicators */}
+         <nav aria-label="┘à╪▒╪º╪¡┘ä ╪Ñ╪¬┘à╪º┘à ╪º┘ä╪╖┘ä╪¿" className="flex items-center justify-center mb-8">
+@@ -762,11 +818,8 @@ const CheckoutPage = () => {
+                 <PaymentMethodStep
+                   formData={formData}
+                   onChange={handleChange}
+-                  onBack={() => setStep(1)}
+-                  onNext={() => {
+-                    setStep(3);
+-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+-                  }}
++                  onBack={handleBackToStep1}
++                  onNext={handleNextStep2}
+                 />
+               )}
+ 
+@@ -775,7 +828,7 @@ const CheckoutPage = () => {
+                   formData={formData}
+                   items={items}
+                   loading={loading}
+-                  onBack={() => setStep(2)}
++                  onBack={handleBackToStep2}
+                 />
+               )}
+             </div>
+diff --git a/frontend/src/legacy-pages/ProductPage.jsx b/frontend/src/legacy-pages/ProductPage.jsx
+index bda8eda..30693ec 100644
+--- a/frontend/src/legacy-pages/ProductPage.jsx
++++ b/frontend/src/legacy-pages/ProductPage.jsx
+@@ -17,7 +17,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
+ import { Autoplay, Pagination } from 'swiper/modules';
+ import 'swiper/css';
+ import 'swiper/css/pagination';
+-import { productsAPI, reviewsAPI, settingsAPI } from '../services/api';
++import { productsAPI, reviewsAPI, settingsAPI, authAPI } from '../services/api';
+ import { useCartStore, useWishlistStore, useAuthStore } from '../store';
+ import ProductCard from '../components/product/ProductCard';
+ import toast from 'react-hot-toast';
+@@ -187,6 +187,7 @@ const ProductPage = () => {
+ 
+   // Local interaction states
+   const [quantity, setQuantity] = useState(1);
++  const [wishlistPending, setWishlistPending] = useState(false);
+   const [isZooming, setIsZooming] = useState(false);
+   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
+   const [activeImageIdx, setActiveImageIdx] = useState(0);
+@@ -356,14 +357,13 @@ const ProductPage = () => {
+       : product.price;
+   }, [product, selectedSize]);
+ 
+-  const calculateTotal = useCallback(() => {
+-    if (!product) return 0;
++  const totalPrice = useMemo(() => {
+     const addonsTotal = selectedAddons.reduce(
+       (sum, addon) => sum + (Number(addon.price) || 0),
+       0
+     );
+     return (effectiveBasePrice + addonsTotal) * quantity;
+-  }, [product, effectiveBasePrice, selectedAddons, quantity]);
++  }, [effectiveBasePrice, quantity, selectedAddons]);
+ 
+   // Dynamic JSON-LD structured data for Google Crawlers
+   const jsonLd = useMemo(() => {
+@@ -381,10 +381,9 @@ const ProductPage = () => {
+       },
+       offers: {
+         '@type': 'Offer',
+-        url: typeof window !== 'undefined' ? window.location.href : '',
+-        priceCurrency: 'EGP',
+-        price: product.price,
+-        priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
++      url: slug ? `/product/${slug}` : '',
++      priceCurrency: 'EGP',
++      price: product.price,
+         itemCondition: 'https://schema.org/NewCondition',
+         availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+       },
+@@ -473,20 +472,31 @@ const ProductPage = () => {
+     quantity,
+   ]);
+ 
+-  const handleToggleWishlist = useCallback(() => {
++  const handleToggleWishlist = useCallback(async () => {
+     if (!isAuthenticated) {
+       toast.error(STRINGS.PRODUCT.LOGIN_TO_ADD_WISHLIST);
+       navigate('/account');
+       return;
+     }
+-    if (inWishlist) {
+-      removeFromWishlist(product._id);
+-      toast.success(STRINGS.PRODUCT.REMOVED_FROM_WISHLIST);
+-    } else {
+-      addToWishlist(product);
+-      toast.success(STRINGS.PRODUCT.ADDED_TO_WISHLIST);
++    if (!product || wishlistPending) return;
++
++    const wasInWishlist = inWishlist;
++    setWishlistPending(true);
++    if (wasInWishlist) removeFromWishlist(product._id);
++    else addToWishlist(product);
++
++    try {
++      if (wasInWishlist) await authAPI.removeFromWishlist(product._id);
++      else await authAPI.addToWishlist(product._id);
++      toast.success(wasInWishlist ? STRINGS.PRODUCT.REMOVED_FROM_WISHLIST : STRINGS.PRODUCT.ADDED_TO_WISHLIST);
++    } catch (_) {
++      if (wasInWishlist) addToWishlist(product);
++      else removeFromWishlist(product._id);
++      toast.error('╪¬╪╣╪░╪▒ ╪¬╪¡╪»┘è╪½ ╪º┘ä┘à┘ü╪╢┘ä╪⌐. ╪¬┘à╪¬ ╪º╪│╪¬╪╣╪º╪»╪⌐ ╪¡╪º┘ä╪¬┘ç╪º ╪º┘ä╪│╪º╪¿┘é╪⌐.');
++    } finally {
++      setWishlistPending(false);
+     }
+-  }, [isAuthenticated, inWishlist, product, navigate, removeFromWishlist, addToWishlist]);
++  }, [addToWishlist, inWishlist, isAuthenticated, navigate, product, removeFromWishlist, wishlistPending]);
+ 
+   const handleShare = useCallback(async () => {
+     if (!product) return;
+@@ -502,6 +512,11 @@ const ProductPage = () => {
+     }
+   }, [product]);
+ 
++  const refreshReviews = useCallback(
++    () => queryClient.invalidateQueries({ queryKey: ['reviews', product?._id] }),
++    [product?._id, queryClient]
++  );
++
+   const toggleAddon = useCallback((addon) => {
+     setSelectedAddons((prev) => {
+       const exists = prev.find((a) => a.name === addon.name);
+@@ -1276,7 +1291,7 @@ const ProductPage = () => {
+                 >
+                   {product.stock === 0
+                     ? STRINGS.PRODUCT.OUT_OF_STOCK
+-                    : `${STRINGS.PRODUCT.ADD_TO_CART_TOTAL}${calculateTotal()} ${STRINGS.PRODUCT.CURRENCY}`}
++                    : `${STRINGS.PRODUCT.ADD_TO_CART_TOTAL}${totalPrice} ${STRINGS.PRODUCT.CURRENCY}`}
+                 </button>
+               </div>
+ 
+@@ -1290,6 +1305,8 @@ const ProductPage = () => {
+               <div className="flex items-center gap-4 pt-4 border-t">
+                 <button
+                   onClick={handleToggleWishlist}
++                  disabled={wishlistPending}
++                  aria-busy={wishlistPending}
+                   className={`flex items-center gap-2 ${
+                     inWishlist ? 'text-red-500 font-semibold' : 'text-gray-600'
+                   } hover:text-red-500 transition-colors text-sm`}
+@@ -1372,7 +1389,7 @@ const ProductPage = () => {
+                 <div>
+                   <ReviewForm
+                     productId={product._id}
+-                    refreshReviews={() => queryClient.invalidateQueries({ queryKey: ['reviews', product._id] })}
++                    refreshReviews={refreshReviews}
+                   />
+ 
+                   {reviewsData?.data?.length > 0 ? (
+diff --git a/frontend/src/store/authStore.js b/frontend/src/store/authStore.js
+index 2d73d59..7aeda6a 100644
+--- a/frontend/src/store/authStore.js
++++ b/frontend/src/store/authStore.js
+@@ -7,7 +7,9 @@ const clearStoredAuthSession = () => {
+   try {
+     localStorage.removeItem(STORAGE_KEYS.TOKEN);
+     localStorage.removeItem(STORAGE_KEYS.AUTH);
+-  } catch (_) {}
++  } catch (_) {
++    // Storage can be unavailable in privacy-restricted contexts.
++  }
+ };
+ 
+ export const useAuthStore = create(
+@@ -17,10 +19,7 @@ export const useAuthStore = create(
+       token: null,
+       isAuthenticated: false,
+       _hasHydrated: false,
+-
+-      setHasHydrated: (state) => {
+-        set({ _hasHydrated: state });
+-      },
++      setHasHydrated: (state) => set({ _hasHydrated: Boolean(state) }),
+ 
+       setAuth: (user, token) => {
+         if (typeof window !== 'undefined') {
+@@ -28,7 +27,7 @@ export const useAuthStore = create(
+             if (token) localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+           } catch (_) {}
+         }
+-        set({ user, token: token || null, isAuthenticated: true });
++        set({ user, token: token || null, isAuthenticated: Boolean(user && token) });
+       },
+ 
+       logout: async () => {
+@@ -53,29 +52,29 @@ export const useAuthStore = create(
+         } catch (_) {}
+       },
+ 
+-      updateUser: (userData) => {
+-        set({ user: { ...get().user, ...userData } });
+-      },
+-
+-      isAdmin: () => {
+-        return get().user?.role === 'admin';
+-      },
++      updateUser: (userData) => set((state) => ({ user: { ...state.user, ...userData } })),
++      isAdmin: () => get().user?.role === 'admin',
+     }),
+     {
+       name: STORAGE_KEYS.AUTH,
++      skipHydration: true,
++      version: 1,
+       partialize: (state) => ({
+         user: state.user,
+-        isAuthenticated: state.isAuthenticated
++        isAuthenticated: state.isAuthenticated,
+       }),
+       onRehydrateStorage: () => (state) => {
++        let token = null;
+         if (typeof window !== 'undefined') {
+           try {
+-            const savedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
+-            if (savedToken && state?.isAuthenticated) {
+-              state.token = savedToken;
+-            }
++            token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+           } catch (_) {}
+         }
++        if (state?.isAuthenticated && token) {
++          state.setAuth(state.user, token);
++        } else if (state?.isAuthenticated) {
++          state.setAuth(null, null);
++        }
+         state?.setHasHydrated(true);
+       },
+     }
+diff --git a/frontend/src/store/buildBoxStore.js b/frontend/src/store/buildBoxStore.js
+index 3710772..4bff0c3 100644
+--- a/frontend/src/store/buildBoxStore.js
++++ b/frontend/src/store/buildBoxStore.js
+@@ -2,72 +2,49 @@ import { create } from 'zustand';
+ import { persist } from 'zustand/middleware';
+ import { BUSINESS_CONFIG, STORAGE_KEYS } from '../constants';
+ 
+-/**
+- * Custom Gift Box Builder State Store (Zustand)
+- * Manages staging items for customized multi-product gift boxes.
+- */
+ export const useBuildBoxStore = create(
+   persist(
+     (set, get) => ({
+       items: [],
+       _hasHydrated: false,
+-      setHasHydrated: (state) => set({ _hasHydrated: state }),
+-
+-      /** Maximum number of items allowed per custom gift box */
++      setHasHydrated: (state) => set({ _hasHydrated: Boolean(state) }),
+       get maxItems() {
+         return BUSINESS_CONFIG.BOX_MAX_ITEMS;
+       },
+-      /** Minimum number of items required to seal a custom gift box */
+       get minItems() {
+         return BUSINESS_CONFIG.BOX_MIN_ITEMS;
+       },
+ 
+-      /**
+-       * Adds a single product into the staged custom box
+-       * @param {Object} product - Product candidate
+-       * @returns {{ success: boolean, reason?: string }}
+-       */
+       addItem: (product) => {
+-        const items = get().items;
+-        if (items.length >= BUSINESS_CONFIG.BOX_MAX_ITEMS) {
++        if (!product || get().items.length >= BUSINESS_CONFIG.BOX_MAX_ITEMS) {
+           return { success: false, reason: 'max_limit_reached' };
+         }
+-        set({ items: [...items, { ...product }] });
++        set((state) => ({ items: [...state.items, { ...product }] }));
+         return { success: true };
+       },
+ 
+-      /**
+-       * Removes an item by index from the staged box
+-       * @param {number} index - Index of item to remove
+-       */
+       removeItem: (index) => {
+-        const items = [...get().items];
+-        items.splice(index, 1);
+-        set({ items });
++        set((state) => {
++          if (index < 0 || index >= state.items.length) return state;
++          return { items: state.items.filter((_, itemIndex) => itemIndex !== index) };
++        });
+       },
+ 
+-      /**
+-       * Clears all items currently in the staged box
+-       */
+-      clearBox: () => set({ items: [] }),
++      clearBox: () => set((state) => (state.items.length ? { items: [] } : state)),
+ 
+-      /**
+-       * Calculates the total discounted price of the staged custom box
+-       * @returns {number} Subtotal including base packaging price
+-       */
+       getTotal: () => {
+         const itemsTotal = get().items.reduce((total, item) => {
+           const discountPercent = item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE;
+-          return total + item.price * (1 - discountPercent / 100);
++          return total + (Number(item.price) || 0) * (1 - discountPercent / 100);
+         }, 0);
+         return itemsTotal > 0 ? itemsTotal + BUSINESS_CONFIG.BOX_BASE_PRICE_EGP : 0;
+       },
+     }),
+     {
+       name: STORAGE_KEYS.BUILD_BOX,
+-      onRehydrateStorage: () => (state) => {
+-        state?.setHasHydrated(true);
+-      },
++      skipHydration: true,
++      version: 1,
++      onRehydrateStorage: () => (state) => state?.setHasHydrated(true),
+     }
+   )
+ );
+diff --git a/frontend/src/store/cartStore.js b/frontend/src/store/cartStore.js
+index c7103af..c3c6274 100644
+--- a/frontend/src/store/cartStore.js
++++ b/frontend/src/store/cartStore.js
+@@ -2,216 +2,151 @@ import { create } from 'zustand';
+ import { persist } from 'zustand/middleware';
+ import { BUSINESS_CONFIG, STORAGE_KEYS } from '../constants';
+ 
+-/**
+- * Safely parse numerical stock with floor at 0
+- * @param {any} value - Raw stock candidate
+- * @returns {number|null} Safe stock number or null
+- */
+ const parseStock = (value) => {
+   const stock = Number(value);
+   if (!Number.isFinite(stock)) return null;
+   return Math.max(0, Math.floor(stock));
+ };
+ 
++const getItemKey = ({ id, selectedSize, selectedColor, selectedShape, _variantsKey, boxId }) =>
++  [id, selectedSize, selectedColor, selectedShape, _variantsKey || '', boxId || ''].join('::');
++
++const getPrice = (item) => {
++  const discountPercent = item.boxId
++    ? item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE
++    : 0;
++  const basePrice = Number(item.price) || 0;
++  const addonsTotal = Array.isArray(item.addons)
++    ? item.addons.reduce((sum, addon) => sum + (Number(addon?.price) || 0), 0)
++    : 0;
++  return basePrice * (1 - discountPercent / 100) + addonsTotal;
++};
++
++export const calculateCartTotal = (items) => {
++  const boxGroups = new Set();
++  const itemsTotal = items.reduce((total, item) => {
++    if (item.boxId) boxGroups.add(item.boxId);
++    return total + getPrice(item) * (Number(item.quantity) || 0);
++  }, 0);
++  return itemsTotal + boxGroups.size * BUSINESS_CONFIG.BOX_BASE_PRICE_EGP;
++};
++
+ /**
+- * Shopping Cart State Store (Zustand)
+- * Manages customer cart items, custom box groupings, quantity capping against inventory, and subtotal aggregation.
++ * Client cart state. Persistence is explicitly rehydrated by Providers after mount so
++ * the server render and the first client render always use the same empty baseline.
+  */
+ export const useCartStore = create(
+   persist(
+     (set, get) => ({
+       items: [],
+       _hasHydrated: false,
+-      setHasHydrated: (state) => set({ _hasHydrated: state }),
+-
+-      /**
+-       * Adds a product with options into the shopping cart
+-       * @param {Object} product - Product entity
+-       * @param {number} quantity - Quantity to add
+-       * @param {Object} options - Customizations (variants, boxId, boxDiscount, addons)
+-       * @returns {{ success: boolean, quantity?: number, capped?: boolean, maxStock?: number|null, reason?: string }}
+-       */
++      setHasHydrated: (state) => set({ _hasHydrated: Boolean(state) }),
++
+       addItem: (product, quantity = 1, options = {}) => {
+-        const items = get().items;
+         const requestedQuantity = Math.max(1, Math.floor(Number(quantity) || 1));
+         const stockLimit = parseStock(product?.stock);
+         const maxAllowed = stockLimit ?? Number.MAX_SAFE_INTEGER;
+ 
+-        if (stockLimit === 0) {
+-          return { success: false, reason: 'out_of_stock', maxStock: 0 };
+-        }
++        if (!product?._id) return { success: false, reason: 'invalid_product' };
++        if (stockLimit === 0) return { success: false, reason: 'out_of_stock', maxStock: 0 };
+ 
+         const variantsKey = options.selectedVariants
+           ? JSON.stringify(options.selectedVariants)
+           : '';
+-        const existingIndex = items.findIndex(
+-          (item) =>
+-            item.id === product._id &&
+-            item.selectedSize === options.selectedSize &&
+-            item.selectedColor === options.selectedColor &&
+-            item.selectedShape === options.selectedShape &&
+-            (item._variantsKey || '') === variantsKey &&
+-            (item.boxId || '') === (options.boxId || '')
+-        );
+-
+-        if (existingIndex > -1) {
+-          const newItems = [...items];
+-          const currentQuantity = newItems[existingIndex].quantity;
+-          const nextQuantity = Math.min(currentQuantity + requestedQuantity, maxAllowed);
+-
+-          if (nextQuantity === currentQuantity) {
+-            return { success: false, reason: 'stock_limit_reached', maxStock: stockLimit };
+-          }
+-
+-          newItems[existingIndex].quantity = nextQuantity;
+-          if (stockLimit !== null) {
+-            newItems[existingIndex].stock = stockLimit;
+-          }
+-
+-          set({ items: newItems });
+-          return {
+-            success: true,
++        const incoming = {
++          id: product._id,
++          name: product.name,
++          slug: product.slug,
++          price: product.price,
++          oldPrice: product.oldPrice,
++          image: product.images?.[0]?.url,
++          quantity: Math.min(requestedQuantity, maxAllowed),
++          stock: stockLimit,
++          selectedSize: options.selectedSize,
++          selectedColor: options.selectedColor,
++          selectedShape: options.selectedShape,
++          selectedVariants: options.selectedVariants,
++          _variantsKey: variantsKey,
++          addons: options.addons || [],
++          boxSelections: options.boxSelections || [],
++          boxId: options.boxId,
++          boxDiscount: options.boxDiscount,
++        };
++        const itemKey = getItemKey(incoming);
++        let result = { success: true, quantity: incoming.quantity, capped: incoming.quantity < requestedQuantity, maxStock: stockLimit };
++
++        set((state) => {
++          const existingIndex = state.items.findIndex((item) => getItemKey(item) === itemKey);
++          if (existingIndex === -1) return { items: [...state.items, incoming] };
++
++          const currentItem = state.items[existingIndex];
++          const nextQuantity = Math.min((Number(currentItem.quantity) || 0) + requestedQuantity, maxAllowed);
++          result = {
++            success: nextQuantity > currentItem.quantity,
+             quantity: nextQuantity,
+-            capped: nextQuantity < currentQuantity + requestedQuantity,
++            capped: nextQuantity < (Number(currentItem.quantity) || 0) + requestedQuantity,
+             maxStock: stockLimit,
++            reason: nextQuantity === currentItem.quantity ? 'stock_limit_reached' : undefined,
+           };
+-        } else {
+-          const finalQuantity = Math.min(requestedQuantity, maxAllowed);
+-
+-          set({
+-            items: [
+-              ...items,
+-              {
+-                id: product._id,
+-                name: product.name,
+-                slug: product.slug,
+-                price: product.price,
+-                oldPrice: product.oldPrice,
+-                image: product.images?.[0]?.url,
+-                quantity: finalQuantity,
+-                stock: stockLimit,
+-                selectedSize: options.selectedSize,
+-                selectedColor: options.selectedColor,
+-                selectedShape: options.selectedShape,
+-                selectedVariants: options.selectedVariants,
+-                _variantsKey: variantsKey,
+-                addons: options.addons || [],
+-                boxSelections: options.boxSelections || [],
+-                boxId: options.boxId,
+-                boxDiscount: options.boxDiscount,
+-              },
+-            ],
+-          });
++          if (nextQuantity === currentItem.quantity) return state;
+ 
+-          return {
+-            success: true,
+-            quantity: finalQuantity,
+-            capped: finalQuantity < requestedQuantity,
+-            maxStock: stockLimit,
++          const items = state.items.slice();
++          items[existingIndex] = {
++            ...currentItem,
++            quantity: nextQuantity,
++            ...(stockLimit !== null ? { stock: stockLimit } : {}),
+           };
+-        }
++          return { items };
++        });
++
++        return result;
+       },
+ 
+       removeItem: (id, selectedSize, selectedColor, selectedShape, _variantsKey, boxId) => {
+-        set({
+-          items: get().items.filter(
+-            (item) =>
+-              !(
+-                item.id === id &&
+-                item.selectedSize === selectedSize &&
+-                item.selectedColor === selectedColor &&
+-                item.selectedShape === selectedShape &&
+-                (item._variantsKey || '') === (_variantsKey || '') &&
+-                (item.boxId || '') === (boxId || '')
+-              )
+-          ),
++        const targetKey = getItemKey({ id, selectedSize, selectedColor, selectedShape, _variantsKey, boxId });
++        set((state) => {
++          const items = state.items.filter((item) => getItemKey(item) !== targetKey);
++          return items.length === state.items.length ? state : { items };
+         });
+       },
+ 
+-      updateQuantity: (
+-        id,
+-        quantity,
+-        selectedSize,
+-        selectedColor,
+-        selectedShape,
+-        _variantsKey,
+-        boxId
+-      ) => {
++      updateQuantity: (id, quantity, selectedSize, selectedColor, selectedShape, _variantsKey, boxId) => {
+         const requestedQuantity = Math.max(1, Math.floor(Number(quantity) || 1));
++        const targetKey = getItemKey({ id, selectedSize, selectedColor, selectedShape, _variantsKey, boxId });
+         let result = { success: false, reason: 'not_found' };
+-        let changed = false;
+-
+-        const items = get().items.map((item) => {
+-          if (
+-            item.id === id &&
+-            item.selectedSize === selectedSize &&
+-            item.selectedColor === selectedColor &&
+-            item.selectedShape === selectedShape &&
+-            (item._variantsKey || '') === (_variantsKey || '') &&
+-            (item.boxId || '') === (boxId || '')
+-          ) {
+-            const stockLimit = parseStock(item.stock);
+-            const maxAllowed = stockLimit ?? Number.MAX_SAFE_INTEGER;
+-            const nextQuantity = Math.min(requestedQuantity, maxAllowed);
+ 
++        set((state) => {
++          let changed = false;
++          const items = state.items.map((item) => {
++            if (getItemKey(item) !== targetKey) return item;
++            const stockLimit = parseStock(item.stock);
++            const nextQuantity = Math.min(requestedQuantity, stockLimit ?? Number.MAX_SAFE_INTEGER);
+             result = {
+               success: true,
+               quantity: nextQuantity,
+               capped: nextQuantity < requestedQuantity,
+               maxStock: stockLimit,
+             };
+-
+-            if (nextQuantity === item.quantity) {
+-              return item;
+-            }
+-
++            if (nextQuantity === item.quantity) return item;
+             changed = true;
+             return { ...item, quantity: nextQuantity };
+-          }
+-          return item;
++          });
++          return changed ? { items } : state;
+         });
+-
+-        if (changed) {
+-          set({ items });
+-        }
+-
+         return result;
+       },
+ 
+-      clearCart: () => set({ items: [] }),
+-
+-      getTotal: () => {
+-        const boxGroups = new Set();
+-        const itemsTotal = get().items.reduce((total, item) => {
+-          let priceToUse = item.price;
+-
+-          if (item.boxId) {
+-            boxGroups.add(item.boxId);
+-            const discountPercent = item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE;
+-            priceToUse = item.price * (1 - discountPercent / 100);
+-          }
+-
+-          let unitPrice = priceToUse;
+-          if (item.addons) {
+-            unitPrice += item.addons.reduce((sum, addon) => sum + (addon.price || 0), 0);
+-          }
+-          const itemTotal = unitPrice * item.quantity;
+-          return total + itemTotal;
+-        }, 0);
+-
+-        const boxesTotal = boxGroups.size * BUSINESS_CONFIG.BOX_BASE_PRICE_EGP;
+-        return itemsTotal + boxesTotal;
+-      },
+-
+-      getItemsCount: () => {
+-        return get().items.reduce((count, item) => count + item.quantity, 0);
+-      },
++      clearCart: () => set((state) => (state.items.length ? { items: [] } : state)),
++      getTotal: () => calculateCartTotal(get().items),
++      getItemsCount: () => get().items.reduce((count, item) => count + (Number(item.quantity) || 0), 0),
+     }),
+     {
+       name: STORAGE_KEYS.CART,
+-      onRehydrateStorage: () => (state) => {
+-        state?.setHasHydrated(true);
+-      }
++      skipHydration: true,
++      version: 1,
++      onRehydrateStorage: () => (state) => state?.setHasHydrated(true),
+     }
+   )
+ );
++
++export { getItemKey };
+diff --git a/frontend/src/store/wishlistStore.js b/frontend/src/store/wishlistStore.js
+index 3ce6c2e..e75f5ee 100644
+--- a/frontend/src/store/wishlistStore.js
++++ b/frontend/src/store/wishlistStore.js
+@@ -13,45 +13,42 @@ export const useWishlistStore = create(
+     (set, get) => ({
+       items: [],
+       _hasHydrated: false,
+-      setHasHydrated: (state) => set({ _hasHydrated: state }),
++      setHasHydrated: (state) => set({ _hasHydrated: Boolean(state) }),
+ 
+       addItem: (product) => {
+-        const items = get().items;
+-        if (!items.find((item) => item.id === product._id)) {
+-          set({
+-            items: [
+-              ...items,
+-              {
+-                id: product._id,
+-                name: product.name,
+-                slug: product.slug,
+-                price: product.price,
+-                oldPrice: product.oldPrice,
+-                image: product.images?.[0]?.url,
+-                stock: parseStock(product.stock),
+-              },
+-            ],
+-          });
+-        }
++        if (!product?._id || get().items.some((item) => item.id === product._id)) return false;
++        set((state) => ({
++          items: [
++            ...state.items,
++            {
++              id: product._id,
++              name: product.name,
++              slug: product.slug,
++              price: product.price,
++              oldPrice: product.oldPrice,
++              image: product.images?.[0]?.url,
++              stock: parseStock(product.stock),
++            },
++          ],
++        }));
++        return true;
+       },
+ 
+       removeItem: (id) => {
+-        set({ items: get().items.filter((item) => item.id !== id) });
++        set((state) => {
++          const items = state.items.filter((item) => item.id !== id);
++          return items.length === state.items.length ? state : { items };
++        });
+       },
+ 
+-      isInWishlist: (id) => {
+-        return get().items.some((item) => item.id === id);
+-      },
++      isInWishlist: (id) => Boolean(id && get().items.some((item) => item.id === id)),
+ 
+       syncWishlist: (serverWishlist) => {
+         if (!Array.isArray(serverWishlist)) return;
+-        const currentItems = get().items;
+-        const map = new Map();
+-        currentItems.forEach((item) => item.id && map.set(item.id, item));
+-
++        const map = new Map(get().items.filter((item) => item?.id).map((item) => [item.id, item]));
+         serverWishlist.forEach((item) => {
+           if (!item) return;
+-          const id = typeof item === 'string' ? item : (item._id || item.id);
++          const id = typeof item === 'string' ? item : item._id || item.id;
+           if (!id) return;
+           const existing = map.get(id);
+           if (typeof item === 'object') {
+@@ -68,17 +65,16 @@ export const useWishlistStore = create(
+             map.set(id, { id });
+           }
+         });
+-
+         set({ items: Array.from(map.values()) });
+       },
+ 
+-      clearWishlist: () => set({ items: [] }),
++      clearWishlist: () => set((state) => (state.items.length ? { items: [] } : state)),
+     }),
+     {
+       name: STORAGE_KEYS.WISHLIST,
+-      onRehydrateStorage: () => (state) => {
+-        state?.setHasHydrated(true);
+-      }
++      skipHydration: true,
++      version: 1,
++      onRehydrateStorage: () => (state) => state?.setHasHydrated(true),
+     }
+   )
+ );

@@ -188,32 +188,19 @@ router.post('/', apiLimiter, [
     if (userId && isVerifiedPurchase) {
       try {
         const Settings = require('../models/Settings');
-        const User = require('../models/User');
+        const { applyLoyaltyDelta } = require('../utils/loyalty');
         const settings = await Settings.getSettings();
         if (settings?.loyalty?.enabled && settings?.loyalty?.pointsPerReview > 0) {
           const rewardReason = `مكافأة تقييم موثوق للمنتج ${productId}`;
-          // Check immutable pointsHistory to prevent point farming via delete/recreate cycles
-          const alreadyAwarded = await User.exists({
-            _id: userId,
-            'pointsHistory.reason': rewardReason
+          const idempotencyKey = `review:${userId}:${productId}`;
+          await applyLoyaltyDelta({
+            userId,
+            pointsDelta: settings.loyalty.pointsPerReview,
+            type: 'EARNED',
+            reason: rewardReason,
+            idempotencyKey,
+            metadata: { productId: productId.toString(), reviewId: review._id.toString() },
           });
-
-          if (!alreadyAwarded) {
-            const pointsAwarded = settings.loyalty.pointsPerReview;
-            await User.updateOne(
-              { _id: userId },
-              {
-                $inc: { loyaltyPoints: pointsAwarded },
-                $push: {
-                  pointsHistory: {
-                    points: pointsAwarded,
-                    reason: rewardReason,
-                    type: 'EARNED'
-                  }
-                }
-              }
-            );
-          }
         }
       } catch (loyaltyErr) {
         console.error('Loyalty points for review error:', loyaltyErr);
@@ -258,11 +245,66 @@ router.put('/:id', protect, async (req, res) => {
     review.pros = pros !== undefined ? pros : review.pros;
     review.cons = cons !== undefined ? cons : review.cons;
     review.isEdited = true;
-    review.isApproved = false; // Re-moderation required after content edit
 
     await review.save();
 
     return sendSuccess(res, { data: review, message: MESSAGES.REVIEWS.UPDATED });
+  } catch (error) {
+    return sendError(res, { message: MESSAGES.GENERAL.ERROR });
+  }
+});
+
+// @route   POST /api/reviews/:id/helpful
+// @desc    Mark review as helpful (Atomic O(1) voting decoupled via ReviewVote)
+// @access  Private
+router.post('/:id/helpful', protect, async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+
+    if (!review) {
+      return sendNotFound(res, MESSAGES.REVIEWS.NOT_FOUND);
+    }
+
+    const ReviewVote = require('../models/ReviewVote');
+    const userId = req.user._id;
+
+    const existingVote = await ReviewVote.findOne({ review: review._id, user: userId });
+    if (existingVote) {
+      // Toggle vote off
+      await ReviewVote.deleteOne({ _id: existingVote._id });
+      const updated = await Review.findByIdAndUpdate(
+        review._id,
+        { $inc: { 'helpful.count': -1 } },
+        { new: true }
+      );
+      return sendSuccess(res, {
+        data: { helpful: Math.max(0, updated.helpful.count), userVoted: false },
+      });
+    }
+
+    try {
+      await ReviewVote.create({ review: review._id, user: userId });
+      const updated = await Review.findByIdAndUpdate(
+        review._id,
+        { $inc: { 'helpful.count': 1 } },
+        { new: true }
+      );
+      return sendSuccess(res, { data: { helpful: updated.helpful.count, userVoted: true } });
+    } catch (voteErr) {
+      if (voteErr.code === 11000) {
+        // Toggle vote off on race condition
+        await ReviewVote.deleteOne({ review: review._id, user: userId });
+        const updated = await Review.findByIdAndUpdate(
+          review._id,
+          { $inc: { 'helpful.count': -1 } },
+          { new: true }
+        );
+        return sendSuccess(res, {
+          data: { helpful: Math.max(0, updated.helpful.count), userVoted: false },
+        });
+      }
+      throw voteErr;
+    }
   } catch (error) {
     return sendError(res, { message: MESSAGES.GENERAL.ERROR });
   }
@@ -286,41 +328,6 @@ router.delete('/:id', protect, async (req, res) => {
     await review.deleteOne();
 
     return sendSuccess(res, { message: MESSAGES.REVIEWS.DELETED });
-  } catch (error) {
-    return sendError(res, { message: MESSAGES.GENERAL.ERROR });
-  }
-});
-
-// @route   POST /api/reviews/:id/helpful
-// @desc    Mark review as helpful
-// @access  Private
-router.post('/:id/helpful', protect, async (req, res) => {
-  try {
-    const review = await Review.findById(req.params.id);
-
-    if (!review) {
-      return sendNotFound(res, MESSAGES.REVIEWS.NOT_FOUND);
-    }
-
-    const userId = req.user._id.toString();
-    const alreadyMarkedHelpful = review.helpful.users.some((id) => id.toString() === userId);
-
-    // Check if user already marked as helpful
-    if (alreadyMarkedHelpful) {
-      // Remove helpful
-      review.helpful.users = review.helpful.users.filter(
-        id => id.toString() !== userId
-      );
-      review.helpful.count -= 1;
-    } else {
-      // Add helpful
-      review.helpful.users.push(req.user._id);
-      review.helpful.count += 1;
-    }
-
-    await review.save();
-
-    return sendSuccess(res, { data: { helpful: review.helpful.count } });
   } catch (error) {
     return sendError(res, { message: MESSAGES.GENERAL.ERROR });
   }

@@ -13,14 +13,16 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const scrolledRef = useRef(false);
 
   // 1. Atomic Zustand Selectors (Prevents re-renders across the entire navbar tree on unrelated state changes)
   const cartCount = useCartStore((state) =>
     state.items.reduce((total, item) => total + (item.quantity || 1), 0)
   );
+  const cartHydrated = useCartStore((state) => state._hasHydrated);
   const wishlistCount = useWishlistStore((state) => state.items.length);
+  const wishlistHydrated = useWishlistStore((state) => state._hasHydrated);
+  const countsReady = cartHydrated && wishlistHydrated;
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isAdmin = useAuthStore((state) => state.user?.role === 'admin');
 
@@ -28,10 +30,6 @@ const Header = () => {
   const isCartOpen = useUIStore((state) => state.isCartOpen);
   const toggleMobileMenu = useUIStore((state) => state.toggleMobileMenu);
   const toggleCart = useUIStore((state) => state.toggleCart);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // 2. High-performance scroll hysteresis using passive listeners
   useEffect(() => {
@@ -216,11 +214,11 @@ const Header = () => {
               to="/wishlist"
               className="p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl relative focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors text-gray-700"
               aria-label={`${STRINGS.NAV.WISHLIST}${
-                isMounted && wishlistCount > 0 ? ` (${wishlistCount} ${STRINGS.PRODUCT.ITEMS})` : ''
+                countsReady && wishlistCount > 0 ? ` (${wishlistCount} ${STRINGS.PRODUCT.ITEMS})` : ''
               }`}
             >
               <FiHeart size={20} aria-hidden="true" />
-              {isMounted && wishlistCount > 0 && (
+              {countsReady && wishlistCount > 0 && (
                 <span
                   className="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
                   aria-hidden="true"
@@ -235,13 +233,13 @@ const Header = () => {
               onClick={toggleCart}
               className="p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl relative focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors text-gray-700"
               aria-label={`${STRINGS.NAV.CART}${
-                isMounted && cartCount > 0 ? ` (${cartCount} ${STRINGS.PRODUCT.ITEMS})` : ''
+                countsReady && cartCount > 0 ? ` (${cartCount} ${STRINGS.PRODUCT.ITEMS})` : ''
               }`}
               aria-expanded={isCartOpen}
               aria-controls="cart-sidebar"
             >
               <FiShoppingBag size={20} aria-hidden="true" />
-              {isMounted && cartCount > 0 && (
+              {countsReady && cartCount > 0 && (
                 <span
                   className="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
                   aria-hidden="true"

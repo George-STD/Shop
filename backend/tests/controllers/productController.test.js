@@ -10,6 +10,9 @@ describe('Product Controller & Routes Tests', () => {
   let productFeatured;
 
   beforeAll(async () => {
+    await Product.deleteMany({});
+    await Category.deleteMany({});
+
     // Create a category
     category = new Category({
       name: 'Electronics',

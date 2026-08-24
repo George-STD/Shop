@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import Image from 'next/image';
 import { STRINGS } from '../../constants';
 import { optimizeCloudinaryUrl } from '../../utils/optimizeImage';
 
@@ -8,13 +9,13 @@ const CategoryCard = ({ category }) => {
     <Link to={`/products?category=${category.slug}`} className="group block">
       <div className="relative overflow-hidden rounded-2xl aspect-square bg-gradient-to-br from-purple-100 to-pink-100">
         {category.image ? (
-          <img
+          <Image
             src={optimizeCloudinaryUrl(category.image, 400)}
             alt={category.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
             width={400}
             height={400}
-            loading="lazy"
+            sizes="(max-width: 768px) 50vw, 20vw"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

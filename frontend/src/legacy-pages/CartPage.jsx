@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { Link } from 'react-router-dom';
 import { FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi';
 import { useCartStore } from '../store';
@@ -62,11 +63,13 @@ const CartPage = () => {
             <div className="lg:col-span-2 space-y-4">
               {items.map((item, index) => (
                 <div key={`${item.id}-${index}`} className="bg-white rounded-2xl p-6 flex gap-6">
-                  <Link to={`/product/${item.slug}`} className="w-24 h-24 flex-shrink-0">
-                    <img
+                  <Link to={`/product/${item.slug}`} className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100 block">
+                    <Image
+                      fill
+                      sizes="96px"
                       src={item.image || '/images/placeholder.jpg'}
                       alt={item.name}
-                      className="w-full h-full object-cover rounded-lg"
+                      className="object-cover"
                     />
                   </Link>
 

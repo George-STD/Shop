@@ -17,7 +17,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
-import { productsAPI, reviewsAPI, settingsAPI } from '../services/api';
+import { productsAPI, reviewsAPI, settingsAPI, authAPI } from '../services/api';
 import { useCartStore, useWishlistStore, useAuthStore } from '../store';
 import ProductCard from '../components/product/ProductCard';
 import toast from 'react-hot-toast';
@@ -187,6 +187,7 @@ const ProductPage = () => {
 
   // Local interaction states
   const [quantity, setQuantity] = useState(1);
+  const [wishlistPending, setWishlistPending] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const [activeImageIdx, setActiveImageIdx] = useState(0);
@@ -356,14 +357,13 @@ const ProductPage = () => {
       : product.price;
   }, [product, selectedSize]);
 
-  const calculateTotal = useCallback(() => {
-    if (!product) return 0;
+  const totalPrice = useMemo(() => {
     const addonsTotal = selectedAddons.reduce(
       (sum, addon) => sum + (Number(addon.price) || 0),
       0
     );
     return (effectiveBasePrice + addonsTotal) * quantity;
-  }, [product, effectiveBasePrice, selectedAddons, quantity]);
+  }, [effectiveBasePrice, quantity, selectedAddons]);
 
   // Dynamic JSON-LD structured data for Google Crawlers
   const jsonLd = useMemo(() => {
@@ -381,10 +381,9 @@ const ProductPage = () => {
       },
       offers: {
         '@type': 'Offer',
-        url: typeof window !== 'undefined' ? window.location.href : '',
-        priceCurrency: 'EGP',
-        price: product.price,
-        priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      url: slug ? `/product/${slug}` : '',
+      priceCurrency: 'EGP',
+      price: product.price,
         itemCondition: 'https://schema.org/NewCondition',
         availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       },
@@ -396,7 +395,7 @@ const ProductPage = () => {
         },
       }),
     };
-  }, [product]);
+  }, [product, slug]);
 
   // Add to cart handler
   const handleAddToCart = useCallback(() => {
@@ -473,20 +472,31 @@ const ProductPage = () => {
     quantity,
   ]);
 
-  const handleToggleWishlist = useCallback(() => {
+  const handleToggleWishlist = useCallback(async () => {
     if (!isAuthenticated) {
       toast.error(STRINGS.PRODUCT.LOGIN_TO_ADD_WISHLIST);
       navigate('/account');
       return;
     }
-    if (inWishlist) {
-      removeFromWishlist(product._id);
-      toast.success(STRINGS.PRODUCT.REMOVED_FROM_WISHLIST);
-    } else {
-      addToWishlist(product);
-      toast.success(STRINGS.PRODUCT.ADDED_TO_WISHLIST);
+    if (!product || wishlistPending) return;
+
+    const wasInWishlist = inWishlist;
+    setWishlistPending(true);
+    if (wasInWishlist) removeFromWishlist(product._id);
+    else addToWishlist(product);
+
+    try {
+      if (wasInWishlist) await authAPI.removeFromWishlist(product._id);
+      else await authAPI.addToWishlist(product._id);
+      toast.success(wasInWishlist ? STRINGS.PRODUCT.REMOVED_FROM_WISHLIST : STRINGS.PRODUCT.ADDED_TO_WISHLIST);
+    } catch (_) {
+      if (wasInWishlist) addToWishlist(product);
+      else removeFromWishlist(product._id);
+      toast.error('تعذر تحديث المفضلة. تمت استعادة حالتها السابقة.');
+    } finally {
+      setWishlistPending(false);
     }
-  }, [isAuthenticated, inWishlist, product, navigate, removeFromWishlist, addToWishlist]);
+  }, [addToWishlist, inWishlist, isAuthenticated, navigate, product, removeFromWishlist, wishlistPending]);
 
   const handleShare = useCallback(async () => {
     if (!product) return;
@@ -501,6 +511,11 @@ const ProductPage = () => {
       toast.success(STRINGS.PRODUCT.LINK_COPIED);
     }
   }, [product]);
+
+  const refreshReviews = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: ['reviews', product?._id] }),
+    [product?._id, queryClient]
+  );
 
   const toggleAddon = useCallback((addon) => {
     setSelectedAddons((prev) => {
@@ -1276,7 +1291,7 @@ const ProductPage = () => {
                 >
                   {product.stock === 0
                     ? STRINGS.PRODUCT.OUT_OF_STOCK
-                    : `${STRINGS.PRODUCT.ADD_TO_CART_TOTAL}${calculateTotal()} ${STRINGS.PRODUCT.CURRENCY}`}
+                    : `${STRINGS.PRODUCT.ADD_TO_CART_TOTAL}${totalPrice} ${STRINGS.PRODUCT.CURRENCY}`}
                 </button>
               </div>
 
@@ -1290,6 +1305,8 @@ const ProductPage = () => {
               <div className="flex items-center gap-4 pt-4 border-t">
                 <button
                   onClick={handleToggleWishlist}
+                  disabled={wishlistPending}
+                  aria-busy={wishlistPending}
                   className={`flex items-center gap-2 ${
                     inWishlist ? 'text-red-500 font-semibold' : 'text-gray-600'
                   } hover:text-red-500 transition-colors text-sm`}
@@ -1372,7 +1389,7 @@ const ProductPage = () => {
                 <div>
                   <ReviewForm
                     productId={product._id}
-                    refreshReviews={() => queryClient.invalidateQueries({ queryKey: ['reviews', product._id] })}
+                    refreshReviews={refreshReviews}
                   />
 
                   {reviewsData?.data?.length > 0 ? (

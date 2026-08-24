@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { FiEdit2, FiTrash2, FiImage } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
 
@@ -21,10 +22,12 @@ const AdminCategoriesGrid = ({ categories, isLoading, handleEdit, handleDelete }
               {/* Category Image */}
               <div className="h-40 bg-gray-100 relative">
                 {category.image ? (
-                  <img
+                  <Image
                     src={category.image}
                     alt={category.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">

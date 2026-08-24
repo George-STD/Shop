@@ -7,7 +7,9 @@ const clearStoredAuthSession = () => {
   try {
     localStorage.removeItem(STORAGE_KEYS.TOKEN);
     localStorage.removeItem(STORAGE_KEYS.AUTH);
-  } catch (_) {}
+  } catch (_) {
+    // Storage can be unavailable in privacy-restricted contexts.
+  }
 };
 
 export const useAuthStore = create(
@@ -17,10 +19,7 @@ export const useAuthStore = create(
       token: null,
       isAuthenticated: false,
       _hasHydrated: false,
-
-      setHasHydrated: (state) => {
-        set({ _hasHydrated: state });
-      },
+      setHasHydrated: (state) => set({ _hasHydrated: Boolean(state) }),
 
       setAuth: (user, token) => {
         if (typeof window !== 'undefined') {
@@ -28,7 +27,7 @@ export const useAuthStore = create(
             if (token) localStorage.setItem(STORAGE_KEYS.TOKEN, token);
           } catch (_) {}
         }
-        set({ user, token: token || null, isAuthenticated: true });
+        set({ user, token: token || null, isAuthenticated: Boolean(user && token) });
       },
 
       logout: async () => {
@@ -53,28 +52,28 @@ export const useAuthStore = create(
         } catch (_) {}
       },
 
-      updateUser: (userData) => {
-        set({ user: { ...get().user, ...userData } });
-      },
-
-      isAdmin: () => {
-        return get().user?.role === 'admin';
-      },
+      updateUser: (userData) => set((state) => ({ user: { ...state.user, ...userData } })),
+      isAdmin: () => get().user?.role === 'admin',
     }),
     {
       name: STORAGE_KEYS.AUTH,
+      skipHydration: true,
+      version: 1,
       partialize: (state) => ({
         user: state.user,
-        isAuthenticated: state.isAuthenticated
+        isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
+        let token = null;
         if (typeof window !== 'undefined') {
           try {
-            const savedToken = localStorage.getItem(STORAGE_KEYS.TOKEN);
-            if (savedToken && state?.isAuthenticated) {
-              state.token = savedToken;
-            }
+            token = localStorage.getItem(STORAGE_KEYS.TOKEN);
           } catch (_) {}
+        }
+        if (state?.isAuthenticated && token) {
+          state.setAuth(state.user, token);
+        } else if (state?.isAuthenticated) {
+          state.setAuth(null, null);
         }
         state?.setHasHydrated(true);
       },

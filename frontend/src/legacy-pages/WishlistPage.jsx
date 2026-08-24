@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { Link, Navigate } from 'react-router-dom';
 import { FiHeart, FiTrash2, FiShoppingCart } from 'react-icons/fi';
 import { useWishlistStore, useCartStore, useAuthStore } from '../store';
@@ -89,8 +90,10 @@ const WishlistPage = () => {
                   key={product.id}
                   className="bg-white rounded-2xl overflow-hidden shadow-sm group"
                 >
-                  <div className="relative aspect-square overflow-hidden">
-                    <img
+                  <div className="relative aspect-square overflow-hidden bg-gray-50">
+                    <Image
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
                       src={product.image || '/images/placeholder.jpg'}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"

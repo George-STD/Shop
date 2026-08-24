@@ -4,6 +4,7 @@ const asyncHandler = require('../../utils/asyncHandler');
 const { escapeRegex, parsePagination, buildPaginationMeta } = require('../../utils/helpers');
 const logAudit = require('../../utils/auditLogger');
 const { processReadyBoxes } = require('../productController');
+const { bustCatalog } = require('../../middleware/cache');
 
 // =====================================================
 // PRODUCTS MANAGEMENT (Admin)
@@ -70,6 +71,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
 
   const filteredData = filterAllowedProductFields(req.body);
   const product = await Product.create({ ...filteredData, slug: uniqueSlug, sku });
+  bustCatalog('products');
   
   await logAudit({
     entityType: 'Product',
@@ -109,6 +111,7 @@ exports.createBulkProducts = asyncHandler(async (req, res) => {
   });
 
   const createdProducts = await Product.insertMany(productsToCreate);
+  bustCatalog('products');
   res.status(201).json({ success: true, message: `تم إنشاء ${createdProducts.length} منتج بنجاح`, count: createdProducts.length });
 }, 'حدث خطأ أثناء الإنشاء الجماعي للمنتجات');
 
@@ -118,6 +121,8 @@ exports.updateProduct = asyncHandler(async (req, res) => {
   const product = await Product.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
   if (!product) return res.status(404).json({ success: false, message: 'المنتج غير موجود' });
   
+  bustCatalog('products');
+
   await logAudit({
     entityType: 'Product',
     entityId: product._id,
@@ -134,6 +139,8 @@ exports.deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findByIdAndDelete(req.params.id);
   if (!product) return res.status(404).json({ success: false, message: 'المنتج غير موجود' });
   
+  bustCatalog('products');
+
   await logAudit({
     entityType: 'Product',
     entityId: product._id,
@@ -181,6 +188,7 @@ exports.bulkProductAction = asyncHandler(async (req, res) => {
       return res.status(400).json({ success: false, message: 'إجراء غير معروف' });
   }
 
+  bustCatalog('products');
   const count = result.modifiedCount || result.deletedCount || 0;
   
   await logAudit({

@@ -3,11 +3,14 @@ const router = express.Router();
 const Category = require('../models/Category');
 const { MESSAGES } = require('../constants');
 const { sendSuccess, sendError, sendNotFound } = require('../utils/response');
+const { rememberGet } = require('../middleware/cache');
+
+const cacheCategories = rememberGet('categories', 60_000);
 
 // @route   GET /api/categories
 // @desc    Get all categories
 // @access  Public
-router.get('/', async (req, res) => {
+router.get('/', cacheCategories, async (req, res) => {
   try {
     const query = { isActive: true };
     if (req.query.showInBox === 'true') {
@@ -29,28 +32,40 @@ router.get('/', async (req, res) => {
 // @route   GET /api/categories/tree
 // @desc    Get categories in tree structure
 // @access  Public
-router.get('/tree', async (req, res) => {
+router.get('/tree', cacheCategories, async (req, res) => {
   try {
     const categories = await Category.find({ isActive: true })
       .sort({ order: 1 })
       .lean();
 
-    // Build tree structure
-    const buildTree = (categories, parentId = null) => {
-      return categories
-        .filter(cat => {
-          if (parentId === null) {
-            return !cat.parent;
-          }
-          return cat.parent && cat.parent.toString() === parentId.toString();
-        })
-        .map(cat => ({
-          ...cat,
-          children: buildTree(categories, cat._id)
-        }));
+    // Build tree structure in O(N) time using Map grouping
+    const childrenByParent = new Map();
+    const tree = [];
+
+    for (const cat of categories) {
+      cat.children = [];
+      const parentIdStr = cat.parent ? cat.parent.toString() : null;
+      if (!parentIdStr) {
+        tree.push(cat);
+      } else {
+        if (!childrenByParent.has(parentIdStr)) {
+          childrenByParent.set(parentIdStr, []);
+        }
+        childrenByParent.get(parentIdStr).push(cat);
+      }
+    }
+
+    const attachChildren = (node) => {
+      const children = childrenByParent.get(node._id.toString()) || [];
+      node.children = children;
+      for (const child of children) {
+        attachChildren(child);
+      }
     };
 
-    const tree = buildTree(categories);
+    for (const root of tree) {
+      attachChildren(root);
+    }
 
     sendSuccess(res, { data: tree });
   } catch (error) {
@@ -62,7 +77,7 @@ router.get('/tree', async (req, res) => {
 // @route   GET /api/categories/main
 // @desc    Get main (parent) categories only
 // @access  Public
-router.get('/main', async (req, res) => {
+router.get('/main', cacheCategories, async (req, res) => {
   try {
     const categories = await Category.find({ 
       isActive: true,
@@ -79,7 +94,7 @@ router.get('/main', async (req, res) => {
 // @route   GET /api/categories/slug/:slug
 // @desc    Get category by slug
 // @access  Public
-router.get('/slug/:slug', async (req, res) => {
+router.get('/slug/:slug', cacheCategories, async (req, res) => {
   try {
     const category = await Category.findOne({ 
       slug: req.params.slug,
@@ -109,7 +124,7 @@ router.get('/slug/:slug', async (req, res) => {
 // @route   GET /api/categories/:id
 // @desc    Get category by ID
 // @access  Public
-router.get('/:id', async (req, res) => {
+router.get('/:id', cacheCategories, async (req, res) => {
   try {
     const category = await Category.findById(req.params.id)
       .populate('parent', 'name slug')
@@ -129,7 +144,7 @@ router.get('/:id', async (req, res) => {
 // @route   GET /api/categories/:id/subcategories
 // @desc    Get subcategories of a category
 // @access  Public
-router.get('/:id/subcategories', async (req, res) => {
+router.get('/:id/subcategories', cacheCategories, async (req, res) => {
   try {
     const subcategories = await Category.find({ 
       parent: req.params.id,

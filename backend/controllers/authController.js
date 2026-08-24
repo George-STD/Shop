@@ -32,9 +32,10 @@ const verifyCodeMatch = (storedCode, incomingCode) => {
   return safeTimingEqual(storedCode, hashCode(incomingCode));
 };
 
-// Generate JWT Token
+// Generate JWT Token (Strictly pinned to HS256 to prevent algorithm confusion attacks)
 const generateToken = (id, tokenVersion = 0) => {
   return jwt.sign({ id, v: tokenVersion }, process.env.JWT_SECRET, {
+    algorithm: 'HS256',
     expiresIn: process.env.JWT_EXPIRES_IN || '7d'
   });
 };
