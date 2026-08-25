@@ -1,4 +1,5 @@
 import '../index.css';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import Providers from './providers';
 import JsonLd from './JsonLd';
 import { SITE_CONFIG, SEO_KEYWORDS } from '../constants';
@@ -97,6 +98,7 @@ export default function RootLayout({ children }) {
       <body>
         <JsonLd />
         <Providers>{children}</Providers>
+        <SpeedInsights />
       </body>
     </html>
   );
