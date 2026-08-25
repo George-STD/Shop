@@ -416,12 +416,13 @@ router.post('/batch-order-review', apiLimiter, [
     const isUserOwner = userId && orderUserId && orderUserId === userId.toString();
     const submittedEmail = (guestEmail || '').toLowerCase().trim();
     const isEmailMatched = submittedEmail && orderEmails.includes(submittedEmail);
+    const isMaskedMatched = submittedEmail && orderEmails.some(oe => maskEmail(oe).toLowerCase() === submittedEmail);
 
-    if (!isUserOwner && !isEmailMatched) {
+    if (!isUserOwner && !isEmailMatched && !isMaskedMatched && submittedEmail) {
       return sendForbidden(res, 'البريد الإلكتروني المكتوب لا يطابق بيانات صاحب الطلب');
     }
 
-    const customerEmail = guestEmail || order.user?.email || order.guestEmail;
+    const customerEmail = (isEmailMatched ? submittedEmail : null) || orderEmails[0] || order.user?.email || order.guestEmail;
     const customerName = guestName || `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`.trim() || order.user?.firstName || 'عميل محدد';
 
     const createdReviews = [];

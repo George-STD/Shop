@@ -6,6 +6,7 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function Page({ params }) {
-  return <ReviewOrderClient orderNumber={params.orderNumber} />;
+export default async function Page({ params }) {
+  const { orderNumber } = await params;
+  return <ReviewOrderClient orderNumber={orderNumber} />;
 }
