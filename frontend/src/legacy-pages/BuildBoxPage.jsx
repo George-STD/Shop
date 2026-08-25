@@ -131,7 +131,7 @@ const BuildBoxPage = () => {
   const progressPercent = Math.round((boxItems.length / maxItems) * 100);
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-20">
+    <div className="bg-gray-50 min-h-screen pb-32 lg:pb-20">
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-12 px-4 text-center">
         <h1 className="text-3xl md:text-5xl font-bold mb-4 flex items-center justify-center gap-3">
@@ -526,6 +526,44 @@ const BuildBoxPage = () => {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Sticky Floating Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-purple-100 p-3 sm:p-4 shadow-2xl lg:hidden">
+        <div className="flex items-center justify-between gap-3 max-w-lg mx-auto">
+          {/* Box Count & Total */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-black text-sm relative">
+              <span>🎁</span>
+              <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-sm">
+                {boxItems.length}
+              </span>
+            </div>
+            <div>
+              <p className="text-[11px] text-gray-500 font-medium">إجمالي البوكس</p>
+              <p className="text-sm sm:text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+                {formatPrice(getTotal())} {STRINGS.PRODUCT.CURRENCY}
+              </p>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <div>
+            {boxItems.length < minItems ? (
+              <span className="text-xs bg-amber-50 text-amber-800 border border-amber-200/80 px-3 py-2 rounded-xl font-bold block text-center">
+                باقي {minItems - boxItems.length} للإتمام
+              </span>
+            ) : (
+              <button
+                onClick={handleFinishBox}
+                className="btn-primary py-2.5 px-5 text-sm font-bold flex items-center gap-2 shadow-lg shadow-purple-500/25 animate-pulse"
+              >
+                <FiShoppingCart />
+                <span>إتمام البوكس</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

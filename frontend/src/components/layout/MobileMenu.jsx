@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { FiX, FiUser, FiMapPin, FiMail, FiSettings, FiChevronLeft } from 'react-icons/fi';
 import { useUIStore, useAuthStore } from '../../store';
-import { occasionsAPI } from '../../services/api';
+import { occasionsAPI, categoriesAPI } from '../../services/api';
 import { STRINGS, BUSINESS_CONFIG } from '../../constants';
 
 /**
@@ -25,7 +25,16 @@ const MobileMenu = () => {
     staleTime: 1000 * 60 * 10,
   });
 
-  const categories = STRINGS.NAV_CATEGORIES;
+  const { data: dbCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesAPI.getAll().then((res) => res.data.data),
+    staleTime: 1000 * 60 * 10,
+  });
+
+  // Use dynamic categories or fallback to HEADER.CATEGORIES
+  const categories = (dbCategories && dbCategories.length > 0)
+    ? dbCategories
+    : STRINGS.HEADER.CATEGORIES;
 
   // 2. Keyboard accessibility: Focus trap & Escape dismissal
   useEffect(() => {
@@ -83,7 +92,7 @@ const MobileMenu = () => {
       {/* Menu Slide-Out Panel */}
       <div
         ref={panelRef}
-        className="absolute top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl overflow-y-auto panel-slide-right flex flex-col justify-between"
+        className="absolute top-0 right-0 h-full w-84 max-w-[88vw] bg-white shadow-2xl overflow-y-auto panel-slide-right flex flex-col justify-between"
       >
         <div>
           {/* Header */}
@@ -101,7 +110,7 @@ const MobileMenu = () => {
             <button
               ref={closeButtonRef}
               onClick={closeMobileMenu}
-              className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label={STRINGS.ACCESSIBILITY.CLOSE_MENU || 'إغلاق القائمة'}
             >
               <FiX size={22} aria-hidden="true" />
@@ -154,44 +163,108 @@ const MobileMenu = () => {
             </div>
           )}
 
-          {/* Gift Finder CTA */}
-          <div className="p-4">
+          {/* Featured Action CTAs: Build Box & Gift Finder */}
+          <div className="p-4 space-y-2.5">
+            {/* Build A Box CTA */}
+            <Link
+              to="/build-a-box"
+              onClick={closeMobileMenu}
+              className="flex items-center gap-3 bg-gradient-to-l from-rose-500 via-pink-500 to-pink-600 text-white p-3.5 rounded-2xl shadow-md shadow-pink-500/20 hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-pink-500 group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition-transform">
+                <span aria-hidden="true">🎁</span>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-sm block">{STRINGS.HEADER.BUILD_BOX}</span>
+                  <span className="bg-white text-pink-600 text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">مميز</span>
+                </div>
+                <p className="text-xs text-white/90">اصنع هديتك بنفسك خطوة بخطوة</p>
+              </div>
+              <FiChevronLeft size={16} className="text-white/70 group-hover:translate-x-[-2px] transition-transform" />
+            </Link>
+
+            {/* Gift Finder CTA */}
             <Link
               to="/gift-finder"
               onClick={closeMobileMenu}
-              className="flex items-center gap-3 bg-gradient-to-l from-purple-500 via-fuchsia-500 to-pink-500 text-white p-4 rounded-2xl shadow-lg shadow-purple-500/20 hover:shadow-xl transition-all focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="flex items-center gap-3 bg-gradient-to-l from-purple-600 via-fuchsia-600 to-pink-500 text-white p-3.5 rounded-2xl shadow-md shadow-purple-500/20 hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 group"
             >
-              <span className="text-2xl" aria-hidden="true">🎯</span>
-              <div>
-                <span className="font-bold text-sm block">{STRINGS.NAV.GIFT_FINDER}</span>
-                <p className="text-xs text-white/80">{STRINGS.HEADER.LET_US_HELP}</p>
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition-transform">
+                <span aria-hidden="true">🎯</span>
               </div>
+              <div className="flex-1">
+                <span className="font-bold text-sm block">{STRINGS.NAV.GIFT_FINDER}</span>
+                <p className="text-xs text-white/90">{STRINGS.HEADER.LET_US_HELP}</p>
+              </div>
+              <FiChevronLeft size={16} className="text-white/70 group-hover:translate-x-[-2px] transition-transform" />
             </Link>
           </div>
 
           {/* Categories Navigation */}
           <div className="px-4 pb-4">
-            <h3 className="font-bold text-xs uppercase tracking-wider text-gray-400 mb-3">
+            <h3 className="font-bold text-xs uppercase tracking-wider text-gray-400 mb-2 px-1">
               {STRINGS.NAV.CATEGORIES}
             </h3>
-            <ul className="space-y-0.5" role="menu">
-              {categories.map((category) => (
-                <li key={category.slug} role="none">
-                  <Link
-                    to={category.slug ? `/products?category=${category.slug}` : '/products'}
-                    onClick={closeMobileMenu}
-                    className="flex items-center justify-between py-2.5 px-3 text-gray-600 hover:text-purple-700 hover:bg-purple-50 rounded-xl transition-all group focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-                    role="menuitem"
-                  >
-                    <span>{category.name}</span>
-                    <FiChevronLeft
-                      size={14}
-                      className="text-gray-300 group-hover:text-purple-400 transition-colors"
-                      aria-hidden="true"
-                    />
-                  </Link>
-                </li>
-              ))}
+            <ul className="space-y-1" role="menu">
+              {/* All Products */}
+              <li role="none">
+                <Link
+                  to="/products"
+                  onClick={closeMobileMenu}
+                  className="flex items-center justify-between py-2.5 px-3 text-gray-700 font-semibold hover:text-purple-700 hover:bg-purple-50 rounded-xl transition-all group focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                  role="menuitem"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                    {STRINGS.NAV.ALL_PRODUCTS}
+                  </span>
+                  <FiChevronLeft
+                    size={14}
+                    className="text-gray-300 group-hover:text-purple-500 transition-colors"
+                    aria-hidden="true"
+                  />
+                </Link>
+              </li>
+
+              {/* Dynamic Categories */}
+              {categories.map((category) => {
+                const slug = category.slug;
+                const name = category.name;
+                return (
+                  <li key={slug || category._id} role="none">
+                    <Link
+                      to={slug ? `/products?category=${encodeURIComponent(slug)}` : '/products'}
+                      onClick={closeMobileMenu}
+                      className="flex items-center justify-between py-2.5 px-3 text-gray-600 hover:text-purple-700 hover:bg-purple-50 rounded-xl transition-all group focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                      role="menuitem"
+                    >
+                      <span>{name}</span>
+                      <FiChevronLeft
+                        size={14}
+                        className="text-gray-300 group-hover:text-purple-400 transition-colors"
+                        aria-hidden="true"
+                      />
+                    </Link>
+                  </li>
+                );
+              })}
+
+              {/* Build-a-box Highlighted in Menu List */}
+              <li role="none" className="pt-1">
+                <Link
+                  to="/build-a-box"
+                  onClick={closeMobileMenu}
+                  className="flex items-center justify-between py-2.5 px-3 text-pink-700 bg-pink-50/80 hover:bg-pink-100/80 font-bold rounded-xl transition-all group focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm border border-pink-100"
+                  role="menuitem"
+                >
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden="true">🎁</span>
+                    {STRINGS.HEADER.BUILD_BOX}
+                  </span>
+                  <span className="text-xs bg-pink-200/80 text-pink-800 px-2 py-0.5 rounded-full font-bold">صمم الآن</span>
+                </Link>
+              </li>
             </ul>
           </div>
 

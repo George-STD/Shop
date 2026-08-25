@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import Image from 'next/image';
 import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { FiSearch, FiUser, FiHeart, FiShoppingBag, FiMenu, FiSettings } from 'react-icons/fi';
 import { useCartStore, useWishlistStore, useAuthStore, useUIStore } from '../../store';
+import { categoriesAPI } from '../../services/api';
 import { STRINGS } from '../../constants';
 
 /**
@@ -73,7 +75,15 @@ const Header = () => {
     [searchQuery, navigate]
   );
 
-  const categories = STRINGS.HEADER.CATEGORIES;
+  const { data: dbCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesAPI.getAll().then((res) => res.data.data),
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const categories = (dbCategories && dbCategories.length > 0)
+    ? dbCategories
+    : STRINGS.HEADER.CATEGORIES;
 
   return (
     <header
@@ -305,9 +315,9 @@ const Header = () => {
               </Link>
             </li>
             {categories.map((category) => (
-              <li key={category.slug} role="none">
+              <li key={category.slug || category._id} role="none">
                 <Link
-                  to={`/products?category=${category.slug}`}
+                  to={`/products?category=${encodeURIComponent(category.slug || '')}`}
                   className="nav-link text-gray-600 hover:text-purple-600 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 rounded text-sm"
                   role="menuitem"
                 >

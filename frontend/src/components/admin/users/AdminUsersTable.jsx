@@ -13,7 +13,7 @@ const AdminUsersTable = ({ data, isLoading, page, setPage, handleToggleRole, han
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden relative before:content-[''] before:absolute before:inset-y-0 before:left-0 before:w-4 before:bg-gradient-to-r before:from-white before:to-transparent before:z-10 before:pointer-events-none after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-white/80 after:to-transparent after:z-10 after:pointer-events-none md:after:hidden">
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">

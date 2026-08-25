@@ -24,7 +24,7 @@ const AdminOrdersTable = ({
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden relative before:content-[''] before:absolute before:inset-y-0 before:left-0 before:w-4 before:bg-gradient-to-r before:from-white before:to-transparent before:z-10 before:pointer-events-none after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-white/80 after:to-transparent after:z-10 after:pointer-events-none md:after:hidden">
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
@@ -38,15 +38,24 @@ const AdminOrdersTable = ({
             </tr>
           </thead>
           <tbody className="divide-y">
-            {data?.data?.map((order) => (
+            {data?.data?.map((order) => {
+              const customerName = order.user?.firstName
+                ? `${order.user.firstName} ${order.user.lastName || ''}`.trim()
+                : order.shippingAddress?.firstName
+                  ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName || ''}`.trim()
+                  : order.guestEmail || 'عميل';
+              const customerEmail = order.user?.email || order.guestEmail || order.shippingAddress?.email;
+              return (
               <tr key={order._id} className="hover:bg-gray-50">
-                <td className="py-3 px-3 sm:px-6 font-medium text-xs sm:text-sm">#{order.orderNumber}</td>
+                <td className="py-3 px-3 sm:px-6 font-medium text-xs sm:text-sm whitespace-nowrap">#{order.orderNumber}</td>
                 <td className="py-3 px-3 sm:px-6">
                   <div>
                     <p className="font-medium text-xs sm:text-sm">
-                      {order.user?.firstName} {order.user?.lastName}
+                      {customerName}
                     </p>
-                    <p className="text-xs text-gray-500 hidden sm:block">{order.user?.email}</p>
+                    {customerEmail && (
+                      <p className="text-xs text-gray-500 hidden sm:block">{customerEmail}</p>
+                    )}
                   </div>
                 </td>
                 <td className="py-3 px-3 sm:px-6 font-medium text-xs sm:text-sm whitespace-nowrap">
@@ -85,7 +94,8 @@ const AdminOrdersTable = ({
                   </button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

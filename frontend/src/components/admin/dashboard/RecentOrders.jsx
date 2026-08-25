@@ -37,7 +37,11 @@ const RecentOrders = ({ stats, statusLabels, statusColors, formatCurrency }) => 
                   </Link>
                 </td>
                 <td className="py-2 px-1 sm:py-3 sm:px-2">
-                  {order.user?.firstName} {order.user?.lastName}
+                  {order.user?.firstName
+                    ? `${order.user.firstName} ${order.user.lastName || ''}`.trim()
+                    : order.shippingAddress?.firstName
+                      ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName || ''}`.trim()
+                      : order.guestEmail || 'عميل'}
                 </td>
                 <td className="py-2 px-1 sm:py-3 sm:px-2">{formatCurrency(order.total)}</td>
                 <td className="py-2 px-1 sm:py-3 sm:px-2">
