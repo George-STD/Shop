@@ -75,7 +75,15 @@ const Header = () => {
     [searchQuery, navigate]
   );
 
-  const categories = STRINGS.HEADER.CATEGORIES;
+  const { data: dbCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesAPI.getAll().then((res) => res.data.data),
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const categories = (dbCategories && dbCategories.length > 0)
+    ? dbCategories
+    : STRINGS.HEADER.CATEGORIES;
 
   return (
     <header
@@ -296,45 +304,45 @@ const Header = () => {
         aria-label={STRINGS.NAV.CATEGORIES}
       >
         <div className="container-custom">
-          <ul className="flex items-center justify-center gap-5 xl:gap-8 py-3 whitespace-nowrap" role="menubar">
-            <li role="none">
+          <ul className="flex items-center justify-center gap-3.5 xl:gap-6 py-3 whitespace-nowrap overflow-x-auto custom-scrollbar" role="menubar">
+            <li role="none" className="shrink-0">
               <Link
                 to="/products"
-                className="nav-link text-gray-700 hover:text-purple-600 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 rounded text-sm whitespace-nowrap"
+                className="nav-link text-gray-700 hover:text-purple-600 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 rounded text-sm whitespace-nowrap inline-block"
                 role="menuitem"
               >
                 {STRINGS.NAV.ALL_PRODUCTS}
               </Link>
             </li>
             {categories.map((category) => (
-              <li key={category.slug} role="none">
+              <li key={category.slug || category._id} role="none" className="shrink-0">
                 <Link
                   to={category.slug ? `/products?category=${encodeURIComponent(category.slug)}` : '/products'}
-                  className="nav-link text-gray-600 hover:text-purple-600 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 rounded text-sm whitespace-nowrap"
+                  className="nav-link text-gray-600 hover:text-purple-600 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 rounded text-sm whitespace-nowrap inline-block"
                   role="menuitem"
                 >
                   {category.name}
                 </Link>
               </li>
             ))}
-            <li role="none">
+            <li role="none" className="shrink-0">
               <Link
                 to="/build-a-box"
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-pink-50 to-rose-50 text-pink-700 font-bold hover:from-pink-100 hover:to-rose-100 transition-all focus:outline-none focus:ring-2 focus:ring-pink-500 rounded-full text-sm whitespace-nowrap border border-pink-100 shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-pink-50 to-rose-50 text-pink-700 font-bold hover:from-pink-100 hover:to-rose-100 transition-all focus:outline-none focus:ring-2 focus:ring-pink-500 rounded-full text-sm whitespace-nowrap border border-pink-100 shadow-sm"
                 role="menuitem"
               >
                 <span aria-hidden="true">🎁</span>
-                {STRINGS.HEADER.BUILD_BOX}
+                <span>{STRINGS.HEADER.BUILD_BOX}</span>
               </Link>
             </li>
-            <li role="none">
+            <li role="none" className="shrink-0">
               <Link
                 to="/gift-finder"
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 font-bold hover:from-purple-100 hover:to-pink-100 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-full text-sm whitespace-nowrap border border-purple-100 shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 font-bold hover:from-purple-100 hover:to-pink-100 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-full text-sm whitespace-nowrap border border-purple-100 shadow-sm"
                 role="menuitem"
               >
                 <span aria-hidden="true">🎯</span>
-                {STRINGS.NAV.GIFT_FINDER}
+                <span>{STRINGS.NAV.GIFT_FINDER}</span>
               </Link>
             </li>
           </ul>

@@ -25,7 +25,15 @@ const MobileMenu = () => {
     staleTime: 1000 * 60 * 10,
   });
 
-  const categories = STRINGS.HEADER.CATEGORIES;
+  const { data: dbCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesAPI.getAll().then((res) => res.data.data),
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const categories = (dbCategories && dbCategories.length > 0)
+    ? dbCategories
+    : STRINGS.HEADER.CATEGORIES;
 
   // 2. Keyboard accessibility: Focus trap & Escape dismissal
   useEffect(() => {
