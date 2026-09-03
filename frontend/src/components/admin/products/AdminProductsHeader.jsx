@@ -14,7 +14,7 @@ const AdminProductsHeader = ({
   resetForm,
 }) => {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="flex flex-wrap items-center justify-between gap-4 min-h-[56px]">
       <div className="flex flex-wrap items-center gap-4 flex-1">
         {/* Search */}
         <div className="relative min-w-[200px]">

@@ -12,9 +12,9 @@ const AdminEmailList = ({
   formatDate,
 }) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-[600px]">
       {/* Header */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm">
+      <div className="bg-white rounded-2xl p-6 shadow-sm min-h-[72px]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <FiMail className="text-2xl text-purple-600" />
@@ -25,13 +25,16 @@ const AdminEmailList = ({
       </div>
 
       {/* Email List */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden min-h-[500px]">
         {isLoading ? (
-          <div className="divide-y">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="p-4 animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
-                <div className="h-3 bg-gray-200 rounded w-2/3" />
+          <div className="divide-y divide-gray-100">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="p-4 animate-pulse flex items-center gap-4 h-16">
+                <div className="w-2 h-2 rounded-full bg-gray-200 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-1/3" />
+                  <div className="h-3 bg-gray-100 rounded w-2/3" />
+                </div>
               </div>
             ))}
           </div>

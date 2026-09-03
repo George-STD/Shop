@@ -3,7 +3,7 @@ import { STRINGS } from '../../../constants';
 
 const AdminReviewsHeader = ({ approvedFilter, setApprovedFilter, totalReviews }) => {
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm">
+    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm min-h-[72px] sm:min-h-[88px]">
       <div className="flex flex-wrap items-center gap-4">
         <select
           value={approvedFilter}

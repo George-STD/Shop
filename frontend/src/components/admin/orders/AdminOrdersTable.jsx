@@ -1,4 +1,4 @@
-import { LoadingSpinner } from '../../common/LoadingSpinner';
+import TableSkeleton from '../TableSkeleton';
 import React from 'react';
 import { FiEye } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
@@ -17,14 +17,25 @@ const AdminOrdersTable = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden p-8 text-center">
-        <LoadingSpinner size="md" className="mx-auto" />
-      </div>
+      <TableSkeleton
+        headers={[
+          { label: STRINGS.ADMIN.TABLE.ORDER_NUMBER, className: '' },
+          { label: STRINGS.ADMIN.TABLE.CUSTOMER, className: '' },
+          { label: STRINGS.ADMIN.TABLE.AMOUNT, className: '' },
+          { label: STRINGS.ADMIN.TABLE.STATUS, className: '' },
+          { label: STRINGS.ADMIN.TABLE.DATE, className: 'hidden md:table-cell' },
+          { label: STRINGS.ADMIN.TABLE.ACTIONS, className: '' },
+        ]}
+        rows={10}
+        hasCheckbox={false}
+        hasThumbnail={false}
+        minHeight="min-h-[600px]"
+      />
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 min-h-[600px] flex flex-col justify-between">
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
@@ -37,7 +48,7 @@ const AdminOrdersTable = ({
               <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">{STRINGS.ADMIN.TABLE.ACTIONS}</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-gray-100">
             {data?.data?.map((order) => {
               const customerName = order.user?.firstName
                 ? `${order.user.firstName} ${order.user.lastName || ''}`.trim()
@@ -46,7 +57,7 @@ const AdminOrdersTable = ({
                   : order.guestEmail || 'عميل';
               const customerEmail = order.user?.email || order.guestEmail || order.shippingAddress?.email;
               return (
-              <tr key={order._id} className="hover:bg-gray-50">
+              <tr key={order._id} className="hover:bg-gray-50 h-14 sm:h-16">
                 <td className="py-3 px-3 sm:px-6 font-medium text-xs sm:text-sm whitespace-nowrap">#{order.orderNumber}</td>
                 <td className="py-3 px-3 sm:px-6">
                   <div>
@@ -102,7 +113,7 @@ const AdminOrdersTable = ({
 
       {/* Pagination */}
       {data?.pagination && (
-        <div className="p-3 sm:p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="p-3 sm:p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-2 min-h-[56px] shrink-0 bg-gray-50/50">
           <p className="text-gray-600 text-xs sm:text-sm">
             {STRINGS.ADMIN.TABLE.SHOWING} {data.data.length} {STRINGS.ADMIN.TABLE.FROM} {data.pagination.total} {STRINGS.ADMIN.TABLE.ORDER_SINGLE}
           </p>

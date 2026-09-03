@@ -77,7 +77,7 @@ const AdminOrders = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-[600px]">
       <AdminOrdersHeader
         search={search}
         setSearch={setSearch}

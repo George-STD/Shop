@@ -61,7 +61,7 @@ const AdminUsers = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-[600px]">
       <AdminUsersHeader
         search={search}
         setSearch={setSearch}

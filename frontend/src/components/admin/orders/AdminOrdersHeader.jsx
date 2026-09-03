@@ -4,7 +4,7 @@ import { STRINGS } from '../../../constants';
 
 const AdminOrdersHeader = ({ search, setSearch, statusFilter, setStatusFilter, statusOptions, statusLabels }) => {
   return (
-    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm min-h-[72px] sm:min-h-[88px]">
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         {/* Search */}
         <div className="relative flex-1">

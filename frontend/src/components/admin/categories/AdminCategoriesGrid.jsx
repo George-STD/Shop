@@ -5,22 +5,34 @@ import { STRINGS } from '../../../constants';
 
 const AdminCategoriesGrid = ({ categories, isLoading, handleEdit, handleDelete }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[600px]">
       {isLoading
         ? [...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl p-6 animate-pulse">
-              <div className="w-16 h-16 bg-gray-200 rounded-xl mb-4" />
-              <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
-              <div className="h-3 bg-gray-200 rounded w-full" />
+            <div
+              key={i}
+              className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 animate-pulse flex flex-col min-h-[290px]"
+            >
+              <div className="h-40 bg-gray-200 w-full shrink-0" />
+              <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="h-5 bg-gray-200 rounded w-1/3" />
+                    <div className="h-5 bg-gray-200 rounded-full w-14" />
+                  </div>
+                  <div className="h-3.5 bg-gray-100 rounded w-1/4 mb-2" />
+                  <div className="h-3.5 bg-gray-100 rounded w-3/4" />
+                </div>
+                <div className="h-3 bg-gray-100 rounded w-16 mt-2" />
+              </div>
             </div>
           ))
-        : categories?.map((category) => (
+        : categories?.map((category, index) => (
             <div
               key={category._id}
-              className="bg-white rounded-2xl shadow-sm overflow-hidden group"
+              className="bg-white rounded-2xl shadow-sm overflow-hidden group border border-gray-100 min-h-[290px] flex flex-col justify-between"
             >
               {/* Category Image */}
-              <div className="h-40 bg-gray-100 relative">
+              <div className="h-40 bg-gray-100 relative overflow-hidden shrink-0">
                 {category.image ? (
                   <Image
                     src={category.image}
@@ -28,6 +40,7 @@ const AdminCategoriesGrid = ({ categories, isLoading, handleEdit, handleDelete }
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover"
+                    loading={index < 6 ? 'eager' : 'lazy'}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">

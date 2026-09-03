@@ -1,19 +1,31 @@
 import React from 'react';
-import { LoadingSpinner } from '../../common/LoadingSpinner';
+import TableSkeleton from '../TableSkeleton';
 import { FiTrash2, FiUserCheck, FiUserX, FiShield, FiUser } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
 
 const AdminUsersTable = ({ data, isLoading, page, setPage, handleToggleRole, handleToggleStatus, handleDelete }) => {
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden p-8 text-center">
-        <LoadingSpinner size="md" className="mx-auto" />
-      </div>
+      <TableSkeleton
+        headers={[
+          { label: STRINGS.ADMIN.TABLE.USER, className: '' },
+          { label: STRINGS.ADMIN.TABLE.EMAIL, className: '' },
+          { label: STRINGS.ADMIN.TABLE.PHONE, className: 'hidden sm:table-cell' },
+          { label: STRINGS.ADMIN.TABLE.ROLE, className: 'hidden md:table-cell' },
+          { label: STRINGS.ADMIN.TABLE.STATUS, className: 'hidden md:table-cell' },
+          { label: STRINGS.ADMIN.TABLE.REGISTRATION_DATE, className: 'hidden lg:table-cell' },
+          { label: STRINGS.ADMIN.TABLE.ACTIONS, className: '' },
+        ]}
+        rows={10}
+        hasCheckbox={false}
+        hasThumbnail={false}
+        minHeight="min-h-[600px]"
+      />
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 min-h-[600px] flex flex-col justify-between">
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
@@ -27,12 +39,12 @@ const AdminUsersTable = ({ data, isLoading, page, setPage, handleToggleRole, han
               <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">{STRINGS.ADMIN.TABLE.ACTIONS}</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-gray-100">
             {data?.data?.map((user) => (
-              <tr key={user._id} className="hover:bg-gray-50">
+              <tr key={user._id} className="hover:bg-gray-50 h-14 sm:h-16">
                 <td className="py-3 px-3 sm:px-6">
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 text-transparent font-medium text-sm sm:text-base">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 min-w-[32px] min-h-[32px] sm:min-w-[40px] sm:min-h-[40px] rounded-full flex items-center justify-center bg-purple-100 text-purple-700 font-semibold text-sm sm:text-base shrink-0">
                       {user.firstName?.charAt(0)}
                     </div>
                     <div>
@@ -132,7 +144,7 @@ const AdminUsersTable = ({ data, isLoading, page, setPage, handleToggleRole, han
 
       {/* Pagination */}
       {data?.pagination && (
-        <div className="p-3 sm:p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="p-3 sm:p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-2 min-h-[56px] shrink-0 bg-gray-50/50">
           <p className="text-gray-600 text-xs sm:text-sm">
             {STRINGS.ADMIN.TABLE.SHOWING} {data.data.length} {STRINGS.ADMIN.TABLE.FROM} {data.pagination.total} {STRINGS.ADMIN.TABLE.OF}
           </p>

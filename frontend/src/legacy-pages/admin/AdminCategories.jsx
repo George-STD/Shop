@@ -102,9 +102,9 @@ const AdminCategories = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">{STRINGS.ADMIN.PAGES.CATEGORIES_TITLE} ({categories?.length || 0})</h2>
+    <div className="space-y-6 min-h-[600px]">
+      <div className="flex items-center justify-between min-h-[48px]">
+        <h2 className="text-lg font-bold">{STRINGS.ADMIN.PAGES.CATEGORIES_TITLE} {categories ? `(${categories.length})` : ''}</h2>
         <button
           onClick={() => {
             resetForm();

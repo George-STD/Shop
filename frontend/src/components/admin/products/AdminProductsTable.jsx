@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { LoadingSpinner } from '../../common/LoadingSpinner';
+import TableSkeleton from '../TableSkeleton';
 import React from 'react';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
@@ -16,9 +16,20 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm overflow-x-auto p-8 text-center">
-        <LoadingSpinner size="md" className="mx-auto" />
-      </div>
+      <TableSkeleton
+        headers={[
+          STRINGS.ADMIN.TABLE.PRODUCT,
+          STRINGS.ADMIN.TABLE.CATEGORY,
+          STRINGS.ADMIN.TABLE.PRICE,
+          STRINGS.ADMIN.TABLE.STOCK,
+          STRINGS.ADMIN.TABLE.STATUS,
+          STRINGS.ADMIN.TABLE.ACTIONS,
+        ]}
+        rows={10}
+        hasCheckbox={true}
+        hasThumbnail={true}
+        minHeight="min-h-[600px]"
+      />
     );
   }
 
@@ -26,7 +37,7 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
   const isAllSelected = allIds.length > 0 && allIds.every(id => selectedIds.includes(id));
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 min-h-[600px] flex flex-col justify-between">
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-xs sm:text-sm">
           <thead className="bg-gray-50 text-xs md:text-sm">
@@ -59,11 +70,11 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-gray-100">
             {products?.data?.map((product, index) => {
               if (!product) return null;
               return (
-              <tr key={product._id || index} className="hover:bg-gray-50">
+              <tr key={product._id || index} className="hover:bg-gray-50 h-14 sm:h-16">
                 <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6 text-center">
                   <input 
                     type="checkbox" 
@@ -74,16 +85,22 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
                 </td>
                 <td className="py-1 px-1 sm:py-2 sm:px-2 md:py-4 md:px-6">
                   <div className="flex items-center gap-3">
-                    {product.images?.[0] && (
-                      <Image
-                    width={32}
-                    height={32}
-                    sizes="32px"
-                        src={product.images[0].url}
-                        alt={product.name}
-                        className="w-8 h-8 sm:w-12 sm:h-12 object-cover rounded-lg"
-                      />
-                    )}
+                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 min-w-[40px] min-h-[40px] sm:min-w-[48px] sm:min-h-[48px] flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                      {product.images?.[0]?.url ? (
+                        <Image
+                          fill
+                          sizes="(max-width: 640px) 40px, 48px"
+                          src={product.images[0].url}
+                          alt={product.name || 'صورة المنتج'}
+                          className="object-cover"
+                          loading={index < 8 ? 'eager' : 'lazy'}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs bg-gray-100">
+                          📦
+                        </div>
+                      )}
+                    </div>
                     <div>
                       <p className="font-medium text-xs sm:text-sm line-clamp-1 max-w-[220px]" title={product.name}>{product.name}</p>
                       <p className="text-xs sm:text-sm text-gray-500">{product.sku}</p>
@@ -159,7 +176,7 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
 
       {/* Pagination */}
       {products?.pagination && (
-        <div className="p-2 sm:p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="p-2 sm:p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-2 min-h-[56px] shrink-0 bg-gray-50/50">
           <p className="text-gray-600 text-xs sm:text-sm">
             {STRINGS.ADMIN.TABLE.SHOWING} {products.data.length} {STRINGS.ADMIN.TABLE.FROM} {products.pagination.total} {STRINGS.ADMIN.TABLE.PRODUCT_SINGLE}
           </p>

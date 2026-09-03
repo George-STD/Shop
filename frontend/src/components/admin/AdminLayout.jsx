@@ -10,21 +10,17 @@ const AdminLayout = ({ children }) => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isVerifyingSession, setIsVerifyingSession] = useState(true);
 
   useEffect(() => {
     if (!_hasHydrated) return;
 
     if (!isAuthenticated || user?.role !== 'admin') {
-      setIsVerifyingSession(false);
       return;
     }
 
     let isMounted = true;
 
     const verifyAdminSession = async () => {
-      setIsVerifyingSession(true);
-
       try {
         const { authAPI } = await import('../../services/api');
         const res = await authAPI.getMe();
@@ -42,10 +38,6 @@ const AdminLayout = ({ children }) => {
         if (isMounted) {
           logout();
         }
-      } finally {
-        if (isMounted) {
-          setIsVerifyingSession(false);
-        }
       }
     };
 
@@ -57,9 +49,9 @@ const AdminLayout = ({ children }) => {
   }, [_hasHydrated, isAuthenticated, logout, updateUser, user?.role]);
 
   // Wait for auth store to rehydrate before checking auth
-  if (!_hasHydrated || isVerifyingSession) {
+  if (!_hasHydrated) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full"></div>
       </div>
     );
