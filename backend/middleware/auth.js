@@ -242,29 +242,42 @@ const forgotPasswordLimiter = rateLimit({
   },
 });
 
-// Rate limiter for verification code attempts
+// Rate limiter for verification code attempts (IP + Target Email/Phone)
 const verifyLimiter = rateLimit({
   ...limiterBase,
   windowMs: CONFIG.RATE_LIMIT.VERIFY.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.VERIFY.MAX_REQUESTS,
   limit: CONFIG.RATE_LIMIT.VERIFY.MAX_REQUESTS,
-  keyGenerator: (req) => clientIp(req),
+  keyGenerator: (req) => `verify:${clientIp(req)}:${emailFromBody(req) || (req.body && req.body.phone ? String(req.body.phone).trim() : '') || 'unknown'}`,
   message: {
     success: false,
     message: MESSAGES.RATE_LIMIT.VERIFY,
   },
 });
 
-// Rate limiter for registration
+// Rate limiter for registration (IP + Target Email)
 const registerLimiter = rateLimit({
   ...limiterBase,
   windowMs: CONFIG.RATE_LIMIT.REGISTER.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.REGISTER.MAX_REQUESTS,
   limit: CONFIG.RATE_LIMIT.REGISTER.MAX_REQUESTS,
-  keyGenerator: (req) => clientIp(req),
+  keyGenerator: (req) => `register:${clientIp(req)}:${emailFromBody(req) || 'unknown'}`,
   message: {
     success: false,
     message: MESSAGES.RATE_LIMIT.REGISTER,
+  },
+});
+
+// Dedicated rate limiter for checkout and order creation (prevents inventory locking and card spamming)
+const checkoutLimiter = rateLimit({
+  ...limiterBase,
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  limit: 15,
+  keyGenerator: (req) => (req.user?._id ? `checkout:usr:${req.user._id}` : `checkout:ip:${clientIp(req)}`),
+  message: {
+    success: false,
+    message: 'تم تجاوز الحد الأقصى لإنشاء الطلبات مؤقتاً. يرجى الانتظار بضع دقائق قبل المحاولة مجدداً.',
   },
 });
 
@@ -367,8 +380,8 @@ const sanitizeInput = (req, res, next) => {
         continue;
       }
 
-      // Drop NoSQL injection operators ($) or prototype pollutions
-      if (key.startsWith('$') || DANGEROUS_KEYS.has(key)) {
+      // Drop NoSQL injection operators ($), dot-notation injection (.), or prototype pollutions
+      if (key.startsWith('$') || key.includes('.') || DANGEROUS_KEYS.has(key)) {
         delete obj[key];
         continue;
       }
@@ -443,4 +456,5 @@ module.exports = {
   logAdminAction,
   clientIp,
   evictUserFromAuthzCache,
+  checkoutLimiter,
 };

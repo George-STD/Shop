@@ -62,22 +62,34 @@ export default async function sitemap() {
     { url: `${baseUrl}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
   ];
 
-  // Dynamic product pages
+  // Dynamic product pages (paginated up to 2,000 products to cover full catalog)
   let productPages = [];
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch(`${API_BASE_URL}/products?limit=100`, { signal: controller.signal, next: { revalidate: 86400 } }).catch(() => null);
-    clearTimeout(timeoutId);
-    if (res && res.ok) {
+    const MAX_PAGES = 20;
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(`${API_BASE_URL}/products?limit=100&page=${page}`, {
+        signal: controller.signal,
+        next: { revalidate: 86400 },
+      }).catch(() => null);
+      clearTimeout(timeoutId);
+
+      if (!res || !res.ok) break;
       const data = await res.json().catch(() => ({}));
       const products = data.data || [];
-      productPages = products.map((product) => ({
-        url: `${baseUrl}/product/${product.slug}`,
-        lastModified: new Date(product.updatedAt || product.createdAt),
-        changeFrequency: 'weekly',
-        priority: 0.8,
-      }));
+      if (products.length === 0) break;
+
+      productPages.push(
+        ...products.map((product) => ({
+          url: `${baseUrl}/product/${product.slug}`,
+          lastModified: new Date(product.updatedAt || product.createdAt),
+          changeFrequency: 'weekly',
+          priority: 0.8,
+        }))
+      );
+
+      if (products.length < 100) break;
     }
   } catch (error) {
     console.error('Sitemap: Error fetching products:', error.message);

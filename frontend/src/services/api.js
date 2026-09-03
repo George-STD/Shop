@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_BASE_URL, QUERY_DEFAULTS, ROUTES, STORAGE_KEYS } from '../constants';
+import { API_BASE_URL, QUERY_DEFAULTS, ROUTES, STORAGE_KEYS, REQUEST_DEFAULTS } from '../constants';
 
 const clearStoredAuthSession = () => {
   localStorage.removeItem(STORAGE_KEYS.TOKEN);
@@ -8,10 +8,22 @@ const clearStoredAuthSession = () => {
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: REQUEST_DEFAULTS?.TIMEOUT || 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// Helper to identify Render cold-start / network timeout errors
+const isColdStartOrNetworkError = (error) => {
+  if (!error.response && (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK' || error.message?.includes('Network Error') || error.message?.includes('timeout'))) {
+    return true;
+  }
+  if (error.response?.status === 504 || error.response?.status === 502) {
+    return true;
+  }
+  return false;
+};
 
 // TODO (Security): Transition from localStorage JWT storage to httpOnly cookies.
 // Storing JWT tokens in localStorage exposes them to potential XSS exfiltration if any third-party script or inline injection succeeds.
@@ -28,10 +40,22 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle response errors
+// Handle response errors & automatic cold-start retry with exponential backoff
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const config = error.config || {};
+
+    // Retry on Render cold-start or gateway timeout (up to 3 retries: 4s, 8s, 12s)
+    if (isColdStartOrNetworkError(error) && !config.__skipColdStartRetry) {
+      config.__retryCount = (config.__retryCount || 0) + 1;
+      if (config.__retryCount <= 3) {
+        const delayMs = config.__retryCount * 4000;
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        return api(config);
+      }
+    }
+
     if (typeof window !== 'undefined' && error.response?.status === 401) {
       const url = error.config?.url || '';
       const isAuthAttempt =

@@ -1,13 +1,16 @@
-import { API_URL, SITE_CONFIG } from '../../../../constants';
+import { SITE_CONFIG } from '../../../../constants';
+import { getProductBySlug } from '../../../../lib/getProductBySlug';
 
 const SITE_URL = SITE_CONFIG.SITE_URL;
 
-export default async function ProductJsonLd({ slug }) {
+export default async function ProductJsonLd({ product: initialProduct, slug }) {
   try {
-    const res = await fetch(`${API_URL}/products/slug/${slug}`, { next: { revalidate: 3600 } });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const product = data.data;
+    let product = initialProduct;
+    if (!product) {
+      const res = await getProductBySlug(slug);
+      product = res.product;
+    }
+    if (!product) return null;
 
     const schema = {
       '@context': 'https://schema.org',
@@ -15,7 +18,7 @@ export default async function ProductJsonLd({ slug }) {
       name: product.name,
       description: product.description?.replace(/<[^>]+>/g, '').substring(0, 300) || '',
       image: product.images?.map((img) => img.url) || [],
-      sku: product._id,
+      sku: product.sku || product._id,
       url: `${SITE_URL}/product/${slug}`,
       brand: {
         '@type': 'Brand',
@@ -26,6 +29,8 @@ export default async function ProductJsonLd({ slug }) {
         url: `${SITE_URL}/product/${slug}`,
         priceCurrency: 'EGP',
         price: product.salePrice || product.price,
+        priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        itemCondition: 'https://schema.org/NewCondition',
         availability:
           product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
         seller: {

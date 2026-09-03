@@ -1,17 +1,21 @@
 import ProductPageClient from './ProductPageClient';
 import ProductJsonLd from './ProductJsonLd';
 import { notFound } from 'next/navigation';
-import { API_URL, SITE_CONFIG } from '../../../../constants';
+import { SITE_CONFIG } from '../../../../constants';
+import { getProductBySlug } from '../../../../lib/getProductBySlug';
 
 const SITE_URL = SITE_CONFIG.SITE_URL;
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   try {
-    const res = await fetch(`${API_URL}/products/slug/${slug}`, { next: { revalidate: 3600 } });
-    if (!res.ok) return { title: 'المنتج غير موجود' };
-    const data = await res.json();
-    const product = data.data;
+    const { product, notFound: isNotFound, error } = await getProductBySlug(slug);
+    if (isNotFound || error || !product) {
+      return {
+        title: 'هدايا فور يو',
+        description: 'اكتشف مجموعتنا من الهدايا المميزة لجميع المناسبات.',
+      };
+    }
 
     const title = product.name;
     const description = product.description
@@ -30,7 +34,7 @@ export async function generateMetadata({ params }) {
         title: `${product.name} | For You - فور يو`,
         description,
         url: `${SITE_URL}/product/${slug}`,
-        type: 'website',
+        type: 'product',
         images: [{ url: image, width: 800, height: 800, alt: product.name }],
       },
       twitter: {
@@ -44,7 +48,7 @@ export async function generateMetadata({ params }) {
         'product:price:currency': 'EGP',
       },
     };
-  } catch (error) {
+  } catch (_) {
     return {
       title: 'هدايا فور يو',
       description: 'اكتشف مجموعتنا من الهدايا المميزة لجميع المناسبات.',
@@ -54,18 +58,20 @@ export async function generateMetadata({ params }) {
 
 export default async function Page({ params }) {
   const { slug } = await params;
-  const res = await fetch(`${API_URL}/products/slug/${slug}`, { next: { revalidate: 3600 } });
+  const { product, notFound: isNotFound, error } = await getProductBySlug(slug);
 
-  if (res.status === 404) {
+  if (isNotFound) {
     notFound();
   }
-  if (!res.ok) {
-    throw new Error(`Failed to fetch product metadata for slug: ${slug}`);
+
+  // If backend is sleeping/cold or error occurred, let the client component take over with retry
+  if (error || !product) {
+    return <ProductPageClient />;
   }
 
   return (
     <>
-      <ProductJsonLd slug={slug} />
+      <ProductJsonLd product={product} slug={slug} />
       <ProductPageClient />
     </>
   );

@@ -8,13 +8,14 @@ const Review = require('../models/Review');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
-const { protect, apiLimiter } = require('../middleware/auth');
+const { protect, apiLimiter, validateObjectId, clientIp } = require('../middleware/auth');
 const { MESSAGES, CONFIG } = require('../constants');
 const { sendSuccess, sendError, sendNotFound, sendForbidden, sendBadRequest, sendCreated } = require('../utils/response');
 
 const orderInfoLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
+  keyGenerator: (req) => clientIp(req),
   message: {
     success: false,
     message: 'تم تجاوز الحد المسموح به لطلبات الاستعلام عن الطلب'
@@ -232,7 +233,7 @@ router.post('/', apiLimiter, [
 // @route   PUT /api/reviews/:id
 // @desc    Update a review
 // @access  Private
-router.put('/:id', protect, async (req, res) => {
+router.put('/:id', protect, validateObjectId('id'), async (req, res) => {
   try {
     const review = await Review.findById(req.params.id);
 
@@ -264,7 +265,7 @@ router.put('/:id', protect, async (req, res) => {
 // @route   POST /api/reviews/:id/helpful
 // @desc    Mark review as helpful (Atomic O(1) voting decoupled via ReviewVote)
 // @access  Private
-router.post('/:id/helpful', protect, async (req, res) => {
+router.post('/:id/helpful', protect, validateObjectId('id'), async (req, res) => {
   try {
     const review = await Review.findById(req.params.id);
 
@@ -320,7 +321,7 @@ router.post('/:id/helpful', protect, async (req, res) => {
 // @route   DELETE /api/reviews/:id
 // @desc    Delete a review
 // @access  Private
-router.delete('/:id', protect, async (req, res) => {
+router.delete('/:id', protect, validateObjectId('id'), async (req, res) => {
   try {
     const review = await Review.findById(req.params.id);
 

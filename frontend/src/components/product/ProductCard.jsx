@@ -278,14 +278,22 @@ const ProductCard = ({ product, priority = false }) => {
 // 3. Strict Custom arePropsEqual Function for React.memo
 const arePropsEqual = (prevProps, nextProps) => {
   if (prevProps.priority !== nextProps.priority) return false;
-  if (prevProps.product?._id !== nextProps.product?._id) return false;
-  if (prevProps.product?.price !== nextProps.product?.price) return false;
-  if (prevProps.product?.oldPrice !== nextProps.product?.oldPrice) return false;
-  if (prevProps.product?.stock !== nextProps.product?.stock) return false;
-  if (prevProps.product?.name !== nextProps.product?.name) return false;
-  if (prevProps.product?.images?.[0]?.url !== nextProps.product?.images?.[0]?.url) return false;
-  if (prevProps.product?.rating?.average !== nextProps.product?.rating?.average) return false;
-  if (prevProps.product?.rating?.count !== nextProps.product?.rating?.count) return false;
+  const p = prevProps.product;
+  const n = nextProps.product;
+  if (p?._id !== n?._id) return false;
+  if (p?.slug !== n?.slug) return false;
+  if (p?.price !== n?.price) return false;
+  if (p?.oldPrice !== n?.oldPrice) return false;
+  if (p?.stock !== n?.stock) return false;
+  if (p?.name !== n?.name) return false;
+  if (p?.images?.[0]?.url !== n?.images?.[0]?.url) return false;
+  if (p?.images?.[0]?.alt !== n?.images?.[0]?.alt) return false;
+  if (p?.isNewArrival !== n?.isNewArrival) return false;
+  if (p?.isBestseller !== n?.isBestseller) return false;
+  if (p?.rating?.average !== n?.rating?.average) return false;
+  if (p?.rating?.count !== n?.rating?.count) return false;
+  const catKey = (arr) => (arr || []).map((c) => c?._id || c?.name || c).join(',');
+  if (catKey(p?.category) !== catKey(n?.category)) return false;
   return true;
 };
 

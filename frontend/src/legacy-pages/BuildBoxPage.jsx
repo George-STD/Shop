@@ -531,7 +531,7 @@ const BuildBoxPage = () => {
       </div>
 
       {/* Mobile Sticky Floating Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-purple-100 p-3 sm:p-4 shadow-2xl lg:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-[45] bg-white/95 backdrop-blur-md border-t border-purple-100 p-3 sm:p-4 shadow-2xl lg:hidden">
         <div className="flex items-center justify-between gap-3 max-w-lg mx-auto">
           {/* Box Count & Total */}
           <div className="flex items-center gap-2.5">

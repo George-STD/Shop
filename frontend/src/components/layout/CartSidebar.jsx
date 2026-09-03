@@ -193,7 +193,7 @@ const CartSidebar = () => {
           <button
             ref={closeButtonRef}
             onClick={closeCart}
-            className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-label={STRINGS.ACCESSIBILITY.CLOSE_CART || 'إغلاق السلة'}
           >
             <FiX size={22} aria-hidden="true" />

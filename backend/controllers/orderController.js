@@ -333,11 +333,17 @@ const handleOrderLoyaltyRefundOrDeduction = async (order, session) => {
         $inc: { loyaltyPoints: redeemedToRefund },
         $push: {
           pointsHistory: {
-            points: redeemedToRefund,
-            reason: `استرجاع نقاط الطلب الملغى #${order.orderNumber || order._id}`,
-            type: 'REFUNDED'
-          }
-        }
+            $each: [
+              {
+                points: redeemedToRefund,
+                reason: `استرجاع نقاط الطلب الملغى #${order.orderNumber || order._id}`,
+                type: 'REFUNDED',
+                createdAt: new Date(),
+              },
+            ],
+            $slice: -50,
+          },
+        },
       },
       opts
     );
@@ -353,11 +359,17 @@ const handleOrderLoyaltyRefundOrDeduction = async (order, session) => {
         $inc: { loyaltyPoints: -earnedToDeduct },
         $push: {
           pointsHistory: {
-            points: earnedToDeduct,
-            reason: `إلغاء نقاط الطلب الملغى #${order.orderNumber || order._id}`,
-            type: 'DEDUCTED'
-          }
-        }
+            $each: [
+              {
+                points: earnedToDeduct,
+                reason: `إلغاء نقاط الطلب الملغى #${order.orderNumber || order._id}`,
+                type: 'DEDUCTED',
+                createdAt: new Date(),
+              },
+            ],
+            $slice: -50,
+          },
+        },
       },
       opts
     );
@@ -436,11 +448,17 @@ const rollbackLoyaltyPoints = async (userId, pointsRedeemed) => {
         $inc: { loyaltyPoints: pointsRedeemed },
         $push: {
           pointsHistory: {
-            points: pointsRedeemed,
-            reason: 'استرجاع نقاط بسبب فشل إنشاء الطلب',
-            type: 'REFUNDED'
-          }
-        }
+            $each: [
+              {
+                points: pointsRedeemed,
+                reason: 'استرجاع نقاط بسبب فشل إنشاء الطلب',
+                type: 'REFUNDED',
+                createdAt: new Date(),
+              },
+            ],
+            $slice: -50,
+          },
+        },
       }
     );
   } catch (err) {
@@ -639,9 +657,15 @@ exports.cancelOrder = async (req, res) => {
             },
             $push: {
               statusHistory: {
-                status: CONFIG.ORDER_STATUS.CANCELLED,
-                note: req.body.reason || MESSAGES.ORDERS.CANCELLED_BY_CUSTOMER
-              }
+                $each: [
+                  {
+                    status: CONFIG.ORDER_STATUS.CANCELLED,
+                    note: req.body.reason || MESSAGES.ORDERS.CANCELLED_BY_CUSTOMER,
+                    date: new Date(),
+                  },
+                ],
+                $slice: -50,
+              },
             }
           },
           { new: true }

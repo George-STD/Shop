@@ -22,29 +22,63 @@ const Modal = ({
   className = ''
 }) => {
   const modalRef = useRef(null);
-  
-  // Handle Escape key to close
+  const closeButtonRef = useRef(null);
+  const triggerRef = useRef(null);
+
+  // Focus restoration & initial focus placement
+  useEffect(() => {
+    if (isOpen) {
+      triggerRef.current = document.activeElement;
+      // Focus close button or first focusable element
+      setTimeout(() => {
+        closeButtonRef.current?.focus();
+      }, 50);
+    } else if (triggerRef.current) {
+      triggerRef.current.focus?.();
+    }
+  }, [isOpen]);
+
+  // Handle Escape key and Tab/Shift+Tab focus trap
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (!isOpen) return;
+
+      if (e.key === 'Escape') {
         onClose();
+        return;
+      }
+
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll(
+          'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
-    
+
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
     }
-    
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
-  
+
   // Lock body scroll when modal is open
   useBodyScrollLock(isOpen);
-  
-  // Focus trap could be added here later
-  
+
   if (!isOpen) return null;
 
   return (
@@ -70,8 +104,9 @@ const Modal = ({
             )}
             {!title && <div />}
             <button
+              ref={closeButtonRef}
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
               aria-label="Close modal"
             >
               <FiX size={20} />

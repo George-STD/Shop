@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const rateLimit = require('express-rate-limit');
-const { protect, apiLimiter, validateObjectId } = require('../middleware/auth');
+const { protect, apiLimiter, validateObjectId, checkoutLimiter, clientIp } = require('../middleware/auth');
 const { noStoreCache } = require('../middleware/cache');
 const { CONFIG, MESSAGES } = require('../constants');
 const orderController = require('../controllers/orderController');
@@ -12,7 +12,7 @@ router.use(noStoreCache);
 // @route   POST /api/orders
 // @desc    Create new order
 // @access  Private (requires authentication)
-router.post('/', protect, apiLimiter, [
+router.post('/', protect, checkoutLimiter, [
   body('items').isArray({ min: 1 }).withMessage(MESSAGES.ORDERS.ITEMS_REQUIRED),
   body('items.*.productId').isMongoId().withMessage(MESSAGES.GENERAL.INVALID_ID),
   body('items.*.quantity').isInt({ min: 1 }).withMessage(MESSAGES.ORDERS.INVALID_QUANTITY),
@@ -33,10 +33,10 @@ router.get('/', protect, orderController.getOrders);
 // @access  Private
 router.get('/:id', protect, validateObjectId('id'), orderController.getOrderById);
 
-// Strict rate limiter for order tracking (prevent brute-force enumeration)
 const trackOrderLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10,
+  keyGenerator: (req) => clientIp(req),
   message: {
     success: false,
     message: 'تم تجاوز الحد الأقصى لمحاولات التتبع. حاول مرة أخرى لاحقاً.'

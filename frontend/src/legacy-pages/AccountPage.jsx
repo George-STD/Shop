@@ -19,6 +19,7 @@ import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { STRINGS, STORAGE_KEYS } from '../constants';
 import { useAuthStore } from '../store';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 // Login/Register Component
 const AuthForm = () => {
@@ -1302,7 +1303,15 @@ const SettingsPage = () => {
 
 // Main Account Page
 const AccountPage = () => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
+
+  if (!_hasHydrated) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   return <>{isAuthenticated ? <Dashboard /> : <AuthForm />}</>;
 };
