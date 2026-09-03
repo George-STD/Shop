@@ -35,7 +35,7 @@ const buildConnectOptions = () => {
     serverSelectionTimeoutMS: MONGO_SERVER_SELECTION_TIMEOUT_MS,
     connectTimeoutMS: Math.max(1000, Number(process.env.MONGO_CONNECT_TIMEOUT_MS) || 10000),
     socketTimeoutMS: Math.max(5000, Number(process.env.MONGO_SOCKET_TIMEOUT_MS) || 45000),
-    maxPoolSize: Math.max(1, Number(process.env.MONGO_MAX_POOL_SIZE) || 50),
+    maxPoolSize: Math.max(1, Number(process.env.MONGO_MAX_POOL_SIZE) || 10),
     minPoolSize: Math.max(0, Number(process.env.MONGO_MIN_POOL_SIZE) || (isProduction ? 5 : 0)),
     maxIdleTimeMS: Math.max(1000, Number(process.env.MONGO_MAX_IDLE_MS) || 30000),
     waitQueueTimeoutMS: Math.max(500, Number(process.env.MONGO_WAIT_QUEUE_MS) || 5000),

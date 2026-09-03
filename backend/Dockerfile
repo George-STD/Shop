@@ -43,4 +43,4 @@ HEALTHCHECK --interval=20s --timeout=5s --start-period=10s --retries=3 \
 # dumb-init acts as PID 1, properly reaping zombie processes and handling SIGTERM/SIGINT
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-CMD ["node", "server.js"]
+CMD ["node", "--max-old-space-size=400", "server.js"]

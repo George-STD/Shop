@@ -7,6 +7,7 @@ const { body, validationResult } = require('express-validator');
 const Review = require('../models/Review');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const User = require('../models/User');
 const { protect, apiLimiter } = require('../middleware/auth');
 const { MESSAGES, CONFIG } = require('../constants');
 const { sendSuccess, sendError, sendNotFound, sendForbidden, sendBadRequest, sendCreated } = require('../utils/response');
@@ -22,12 +23,18 @@ const orderInfoLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Optional auth helper — returns userId or null (for guest reviews)
-const getOptionalUserId = (req) => {
+// Optional auth helper — verifies token, tokenVersion and active status
+const getOptionalUserId = async (req) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return null;
   try {
-    return jwt.verify(token, process.env.JWT_SECRET).id;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+    const user = await User.findById(decoded.id).select('isActive tokenVersion');
+    if (!user || !user.isActive) return null;
+    if (decoded.v !== undefined && user.tokenVersion !== undefined && decoded.v !== user.tokenVersion) {
+      return null;
+    }
+    return decoded.id;
   } catch {
     return null;
   }
@@ -124,7 +131,7 @@ router.post('/', apiLimiter, [
   body('images.*').optional().isURL({ protocols: ['http', 'https'], require_protocol: true }).withMessage('رابط الصورة غير صالح')
 ], async (req, res) => {
   try {
-    const userId = getOptionalUserId(req);
+    const userId = await getOptionalUserId(req);
     const { product, rating, title, comment, pros, cons, images, orderId, guestName, guestEmail } = req.body;
     const productId = String(product);
     const normalizedGuestEmail = guestEmail ? String(guestEmail).toLowerCase().trim() : undefined;
@@ -395,7 +402,7 @@ router.post('/batch-order-review', apiLimiter, [
     }
 
     const { orderNumber, rating = 5, comment = 'ممتاز جداً', title, guestName, guestEmail } = req.body;
-    const userId = getOptionalUserId(req);
+    const userId = await getOptionalUserId(req);
 
     const order = await Order.findOne({
       $or: [{ orderNumber: orderNumber }, { _id: mongoose.Types.ObjectId.isValid(orderNumber) ? orderNumber : null }]
@@ -425,22 +432,34 @@ router.post('/batch-order-review', apiLimiter, [
     const customerEmail = (isEmailMatched ? submittedEmail : null) || orderEmails[0] || order.user?.email || order.guestEmail;
     const customerName = guestName || `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`.trim() || order.user?.firstName || 'عميل محدد';
 
+    const productIds = order.items
+      .map((i) => i.product?._id || i.product)
+      .filter(Boolean);
+
+    if (productIds.length === 0) {
+      return sendBadRequest(res, 'لا توجد منتجات صالحة للتقييم في هذا الطلب');
+    }
+
+    // 1. Fetch existing reviews for all products in this order in a single query
+    const existingFilter = { product: { $in: productIds } };
+    if (userId) {
+      existingFilter.user = userId;
+    } else if (customerEmail) {
+      existingFilter.guestEmail = customerEmail.toLowerCase().trim();
+    } else {
+      existingFilter.order = order._id;
+    }
+
+    const existingReviews = await Review.find(existingFilter);
+    const existingByProduct = new Map(existingReviews.map((r) => [String(r.product), r]));
     const createdReviews = [];
 
-    for (const item of order.items) {
-      const productId = item.product?._id || item.product;
-      if (!productId) continue;
-
-      // Check if duplicate review exists
-      let existingReview = null;
-      if (userId) {
-        existingReview = await Review.findOne({ product: productId, user: userId });
-      } else if (customerEmail) {
-        existingReview = await Review.findOne({ product: productId, guestEmail: customerEmail.toLowerCase().trim() });
-      }
+    // 2. Perform updates or creations
+    for (const productId of productIds) {
+      const pIdStr = String(productId);
+      const existingReview = existingByProduct.get(pIdStr);
 
       if (existingReview) {
-        // Update existing review with new rating & comment
         existingReview.rating = rating;
         existingReview.comment = comment;
         if (title) existingReview.title = title;
@@ -448,7 +467,6 @@ router.post('/batch-order-review', apiLimiter, [
         await existingReview.save();
         createdReviews.push(existingReview);
       } else {
-        // Create new review
         const newReview = await Review.create({
           product: productId,
           user: userId || undefined,
@@ -459,17 +477,41 @@ router.post('/batch-order-review', apiLimiter, [
           title: title || 'تقييم الطلب',
           comment,
           isVerifiedPurchase: true,
-          isApproved: true
+          isApproved: true,
         });
         createdReviews.push(newReview);
       }
+    }
 
-      // Recalculate average rating for product
-      try {
-        await Review.calcAverageRating(productId);
-      } catch (err) {
-        console.error('Error recalculating rating for product', productId, err);
+    // 3. Recalculate average ratings with a single aggregate pipeline instead of N round-trips
+    try {
+      const stats = await Review.aggregate([
+        { $match: { product: { $in: productIds }, isApproved: true } },
+        {
+          $group: {
+            _id: '$product',
+            avgRating: { $avg: '$rating' },
+            numReviews: { $sum: 1 },
+            sumRating: { $sum: '$rating' },
+          },
+        },
+      ]);
+
+      if (stats.length > 0) {
+        const bulkProductOps = stats.map((s) => ({
+          updateOne: {
+            filter: { _id: s._id },
+            update: {
+              'rating.average': Math.round(s.avgRating * 10) / 10,
+              'rating.count': s.numReviews,
+              'rating.sum': s.sumRating,
+            },
+          },
+        }));
+        await Product.bulkWrite(bulkProductOps);
       }
+    } catch (err) {
+      console.error('Error batch recalculating ratings for products:', err);
     }
 
     return sendSuccess(res, {

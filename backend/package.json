@@ -4,7 +4,7 @@
   "description": "Backend API for Hadaya Gift Shop",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node --max-old-space-size=400 server.js",
     "dev": "nodemon server.js",
     "check": "node scripts/check-syntax.js",
     "test": "cross-env NODE_ENV=test MONGOMS_MD5_CHECK=0 jest --runInBand --forceExit"

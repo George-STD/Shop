@@ -7,6 +7,7 @@ const { sendVerificationEmail, sendPasswordResetEmail, generateVerificationCode 
 const { MESSAGES } = require('../constants');
 const { sendSuccess, sendError, sendNotFound, sendCreated } = require('../utils/response');
 const asyncHandler = require('../utils/asyncHandler');
+const { evictUserFromAuthzCache } = require('../middleware/auth');
 
 // Syntactically valid bcrypt hash with no matching password, used to normalize timing on non-existent users
 const DUMMY_BCRYPT_HASH = '$2a$12$CwTycUXWue0Thq9StjUM0uJ8Q0m8lJ8p5dNFYcz5v.0vYyYUnjq2G';
@@ -258,6 +259,7 @@ exports.changePassword = asyncHandler(async (req, res) => {
     $set: { password: hashedNewPassword, passwordChangedAt: new Date() },
     $inc: { tokenVersion: 1 }
   });
+  evictUserFromAuthzCache(req.user._id);
   sendSuccess(res, { message: MESSAGES.AUTH.PASSWORD_CHANGED });
 }, MESSAGES.GENERAL.ERROR);
 
@@ -404,6 +406,7 @@ exports.resetPassword = asyncHandler(async (req, res) => {
     $inc: { tokenVersion: 1 },
     $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 }
   });
+  evictUserFromAuthzCache(user._id);
 
   sendSuccess(res, { message: MESSAGES.AUTH.PASSWORD_LOGIN_PROMPT });
 }, MESSAGES.GENERAL.ERROR);
@@ -411,5 +414,6 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 exports.logout = asyncHandler(async (req, res) => {
   // Invalidate all outstanding JWT tokens by incrementing tokenVersion
   await User.findByIdAndUpdate(req.user._id, { $inc: { tokenVersion: 1 } });
+  evictUserFromAuthzCache(req.user._id);
   sendSuccess(res, { message: 'تم تسجيل الخروج بنجاح' });
 }, MESSAGES.GENERAL.ERROR);

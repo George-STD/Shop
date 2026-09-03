@@ -12,14 +12,19 @@
  * @param {number|string} egp
  * @returns {number} Integer piasters
  */
+const MAX_EGP = 10_000_000;
+
 const toPiasters = (egp) => {
   if (egp === null || egp === undefined || egp === '') return 0;
   const n = Number(egp);
   if (!Number.isFinite(n)) return 0;
 
-  // Split string representation to avoid 0.1 * 100 = 10.000000000000002 drift
-  const [whole, fraction = '00'] = Math.abs(n).toFixed(2).split('.');
-  const piasters = Number(whole) * 100 + Number((fraction + '00').slice(0, 2));
+  if (Math.abs(n) > MAX_EGP) {
+    throw new Error(`Amount ${n} EGP exceeds maximum allowed ceiling of ${MAX_EGP} EGP`);
+  }
+
+  // Use direct scaling with 1e-9 epsilon nudge to avoid binary float under-rounding (e.g. 1.005 -> 101)
+  const piasters = Math.round(Math.abs(n) * 100 + 1e-9);
   return n < 0 ? -piasters : piasters;
 };
 
@@ -29,7 +34,9 @@ const toPiasters = (egp) => {
  * @returns {number} EGP number with 2 decimal precision
  */
 const toEgp = (piasters) => {
-  if (!Number.isFinite(piasters)) return 0;
+  if (!Number.isFinite(piasters)) {
+    throw new Error('toEgp received a non-finite value — refusing to silently return 0 for a monetary amount');
+  }
   return Number((Math.round(piasters) / 100).toFixed(2));
 };
 

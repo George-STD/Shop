@@ -14,9 +14,9 @@ let currentInflightBytes = 0;
  * In-flight Memory Guard: Inspects Content-Length before allocating memory buffers
  */
 const inflightGuard = (req, res, next) => {
-  const declared = Number(req.headers['content-length'] || 0);
+  const declared = Number(req.headers['content-length'] || MAX_FILE_BYTES);
 
-  if (declared > MAX_FILE_BYTES * 6) {
+  if (declared > MAX_FILE_BYTES * 1.5) {
     return res.status(413).json({
       success: false,
       message: 'حجم الطلب أكبر من المسموح (الحد الأقصى للملف 5 ميجابايت).',

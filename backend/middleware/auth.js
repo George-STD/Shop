@@ -39,6 +39,16 @@ const cleanAuthzCache = () => {
   }
 };
 
+const evictUserFromAuthzCache = (userId) => {
+  if (!userId) return;
+  const uid = String(userId);
+  for (const [token, entry] of authzCache.entries()) {
+    if (entry.user && String(entry.user._id) === uid) {
+      authzCache.delete(token);
+    }
+  }
+};
+
 setInterval(cleanAuthzCache, 30_000).unref();
 
 // =====================================================
@@ -63,8 +73,19 @@ const protect = async (req, res, next) => {
     if (process.env.NODE_ENV !== 'test') {
       const cached = authzCache.get(token);
       if (cached && Date.now() - cached.cachedAt < AUTHZ_CACHE_TTL_MS) {
-        req.user = cached.user;
-        return next();
+        try {
+          const decodedQuick = jwt.decode(token);
+          if (decodedQuick && decodedQuick.v !== undefined && cached.user.tokenVersion !== undefined && decodedQuick.v !== cached.user.tokenVersion) {
+            authzCache.delete(token);
+          } else if (cached.user.isActive === false) {
+            authzCache.delete(token);
+          } else {
+            req.user = cached.user;
+            return next();
+          }
+        } catch (_) {
+          authzCache.delete(token);
+        }
       }
     }
 
@@ -421,4 +442,5 @@ module.exports = {
   sanitizeInput,
   logAdminAction,
   clientIp,
+  evictUserFromAuthzCache,
 };

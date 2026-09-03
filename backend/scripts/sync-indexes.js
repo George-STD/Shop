@@ -2,7 +2,8 @@
  * Standalone Index Synchronization Job
  * Builds and synchronizes all Mongoose model indexes safely outside the request loop.
  */
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const mongoose = require('mongoose');
 const { buildConnectOptions } = require('../config/mongo');
 

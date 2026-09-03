@@ -484,7 +484,25 @@ const rollbackLoyaltyPoints = async (userId, pointsRedeemed) => {
   const session = await mongoose.startSession();
 
   try {
-    order = await createWithSession(session);
+    const MAX_TXN_RETRIES = 3;
+    let lastError;
+    for (let attempt = 1; attempt <= MAX_TXN_RETRIES; attempt++) {
+      try {
+        order = await createWithSession(session);
+        lastError = null;
+        break;
+      } catch (txnError) {
+        if (session.inTransaction()) await session.abortTransaction();
+        const isTransient = txnError.hasErrorLabel?.('TransientTransactionError') || txnError.code === 112;
+        if (isTransient && attempt < MAX_TXN_RETRIES) {
+          await new Promise((r) => setTimeout(r, 40 * attempt));
+          continue;
+        }
+        lastError = txnError;
+        break;
+      }
+    }
+    if (lastError) throw lastError;
   } catch (error) {
     if (session.inTransaction()) await session.abortTransaction();
 

@@ -176,6 +176,9 @@ router.post(
         config: { responseMimeType: 'application/json' },
       });
 
+      // Free base64 encoded parts from memory immediately
+      imageParts.length = 0;
+
       const productData = safeParseJSON(result.text);
 
       // Upload all image buffers to Cloudinary concurrently
@@ -212,6 +215,13 @@ router.post(
         success: false,
         message: 'حدث خطأ أثناء تحليل أو حفظ الصور. تأكد من إعدادات API.',
       });
+    } finally {
+      // Immediate garbage collection hint: clear buffers from memory
+      if (req.files && Array.isArray(req.files)) {
+        req.files.forEach((f) => {
+          f.buffer = null;
+        });
+      }
     }
   }, 'حدث خطأ أثناء تحليل أو رفع الصور')
 );

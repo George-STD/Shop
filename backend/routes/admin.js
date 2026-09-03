@@ -8,6 +8,7 @@ const adminController = require('../controllers/admin');
 
 // Middleware
 const { protect, admin, adminLimiter, validateObjectId, sanitizeInput, logAdminAction } = require('../middleware/auth');
+const { rememberGet } = require('../middleware/cache');
 
 router.use(protect);
 router.use(admin);
@@ -17,7 +18,7 @@ router.use(sanitizeInput);
 // =====================================================
 // DASHBOARD STATS & ANALYSIS
 // =====================================================
-router.get('/stats', adminController.getStats);
+router.get('/stats', rememberGet('admin-stats', 15_000, { perUser: true, allowAuth: true }), adminController.getStats);
 router.get('/analysis', adminController.getAnalysis);
 router.get('/logs', adminController.getLogs);
 router.get('/export-report', adminController.getExportReport);

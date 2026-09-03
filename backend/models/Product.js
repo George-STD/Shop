@@ -259,6 +259,8 @@ productSchema.index({ isActive: 1, category: 1, price: 1 });
 productSchema.index({ isActive: 1, isReadyBox: 1 });
 productSchema.index({ isActive: 1, occasions: 1 });
 productSchema.index({ isActive: 1, recipients: 1 });
+productSchema.index({ isActive: 1, createdAt: -1 });
+productSchema.index({ isActive: 1, 'rating.average': -1 });
 productSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Product', productSchema);

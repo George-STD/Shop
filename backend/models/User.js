@@ -233,7 +233,8 @@ userSchema.virtual('fullName').get(function () {
   return `${this.firstName || ''} ${this.lastName || ''}`.trim();
 });
 
-// Primary compound index for security & active user resolution
-userSchema.index({ role: 1, isActive: 1 });
+// Primary compound index for security & active user resolution (with createdAt sort support)
+userSchema.index({ role: 1, isActive: 1, createdAt: -1 });
+userSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('User', userSchema);

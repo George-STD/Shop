@@ -62,7 +62,7 @@ exports.getStats = asyncHandler(async (req, res) => {
           ],
         },
       },
-    ]),
+    ], { allowDiskUse: true }),
     Order.find()
       .sort({ createdAt: -1 })
       .limit(5)
@@ -119,6 +119,11 @@ exports.getAnalysis = asyncHandler(async (req, res) => {
     matchQuery.createdAt = { $gte: new Date(now.setDate(now.getDate() - 7)) };
   } else if (period === '30d') {
     matchQuery.createdAt = { $gte: new Date(now.setDate(now.getDate() - 30)) };
+  } else {
+    // Default to 90 days to prevent unbounded O(N) memory exhaustion on M0 free tier
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    matchQuery.createdAt = { $gte: ninetyDaysAgo };
   }
 
   // Run in MongoDB directly via $facet and $lookup rather than buffering entire dataset in Node V8 heap
@@ -182,7 +187,7 @@ exports.getAnalysis = asyncHandler(async (req, res) => {
           ],
         },
       },
-    ]),
+    ], { allowDiskUse: true }),
     Product.find({ isActive: true, stock: { $lte: 5 } })
       .select('name price stock category images')
       .sort({ stock: 1 })

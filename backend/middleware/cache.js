@@ -83,18 +83,25 @@ const generateETag = (body) => {
 };
 
 /**
- * Express Middleware: Caches public GET endpoints with ETag & 304 Not Modified
- * @param {string} namespace - e.g. 'products', 'categories', 'occasions', 'settings'
+ * Express Middleware: Caches public or authenticated GET endpoints with ETag & 304 Not Modified
+ * @param {string} namespace - e.g. 'products', 'categories', 'occasions', 'admin-stats'
  * @param {number} [ttlMs=30000] - Time to live in milliseconds
+ * @param {object} [options] - { perUser = false, allowAuth = false }
  */
-const rememberGet = (namespace, ttlMs = 30_000) => {
+const rememberGet = (namespace, ttlMs = 30_000, { perUser = false, allowAuth = false } = {}) => {
   return (req, res, next) => {
-    // Only cache GET requests without Authorization headers, bypassed in test env
-    if (req.method !== 'GET' || req.headers.authorization || process.env.NODE_ENV === 'test') {
+    // Only cache GET requests, bypassed in test env
+    if (req.method !== 'GET' || process.env.NODE_ENV === 'test') {
       return next();
     }
 
-    const key = `${namespace}:${req.originalUrl}`;
+    // Skip authorized requests unless explicitly configured for perUser or allowAuth
+    if (req.headers.authorization && !perUser && !allowAuth) {
+      return next();
+    }
+
+    const identity = perUser ? (req.user?._id || 'anon') : 'public';
+    const key = `${namespace}:${identity}:${req.originalUrl}`;
     const cached = catalogCache.get(key);
 
     if (cached) {
