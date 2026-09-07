@@ -413,6 +413,11 @@ router.post('/batch-order-review', apiLimiter, [
       return sendNotFound(res, 'الطلب غير موجود');
     }
 
+    // Security Fix (H-2): Require order to be delivered before allowing verified review
+    if (order.status !== 'delivered') {
+      return sendBadRequest(res, 'لا يمكن تقييم الطلب قبل اكتمال التوصيل');
+    }
+
     // Verify order ownership: must match logged-in user OR submitted guestEmail must match order's email
     const orderEmails = [
       order.guestEmail,
@@ -424,13 +429,15 @@ router.post('/batch-order-review', apiLimiter, [
     const isUserOwner = userId && orderUserId && orderUserId === userId.toString();
     const submittedEmail = (guestEmail || '').toLowerCase().trim();
     const isEmailMatched = submittedEmail && orderEmails.includes(submittedEmail);
-    const isMaskedMatched = submittedEmail && orderEmails.some(oe => maskEmail(oe).toLowerCase() === submittedEmail);
 
-    if (!isUserOwner && !isEmailMatched && !isMaskedMatched && submittedEmail) {
-      return sendForbidden(res, 'البريد الإلكتروني المكتوب لا يطابق بيانات صاحب الطلب');
+    // Security Fix (H-2): If not logged in as the order owner, guestEmail is mandatory and must strictly match
+    if (!isUserOwner) {
+      if (!submittedEmail || !isEmailMatched) {
+        return sendForbidden(res, 'البريد الإلكتروني المكتوب لا يطابق بيانات صاحب الطلب');
+      }
     }
 
-    const customerEmail = (isEmailMatched ? submittedEmail : null) || orderEmails[0] || order.user?.email || order.guestEmail;
+    const customerEmail = isUserOwner ? (order.user?.email || orderEmails[0]) : submittedEmail;
     const customerName = guestName || `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`.trim() || order.user?.firstName || 'عميل محدد';
 
     const productIds = order.items

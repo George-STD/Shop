@@ -102,7 +102,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, 'كلمة المرور مطلوبة'],
-      minlength: 6,
+      minlength: [8, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'],
       select: false,
     },
     pendingPassword: {

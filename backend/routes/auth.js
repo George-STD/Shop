@@ -16,7 +16,7 @@ router.post('/register', registerLimiter, [
   body('lastName').trim().notEmpty().withMessage(MESSAGES.VALIDATION.LAST_NAME_REQUIRED),
   body('email').isEmail().withMessage(MESSAGES.VALIDATION.EMAIL_INVALID),
   body('phone').notEmpty().withMessage(MESSAGES.VALIDATION.PHONE_REQUIRED),
-  body('password').isLength({ min: 6 }).withMessage(MESSAGES.VALIDATION.PASSWORD_MIN_LENGTH)
+  body('password').isLength({ min: 8 }).withMessage(MESSAGES.VALIDATION.PASSWORD_MIN_LENGTH)
 ], authController.register);
 
 // @route   POST /api/auth/verify-email

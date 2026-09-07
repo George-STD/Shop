@@ -61,7 +61,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Install sharp natively inside production runtime for high-throughput image transforms
-RUN npm install sharp@^0.33.5 --no-save
+RUN npm install sharp@^0.35.0 --no-save
 
 USER nextjs
 

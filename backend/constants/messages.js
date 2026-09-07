@@ -93,9 +93,9 @@ const MESSAGES = {
     EMAIL_REQUIRED: 'البريد الإلكتروني مطلوب',
     PHONE_REQUIRED: 'رقم الهاتف مطلوب',
     PASSWORD_REQUIRED: 'كلمة المرور مطلوبة',
-    PASSWORD_MIN_LENGTH: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+    PASSWORD_MIN_LENGTH: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
     CURRENT_PASSWORD_REQUIRED: 'كلمة المرور الحالية مطلوبة',
-    NEW_PASSWORD_MIN_LENGTH: 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل',
+    NEW_PASSWORD_MIN_LENGTH: 'كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل',
     
     // Verification code
     CODE_LENGTH: 'الكود يجب أن يكون 6 أرقام',

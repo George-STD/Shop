@@ -51,12 +51,11 @@ exports.register = asyncHandler(async (req, res) => {
 
   if (existingUser) {
     if (!existingUser.isVerified) {
+      // Security Fix (H-1): Do not overwrite pendingPassword or profile details to prevent Account Takeover.
+      // Only refresh the verification code and dispatch it to the registered email owner.
       const code = generateVerificationCode();
-      const hashedPassword = await bcrypt.hash(password, 12);
       await User.findByIdAndUpdate(existingUser._id, {
         $set: {
-          firstName, lastName, phone,
-          pendingPassword: hashedPassword,
           emailVerificationCode: hashCode(code),
           emailVerificationExpires: new Date(Date.now() + 10 * 60 * 1000)
         }

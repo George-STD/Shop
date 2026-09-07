@@ -59,7 +59,7 @@ services:
       - NODE_ENV=production
       - PORT=5000
       - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:27017/hadaya_db}
-      - JWT_SECRET=${JWT_SECRET:-production_jwt_secret_key_minimum_32_characters_long_12345}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
       - JWT_EXPIRE=${JWT_EXPIRE:-7d}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
@@ -99,7 +99,7 @@ services:
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -127,7 +127,7 @@ services:
     restart: unless-stopped
     command: ["mongod", "--wiredTigerCacheSizeGB", "1.0"]
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     environment:
       - MONGO_INITDB_DATABASE=hadaya_db
     volumes:

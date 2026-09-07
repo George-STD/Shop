@@ -564,7 +564,8 @@ router.post('/execute', asyncHandler(async (req, res) => {
   // Execute update
   const result = await Model.updateMany(
     { _id: { $in: validDocIds } },
-    finalUpdate
+    finalUpdate,
+    { runValidators: true }
   );
 
   // Audit Log

@@ -115,7 +115,7 @@ const AuthForm = () => {
       toast.error(STRINGS.AUTH.PASSWORDS_DO_NOT_MATCH);
       return;
     }
-    if (formData.password.length < 6) {
+    if (formData.password.length < 8) {
       toast.error(STRINGS.AUTH.PASSWORD_LENGTH_ERROR);
       return;
     }
@@ -204,7 +204,7 @@ const AuthForm = () => {
 
   // Reset password handler
   const handleResetPassword = async () => {
-    if (newPassword.length < 6) {
+    if (newPassword.length < 8) {
       toast.error(STRINGS.AUTH.PASSWORD_LENGTH_ERROR);
       return;
     }
@@ -778,7 +778,7 @@ const SettingsPage = () => {
       return;
     }
 
-    if (passwordData.newPassword.length < 6) {
+    if (passwordData.newPassword.length < 8) {
       toast.error(STRINGS.AUTH.PASSWORD_LENGTH_ERROR);
       return;
     }

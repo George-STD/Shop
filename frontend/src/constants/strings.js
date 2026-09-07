@@ -1565,7 +1565,7 @@ export const STRINGS = {
     ACCOUNT_NOT_VERIFIED: 'حسابك غير مُفعّل. تم إرسال كود التفعيل',
     LOGIN_ERROR: 'حدث خطأ في تسجيل الدخول',
     PASSWORDS_DO_NOT_MATCH: 'كلمتا المرور غير متطابقتين',
-    PASSWORD_LENGTH_ERROR: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+    PASSWORD_LENGTH_ERROR: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
     VERIFICATION_SENT: 'تم إرسال كود التفعيل إلى بريدك الإلكتروني',
     REGISTER_ERROR: 'حدث خطأ في التسجيل',
     ENTER_6_DIGIT_CODE: 'أدخل الكود المكوّن من 6 أرقام',

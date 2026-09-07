@@ -33,11 +33,14 @@
     "eslint-config-next": "^15.5.15",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
-    "postcss": "^8.4.31",
+    "postcss": "^8.5.28",
     "prettier": "^3.9.5",
     "tailwindcss": "^3.3.5"
   },
   "overrides": {
-    "follow-redirects": "1.16.0"
+    "follow-redirects": "1.16.0",
+    "next": {
+      "postcss": "$postcss"
+    }
   }
 }
