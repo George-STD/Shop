@@ -8,6 +8,7 @@ require('dotenv').config();
 
 const { CONFIG, MESSAGES } = require('./constants');
 const { connectToDatabase, mongoHealthFence, getMongoStateLabel } = require('./config/mongo');
+const { startPeriodicCleanup, stopPeriodicCleanup } = require('./services/cleanupService');
 
 const app = express();
 let server;
@@ -28,6 +29,12 @@ const closeServer = async () => {
 
 const gracefulShutdown = async (reason, exitCode = 0) => {
   console.log(`Shutting down (${reason})`);
+
+  try {
+    stopPeriodicCleanup();
+  } catch (error) {
+    console.error('Error while stopping cleanup service:', error);
+  }
 
   try {
     await closeServer();
@@ -192,6 +199,7 @@ const startServer = async () => {
   try {
     validateEnvironment();
     await connectToDatabase();
+    startPeriodicCleanup();
 
     const PORT = process.env.PORT || 5000;
     server = app.listen(PORT, () => {

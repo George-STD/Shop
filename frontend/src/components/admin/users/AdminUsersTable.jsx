@@ -88,15 +88,25 @@ const AdminUsersTable = ({ data, isLoading, page, setPage, handleToggleRole, han
                   </span>
                 </td>
                 <td className="py-3 px-3 sm:px-6 hidden md:table-cell">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      user.isActive
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}
-                  >
-                    {user.isActive ? STRINGS.ADMIN.TABLE.ACTIVE : STRINGS.ADMIN.TABLE.INACTIVE}
-                  </span>
+                  <div className="flex flex-col gap-1 items-start">
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        user.isActive
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}
+                    >
+                      {user.isActive ? STRINGS.ADMIN.TABLE.ACTIVE : STRINGS.ADMIN.TABLE.INACTIVE}
+                    </span>
+                    {!user.isVerified && (
+                      <span
+                        className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-800 border border-amber-200"
+                        title="لم يتم تأكيد البريد الإلكتروني"
+                      >
+                        غير مؤكد ⏳
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="py-3 px-3 sm:px-6 text-gray-600 text-xs sm:text-sm hidden lg:table-cell">
                   {new Date(user.createdAt).toLocaleDateString('ar-EG')}

@@ -237,4 +237,14 @@ userSchema.virtual('fullName').get(function () {
 userSchema.index({ role: 1, isActive: 1, createdAt: -1 });
 userSchema.index({ createdAt: -1 });
 
+// TTL index to automatically purge expired unverified users (1 hour after verification code expires)
+userSchema.index(
+  { emailVerificationExpires: 1 },
+  {
+    expireAfterSeconds: 3600,
+    partialFilterExpression: { isVerified: false, role: 'user' },
+  }
+);
+
 module.exports = mongoose.model('User', userSchema);
+
