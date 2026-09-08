@@ -179,8 +179,9 @@ const ReviewForm = memo(function ReviewForm({ productId, refreshReviews }) {
 /**
  * Granular & Memoized Master Product Page
  */
-const ProductPage = () => {
-  const { slug } = useParams();
+const ProductPage = ({ initialProduct, slug: propSlug }) => {
+  const params = useParams();
+  const slug = propSlug || params?.slug || initialProduct?.slug;
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -225,6 +226,7 @@ const ProductPage = () => {
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', slug],
     queryFn: () => productsAPI.getBySlug(slug).then((res) => res.data.data),
+    initialData: initialProduct && (!slug || initialProduct.slug === slug) ? initialProduct : undefined,
     staleTime: 1000 * 60 * 5,
   });
 

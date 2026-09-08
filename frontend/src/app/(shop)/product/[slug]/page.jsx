@@ -34,7 +34,7 @@ export async function generateMetadata({ params }) {
         title: `${product.name} | For You - فور يو`,
         description,
         url: `${SITE_URL}/product/${slug}`,
-        type: 'product',
+        type: 'website',
         images: [{ url: image, width: 800, height: 800, alt: product.name }],
       },
       twitter: {
@@ -58,21 +58,16 @@ export async function generateMetadata({ params }) {
 
 export default async function Page({ params }) {
   const { slug } = await params;
-  const { product, notFound: isNotFound, error } = await getProductBySlug(slug);
+  const { product, notFound: isNotFound } = await getProductBySlug(slug);
 
   if (isNotFound) {
     notFound();
   }
 
-  // If backend is sleeping/cold or error occurred, let the client component take over with retry
-  if (error || !product) {
-    return <ProductPageClient />;
-  }
-
   return (
     <>
-      <ProductJsonLd product={product} slug={slug} />
-      <ProductPageClient />
+      {product && <ProductJsonLd product={product} slug={slug} />}
+      <ProductPageClient initialProduct={product} slug={slug} />
     </>
   );
 }

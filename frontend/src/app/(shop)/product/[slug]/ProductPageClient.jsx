@@ -7,6 +7,6 @@ const ProductPage = dynamic(() => import('../../../../legacy-pages/ProductPage')
   loading: () => <div className="container-custom min-h-[800px] py-8" aria-label="Loading product" />,
 });
 
-export default function ProductPageClient() {
-  return <ProductPage />;
+export default function ProductPageClient({ initialProduct, slug }) {
+  return <ProductPage initialProduct={initialProduct} slug={slug} />;
 }

@@ -69,7 +69,7 @@ export function generateProductMetadata(product) {
       url: `${SITE_URL}${path}`,
       images: [{ url: image, alt: product.name }],
       locale: SITE_CONFIG.LOCALE,
-      type: 'product',
+      type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
