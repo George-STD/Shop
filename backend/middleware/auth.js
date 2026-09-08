@@ -178,11 +178,14 @@ const admin = (req, res, next) => {
 // =====================================================
 // RATE LIMITERS BASE CONFIGURATION (Draft-7 & Health Skip)
 // =====================================================
+const isPerfTesting = process.env.ENABLE_PERF_TESTING === 'true' && process.env.NODE_ENV !== 'production';
+
 const limiterBase = {
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   validate: false,
   skip: (req) =>
+    isPerfTesting ||
     req.method === 'OPTIONS' ||
     req.method === 'HEAD' ||
     req.path === '/health' ||
