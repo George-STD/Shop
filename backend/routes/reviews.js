@@ -129,7 +129,23 @@ router.post('/', apiLimiter, [
   body('guestName').optional({ checkFalsy: true }).trim().notEmpty().withMessage(MESSAGES.REVIEWS.GUEST_NAME_REQUIRED),
   body('guestEmail').optional({ checkFalsy: true }).isEmail().withMessage(MESSAGES.REVIEWS.GUEST_EMAIL_INVALID),
   body('images').optional().isArray().withMessage('يجب أن تكون الصور في صيغة قائمة'),
-  body('images.*').optional().isURL({ protocols: ['http', 'https'], require_protocol: true }).withMessage('رابط الصورة غير صالح')
+  body('images.*')
+    .optional()
+    .isURL({ protocols: ['https'], require_protocol: true })
+    .withMessage('رابط الصورة غير صالح')
+    .custom((url) => {
+      try {
+        const parsed = new URL(url);
+        const allowedHosts = ['res.cloudinary.com', 'cloudinary.com', 'foryo.me', 'www.foryo.me'];
+        const isAllowed = allowedHosts.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
+        if (!isAllowed) {
+          throw new Error('يجب أن تكون الصور مرفوعة عبر خوادم الموقع الرسمية (Cloudinary)');
+        }
+        return true;
+      } catch (err) {
+        throw new Error(err.message || 'رابط الصورة غير مسموح به');
+      }
+    }),
 ], async (req, res) => {
   try {
     const userId = await getOptionalUserId(req);
