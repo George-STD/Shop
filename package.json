@@ -7,7 +7,9 @@
     "frontend": "cd frontend && npm run dev",
     "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
-    "check": "npm run check --prefix backend && npm run check --prefix frontend"
+    "check": "npm run check --prefix backend && npm run check --prefix frontend",
+    "test:perf:baseline": "k6 run tests/perf/benchmark-test.js",
+    "test:perf:concurrency": "node tests/perf/run-concurrency-simulation.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

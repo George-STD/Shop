@@ -429,8 +429,9 @@ exports.createOrder = asyncHandler(async (req, res) => {
     const { orderItems, subtotal, boxGroups } = buildOrderItems(items, productMap);
     const orderData = await buildOrderData({ userId, guestEmail, orderItems, subtotal, boxGroups, req, session });
 
-    const [createdOrder] = await Order.create([orderData], { session });
+    // Deduct stock first: if stock is insufficient, throws ClientError immediately before creating Order
     await deductStock(orderItems, session);
+    const [createdOrder] = await Order.create([orderData], { session });
     await session.commitTransaction();
     return createdOrder;
   };
@@ -502,7 +503,7 @@ const rollbackLoyaltyPoints = async (userId, pointsRedeemed) => {
   const session = await mongoose.startSession();
 
   try {
-    const MAX_TXN_RETRIES = 3;
+    const MAX_TXN_RETRIES = 10;
     let lastError;
     for (let attempt = 1; attempt <= MAX_TXN_RETRIES; attempt++) {
       try {
@@ -511,9 +512,17 @@ const rollbackLoyaltyPoints = async (userId, pointsRedeemed) => {
         break;
       } catch (txnError) {
         if (session.inTransaction()) await session.abortTransaction();
-        const isTransient = txnError.hasErrorLabel?.('TransientTransactionError') || txnError.code === 112;
+        const isTransient =
+          txnError.hasErrorLabel?.('TransientTransactionError') ||
+          txnError.code === 112 ||
+          txnError.errorResponse?.code === 112 ||
+          txnError.errorLabels?.includes?.('TransientTransactionError');
+
         if (isTransient && attempt < MAX_TXN_RETRIES) {
-          await new Promise((r) => setTimeout(r, 40 * attempt));
+          // Exponential backoff with random jitter to prevent thundering-herd write conflicts
+          const baseDelay = Math.min(500, 30 * Math.pow(1.3, attempt));
+          const jitter = Math.floor(Math.random() * 60);
+          await new Promise((r) => setTimeout(r, baseDelay + jitter));
           continue;
         }
         lastError = txnError;

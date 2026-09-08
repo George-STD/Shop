@@ -16,8 +16,8 @@ const escapeHtml = (str) => String(str ?? '')
  * Send email via Resend HTTP API
  */
 async function sendEmail({ to, subject, html }) {
-  if (process.env.NODE_ENV === 'test') {
-    return { id: 'test_id', message: 'Email skipped in test environment' };
+  if (process.env.NODE_ENV === 'test' || process.env.ENABLE_PERF_TESTING === 'true') {
+    return { id: 'test_id', message: 'Email skipped in test/perf environment' };
   }
 
   const res = await fetchWithTimeout('https://api.resend.com/emails', {
