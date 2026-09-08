@@ -43,7 +43,7 @@ const CartSidebar = () => {
     return itemsTotal + boxesTotal;
   }, [items]);
 
-  const shippingCost = BUSINESS_CONFIG.SHIPPING_COST;
+  const shippingCost = BUSINESS_CONFIG.SHIPPING_COST_CAIRO;
   const grandTotal = useMemo(() => subtotal + shippingCost, [subtotal, shippingCost]);
 
   const totalItemsCount = useMemo(() => {
@@ -352,9 +352,13 @@ const CartSidebar = () => {
               <div className="flex justify-between text-gray-500">
                 <span>{STRINGS.CART.SHIPPING}</span>
                 <span className="font-semibold text-gray-800">
+                  <span className="text-xs text-gray-500 ml-1">يبدأ من</span>
                   <bdi>{formatPrice(shippingCost)}</bdi> {STRINGS.PRODUCT.CURRENCY}
                 </span>
               </div>
+              <p className="text-[10px] text-purple-700 bg-purple-50/80 p-1.5 rounded-md font-medium text-center">
+                95 ج.م داخل القاهرة | 125 ج.م للمحافظات
+              </p>
 
               <div className="flex justify-between text-base font-extrabold pt-2.5 border-t border-gray-200 text-gray-900">
                 <span>{STRINGS.CART.TOTAL}</span>

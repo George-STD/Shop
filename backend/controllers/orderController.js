@@ -170,7 +170,7 @@ const buildOrderData = async ({ userId, guestEmail, orderItems, subtotal, boxGro
 
   const totalBoxPrice = mulEgp(boxGroups.size, CONFIG.BUSINESS.BOX_BASE_PRICE_EGP);
   subtotal = addEgp(subtotal, totalBoxPrice);
-  const shippingCost = CONFIG.BUSINESS.SHIPPING_COST_EGP;
+  const shippingCost = CONFIG.getShippingCostByGovernorate(shippingAddress?.governorate);
   let total = addEgp(subtotal, shippingCost);
 
   let pointsRedeemed = 0;

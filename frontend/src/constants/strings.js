@@ -611,11 +611,15 @@ export const STRINGS = {
   SHIPPING_PAGE: {
     HERO_TITLE: 'الشحن والتوصيل',
     HERO_SUBTITLE: 'نوصل هداياك بأمان وسرعة إلى أي مكان',
-    SHIPPING_OPTIONS_TITLE: 'التوصيل',
-    SHIPPING_UNIFIED_PRICE: 'سعر الشحن الموحد',
+    SHIPPING_OPTIONS_TITLE: 'خيارات وأسعار التوصيل',
+    SHIPPING_CAIRO_TITLE: 'الشحن داخل القاهرة',
+    SHIPPING_CAIRO_DESC: 'توصيل سريع لكافة مناطق محافظة القاهرة',
+    SHIPPING_CAIRO_TIME: '1-2 يوم عمل',
+    SHIPPING_OTHER_TITLE: 'الشحن للمحافظات',
+    SHIPPING_OTHER_DESC: 'توصيل موثوق لجميع محافظات مصر خارج القاهرة',
+    SHIPPING_OTHER_TIME: '2-5 أيام عمل',
     CURRENCY: 'ج.م',
     TIME_2_5_DAYS: '2-5 أيام عمل',
-    UNIFIED_PRICE_DESC: 'توصيل إلى جميع محافظات مصر بسعر موحد',
     DELIVERY_TIMES_TITLE: 'أوقات التوصيل حسب المنطقة',
     DELIVERY_TIMES: [
       { city: 'القاهرة', time: '1-2 يوم عمل' },

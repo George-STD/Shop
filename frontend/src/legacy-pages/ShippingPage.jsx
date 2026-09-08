@@ -27,20 +27,37 @@ const ShippingPage = () => {
           {/* Shipping Options */}
           <section className="mb-16">
             <h2 className="text-2xl font-bold mb-8 text-center">{STRINGS.SHIPPING_PAGE.SHIPPING_OPTIONS_TITLE}</h2>
-            <div className="max-w-md mx-auto">
-              <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <FiTruck className="text-3xl text-purple-600" />
+            <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+              {/* Cairo Shipping */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all text-center border border-purple-50">
+                <div className="w-14 h-14 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <FiTruck className="text-2xl text-purple-600" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">{STRINGS.SHIPPING_PAGE.SHIPPING_UNIFIED_PRICE}</h3>
-                <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                  {BUSINESS_CONFIG.SHIPPING_COST} {STRINGS.SHIPPING_PAGE.CURRENCY}
+                <h3 className="text-lg font-bold mb-2 text-gray-800">{STRINGS.SHIPPING_PAGE.SHIPPING_CAIRO_TITLE}</h3>
+                <span className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+                  {BUSINESS_CONFIG.SHIPPING_COST_CAIRO} {STRINGS.SHIPPING_PAGE.CURRENCY}
                 </span>
-                <div className="flex items-center justify-center gap-2 text-gray-600 mt-4 mb-2">
-                  <FiClock />
-                  <span>{STRINGS.SHIPPING_PAGE.TIME_2_5_DAYS}</span>
+                <div className="flex items-center justify-center gap-1.5 text-gray-600 mt-4 mb-2 text-sm font-medium">
+                  <FiClock className="text-purple-500" />
+                  <span>{STRINGS.SHIPPING_PAGE.SHIPPING_CAIRO_TIME}</span>
                 </div>
-                <p className="text-gray-500 text-sm">{STRINGS.SHIPPING_PAGE.UNIFIED_PRICE_DESC}</p>
+                <p className="text-gray-500 text-xs sm:text-sm">{STRINGS.SHIPPING_PAGE.SHIPPING_CAIRO_DESC}</p>
+              </div>
+
+              {/* Other Governorates Shipping */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all text-center border border-purple-50">
+                <div className="w-14 h-14 bg-gradient-to-r from-pink-100 to-amber-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <FiTruck className="text-2xl text-pink-600" />
+                </div>
+                <h3 className="text-lg font-bold mb-2 text-gray-800">{STRINGS.SHIPPING_PAGE.SHIPPING_OTHER_TITLE}</h3>
+                <span className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-purple-600">
+                  {BUSINESS_CONFIG.SHIPPING_COST_OTHER} {STRINGS.SHIPPING_PAGE.CURRENCY}
+                </span>
+                <div className="flex items-center justify-center gap-1.5 text-gray-600 mt-4 mb-2 text-sm font-medium">
+                  <FiClock className="text-pink-500" />
+                  <span>{STRINGS.SHIPPING_PAGE.SHIPPING_OTHER_TIME}</span>
+                </div>
+                <p className="text-gray-500 text-xs sm:text-sm">{STRINGS.SHIPPING_PAGE.SHIPPING_OTHER_DESC}</p>
               </div>
             </div>
           </section>

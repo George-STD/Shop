@@ -212,7 +212,8 @@ npm run dev
 | `JWT_SECRET` | ✅ | مفتاح تشفير توكنات المصادقة (32 حرفاً على الأقل) | `a-very-long-secure-random-secret-key-123` |
 | `JWT_EXPIRES_IN` | ❌ | مدة صلاحية توكن تسجيل الدخول | `7d` |
 | `CORS_ORIGINS` | ❌ | النطاقات المصرح لها بالاتصال بالسيرفر | `https://www.foryo.me,https://foryo.me` |
-| `SHIPPING_COST` | ❌ | تكلفة الشحن الافتراضية بالجنيه المصري | `95` |
+| `SHIPPING_COST_CAIRO` | ❌ | تكلفة الشحن داخل محافظة القاهرة (افتراضياً 95) | `95` |
+| `SHIPPING_COST_OTHER` | ❌ | تكلفة الشحن لجميع المحافظات خارج القاهرة (افتراضياً 125) | `125` |
 | `SMTP_PASS` | ✅ | مفتاح الـ API الخاص بخدمة Resend لإرسال الإيميلات | `re_xxxxxxxxxxxxxx` |
 | `SMTP_FROM` | ❌ | عنوان واسم مرسل الإيميلات | `For You <no-reply@foryo.me>` |
 | `GEMINI_API_KEY` | ❌ | مفتاح Google Gemini AI لميزات الذكاء الاصطناعي | `AIzaSy...` |

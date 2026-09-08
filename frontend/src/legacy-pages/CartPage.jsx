@@ -206,10 +206,15 @@ const CartPage = () => {
                     <span className="text-gray-600">{STRINGS.CART.SUBTOTAL}</span>
                     <span>{subtotal} {STRINGS.PRODUCT.CURRENCY}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-600">{STRINGS.CART.SHIPPING}</span>
-                    <span>{`${shippingCost} ${STRINGS.PRODUCT.CURRENCY}`}</span>
+                    <span className="font-semibold text-gray-800">
+                      يبدأ من {BUSINESS_CONFIG.SHIPPING_COST_CAIRO} {STRINGS.PRODUCT.CURRENCY}
+                    </span>
                   </div>
+                  <p className="text-[11px] text-purple-700 bg-purple-50/70 p-2 rounded-lg font-medium leading-relaxed">
+                    🚚 95 ج.م داخل القاهرة | 125 ج.م للمحافظات الأخرى
+                  </p>
                   <div className="border-t pt-4 flex justify-between text-lg font-bold">
                     <span>{STRINGS.CART.TOTAL}</span>
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">

@@ -64,7 +64,7 @@ describe('Edge Case: Order Checkout Idempotency & Duplicate Prevention', () => {
     expect(res.statusCode).toBe(201);
     expect(res.body.success).toBe(true);
     expect(res.body.data.orderNumber).toBeDefined();
-    expect(res.body.data.total).toBe(300 + CONFIG.BUSINESS.SHIPPING_COST_EGP);
+    expect(res.body.data.total).toBe(300 + CONFIG.BUSINESS.SHIPPING_COST_CAIRO_EGP);
 
     // Stock must decrease by 2 (20 -> 18)
     const productInDb = await Product.findById(testProduct._id);

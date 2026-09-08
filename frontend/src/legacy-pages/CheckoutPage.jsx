@@ -5,7 +5,7 @@ import { FiCheck, FiCreditCard, FiTruck, FiAward, FiCopy, FiPackage } from 'reac
 import { useCartStore, useAuthStore } from '../store';
 import { ordersAPI, settingsAPI } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
-import { BUSINESS_CONFIG, STRINGS } from '../constants';
+import { BUSINESS_CONFIG, STRINGS, getShippingCost } from '../constants';
 import toast from 'react-hot-toast';
 
 /**
@@ -138,10 +138,18 @@ const ShippingFormStep = memo(function ShippingFormStep({
             <option value="">{STRINGS.CHECKOUT.SELECT_GOVERNORATE}</option>
             {governorates.map((gov) => (
               <option key={gov} value={gov}>
-                {gov}
+                {gov} ({gov === 'القاهرة' ? '95 ج.م' : '125 ج.م'})
               </option>
             ))}
           </select>
+          {formData.governorate && (
+            <p className="text-[11px] text-purple-600 mt-1 font-medium flex items-center gap-1">
+              <FiTruck size={12} />
+              <span>
+                سعر الشحن لـ {formData.governorate}: {formData.governorate === 'القاهرة' ? '95 ج.م (داخل القاهرة)' : '125 ج.م (محافظات خارج القاهرة)'}
+              </span>
+            </p>
+          )}
           {errors.governorate && (
             <p id="error-governorate" className="text-red-500 text-xs mt-1 font-medium" role="alert">
               {errors.governorate}
@@ -390,6 +398,11 @@ const OrderReviewStep = memo(function OrderReviewStep({
           {formData.street} {formData.building && `، عمارة ${formData.building}`} {formData.floor && `، طابق ${formData.floor}`} {formData.apartment && `، شقة ${formData.apartment}`}
           <br />
           {formData.area && `${formData.area}، `}{formData.city && `${formData.city}، `}{formData.governorate}
+          {formData.governorate && (
+            <span className="inline-block mr-2 px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-700">
+              {formData.governorate === 'القاهرة' ? 'شحن داخل القاهرة: 95 ج.م' : 'شحن محافظات: 125 ج.م'}
+            </span>
+          )}
           <br />
           {formData.phone}
         </p>
@@ -595,7 +608,9 @@ const CheckoutPage = () => {
     return itemsTotal + boxesTotal;
   }, [items]);
 
-  const shippingCost = BUSINESS_CONFIG.SHIPPING_COST;
+  const shippingCost = useMemo(() => {
+    return getShippingCost(formData.governorate);
+  }, [formData.governorate]);
   const egpPerPoint = loyaltySettings?.egpPerPointRedeemed || 0.1;
   const pointsDiscount = useMemo(() => pointsToRedeem * egpPerPoint, [pointsToRedeem, egpPerPoint]);
   const total = useMemo(
@@ -918,7 +933,14 @@ const CheckoutPage = () => {
                     </span>
                   </div>
                   <div className="flex justify-between text-gray-500">
-                    <span>{STRINGS.CART.SHIPPING}</span>
+                    <span>
+                      {STRINGS.CART.SHIPPING}
+                      {formData.governorate && (
+                        <span className="text-[11px] text-purple-600 mr-1 font-medium">
+                          ({formData.governorate === 'القاهرة' ? 'داخل القاهرة' : 'محافظات'})
+                        </span>
+                      )}
+                    </span>
                     <span className="font-semibold text-gray-800">
                       <bdi>{shippingCost}</bdi> {STRINGS.PRODUCT.CURRENCY}
                     </span>

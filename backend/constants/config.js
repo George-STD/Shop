@@ -86,7 +86,9 @@ const CONFIG = {
   // BUSINESS RULES
   // =====================================================
   BUSINESS: {
-    SHIPPING_COST_EGP: Number(process.env.SHIPPING_COST) || 95,
+    SHIPPING_COST_CAIRO_EGP: Number(process.env.SHIPPING_COST_CAIRO || process.env.SHIPPING_COST) || 95,
+    SHIPPING_COST_OTHER_EGP: Number(process.env.SHIPPING_COST_OTHER) || 125,
+    SHIPPING_COST_EGP: Number(process.env.SHIPPING_COST_CAIRO || process.env.SHIPPING_COST) || 95,
     CURRENCY: 'EGP',
     CURRENCY_SYMBOL: 'ج.م',
     BOX_MIN_ITEMS: 2,
@@ -207,4 +209,15 @@ const CONFIG = {
   },
 };
 
+CONFIG.getShippingCostByGovernorate = (governorate) => {
+  if (!governorate) return CONFIG.BUSINESS.SHIPPING_COST_CAIRO_EGP;
+  const normalized = String(governorate).trim().toLowerCase();
+  if (normalized === 'القاهرة' || normalized === 'cairo') {
+    return CONFIG.BUSINESS.SHIPPING_COST_CAIRO_EGP;
+  }
+  return CONFIG.BUSINESS.SHIPPING_COST_OTHER_EGP;
+};
+
 module.exports = CONFIG;
+
+

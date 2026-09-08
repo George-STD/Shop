@@ -71,7 +71,42 @@ describe('Order Controller Tests', () => {
 
     expect(res.statusCode).toBe(201);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.total).toBe(200 + CONFIG.BUSINESS.SHIPPING_COST_EGP); // (100 * 2) + shipping
+    expect(res.body.data.shippingCost).toBe(CONFIG.BUSINESS.SHIPPING_COST_CAIRO_EGP);
+    expect(res.body.data.total).toBe(200 + CONFIG.BUSINESS.SHIPPING_COST_CAIRO_EGP); // (100 * 2) + shipping
+  });
+
+  it('should calculate 95 EGP shipping for Cairo and 125 EGP for other governorates', async () => {
+    // Cairo order in Arabic
+    const resCairo = await request(app)
+      .post('/api/orders')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        items: [{ productId: productNormal._id, quantity: 1 }],
+        shippingAddress: {
+          firstName: 'John', lastName: 'Doe', phone: '01000000000',
+          governorate: 'القاهرة', city: 'Nasr City', street: 'Street 1', building: '1'
+        },
+        paymentMethod: 'cod'
+      });
+    expect(resCairo.statusCode).toBe(201);
+    expect(resCairo.body.data.shippingCost).toBe(95);
+    expect(resCairo.body.data.total).toBe(100 + 95);
+
+    // Other governorate (Alexandria)
+    const resAlex = await request(app)
+      .post('/api/orders')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        items: [{ productId: productNormal._id, quantity: 1 }],
+        shippingAddress: {
+          firstName: 'John', lastName: 'Doe', phone: '01000000000',
+          governorate: 'الإسكندرية', city: 'Smouha', street: 'Street 2', building: '2'
+        },
+        paymentMethod: 'cod'
+      });
+    expect(resAlex.statusCode).toBe(201);
+    expect(resAlex.body.data.shippingCost).toBe(125);
+    expect(resAlex.body.data.total).toBe(100 + 125);
   });
 
   it('should fail to create box order with less than minimum items', async () => {

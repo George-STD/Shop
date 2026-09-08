@@ -56,6 +56,8 @@ export const BUSINESS_CONFIG = {
   CURRENCY_POSITION: 'after', // 'before' or 'after'
 
   // Shipping
+  SHIPPING_COST_CAIRO: 95,
+  SHIPPING_COST_OTHER: 125,
   SHIPPING_COST: 95,
 
   // Build-a-Box
@@ -178,6 +180,16 @@ export const SOCIAL_LINKS = {
   FACEBOOK: 'https://www.facebook.com/share/1BzYfakvLp/?mibextid=wwXIfr',
   INSTAGRAM: 'https://www.instagram.com/foryou._.21',
   YOUTUBE: 'https://www.youtube.com/@foryou-l1k',
+};
+
+// Calculate dynamic shipping cost based on governorate
+export const getShippingCost = (governorate) => {
+  if (!governorate) return BUSINESS_CONFIG.SHIPPING_COST_CAIRO;
+  const normalized = String(governorate).trim().toLowerCase();
+  if (normalized === 'القاهرة' || normalized === 'cairo') {
+    return BUSINESS_CONFIG.SHIPPING_COST_CAIRO;
+  }
+  return BUSINESS_CONFIG.SHIPPING_COST_OTHER;
 };
 
 export default SITE_CONFIG;
