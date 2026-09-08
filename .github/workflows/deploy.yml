@@ -46,7 +46,7 @@ jobs:
         working-directory: ./backend
         run: node scripts/check-syntax.js
 
-      - name: 🧪 Run Backend Test Suite (183 Tests / 39 Suites)
+      - name: 🧪 Run Backend Test Suite (204 Tests / 42 Suites)
         working-directory: ./backend
         run: npm test
         env:
@@ -143,5 +143,5 @@ jobs:
 
       - name: ✅ Deployment Notification
         run: |
-          echo "🎉 All 183 unit & edge-case test suites passed cleanly!"
+          echo "🎉 All 204 unit & edge-case test suites passed cleanly!"
           echo "🐳 Successfully built and published Docker images to GitHub Container Registry."
