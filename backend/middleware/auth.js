@@ -178,14 +178,29 @@ const admin = (req, res, next) => {
 // =====================================================
 // RATE LIMITERS BASE CONFIGURATION (Draft-7 & Health Skip)
 // =====================================================
-const isPerfTesting = process.env.ENABLE_PERF_TESTING === 'true' && process.env.NODE_ENV !== 'production';
+// Rate limit testing bypass is STRICTLY restricted to:
+// 1. Explicit process.env.ENABLE_PERF_TESTING === 'true'
+// 2. Non-production environment (process.env.NODE_ENV !== 'production')
+// 3. Request IP MUST originate from local loopback (127.0.0.1 / ::1 / localhost)
+const isLoopbackIp = (ip) => {
+  if (!ip) return false;
+  return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || ip.startsWith('127.');
+};
+
+const isPerfTestingRequest = (req) => {
+  return (
+    process.env.ENABLE_PERF_TESTING === 'true' &&
+    process.env.NODE_ENV !== 'production' &&
+    isLoopbackIp(clientIp(req))
+  );
+};
 
 const limiterBase = {
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   validate: false,
   skip: (req) =>
-    isPerfTesting ||
+    isPerfTestingRequest(req) ||
     req.method === 'OPTIONS' ||
     req.method === 'HEAD' ||
     req.path === '/health' ||
