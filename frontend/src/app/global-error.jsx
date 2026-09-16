@@ -10,7 +10,7 @@ export default function GlobalError({ error, reset }) {
 
   return (
     <html lang="ar" dir="rtl">
-      <body className="min-h-screen bg-gray-50 flex items-center justify-center p-6 text-center font-sans">
+      <body className="min-h-screen min-h-dvh bg-gray-50 flex items-center justify-center p-6 text-center font-sans">
         <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
           <div className="w-16 h-16 bg-gradient-to-tr from-purple-500 to-pink-500 text-white rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg shadow-purple-500/20">
             🎁

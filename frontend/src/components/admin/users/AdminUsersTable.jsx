@@ -40,7 +40,20 @@ const AdminUsersTable = ({ data, isLoading, page, setPage, handleToggleRole, han
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {data?.data?.map((user) => (
+            {(!data?.data || data.data.length === 0) ? (
+              <tr>
+                <td colSpan={7} className="text-center py-16 text-gray-500">
+                  <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
+                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-1">
+                      <FiUser className="w-6 h-6" />
+                    </div>
+                    <p className="font-bold text-gray-700 text-sm sm:text-base">لا يوجد مستخدمون يطابقون هذا البحث أو الفلتر</p>
+                    <p className="text-xs text-gray-400">جرب البحث بكلمات أخرى أو تغيير الفلتر المحدد</p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              data.data.map((user) => (
               <tr key={user._id} className="hover:bg-gray-50 h-14 sm:h-16">
                 <td className="py-3 px-3 sm:px-6">
                   <div className="flex items-center gap-2 sm:gap-3">
@@ -147,7 +160,8 @@ const AdminUsersTable = ({ data, isLoading, page, setPage, handleToggleRole, han
                   </div>
                 </td>
               </tr>
-            ))}
+            ))
+          )}
           </tbody>
         </table>
       </div>

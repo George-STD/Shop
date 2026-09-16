@@ -39,7 +39,15 @@ const AdminReviewsList = ({
   }
 
   if (data?.data?.length === 0) {
-    return <div className="bg-white rounded-2xl p-12 text-center text-gray-500">{STRINGS.ADMIN.REVIEWS_STRINGS.NO_REVIEWS}</div>;
+    return (
+      <div className="bg-white rounded-2xl p-16 text-center border border-gray-100 shadow-sm flex flex-col items-center justify-center gap-2 max-w-md mx-auto">
+        <div className="w-14 h-14 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-500 mb-1">
+          <FiStar className="w-7 h-7" />
+        </div>
+        <p className="font-bold text-gray-700 text-base">{STRINGS.ADMIN.REVIEWS_STRINGS.NO_REVIEWS}</p>
+        <p className="text-xs text-gray-400">ستظهر تقييمات وآراء العملاء حول المنتجات هنا للمراجعة والاعتماد</p>
+      </div>
+    );
   }
 
   return (

@@ -589,7 +589,7 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
         />
       )}
 
-      <div className="bg-gray-50 min-h-screen">
+      <div className="bg-gray-50 min-h-screen min-h-dvh">
         {/* Breadcrumbs */}
         <div className="bg-white border-b">
           <div className="container-custom py-4">

@@ -17,7 +17,7 @@ const AboutPage = () => {
 
   return (
     <>
-      <div className="min-h-screen">
+      <div className="min-h-screen min-h-dvh">
         {/* Hero */}
         <div className="relative bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white py-20 overflow-hidden">
           <div className="absolute inset-0 opacity-10">

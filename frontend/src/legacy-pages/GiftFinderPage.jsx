@@ -197,7 +197,7 @@ const GiftFinderPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50/50 via-white to-pink-50/30 py-12 px-4 sm:px-6 lg:px-8 dir-rtl">
+    <div className="min-h-screen min-h-dvh bg-gradient-to-b from-purple-50/50 via-white to-pink-50/30 py-12 px-4 sm:px-6 lg:px-8 dir-rtl">
       <div className="max-w-4xl mx-auto">
         {/* Top AI Badge & Title */}
         <div className="text-center mb-10">

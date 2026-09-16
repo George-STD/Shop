@@ -5,7 +5,7 @@ import { STRINGS } from '../constants';
 const NotFoundPage = () => {
   return (
     <>
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12">
+      <div className="min-h-screen min-h-dvh bg-gray-50 flex items-center justify-center py-12">
         <div className="container-custom">
           <div className="max-w-lg mx-auto text-center">
             {/* 404 Illustration */}

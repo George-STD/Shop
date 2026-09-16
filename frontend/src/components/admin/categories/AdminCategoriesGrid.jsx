@@ -26,8 +26,17 @@ const AdminCategoriesGrid = ({ categories, isLoading, handleEdit, handleDelete }
               </div>
             </div>
           ))
-        : categories?.map((category, index) => (
-            <div
+        : (!categories || categories.length === 0) ? (
+            <div className="col-span-full bg-white rounded-2xl p-16 text-center border border-gray-100 shadow-sm flex flex-col items-center justify-center gap-3">
+              <div className="w-16 h-16 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 mb-1">
+                <FiImage className="w-8 h-8" />
+              </div>
+              <p className="font-bold text-gray-700 text-base">لا توجد تصنيفات مضافة بعد</p>
+              <p className="text-xs text-gray-400 max-w-sm">يمكنك إضافة تصنيفات جديدة لتنظيم المنتجات والهدايا في المتجر</p>
+            </div>
+          ) : (
+            categories.map((category, index) => (
+              <div
               key={category._id}
               className="bg-white rounded-2xl shadow-sm overflow-hidden group border border-gray-100 min-h-[290px] flex flex-col justify-between"
             >
@@ -86,7 +95,8 @@ const AdminCategoriesGrid = ({ categories, isLoading, handleEdit, handleDelete }
                 <p className="text-xs text-gray-400 mt-2">{STRINGS.ADMIN.CATEGORIES.ORDER_PREFIX} {category.order || 0}</p>
               </div>
             </div>
-          ))}
+          ))
+        )}
     </div>
   );
 };

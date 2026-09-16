@@ -113,10 +113,12 @@ const ShippingFormStep = memo(function ShippingFormStep({
             placeholder="010XXXXXXXX"
             required
           />
-          {errors.phone && (
+          {errors.phone ? (
             <p id="error-phone" className="text-red-500 text-xs mt-1 font-medium" role="alert">
               {errors.phone}
             </p>
+          ) : (
+            <p className="text-[11px] text-gray-400 mt-1">مثال: 01012345678 (فودافون، أورنج، اتصالات، وي)</p>
           )}
         </div>
 
@@ -766,11 +768,25 @@ const CheckoutPage = () => {
 
   if (items.length === 0) {
     return (
-      <div className="container-custom py-16 text-center">
-        <h1 className="text-2xl font-bold mb-4">{STRINGS.CART.EMPTY}</h1>
-        <Link to="/products" className="btn-primary">
-          {STRINGS.CART.START_SHOPPING}
-        </Link>
+      <div className="min-h-screen min-h-dvh bg-gray-50 flex items-center py-12 px-4">
+        <div className="container-custom max-w-xl text-center">
+          <div className="bg-white rounded-3xl p-8 sm:p-12 shadow-sm border border-purple-100/80 relative overflow-hidden">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 rounded-full bg-gradient-to-tr from-purple-100 to-pink-100 flex items-center justify-center text-purple-600 shadow-inner">
+              <FiPackage className="w-10 h-10 sm:w-12 sm:h-12" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-3">{STRINGS.CART.EMPTY}</h1>
+            <p className="text-gray-500 text-sm sm:text-base mb-8 leading-relaxed max-w-md mx-auto">
+              {STRINGS.CART.EMPTY_MESSAGE}، أضف بعض الهدايا المميزة إلى سلتك قبل متابعة إتمام الطلب!
+            </p>
+            <Link
+              to="/products"
+              className="btn-primary w-full py-3.5 text-sm sm:text-base font-bold shadow-lg shadow-purple-500/20 inline-flex items-center justify-center gap-2"
+            >
+              <FiPackage />
+              <span>{STRINGS.CART.START_SHOPPING}</span>
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }

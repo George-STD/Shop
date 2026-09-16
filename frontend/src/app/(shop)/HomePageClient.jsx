@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 
 const HomePage = dynamic(() => import('../../legacy-pages/HomePage'), {
   ssr: true,
-  loading: () => <div className="min-h-screen bg-white" aria-label="Loading home page" />,
+  loading: () => <div className="min-h-screen min-h-dvh bg-white" aria-label="Loading home page" />,
 });
 
 export default function HomePageClient() {

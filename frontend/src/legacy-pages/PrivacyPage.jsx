@@ -3,7 +3,7 @@ import { STRINGS } from '../constants';
 const PrivacyPage = () => {
   return (
     <>
-      <div className="min-h-screen bg-gray-50 py-12">
+      <div className="min-h-screen min-h-dvh bg-gray-50 py-12">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto bg-white rounded-2xl p-8 md:p-12 shadow-sm">
             <h1 className="text-3xl font-bold mb-8">{STRINGS.PRIVACY_PAGE.HERO_TITLE}</h1>

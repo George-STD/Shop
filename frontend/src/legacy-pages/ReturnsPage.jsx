@@ -11,7 +11,7 @@ const ReturnsPage = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen min-h-dvh bg-gray-50">
         {/* Hero */}
         <div className="bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white py-16">
           <div className="container-custom text-center">
