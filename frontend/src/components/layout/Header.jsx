@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import Image from 'next/image';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { FiSearch, FiUser, FiHeart, FiShoppingBag, FiMenu, FiSettings } from 'react-icons/fi';
 import { useCartStore, useWishlistStore, useAuthStore, useUIStore } from '../../store';
@@ -12,6 +12,7 @@ import { STRINGS } from '../../constants';
  */
 const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -87,7 +88,7 @@ const Header = () => {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
+      className={`sticky top-0 z-40 transition-all duration-300 ${
         isScrolled ? 'header-scrolled bg-white/95 backdrop-blur-md shadow-md' : 'bg-white shadow-sm'
       }`}
       role="banner"
@@ -104,13 +105,25 @@ const Header = () => {
             {STRINGS.HOME.TAGLINE}
           </p>
           <nav className="hidden md:flex gap-4 font-medium" aria-label={STRINGS.NAV.QUICK_LINKS}>
-            <Link to="/track-order" className="hover:text-white/80 transition-colors">
+            <Link
+              to="/track-order"
+              className={`hover:text-white/80 transition-colors ${location.pathname === '/track-order' ? 'underline font-bold' : ''}`}
+              aria-current={location.pathname === '/track-order' ? 'page' : undefined}
+            >
               {STRINGS.NAV.TRACK_ORDER}
             </Link>
-            <Link to="/stores" className="hover:text-white/80 transition-colors">
+            <Link
+              to="/stores"
+              className={`hover:text-white/80 transition-colors ${location.pathname === '/stores' ? 'underline font-bold' : ''}`}
+              aria-current={location.pathname === '/stores' ? 'page' : undefined}
+            >
               {STRINGS.NAV.STORES}
             </Link>
-            <Link to="/contact" className="hover:text-white/80 transition-colors">
+            <Link
+              to="/contact"
+              className={`hover:text-white/80 transition-colors ${location.pathname === '/contact' ? 'underline font-bold' : ''}`}
+              aria-current={location.pathname === '/contact' ? 'page' : undefined}
+            >
               {STRINGS.NAV.CONTACT}
             </Link>
           </nav>
@@ -210,8 +223,13 @@ const Header = () => {
             {/* Account / Login */}
             <Link
               to="/account"
-              className="p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl hidden sm:flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors text-gray-700"
+              className={`p-2 sm:p-2.5 rounded-xl hidden sm:flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
+                location.pathname.startsWith('/account')
+                  ? 'bg-purple-100/70 text-purple-700'
+                  : 'text-gray-700 hover:bg-purple-50'
+              }`}
               aria-label={isAuthenticated ? STRINGS.NAV.ACCOUNT : STRINGS.AUTH.LOGIN}
+              aria-current={location.pathname.startsWith('/account') ? 'page' : undefined}
             >
               <FiUser size={20} aria-hidden="true" />
               <span className="hidden lg:inline text-sm font-medium">
@@ -222,10 +240,15 @@ const Header = () => {
             {/* Wishlist */}
             <Link
               to="/wishlist"
-              className="p-2 sm:p-2.5 hover:bg-purple-50 rounded-xl relative focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors text-gray-700"
+              className={`p-2 sm:p-2.5 rounded-xl relative focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors ${
+                location.pathname === '/wishlist'
+                  ? 'bg-purple-100/70 text-purple-700'
+                  : 'text-gray-700 hover:bg-purple-50'
+              }`}
               aria-label={`${STRINGS.NAV.WISHLIST}${
                 countsReady && wishlistCount > 0 ? ` (${wishlistCount} ${STRINGS.PRODUCT.ITEMS})` : ''
               }`}
+              aria-current={location.pathname === '/wishlist' ? 'page' : undefined}
             >
               <FiHeart size={20} aria-hidden="true" />
               {countsReady && wishlistCount > 0 && (
@@ -304,32 +327,51 @@ const Header = () => {
         aria-label={STRINGS.NAV.CATEGORIES}
       >
         <div className="container-custom">
-          <ul className="flex items-center justify-center gap-3.5 xl:gap-6 py-3 whitespace-nowrap overflow-x-auto custom-scrollbar" role="menubar">
+          <ul className="flex items-center justify-center gap-2 xl:gap-4 py-2.5 whitespace-nowrap overflow-x-auto custom-scrollbar" role="menubar">
             <li role="none" className="shrink-0">
               <Link
                 to="/products"
-                className="nav-link text-gray-700 hover:text-purple-600 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 rounded text-sm whitespace-nowrap inline-block"
+                className={`nav-link px-3 py-1.5 rounded-xl text-sm whitespace-nowrap inline-block transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                  location.pathname === '/products' && !location.search
+                    ? 'text-purple-700 bg-purple-50 font-bold border border-purple-200/60'
+                    : 'text-gray-700 hover:text-purple-600 font-semibold'
+                }`}
                 role="menuitem"
+                aria-current={location.pathname === '/products' && !location.search ? 'page' : undefined}
               >
                 {STRINGS.NAV.ALL_PRODUCTS}
               </Link>
             </li>
-            {categories.map((category) => (
-              <li key={category.slug || category._id} role="none" className="shrink-0">
-                <Link
-                  to={category.slug ? `/products?category=${encodeURIComponent(category.slug)}` : '/products'}
-                  className="nav-link text-gray-600 hover:text-purple-600 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 rounded text-sm whitespace-nowrap inline-block"
-                  role="menuitem"
-                >
-                  {category.name}
-                </Link>
-              </li>
-            ))}
+            {categories.map((category) => {
+              const isCategoryActive =
+                location.pathname === '/products' &&
+                category.slug &&
+                location.search.includes(`category=${encodeURIComponent(category.slug)}`);
+              return (
+                <li key={category.slug || category._id} role="none" className="shrink-0">
+                  <Link
+                    to={category.slug ? `/products?category=${encodeURIComponent(category.slug)}` : '/products'}
+                    className={`nav-link px-3 py-1.5 rounded-xl text-sm whitespace-nowrap inline-block transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                      isCategoryActive
+                        ? 'text-purple-700 bg-purple-50 font-bold border border-purple-200/60'
+                        : 'text-gray-600 hover:text-purple-600 font-medium'
+                    }`}
+                    role="menuitem"
+                    aria-current={isCategoryActive ? 'page' : undefined}
+                  >
+                    {category.name}
+                  </Link>
+                </li>
+              );
+            })}
             <li role="none" className="shrink-0">
               <Link
                 to="/build-a-box"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-pink-50 to-rose-50 text-pink-700 font-bold hover:from-pink-100 hover:to-rose-100 transition-all focus:outline-none focus:ring-2 focus:ring-pink-500 rounded-full text-sm whitespace-nowrap border border-pink-100 shadow-sm"
+                className={`flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-pink-50 to-rose-50 text-pink-700 font-bold hover:from-pink-100 hover:to-rose-100 transition-all focus:outline-none focus:ring-2 focus:ring-pink-500 rounded-full text-sm whitespace-nowrap border border-pink-200/80 shadow-sm ${
+                  location.pathname === '/build-a-box' ? 'ring-2 ring-pink-500 shadow-md' : ''
+                }`}
                 role="menuitem"
+                aria-current={location.pathname === '/build-a-box' ? 'page' : undefined}
               >
                 <span aria-hidden="true">🎁</span>
                 <span>{STRINGS.HEADER.BUILD_BOX}</span>
@@ -338,8 +380,11 @@ const Header = () => {
             <li role="none" className="shrink-0">
               <Link
                 to="/gift-finder"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 font-bold hover:from-purple-100 hover:to-pink-100 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-full text-sm whitespace-nowrap border border-purple-100 shadow-sm"
+                className={`flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 font-bold hover:from-purple-100 hover:to-pink-100 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-full text-sm whitespace-nowrap border border-purple-200/80 shadow-sm ${
+                  location.pathname === '/gift-finder' ? 'ring-2 ring-purple-500 shadow-md' : ''
+                }`}
                 role="menuitem"
+                aria-current={location.pathname === '/gift-finder' ? 'page' : undefined}
               >
                 <span aria-hidden="true">🎯</span>
                 <span>{STRINGS.NAV.GIFT_FINDER}</span>

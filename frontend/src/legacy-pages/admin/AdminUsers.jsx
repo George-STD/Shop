@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
 import { STRINGS } from '../../constants';
+import toast from 'react-hot-toast';
 
 import AdminUsersHeader from '../../components/admin/users/AdminUsersHeader';
 import AdminUsersTable from '../../components/admin/users/AdminUsersTable';
@@ -31,6 +32,10 @@ const AdminUsers = () => {
     mutationFn: ({ id, data }) => adminAPI.updateUser(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success(STRINGS.ADMIN.NOTIFICATIONS.USER_UPDATED || 'تم تحديث بيانات المستخدم بنجاح');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'فشل تحديث المستخدم');
     },
   });
 
@@ -38,6 +43,10 @@ const AdminUsers = () => {
     mutationFn: (id) => adminAPI.deleteUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success(STRINGS.ADMIN.NOTIFICATIONS.USER_DELETED || 'تم حذف المستخدم بنجاح');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'فشل حذف المستخدم');
     },
   });
 
@@ -69,6 +78,7 @@ const AdminUsers = () => {
         setRoleFilter={setRoleFilter}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
+        setPage={setPage}
       />
 
       <AdminUsersTable

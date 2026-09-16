@@ -1197,6 +1197,7 @@ export const STRINGS = {
       EMAIL_REQUIRED: 'البريد الإلكتروني مطلوب',
       EMAIL_INVALID: 'البريد الإلكتروني غير صحيح',
       PHONE_REQUIRED: 'رقم الهاتف مطلوب',
+      PHONE_INVALID: 'يرجى إدخال رقم هاتف مصري صحيح يبدأ بـ 010 أو 011 أو 012 أو 015',
       GOVERNORATE_REQUIRED: 'المحافظة مطلوبة',
       STREET_REQUIRED: 'العنوان التفصيلي مطلوب',
       FILL_REQUIRED: 'الرجاء ملء جميع الحقول المطلوبة',

@@ -1,13 +1,16 @@
 import React from 'react';
 import { STRINGS } from '../../../constants';
 
-const AdminReviewsHeader = ({ approvedFilter, setApprovedFilter, totalReviews }) => {
+const AdminReviewsHeader = ({ approvedFilter, setApprovedFilter, totalReviews, setPage }) => {
   return (
     <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm min-h-[72px] sm:min-h-[88px]">
       <div className="flex flex-wrap items-center gap-4">
         <select
           value={approvedFilter}
-          onChange={(e) => setApprovedFilter(e.target.value)}
+          onChange={(e) => {
+            setApprovedFilter(e.target.value);
+            if (setPage) setPage(1);
+          }}
           className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
         >
           <option value="">{STRINGS.ADMIN.REVIEWS_STRINGS.ALL_REVIEWS}</option>

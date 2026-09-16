@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
 import { STRINGS } from '../../constants';
+import toast from 'react-hot-toast';
 
 import AdminReviewsHeader from '../../components/admin/reviews/AdminReviewsHeader';
 import AdminReviewsList from '../../components/admin/reviews/AdminReviewsList';
@@ -25,8 +26,12 @@ const AdminReviews = () => {
 
   const approveMutation = useMutation({
     mutationFn: ({ id, isApproved }) => adminAPI.approveReview(id, isApproved),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
+      toast.success(variables.isApproved ? 'تمت الموافقة على التقييم بنجاح' : 'تم إلغاء الموافقة على التقييم');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'فشل تحديث التقييم');
     },
   });
 
@@ -34,6 +39,10 @@ const AdminReviews = () => {
     mutationFn: (id) => adminAPI.deleteReview(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
+      toast.success('تم حذف التقييم بنجاح');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'فشل حذف التقييم');
     },
   });
 
@@ -53,6 +62,7 @@ const AdminReviews = () => {
         approvedFilter={approvedFilter}
         setApprovedFilter={setApprovedFilter}
         totalReviews={data?.pagination?.total}
+        setPage={setPage}
       />
 
       <AdminReviewsList

@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import TableSkeleton from '../TableSkeleton';
 import React from 'react';
-import { FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiPackage } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
 import toast from 'react-hot-toast';
 
@@ -71,7 +71,20 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {products?.data?.map((product, index) => {
+            {(!products?.data || products.data.length === 0) ? (
+              <tr>
+                <td colSpan={7} className="text-center py-16 text-gray-500">
+                  <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
+                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-1">
+                      <FiPackage className="w-6 h-6" />
+                    </div>
+                    <p className="font-bold text-gray-700 text-sm sm:text-base">لا توجد منتجات تطابق هذا البحث أو التصنيف</p>
+                    <p className="text-xs text-gray-400">جرب تغيير كلمات البحث أو اختيار فئة أخرى</p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              products.data.map((product, index) => {
               if (!product) return null;
               return (
               <tr key={product._id || index} className="hover:bg-gray-50 h-14 sm:h-16">
@@ -169,7 +182,8 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
                 </td>
               </tr>
               );
-            })}
+            })
+            )}
           </tbody>
         </table>
       </div>

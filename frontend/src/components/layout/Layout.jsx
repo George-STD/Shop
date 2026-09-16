@@ -11,10 +11,17 @@ const Layout = ({ children }) => {
   const isCartOpen = useUIStore((state) => state.isCartOpen);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen min-h-dvh flex flex-col">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:right-4 focus:z-[9999] focus:px-6 focus:py-3 focus:bg-purple-700 focus:text-white focus:rounded-xl focus:shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-300 font-bold text-sm transition-all"
+      >
+        تخطي إلى المحتوى الرئيسي
+      </a>
+
       <Header />
 
-      <main className="flex-grow">{children || <Outlet />}</main>
+      <main id="main-content" className="flex-grow">{children || <Outlet />}</main>
 
       <Footer />
 

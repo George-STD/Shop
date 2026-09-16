@@ -203,17 +203,20 @@ export default function ReviewOrderClient({ orderNumber }) {
             <label className="block text-gray-800 font-bold text-sm sm:text-base mb-3">
               ما هو تقييمك الإجمالي للمنتجات؟ ⭐
             </label>
-            <div className="flex items-center justify-center gap-2 dir-ltr">
+            <div className="flex items-center justify-center gap-2 dir-ltr" dir="ltr" role="radiogroup" aria-label="تقييم من 1 إلى 5 نجوم">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
                   type="button"
+                  role="radio"
+                  aria-checked={rating === star}
+                  aria-label={`${star} من 5 نجوم`}
                   onClick={() => setRating(star)}
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
-                  className="p-1 text-3xl sm:text-4xl transition-all duration-200 hover:scale-125 focus:outline-none"
+                  className="p-1 text-3xl sm:text-4xl transition-all duration-200 hover:scale-125 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded-lg"
                 >
-                  <span className={(hoverRating || rating) >= star ? 'text-amber-400 drop-shadow-sm' : 'text-gray-300'}>
+                  <span aria-hidden="true" className={(hoverRating || rating) >= star ? 'text-amber-400 drop-shadow-sm' : 'text-gray-300'}>
                     ★
                   </span>
                 </button>

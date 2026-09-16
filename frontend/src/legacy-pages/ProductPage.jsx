@@ -21,7 +21,7 @@ import { productsAPI, reviewsAPI, settingsAPI, authAPI } from '../services/api';
 import { useCartStore, useWishlistStore, useAuthStore } from '../store';
 import ProductCard from '../components/product/ProductCard';
 import toast from 'react-hot-toast';
-import { STRINGS } from '../constants';
+import { STRINGS, SITE_CONFIG } from '../constants';
 
 // Safe image helper
 const getOptImages = (opt) => {
@@ -295,7 +295,7 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
 
   // Active Hero Image URL
   const currentHeroImageUrl = useMemo(() => {
-    return mainOverrideImage || activeBoxImage || displayImages[activeImageIdx]?.url || '/placeholder-gift.png';
+    return mainOverrideImage || activeBoxImage || displayImages[activeImageIdx]?.url || SITE_CONFIG.PLACEHOLDER_IMAGE;
   }, [mainOverrideImage, activeBoxImage, displayImages, activeImageIdx]);
 
   // Auto-play gallery
@@ -1096,7 +1096,7 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
                       title={STRINGS.PRODUCT.ORIGINAL_SHAPE}
                     >
                       <Image
-                        src={displayImages[0]?.url || product.images?.[0]?.url || '/placeholder-gift.png'}
+                        src={displayImages[0]?.url || product.images?.[0]?.url || SITE_CONFIG.PLACEHOLDER_IMAGE}
                         alt={STRINGS.PRODUCT.ORIGINAL_SHAPE}
                         fill
                         sizes="64px"

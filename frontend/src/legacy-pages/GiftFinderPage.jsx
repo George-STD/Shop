@@ -17,6 +17,7 @@ import {
 import { HiSparkles } from 'react-icons/hi';
 import { giftFinderAPI } from '../services/api';
 import { useCartStore } from '../store';
+import { SITE_CONFIG } from '../constants';
 import toast from 'react-hot-toast';
 
 const RECIPIENTS_LIST = [
@@ -308,7 +309,7 @@ const GiftFinderPage = () => {
                           <Image
                             fill
                             sizes="(max-width: 768px) 100vw, 256px"
-                            src={box.images?.[0]?.url || '/placeholder-box.png'}
+                            src={box.images?.[0]?.url || SITE_CONFIG.PLACEHOLDER_BOX_IMAGE || SITE_CONFIG.PLACEHOLDER_IMAGE}
                             alt={box.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
@@ -325,7 +326,7 @@ const GiftFinderPage = () => {
                           <div>
                             <div className="flex items-center justify-between gap-2 mb-1">
                               <h4 className="text-xl font-bold text-gray-900">{box.name}</h4>
-                              <div className="text-left dir-ltr shrink-0">
+                              <div className="text-left dir-ltr shrink-0" dir="ltr">
                                 <span className="text-lg font-extrabold text-purple-700 whitespace-nowrap">
                                   {box.price} ج.م
                                 </span>

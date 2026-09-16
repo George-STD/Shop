@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -17,19 +17,29 @@ import {
 } from 'react-icons/fi';
 import { productsAPI, categoriesAPI } from '../services/api';
 import { useBuildBoxStore, useCartStore } from '../store';
-import { STRINGS, BUSINESS_CONFIG } from '../constants';
+import { STRINGS, BUSINESS_CONFIG, SITE_CONFIG } from '../constants';
+import { ConfirmModal } from '../components/common';
 import toast from 'react-hot-toast';
 
 const BuildBoxPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim());
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const { items: boxItems, addItem, removeItem, clearBox, getTotal } = useBuildBoxStore();
   const maxItems = BUSINESS_CONFIG.BOX_MAX_ITEMS;
   const minItems = BUSINESS_CONFIG.BOX_MIN_ITEMS;
   const { addItem: addCartItem } = useCartStore();
   const navigate = useNavigate();
 
-  // null = Show All Products
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
   // Fetch box categories
   const { data: categoriesData, isLoading: isCategoriesLoading } = useQuery({
@@ -39,11 +49,11 @@ const BuildBoxPage = () => {
 
   // Fetch box-eligible products (defaults to ALL products if no category is selected)
   const { data: productsData, isLoading } = useQuery({
-    queryKey: ['products', { canBeAddedToBox: 'true', category: selectedCategory, search: searchTerm }],
+    queryKey: ['products', { canBeAddedToBox: 'true', category: selectedCategory, search: debouncedSearch }],
     queryFn: () => {
       const params = { canBeAddedToBox: 'true', limit: 50 };
       if (selectedCategory) params.category = selectedCategory;
-      if (searchTerm) params.search = searchTerm;
+      if (debouncedSearch) params.search = debouncedSearch;
       return productsAPI.getAll(params).then((res) => res.data);
     },
   });
@@ -94,10 +104,7 @@ const BuildBoxPage = () => {
   };
 
   const handleClearBox = () => {
-    if (window.confirm(STRINGS.BUILD_BOX_PAGE.CONFIRM_CLEAR_BOX)) {
-      clearBox();
-      toast.success(STRINGS.BUILD_BOX_PAGE.BOX_CLEARED);
-    }
+    setIsClearModalOpen(true);
   };
 
   const handleAddToBox = (product) => {
@@ -121,7 +128,7 @@ const BuildBoxPage = () => {
       name: product.name,
       slug: product.slug,
       price: product.price,
-      image: product.images[0]?.url,
+      image: product.images?.[0]?.url || SITE_CONFIG.PLACEHOLDER_IMAGE,
       stock: product.stock,
       boxDiscount: product.boxDiscount
     });
@@ -131,7 +138,7 @@ const BuildBoxPage = () => {
   const progressPercent = Math.round((boxItems.length / maxItems) * 100);
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-32 lg:pb-20">
+    <div className="bg-gray-50 min-h-screen min-h-dvh pb-32 lg:pb-20">
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-12 px-4 text-center">
         <h1 className="text-3xl md:text-5xl font-bold mb-4 flex items-center justify-center gap-3">
@@ -267,9 +274,9 @@ const BuildBoxPage = () => {
                         className="relative h-48 overflow-hidden block"
                       >
                         <Image
-                    fill
-                    sizes="100vw"
-                          src={product.images[0]?.url}
+                          fill
+                          sizes="100vw"
+                          src={product.images?.[0]?.url || SITE_CONFIG.PLACEHOLDER_IMAGE}
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
@@ -405,9 +412,9 @@ const BuildBoxPage = () => {
                         }}
                       >
                         <Image
-                    fill
-                    sizes="100vw"
-                          src={item.image}
+                          fill
+                          sizes="100vw"
+                          src={item.image || SITE_CONFIG.PLACEHOLDER_IMAGE}
                           alt={item.name}
                           className="w-full h-full object-cover rounded-lg border-2 border-white/50 bg-white"
                         />
@@ -440,10 +447,10 @@ const BuildBoxPage = () => {
                       className="flex gap-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm relative group"
                     >
                       <Image
-                    width={64}
-                    height={64}
-                    sizes="64px"
-                        src={item.image}
+                        width={64}
+                        height={64}
+                        sizes="64px"
+                        src={item.image || SITE_CONFIG.PLACEHOLDER_IMAGE}
                         alt={item.name}
                         className="w-16 h-16 object-cover rounded-xl"
                       />
@@ -567,6 +574,21 @@ const BuildBoxPage = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        onConfirm={() => {
+          clearBox();
+          setIsClearModalOpen(false);
+          toast.success(STRINGS.BUILD_BOX_PAGE.BOX_CLEARED);
+        }}
+        title="تفريغ محتويات البوكس"
+        message={STRINGS.BUILD_BOX_PAGE.CONFIRM_CLEAR_BOX}
+        confirmText="تفريغ البوكس"
+        cancelText="تراجع"
+        type="danger"
+      />
     </div>
   );
 };

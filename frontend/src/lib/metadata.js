@@ -124,6 +124,13 @@ export const PAGE_METADATA = {
     path: ROUTES.GIFT_FINDER,
   }),
 
+  buildBox: generateMetadata({
+    title: 'صمم بوكس هديتك بنفسك',
+    description:
+      'صمم بوكس هدايا مخصص ومميز خطوة بخطوة. اختر الصندوق والهدايا والتوزيعات والحلويات المفضلة مع تغليف فاخر وشحن سريع لجميع محافظات مصر.',
+    path: '/build-a-box',
+  }),
+
   trackOrder: generateMetadata({
     title: 'تتبع الطلب',
     description: 'تتبع حالة طلبك من فور يو. أدخل رقم الطلب لمعرفة حالة الشحن والتوصيل.',

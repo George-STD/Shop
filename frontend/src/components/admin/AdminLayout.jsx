@@ -48,10 +48,20 @@ const AdminLayout = ({ children }) => {
     };
   }, [_hasHydrated, isAuthenticated, logout, updateUser, user?.role]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mobileMenuOpen]);
+
   // Wait for auth store to rehydrate before checking auth
   if (!_hasHydrated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen min-h-dvh bg-gray-50 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full"></div>
       </div>
     );
@@ -68,7 +78,7 @@ const AdminLayout = ({ children }) => {
 
   const menuItems = [
     { path: '/admin', icon: FiHome, label: STRINGS.ADMIN.DASHBOARD.TITLE, exact: true },
-    { path: '/admin/analysis', icon: FiBarChart2, label: 'التحليلات والتتبع' },
+    { path: '/admin/analysis', icon: FiBarChart2, label: STRINGS.ADMIN.ANALYSIS?.TITLE || 'التحليلات والتتبع' },
     { path: '/admin/users', icon: FiUsers, label: STRINGS.ADMIN.USERS },
     { path: '/admin/products', icon: FiPackage, label: STRINGS.ADMIN.PRODUCTS },
     { path: '/admin/orders', icon: FiShoppingCart, label: STRINGS.ADMIN.ORDERS.TITLE },
@@ -84,7 +94,14 @@ const AdminLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex" dir="rtl">
+    <div className="min-h-screen min-h-dvh bg-gray-100 flex" dir="rtl">
+      <a
+        href="#admin-main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:right-4 focus:z-[9999] focus:px-6 focus:py-3 focus:bg-purple-700 focus:text-white focus:rounded-xl focus:shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-300 font-bold text-sm transition-all"
+      >
+        تخطي إلى محتوى لوحة التحكم
+      </a>
+
       {/* Sidebar - Desktop */}
       <aside
         className={`hidden lg:flex flex-col bg-gray-900 text-white transition-all duration-300 ${
@@ -99,7 +116,9 @@ const AdminLayout = ({ children }) => {
             </Link>
           )}
           <button
+            type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label={sidebarOpen ? 'تصغير القائمة الجانبية' : 'توسيع القائمة الجانبية'}
             className="p-1 sm:p-2 hover:bg-gray-700 rounded-lg"
           >
             <FiChevronLeft
@@ -158,11 +177,15 @@ const AdminLayout = ({ children }) => {
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Mobile Sidebar */}
       <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label="قائمة لوحة التحكم"
         className={`fixed top-0 right-0 h-full w-64 bg-gray-900 text-white z-50 transform transition-transform lg:hidden ${
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
@@ -170,7 +193,9 @@ const AdminLayout = ({ children }) => {
         <div className="h-14 sm:h-16 flex items-center justify-between px-2 sm:px-4 border-b border-gray-700">
           <span className="text-lg sm:text-xl font-bold text-pink-400">{STRINGS.ADMIN.DASHBOARD.TITLE}</span>
           <button
+            type="button"
             onClick={() => setMobileMenuOpen(false)}
+            aria-label="إغلاق القائمة الجانبية"
             className="p-1 sm:p-2 hover:bg-gray-700 rounded-lg"
           >
             <FiX />
@@ -216,12 +241,14 @@ const AdminLayout = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen min-h-dvh">
         {/* Top Bar */}
         <header className="h-14 sm:h-16 bg-white shadow-sm flex items-center justify-between px-2 sm:px-4 lg:px-8">
           <div className="flex items-center gap-2 sm:gap-4">
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(true)}
+              aria-label="فتح القائمة الجانبية"
               className="lg:hidden p-1 sm:p-2 hover:bg-gray-100 rounded-lg"
             >
               <FiMenu className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -243,7 +270,7 @@ const AdminLayout = ({ children }) => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-2 sm:p-4 lg:p-8 overflow-auto">{children || <Outlet />}</main>
+        <main id="admin-main-content" className="flex-1 p-2 sm:p-4 lg:p-8 overflow-auto">{children || <Outlet />}</main>
       </div>
       
       {/* AI Assistant */}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
 import { STRINGS } from '../../constants';
+import toast from 'react-hot-toast';
 
 import AdminEmailList from '../../components/admin/emails/AdminEmailList';
 import AdminEmailDetail from '../../components/admin/emails/AdminEmailDetail';
@@ -21,6 +22,10 @@ const AdminEmails = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-emails'] });
       setSelectedEmail(null);
+      toast.success('تم حذف الرسالة بنجاح');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'فشل حذف الرسالة');
     },
   });
 

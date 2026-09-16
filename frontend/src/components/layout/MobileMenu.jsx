@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, memo } from 'react';
 import Image from 'next/image';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { FiX, FiUser, FiMapPin, FiMail, FiSettings, FiChevronLeft } from 'react-icons/fi';
 import { useUIStore, useAuthStore } from '../../store';
@@ -11,6 +11,7 @@ import { STRINGS, BUSINESS_CONFIG } from '../../constants';
  * Accessible & Memoized Mobile Navigation Drawer with Focus Trapping
  */
 const MobileMenu = () => {
+  const location = useLocation();
   const panelRef = useRef(null);
   const closeButtonRef = useRef(null);
 
@@ -211,8 +212,13 @@ const MobileMenu = () => {
                 <Link
                   to="/products"
                   onClick={closeMobileMenu}
-                  className="flex items-center justify-between py-2.5 px-3 text-gray-700 font-semibold hover:text-purple-700 hover:bg-purple-50 rounded-xl transition-all group focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                  className={`flex items-center justify-between py-2.5 px-3 rounded-xl transition-all group focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm ${
+                    location.pathname === '/products' && !location.search
+                      ? 'text-purple-700 bg-purple-100/70 font-bold border border-purple-200/60'
+                      : 'text-gray-700 font-semibold hover:text-purple-700 hover:bg-purple-50'
+                  }`}
                   role="menuitem"
+                  aria-current={location.pathname === '/products' && !location.search ? 'page' : undefined}
                 >
                   <span className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-purple-500"></span>
@@ -230,13 +236,22 @@ const MobileMenu = () => {
               {categories.map((category) => {
                 const slug = category.slug;
                 const name = category.name;
+                const isCategoryActive =
+                  location.pathname === '/products' &&
+                  slug &&
+                  location.search.includes(`category=${encodeURIComponent(slug)}`);
                 return (
                   <li key={slug || category._id} role="none">
                     <Link
                       to={slug ? `/products?category=${encodeURIComponent(slug)}` : '/products'}
                       onClick={closeMobileMenu}
-                      className="flex items-center justify-between py-2.5 px-3 text-gray-600 hover:text-purple-700 hover:bg-purple-50 rounded-xl transition-all group focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                      className={`flex items-center justify-between py-2.5 px-3 rounded-xl transition-all group focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm ${
+                        isCategoryActive
+                          ? 'text-purple-700 bg-purple-100/70 font-bold border border-purple-200/60'
+                          : 'text-gray-600 hover:text-purple-700 hover:bg-purple-50 font-medium'
+                      }`}
                       role="menuitem"
+                      aria-current={isCategoryActive ? 'page' : undefined}
                     >
                       <span>{name}</span>
                       <FiChevronLeft
@@ -254,8 +269,13 @@ const MobileMenu = () => {
                 <Link
                   to="/build-a-box"
                   onClick={closeMobileMenu}
-                  className="flex items-center justify-between py-2.5 px-3 text-pink-700 bg-pink-50/80 hover:bg-pink-100/80 font-bold rounded-xl transition-all group focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm border border-pink-100"
+                  className={`flex items-center justify-between py-2.5 px-3 rounded-xl transition-all group focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm border ${
+                    location.pathname === '/build-a-box'
+                      ? 'text-pink-800 bg-pink-100 font-black border-pink-300 ring-2 ring-pink-400/40'
+                      : 'text-pink-700 bg-pink-50/80 hover:bg-pink-100/80 font-bold border-pink-100'
+                  }`}
                   role="menuitem"
+                  aria-current={location.pathname === '/build-a-box' ? 'page' : undefined}
                 >
                   <span className="flex items-center gap-2">
                     <span aria-hidden="true">🎁</span>
@@ -299,18 +319,26 @@ const MobileMenu = () => {
                 { to: '/stores', label: STRINGS.NAV.STORES, icon: '🏪' },
                 { to: '/faq', label: STRINGS.FOOTER.FAQ || 'الأسئلة الشائعة', icon: '❓' },
                 { to: '/contact', label: STRINGS.NAV.CONTACT, icon: '💬' },
-              ].map((link) => (
-                <li key={link.to}>
-                  <Link
-                    to={link.to}
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-3 py-2.5 px-3 text-gray-600 hover:text-purple-700 hover:bg-purple-50 rounded-xl transition-all text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <span aria-hidden="true">{link.icon}</span>
-                    <span>{link.label}</span>
-                  </Link>
-                </li>
-              ))}
+              ].map((link) => {
+                const isActive = location.pathname === link.to;
+                return (
+                  <li key={link.to}>
+                    <Link
+                      to={link.to}
+                      onClick={closeMobileMenu}
+                      className={`flex items-center gap-3 py-2.5 px-3 rounded-xl transition-all text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                        isActive
+                          ? 'text-purple-700 bg-purple-100/70 font-bold border border-purple-200/60'
+                          : 'text-gray-600 hover:text-purple-700 hover:bg-purple-50'
+                      }`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      <span aria-hidden="true">{link.icon}</span>
+                      <span>{link.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>

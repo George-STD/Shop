@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Image from 'next/image';
 import {
@@ -8,15 +9,26 @@ import {
   FiMapPin,
   FiMessageCircle,
   FiHeart,
+  FiCheckCircle,
 } from 'react-icons/fi';
 import { STRINGS, BUSINESS_CONFIG } from '../../constants';
+import toast from 'react-hot-toast';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
 
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
-    // TODO: implement newsletter signup
+    const cleanEmail = email.trim();
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      toast.error('يرجى إدخال بريد إلكتروني صالح');
+      return;
+    }
+    setSubscribed(true);
+    toast.success('شكراً لاشتراكك في نشرتنا البريدية! سنرسل لك أحدث العروض والخصومات.');
+    setEmail('');
   };
 
   return (
@@ -40,19 +52,35 @@ const Footer = () => {
             <p className="text-purple-100 mb-8 text-sm sm:text-base">
               {STRINGS.FOOTER.NEWSLETTER_SUBTITLE}
             </p>
-            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto px-4 sm:px-0">
-              <input
-                type="email"
-                placeholder={STRINGS.FOOTER.NEWSLETTER_PLACEHOLDER}
-                className="flex-1 px-5 py-3 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-white/50 bg-white/95 backdrop-blur-sm text-sm"
-              />
-              <button
-                type="submit"
-                className="bg-white text-purple-700 px-6 py-3 rounded-xl font-bold hover:bg-purple-50 transition-all hover:shadow-lg hover:shadow-white/20 hover:-translate-y-0.5 active:translate-y-0 text-sm whitespace-nowrap"
-              >
-                {STRINGS.FOOTER.NEWSLETTER_BUTTON} ←
-              </button>
-            </form>
+            {subscribed ? (
+              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-6 py-3.5 rounded-2xl text-white font-bold border border-white/30 text-base shadow-sm">
+                <FiCheckCircle className="text-xl text-green-300" />
+                <span>تم الاشتراك بنجاح! شكراً لك 🎉</span>
+              </div>
+            ) : (
+              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto px-4 sm:px-0">
+                <label htmlFor="footer-newsletter-email" className="sr-only">
+                  {STRINGS.FOOTER.NEWSLETTER_PLACEHOLDER}
+                </label>
+                <input
+                  id="footer-newsletter-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={STRINGS.FOOTER.NEWSLETTER_PLACEHOLDER}
+                  className="flex-1 px-5 py-3 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-white/50 bg-white/95 backdrop-blur-sm text-sm"
+                />
+                <button
+                  type="submit"
+                  className="bg-white text-purple-700 px-6 py-3 rounded-xl font-bold hover:bg-purple-50 transition-all hover:shadow-lg hover:shadow-white/20 hover:-translate-y-0.5 active:translate-y-0 text-sm whitespace-nowrap"
+                >
+                  {STRINGS.FOOTER.NEWSLETTER_BUTTON} ←
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>

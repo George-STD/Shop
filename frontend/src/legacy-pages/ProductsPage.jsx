@@ -23,6 +23,37 @@ const ProductsPage = () => {
   const canBeAddedToBox = searchParams.get('canBeAddedToBox') || '';
   const isReadyBox = searchParams.get('isReadyBox') || '';
 
+  // Close mobile filters on Escape and lock body scroll
+  useEffect(() => {
+    if (!showFilters) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowFilters(false);
+      }
+    };
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showFilters]);
+
+  // Windowed pagination items generator
+  const getPaginationItems = (current, total) => {
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    if (current <= 4) {
+      return [1, 2, 3, 4, 5, '...', total];
+    }
+    if (current >= total - 3) {
+      return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+    }
+    return [1, '...', current - 1, current, current + 1, '...', total];
+  };
+
   // Fetch category info (for display only)
   const { data: categoryInfo } = useQuery({
     queryKey: ['category', categorySlug],
@@ -155,7 +186,7 @@ const ProductsPage = () => {
 
   return (
     <>
-      <div className="bg-gray-50 min-h-screen">
+      <div className="bg-gray-50 min-h-screen min-h-dvh">
         {/* Breadcrumb */}
         <div className="bg-white border-b">
           <div className="container-custom py-4">
@@ -339,16 +370,22 @@ const ProductsPage = () => {
                 </div>
 
                 {/* View Mode */}
-                <div className="hidden md:flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                <div className="hidden md:flex items-center gap-1 bg-gray-100 rounded-lg p-1" role="group" aria-label="نمط عرض المنتجات">
                   <button
+                    type="button"
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded ${viewMode === 'grid' ? 'bg-white shadow' : ''}`}
+                    className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-white shadow text-purple-700 font-bold' : 'text-gray-600 hover:text-gray-900'}`}
+                    aria-label="عرض المنتجات في شبكة"
+                    aria-pressed={viewMode === 'grid'}
                   >
                     <FiGrid />
                   </button>
                   <button
+                    type="button"
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded ${viewMode === 'list' ? 'bg-white shadow' : ''}`}
+                    className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-white shadow text-purple-700 font-bold' : 'text-gray-600 hover:text-gray-900'}`}
+                    aria-label="عرض المنتجات في قائمة"
+                    aria-pressed={viewMode === 'list'}
                   >
                     <FiList />
                   </button>
@@ -439,21 +476,48 @@ const ProductsPage = () => {
 
               {/* Pagination */}
               {pagination.pages > 1 && (
-                <div className="flex justify-center gap-2 mt-8">
-                  {[...Array(pagination.pages)].map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => updateFilter('page', i + 1)}
-                      className={`w-10 h-10 rounded-lg font-medium transition-colors ${
-                        pagination.current === i + 1
-                          ? 'bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 text-white'
-                          : 'bg-white text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                </div>
+                <nav className="flex justify-center items-center gap-1.5 sm:gap-2 mt-10" aria-label="ترقيم الصفحات">
+                  <button
+                    type="button"
+                    onClick={() => updateFilter('page', Math.max(1, (pagination.current || 1) - 1))}
+                    disabled={pagination.current <= 1}
+                    aria-label="الصفحة السابقة"
+                    className="px-3 py-2 rounded-lg text-sm font-medium bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    السابق
+                  </button>
+                  {getPaginationItems(pagination.current || 1, pagination.pages).map((p, idx) =>
+                    p === '...' ? (
+                      <span key={`ellipsis-${idx}`} className="px-2 py-2 text-gray-400 font-bold select-none">
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => updateFilter('page', p)}
+                        aria-current={pagination.current === p ? 'page' : undefined}
+                        aria-label={`الصفحة ${p}`}
+                        className={`min-w-[40px] h-10 px-3 rounded-lg text-sm font-bold transition-all ${
+                          pagination.current === p
+                            ? 'bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white shadow-md shadow-purple-500/20'
+                            : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => updateFilter('page', Math.min(pagination.pages, (pagination.current || 1) + 1))}
+                    disabled={pagination.current >= pagination.pages}
+                    aria-label="الصفحة التالية"
+                    className="px-3 py-2 rounded-lg text-sm font-medium bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    التالي
+                  </button>
+                </nav>
               )}
             </div>
           </div>
@@ -461,12 +525,28 @@ const ProductsPage = () => {
 
         {/* Mobile Filters Modal */}
         {showFilters && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <div className="absolute inset-0 bg-black/50" onClick={() => setShowFilters(false)} />
-            <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[80vh] overflow-y-auto">
-              <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white">
-                <h2 className="font-bold text-lg">{STRINGS.PRODUCTS_PAGE.FILTER}</h2>
-                <button onClick={() => setShowFilters(false)}>
+          <div
+            className="fixed inset-0 z-50 lg:hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mobile-filter-title"
+          >
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
+              onClick={() => setShowFilters(false)}
+              aria-hidden="true"
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-y-auto shadow-2xl">
+              <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white z-10">
+                <h2 id="mobile-filter-title" className="font-bold text-lg text-gray-900">
+                  {STRINGS.PRODUCTS_PAGE.FILTER}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowFilters(false)}
+                  aria-label="إغلاق نافذة التصفية"
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                >
                   <FiX size={24} />
                 </button>
               </div>

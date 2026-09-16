@@ -83,6 +83,10 @@ const AdminProducts = () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       setShowModal(false);
       resetForm();
+      toast.success(STRINGS.ADMIN.NOTIFICATIONS.PRODUCT_CREATED || 'تمت إضافة المنتج بنجاح');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'فشل إضافة المنتج');
     },
   });
 
@@ -92,6 +96,10 @@ const AdminProducts = () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       setShowModal(false);
       resetForm();
+      toast.success(STRINGS.ADMIN.NOTIFICATIONS.PRODUCT_UPDATED || 'تم تحديث المنتج بنجاح');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'فشل تحديث المنتج');
     },
   });
 
@@ -99,6 +107,10 @@ const AdminProducts = () => {
     mutationFn: (id) => adminAPI.deleteProduct(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast.success(STRINGS.ADMIN.NOTIFICATIONS.PRODUCT_DELETED || 'تم حذف المنتج بنجاح');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'فشل حذف المنتج');
     },
   });
 
@@ -366,6 +378,7 @@ const AdminProducts = () => {
         setSearch={setSearch}
         categoryFilter={categoryFilter}
         setCategoryFilter={setCategoryFilter}
+        setPage={setPage}
         categories={categories}
         setShowScanner={setShowScanner}
         setShowAiUploader={setShowAiUploader}

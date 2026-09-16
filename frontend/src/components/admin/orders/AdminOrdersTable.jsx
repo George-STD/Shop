@@ -1,6 +1,6 @@
 import TableSkeleton from '../TableSkeleton';
 import React from 'react';
-import { FiEye } from 'react-icons/fi';
+import { FiEye, FiShoppingCart } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
 
 const AdminOrdersTable = ({
@@ -49,7 +49,20 @@ const AdminOrdersTable = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {data?.data?.map((order) => {
+            {(!data?.data || data.data.length === 0) ? (
+              <tr>
+                <td colSpan={6} className="text-center py-16 text-gray-500">
+                  <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
+                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-1">
+                      <FiShoppingCart className="w-6 h-6" />
+                    </div>
+                    <p className="font-bold text-gray-700 text-sm sm:text-base">لا توجد طلبات تطابق هذا البحث أو الفلتر</p>
+                    <p className="text-xs text-gray-400">جرب البحث برقم طلب آخر أو تغيير حالة الطلب المحددة</p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              data.data.map((order) => {
               const customerName = order.user?.firstName
                 ? `${order.user.firstName} ${order.user.lastName || ''}`.trim()
                 : order.shippingAddress?.firstName
@@ -106,7 +119,8 @@ const AdminOrdersTable = ({
                 </td>
               </tr>
               );
-            })}
+            })
+            )}
           </tbody>
         </table>
       </div>

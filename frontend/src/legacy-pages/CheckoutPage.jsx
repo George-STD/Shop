@@ -5,7 +5,7 @@ import { FiCheck, FiCreditCard, FiTruck, FiAward, FiCopy, FiPackage } from 'reac
 import { useCartStore, useAuthStore } from '../store';
 import { ordersAPI, settingsAPI } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
-import { BUSINESS_CONFIG, STRINGS, getShippingCost } from '../constants';
+import { BUSINESS_CONFIG, STRINGS, SITE_CONFIG, getShippingCost } from '../constants';
 import toast from 'react-hot-toast';
 
 /**
@@ -136,17 +136,20 @@ const ShippingFormStep = memo(function ShippingFormStep({
             required
           >
             <option value="">{STRINGS.CHECKOUT.SELECT_GOVERNORATE}</option>
-            {governorates.map((gov) => (
-              <option key={gov} value={gov}>
-                {gov} ({gov === 'القاهرة' ? '95 ج.م' : '125 ج.م'})
-              </option>
-            ))}
+            {governorates.map((gov) => {
+              const cost = getShippingCost(gov);
+              return (
+                <option key={gov} value={gov}>
+                  {gov} ({cost} {STRINGS.PRODUCT.CURRENCY})
+                </option>
+              );
+            })}
           </select>
           {formData.governorate && (
             <p className="text-[11px] text-purple-600 mt-1 font-medium flex items-center gap-1">
               <FiTruck size={12} />
               <span>
-                سعر الشحن لـ {formData.governorate}: {formData.governorate === 'القاهرة' ? '95 ج.م (داخل القاهرة)' : '125 ج.م (محافظات خارج القاهرة)'}
+                سعر الشحن لـ {formData.governorate}: {getShippingCost(formData.governorate)} {STRINGS.PRODUCT.CURRENCY} ({formData.governorate === 'القاهرة' ? 'داخل القاهرة' : 'المحافظات'})
               </span>
             </p>
           )}
@@ -311,7 +314,7 @@ const PaymentMethodStep = memo(function PaymentMethodStep({
           <div className="p-3 bg-white rounded-xl border border-purple-200/80 flex items-center justify-between shadow-sm">
             <span className="text-gray-700 text-xs sm:text-sm font-semibold">رقم تحويل إنستاباي:</span>
             <div className="flex items-center gap-2">
-              <span className="text-sm sm:text-base font-bold text-purple-700 font-mono tracking-wider dir-ltr select-all">
+              <span className="text-sm sm:text-base font-bold text-purple-700 font-mono tracking-wider dir-ltr select-all" dir="ltr">
                 {BUSINESS_CONFIG.INSTAPAY_NUMBER}
               </span>
               <button
@@ -426,7 +429,7 @@ const OrderReviewStep = memo(function OrderReviewStep({
                 📱 {STRINGS.CHECKOUT.INSTAPAY}
               </span>
               <span className="text-xs text-gray-500">
-                رقم التحويل: <strong className="font-mono text-purple-700 dir-ltr">{BUSINESS_CONFIG.INSTAPAY_NUMBER}</strong>
+                رقم التحويل: <strong className="font-mono text-purple-700 dir-ltr" dir="ltr">{BUSINESS_CONFIG.INSTAPAY_NUMBER}</strong>
               </span>
             </div>
           )}
@@ -444,7 +447,7 @@ const OrderReviewStep = memo(function OrderReviewStep({
             <div key={`${item.id}-${index}`} className="flex gap-3 bg-gray-50/70 p-2.5 rounded-xl border border-gray-100">
               <div className="relative w-14 h-14 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
                 <Image
-                  src={item.image || '/placeholder-gift.png'}
+                  src={item.image || SITE_CONFIG.PLACEHOLDER_IMAGE}
                   alt={item.name}
                   fill
                   sizes="56px"
@@ -641,8 +644,11 @@ const CheckoutPage = () => {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = STRINGS.CHECKOUT.ERRORS.EMAIL_INVALID;
     }
-    if (!formData.phone.trim()) {
+    const cleanPhone = formData.phone.trim().replace(/[\s-]/g, '');
+    if (!cleanPhone) {
       newErrors.phone = STRINGS.CHECKOUT.ERRORS.PHONE_REQUIRED;
+    } else if (!/^(01[0125][0-9]{8}|\+201[0125][0-9]{8})$/.test(cleanPhone)) {
+      newErrors.phone = STRINGS.CHECKOUT.ERRORS.PHONE_INVALID;
     }
     if (!formData.governorate) {
       newErrors.governorate = STRINGS.CHECKOUT.ERRORS.GOVERNORATE_REQUIRED;
@@ -770,7 +776,7 @@ const CheckoutPage = () => {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen py-8">
+    <div className="bg-gray-50 min-h-screen min-h-dvh py-8">
       {!isOnline && (
         <div className="container-custom mb-4">
           <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm font-semibold text-amber-800" role="alert">
@@ -864,7 +870,7 @@ const CheckoutPage = () => {
                     <div key={`${item.id}-${index}`} className="flex gap-3 items-center">
                       <div className="relative w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-200/60">
                         <Image
-                          src={item.image || '/placeholder-gift.png'}
+                          src={item.image || SITE_CONFIG.PLACEHOLDER_IMAGE}
                           alt={item.name}
                           fill
                           sizes="56px"
@@ -935,9 +941,13 @@ const CheckoutPage = () => {
                   <div className="flex justify-between text-gray-500">
                     <span>
                       {STRINGS.CART.SHIPPING}
-                      {formData.governorate && (
+                      {formData.governorate ? (
                         <span className="text-[11px] text-purple-600 mr-1 font-medium">
-                          ({formData.governorate === 'القاهرة' ? 'داخل القاهرة' : 'محافظات'})
+                          ({formData.governorate === 'القاهرة' ? 'داخل القاهرة' : 'المحافظات'})
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-gray-400 mr-1 font-normal">
+                          (القاهرة افتراضياً)
                         </span>
                       )}
                     </span>

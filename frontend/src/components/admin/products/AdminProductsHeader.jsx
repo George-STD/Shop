@@ -7,6 +7,7 @@ const AdminProductsHeader = ({
   setSearch,
   categoryFilter,
   setCategoryFilter,
+  setPage,
   categories,
   setShowScanner,
   setShowAiUploader,
@@ -23,7 +24,10 @@ const AdminProductsHeader = ({
             type="text"
             placeholder={STRINGS.ADMIN.SEARCH}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              if (setPage) setPage(1);
+            }}
             className="w-full pr-10 pl-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
           />
         </div>
@@ -31,7 +35,10 @@ const AdminProductsHeader = ({
         {/* Category Filter */}
         <select
           value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
+          onChange={(e) => {
+            setCategoryFilter(e.target.value);
+            if (setPage) setPage(1);
+          }}
           className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500"
         >
           <option value="">{STRINGS.ADMIN.ALL_CATEGORIES}</option>

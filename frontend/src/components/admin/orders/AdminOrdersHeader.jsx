@@ -2,7 +2,7 @@ import React from 'react';
 import { FiSearch } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
 
-const AdminOrdersHeader = ({ search, setSearch, statusFilter, setStatusFilter, statusOptions, statusLabels }) => {
+const AdminOrdersHeader = ({ search, setSearch, statusFilter, setStatusFilter, statusOptions, statusLabels, setPage }) => {
   return (
     <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm min-h-[72px] sm:min-h-[88px]">
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -13,7 +13,10 @@ const AdminOrdersHeader = ({ search, setSearch, statusFilter, setStatusFilter, s
             type="text"
             placeholder={STRINGS.ADMIN.SEARCH_ORDERS}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              if (setPage) setPage(1);
+            }}
             className="w-full pr-10 pl-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
           />
         </div>
@@ -21,7 +24,10 @@ const AdminOrdersHeader = ({ search, setSearch, statusFilter, setStatusFilter, s
         {/* Status Filter */}
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            if (setPage) setPage(1);
+          }}
           className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 text-sm"
         >
           <option value="">{STRINGS.ADMIN.ALL_STATUSES}</option>

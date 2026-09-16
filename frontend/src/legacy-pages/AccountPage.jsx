@@ -11,7 +11,9 @@ import {
   FiArrowRight,
   FiMail,
   FiLock,
-  FiAward
+  FiAward,
+  FiEye,
+  FiEyeOff,
 } from 'react-icons/fi';
 import LoyaltyPointsCard from '../components/account/LoyaltyPointsCard';
 import { settingsAPI } from '../services/api';
@@ -43,6 +45,8 @@ const AuthForm = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [verifyEmail, setVerifyEmail] = useState(''); // email used for verification
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const inputRefs = useRef([]);
 
   // Resend cooldown timer
@@ -273,7 +277,7 @@ const AuthForm = () => {
   // Code input rendered inline (not as a component to prevent remounting)
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen min-h-dvh bg-gray-50 py-12">
       <div className="container-custom">
         <div className="max-w-md mx-auto bg-white rounded-2xl p-8 shadow-lg">
           {/* Back button */}
@@ -315,66 +319,134 @@ const AuthForm = () => {
             {mode === 'register' && (
               <>
                 <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="auth-first-name" className="block text-xs font-medium text-gray-700 mb-1">
+                      {STRINGS.AUTH.FIRST_NAME}
+                    </label>
+                    <input
+                      id="auth-first-name"
+                      name="firstName"
+                      type="text"
+                      autoComplete="given-name"
+                      placeholder={STRINGS.AUTH.FIRST_NAME}
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      required
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="auth-last-name" className="block text-xs font-medium text-gray-700 mb-1">
+                      {STRINGS.AUTH.LAST_NAME}
+                    </label>
+                    <input
+                      id="auth-last-name"
+                      name="lastName"
+                      type="text"
+                      autoComplete="family-name"
+                      placeholder={STRINGS.AUTH.LAST_NAME}
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      required
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="auth-phone" className="block text-xs font-medium text-gray-700 mb-1">
+                    {STRINGS.AUTH.PHONE}
+                  </label>
                   <input
-                    type="text"
-                    placeholder={STRINGS.AUTH.FIRST_NAME}
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    required
-                    className="input-field"
-                  />
-                  <input
-                    type="text"
-                    placeholder={STRINGS.AUTH.LAST_NAME}
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    id="auth-phone"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder={STRINGS.AUTH.PHONE}
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     required
                     className="input-field"
                   />
                 </div>
-                <input
-                  type="tel"
-                  placeholder={STRINGS.AUTH.PHONE}
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  required
-                  className="input-field"
-                />
               </>
             )}
 
             {/* Login/Register common fields */}
             {(mode === 'login' || mode === 'register') && (
               <>
-                <input
-                  type="email"
-                  placeholder={STRINGS.AUTH.EMAIL}
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                  className="input-field"
-                />
-                <input
-                  type="password"
-                  placeholder={STRINGS.AUTH.PASSWORD}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required
-                  className="input-field"
-                />
+                <div>
+                  <label htmlFor="auth-email" className="block text-xs font-medium text-gray-700 mb-1">
+                    {STRINGS.AUTH.EMAIL}
+                  </label>
+                  <input
+                    id="auth-email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder={STRINGS.AUTH.EMAIL}
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                    className="input-field"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="auth-password" className="block text-xs font-medium text-gray-700 mb-1">
+                    {STRINGS.AUTH.PASSWORD}
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="auth-password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                      placeholder={STRINGS.AUTH.PASSWORD}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      required
+                      className="input-field pl-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none p-1"
+                    >
+                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    </button>
+                  </div>
+                </div>
               </>
             )}
 
             {/* Register confirm password */}
             {mode === 'register' && (
-              <input
-                type="password"
-                placeholder={STRINGS.AUTH.CONFIRM_PASSWORD}
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                required
-                className="input-field"
-              />
+              <div>
+                <label htmlFor="auth-confirm-password" className="block text-xs font-medium text-gray-700 mb-1">
+                  {STRINGS.AUTH.CONFIRM_PASSWORD}
+                </label>
+                <div className="relative">
+                  <input
+                    id="auth-confirm-password"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    placeholder={STRINGS.AUTH.CONFIRM_PASSWORD}
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    required
+                    className="input-field pl-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? 'إخفاء تأكيد كلمة المرور' : 'إظهار تأكيد كلمة المرور'}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none p-1"
+                  >
+                    {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </button>
+                </div>
+              </div>
             )}
 
             {/* Forgot password link (on login page) */}
@@ -392,26 +464,38 @@ const AuthForm = () => {
 
             {/* Forgot password - email input */}
             {mode === 'forgot-password' && (
-              <input
-                type="email"
-                placeholder={STRINGS.AUTH.ENTER_EMAIL}
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-                className="input-field"
-              />
+              <div>
+                <label htmlFor="auth-forgot-email" className="block text-xs font-medium text-gray-700 mb-1">
+                  {STRINGS.AUTH.ENTER_EMAIL}
+                </label>
+                <input
+                  id="auth-forgot-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder={STRINGS.AUTH.ENTER_EMAIL}
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                  className="input-field"
+                />
+              </div>
             )}
 
             {/* Verification code inputs */}
             {(mode === 'verify-email' || mode === 'verify-reset') && (
               <>
-                <div className="flex justify-center gap-2 my-6" dir="ltr">
+                <div role="group" aria-label="رمز التحقق المكون من 6 أرقام" className="flex justify-center gap-2 my-6" dir="ltr">
                   {verificationCode.map((digit, i) => (
                     <input
                       key={i}
                       ref={(el) => (inputRefs.current[i] = el)}
+                      id={`auth-otp-digit-${i + 1}`}
+                      name={`otp_digit_${i + 1}`}
+                      aria-label={`الرقم ${i + 1} من رمز التحقق`}
                       type="text"
                       inputMode="numeric"
+                      autoComplete={i === 0 ? 'one-time-code' : 'off'}
                       maxLength={1}
                       value={digit}
                       onChange={(e) => handleCodeChange(i, e.target.value)}
@@ -440,24 +524,60 @@ const AuthForm = () => {
             {/* Reset password fields */}
             {mode === 'reset-password' && (
               <>
-                <input
-                  type="password"
-                  placeholder={STRINGS.AUTH.NEW_PASSWORD_PLACEHOLDER}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="input-field"
-                />
-                <input
-                  type="password"
-                  placeholder={STRINGS.AUTH.CONFIRM_NEW_PASSWORD}
-                  value={confirmNewPassword}
-                  onChange={(e) => setConfirmNewPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="input-field"
-                />
+                <div>
+                  <label htmlFor="auth-reset-password" className="block text-xs font-medium text-gray-700 mb-1">
+                    {STRINGS.AUTH.NEW_PASSWORD_PLACEHOLDER}
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="auth-reset-password"
+                      name="newPassword"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      placeholder={STRINGS.AUTH.NEW_PASSWORD_PLACEHOLDER}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="input-field pl-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none p-1"
+                    >
+                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="auth-confirm-reset-password" className="block text-xs font-medium text-gray-700 mb-1">
+                    {STRINGS.AUTH.CONFIRM_NEW_PASSWORD}
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="auth-confirm-reset-password"
+                      name="confirmNewPassword"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      placeholder={STRINGS.AUTH.CONFIRM_NEW_PASSWORD}
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="input-field pl-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      aria-label={showConfirmPassword ? 'إخفاء تأكيد كلمة المرور' : 'إظهار تأكيد كلمة المرور'}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none p-1"
+                    >
+                      {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    </button>
+                  </div>
+                </div>
               </>
             )}
 
@@ -534,7 +654,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen min-h-dvh bg-gray-50 py-8">
       <div className="container-custom">
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Sidebar */}

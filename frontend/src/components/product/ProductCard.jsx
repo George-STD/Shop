@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, memo } from 'react';
 import Image from 'next/image';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiHeart, FiShoppingBag, FiEye } from 'react-icons/fi';
-import { STRINGS } from '../../constants';
+import { STRINGS, SITE_CONFIG } from '../../constants';
 import { useCartStore, useWishlistStore, useAuthStore } from '../../store';
 import { optimizeCloudinaryUrl } from '../../utils/optimizeImage';
 import toast from 'react-hot-toast';
@@ -91,7 +91,7 @@ const ProductCard = ({ product, priority = false }) => {
   const imageUrl =
     optimizeCloudinaryUrl(product?.images?.[0]?.url, 400) ||
     product?.images?.[0]?.url ||
-    '/placeholder-gift.png';
+    SITE_CONFIG.PLACEHOLDER_IMAGE;
 
   if (!product) return null;
 
@@ -218,7 +218,7 @@ const ProductCard = ({ product, priority = false }) => {
           {/* Ratings */}
           {product.rating?.count > 0 && (
             <div className="flex items-center gap-1.5 mt-2 rating-stars" aria-label={`تقييم ${product.rating.average} من 5`}>
-              <div className="flex text-amber-400 text-xs sm:text-sm">
+              <div className="flex text-amber-400 text-xs sm:text-sm dir-ltr" dir="ltr">
                 {[...Array(5)].map((_, i) => (
                   <span
                     key={i}

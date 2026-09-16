@@ -69,7 +69,14 @@ api.interceptors.response.use(
 
       if (!isAuthAttempt) {
         clearStoredAuthSession();
-        if (window.location.pathname !== ROUTES.ACCOUNT) {
+        try {
+          import('../store').then(({ useAuthStore }) => {
+            useAuthStore.getState().setAuth(null, null);
+          }).catch(() => {});
+        } catch (_) {}
+
+        const pathname = window.location.pathname || '';
+        if (pathname.startsWith('/admin') && pathname !== ROUTES.ACCOUNT) {
           window.location.href = ROUTES.ACCOUNT;
         }
       }

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FiPlus } from 'react-icons/fi';
 import { adminAPI, categoriesAPI } from '../../services/api';
 import { STRINGS } from '../../constants';
+import toast from 'react-hot-toast';
 
 import AdminCategoriesGrid from '../../components/admin/categories/AdminCategoriesGrid';
 import CategoryFormModal from '../../components/admin/categories/CategoryFormModal';
@@ -33,6 +34,10 @@ const AdminCategories = () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setShowModal(false);
       resetForm();
+      toast.success(STRINGS.ADMIN.NOTIFICATIONS.CATEGORY_CREATED || 'تمت إضافة التصنيف بنجاح');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'فشل إضافة التصنيف');
     },
   });
 
@@ -42,6 +47,10 @@ const AdminCategories = () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setShowModal(false);
       resetForm();
+      toast.success(STRINGS.ADMIN.NOTIFICATIONS.CATEGORY_UPDATED || 'تم تحديث التصنيف بنجاح');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'فشل تحديث التصنيف');
     },
   });
 
@@ -49,9 +58,10 @@ const AdminCategories = () => {
     mutationFn: (id) => adminAPI.deleteCategory(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      toast.success(STRINGS.ADMIN.NOTIFICATIONS.CATEGORY_DELETED || 'تم حذف التصنيف بنجاح');
     },
     onError: (error) => {
-      alert(error.response?.data?.message || STRINGS.ADMIN.NOTIFICATIONS.DELETE_CATEGORY_ERROR);
+      toast.error(error.response?.data?.message || STRINGS.ADMIN.NOTIFICATIONS.DELETE_CATEGORY_ERROR);
     },
   });
 

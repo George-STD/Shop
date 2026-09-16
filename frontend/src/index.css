@@ -31,6 +31,13 @@ bdi, [dir="auto"] {
   unicode-bidi: isolate;
 }
 
+/* Mobile Viewport Height (DVH) Progressive Enhancement */
+@supports (min-height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -626,4 +633,30 @@ bdi, [dir="auto"] {
 
 .sticky-header-offset {
   top: var(--header-offset, 6rem);
+}
+
+/* ═══════════════════════════════════════════
+   RTL / LTR DIRECTION UTILITIES
+   ═══════════════════════════════════════════ */
+@layer utilities {
+  .dir-ltr {
+    direction: ltr !important;
+  }
+  .dir-rtl {
+    direction: rtl !important;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   ACCESSIBILITY: PREFERS REDUCED MOTION
+   ═══════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

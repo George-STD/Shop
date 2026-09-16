@@ -104,9 +104,9 @@ const HomePage = () => {
                       <span>👑</span>
                       <span>{STRINGS.HOME.LOYALTY_BADGE}</span>
                     </div>
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight animate-fadeInUp">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight animate-fadeInUp">
                       {STRINGS.HOME.LOYALTY_TITLE} <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-200">{STRINGS.HOME.LOYALTY_TITLE_HIGHLIGHT}</span>
-                    </h1>
+                    </h2>
                     <p className="text-sm sm:text-base md:text-lg text-purple-100 mb-7 animate-fadeInUp leading-relaxed max-w-lg">
                       {STRINGS.HOME.LOYALTY_SUBTITLE}
                     </p>
@@ -288,10 +288,18 @@ const HomePage = () => {
                   </SwiperSlide>
                 ))}
               </Swiper>
-              <button className="swiper-button-next-readyboxes absolute top-1/3 -left-4 sm:-left-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 hidden md:flex items-center justify-center text-blue-600 hover:bg-blue-50 hover:scale-110 transition-all z-10 opacity-0 group-hover:opacity-100 disabled:opacity-0">
+              <button
+                type="button"
+                aria-label="عرض البوكسات التالية"
+                className="swiper-button-next-readyboxes absolute top-1/3 -left-4 sm:-left-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 hidden md:flex items-center justify-center text-blue-600 hover:bg-blue-50 hover:scale-110 transition-all z-10 opacity-0 group-hover:opacity-100 disabled:opacity-0"
+              >
                 ←
               </button>
-              <button className="swiper-button-prev-readyboxes absolute top-1/3 -right-4 sm:-right-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 hidden md:flex items-center justify-center text-blue-600 hover:bg-blue-50 hover:scale-110 transition-all z-10 opacity-0 group-hover:opacity-100 disabled:opacity-0">
+              <button
+                type="button"
+                aria-label="عرض البوكسات السابقة"
+                className="swiper-button-prev-readyboxes absolute top-1/3 -right-4 sm:-right-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 hidden md:flex items-center justify-center text-blue-600 hover:bg-blue-50 hover:scale-110 transition-all z-10 opacity-0 group-hover:opacity-100 disabled:opacity-0"
+              >
                 →
               </button>
             </div>

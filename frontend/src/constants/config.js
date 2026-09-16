@@ -37,7 +37,8 @@ export const SITE_CONFIG = {
   // Images
   LOGO_URL: '/images/logo.jpeg',
   OG_IMAGE: '/images/logo.jpeg',
-  PLACEHOLDER_IMAGE: '/images/placeholder.jpg',
+  PLACEHOLDER_IMAGE: '/images/placeholder-gift.png',
+  PLACEHOLDER_BOX_IMAGE: '/images/placeholder-box.png',
 
   // Theme
   THEME_COLOR: '#a855f7',

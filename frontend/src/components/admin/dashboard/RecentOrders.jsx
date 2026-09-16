@@ -30,7 +30,7 @@ const RecentOrders = ({ stats, statusLabels, statusColors, formatCurrency }) => 
               <tr key={order._id} className="border-b last:border-0">
                 <td className="py-2 px-1 sm:py-3 sm:px-2">
                   <Link
-                    to={`/admin/orders/${order._id}`}
+                    to={`/admin/orders?orderId=${order._id}`}
                     className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline"
                   >
                     #{order.orderNumber}

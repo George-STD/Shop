@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { adminAPI } from '../../services/api';
 import { STRINGS } from '../../constants';
+import toast from 'react-hot-toast';
 
 import AdminOrdersHeader from '../../components/admin/orders/AdminOrdersHeader';
 import AdminOrdersTable from '../../components/admin/orders/AdminOrdersTable';
@@ -30,12 +32,30 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-const AdminOrders = () => {
+const AdminOrders = ({ initialOrderId = null }) => {
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const targetOrderId = initialOrderId || searchParams?.get('orderId');
+
+  useEffect(() => {
+    if (targetOrderId) {
+      adminAPI
+        .getOrder(targetOrderId)
+        .then((res) => {
+          if (res?.data?.data) {
+            setSelectedOrder(res.data.data);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load order details for URL target:', err);
+        });
+    }
+  }, [targetOrderId]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-orders', { search, status: statusFilter, page }],
@@ -56,6 +76,10 @@ const AdminOrders = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
       setSelectedOrder(null);
+      toast.success(STRINGS.ADMIN.NOTIFICATIONS.ORDER_UPDATED || 'تم تحديث حالة الطلب بنجاح');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'فشل تحديث حالة الطلب');
     },
   });
 
@@ -85,6 +109,7 @@ const AdminOrders = () => {
         setStatusFilter={setStatusFilter}
         statusOptions={statusOptions}
         statusLabels={statusLabels}
+        setPage={setPage}
       />
 
       <AdminOrdersTable

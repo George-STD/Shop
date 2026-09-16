@@ -2,7 +2,7 @@ import React from 'react';
 import { FiSearch } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
 
-const AdminUsersHeader = ({ search, setSearch, roleFilter, setRoleFilter, statusFilter, setStatusFilter }) => {
+const AdminUsersHeader = ({ search, setSearch, roleFilter, setRoleFilter, statusFilter, setStatusFilter, setPage }) => {
   return (
     <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm min-h-[72px] sm:min-h-[88px]">
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -14,7 +14,10 @@ const AdminUsersHeader = ({ search, setSearch, roleFilter, setRoleFilter, status
               type="text"
               placeholder={STRINGS.ADMIN.SEARCH_USERS}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                if (setPage) setPage(1);
+              }}
               className="w-full pr-10 pl-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
             />
           </div>
@@ -24,7 +27,10 @@ const AdminUsersHeader = ({ search, setSearch, roleFilter, setRoleFilter, status
           {/* Role Filter */}
           <select
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
+            onChange={(e) => {
+              setRoleFilter(e.target.value);
+              if (setPage) setPage(1);
+            }}
             className="border rounded-lg px-3 sm:px-4 py-2 focus:ring-2 focus:ring-purple-500 text-sm flex-1 sm:flex-none"
           >
             <option value="">{STRINGS.ADMIN.ALL_ROLES}</option>
@@ -35,7 +41,10 @@ const AdminUsersHeader = ({ search, setSearch, roleFilter, setRoleFilter, status
           {/* Status Filter */}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              if (setPage) setPage(1);
+            }}
             className="border rounded-lg px-3 sm:px-4 py-2 focus:ring-2 focus:ring-purple-500 text-sm flex-1 sm:flex-none"
           >
             <option value="">{STRINGS.ADMIN.ALL_STATUSES}</option>
