@@ -104,12 +104,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ar" dir="rtl" className={`${tajawal.variable} ${arefRuqaa.variable}`} suppressHydrationWarning>
       <head>
-        {/* Preconnect to backend API for earlier socket & TLS negotiation */}
-        <link rel="preconnect" href="https://shop-gx97.onrender.com" />
+        {/* Preconnect to backend API with CORS crossOrigin matching Axios/fetch */}
+        <link rel="preconnect" href="https://shop-gx97.onrender.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://shop-gx97.onrender.com" />
+        <JsonLd />
       </head>
       <body className={`${tajawal.className} font-sans`} suppressHydrationWarning>
-        <JsonLd />
         <Providers>{children}</Providers>
         <SpeedInsights />
       </body>

@@ -1,11 +1,6 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-
-const HomePage = dynamic(() => import('../../legacy-pages/HomePage'), {
-  ssr: true,
-  loading: () => <div className="min-h-screen min-h-dvh bg-white" aria-label="Loading home page" />,
-});
+import HomePage from '../../legacy-pages/HomePage';
 
 export default function HomePageClient() {
   return <HomePage />;
