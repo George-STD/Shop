@@ -1,8 +1,23 @@
 import '../index.css';
+import { Tajawal, Aref_Ruqaa } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import Providers from './providers';
 import JsonLd from './JsonLd';
 import { SITE_CONFIG, SEO_KEYWORDS } from '../constants';
+
+const tajawal = Tajawal({
+  subsets: ['arabic', 'latin'],
+  weight: ['300', '400', '500', '700', '800', '900'],
+  display: 'swap',
+  variable: '--font-tajawal',
+});
+
+const arefRuqaa = Aref_Ruqaa({
+  subsets: ['arabic'],
+  weight: ['400', '700'],
+  display: 'swap',
+  variable: '--font-aref-ruqaa',
+});
 
 const SITE_URL = SITE_CONFIG.SITE_URL;
 const SITE_NAME = SITE_CONFIG.SITE_NAME;
@@ -87,15 +102,13 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" className={`${tajawal.variable} ${arefRuqaa.variable}`} suppressHydrationWarning>
       <head>
-        {/* Preconnect to critical origins with crossOrigin for API & CDN socket reuse */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://shop-gx97.onrender.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        {/* Preconnect to backend API for earlier socket & TLS negotiation */}
+        <link rel="preconnect" href="https://shop-gx97.onrender.com" />
+        <link rel="dns-prefetch" href="https://shop-gx97.onrender.com" />
       </head>
-      <body>
+      <body className={`${tajawal.className} font-sans`} suppressHydrationWarning>
         <JsonLd />
         <Providers>{children}</Providers>
         <SpeedInsights />

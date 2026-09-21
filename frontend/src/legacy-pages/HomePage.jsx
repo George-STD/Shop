@@ -81,7 +81,7 @@ const HomePage = () => {
       {/* <ScrollVideoSequence /> */}
 
       {/* Hero Section */}
-      <section className="hero-gradient relative" id="main-hero-content">
+      <section className="hero-gradient relative min-h-[420px] sm:min-h-[450px] md:min-h-[550px]" id="main-hero-content">
         <Swiper
           modules={[Autoplay, Pagination, Navigation]}
           spaceBetween={0}
@@ -255,6 +255,7 @@ const HomePage = () => {
             <Link
               to="/products?isReadyBox=true"
               className="hidden sm:inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium text-sm hover:gap-2 transition-all"
+              aria-label="عرض جميع بوكسات الهدايا الجاهزة"
             >
               {STRINGS.COMMON.VIEW_ALL}
               <span>←</span>
@@ -314,6 +315,7 @@ const HomePage = () => {
             <Link
               to="/products?isReadyBox=true"
               className="inline-block btn-outline w-full max-w-xs"
+              aria-label="عرض جميع بوكسات الهدايا الجاهزة"
             >
               {STRINGS.COMMON.VIEW_ALL}
             </Link>
@@ -336,6 +338,7 @@ const HomePage = () => {
             <Link
               to="/products?featured=true"
               className="hidden sm:inline-flex items-center gap-1 text-purple-600 hover:text-purple-700 font-medium text-sm hover:gap-2 transition-all"
+              aria-label="عرض جميع المنتجات المميزة"
             >
               {STRINGS.COMMON.VIEW_ALL}
               <span>←</span>
@@ -359,6 +362,7 @@ const HomePage = () => {
           <Link
             to="/products?featured=true"
             className="sm:hidden flex items-center justify-center gap-1 text-purple-600 font-medium text-sm mt-6 hover:gap-2 transition-all"
+            aria-label="عرض جميع المنتجات المميزة"
           >
             {STRINGS.HOME.FEATURED_VIEW_ALL} ←
           </Link>
@@ -394,6 +398,7 @@ const HomePage = () => {
             <Link
               to="/products?bestseller=true"
               className="hidden sm:inline-flex items-center gap-1 text-amber-600 hover:text-amber-700 font-medium text-sm hover:gap-2 transition-all"
+              aria-label="عرض جميع المنتجات الأكثر مبيعاً"
             >
               {STRINGS.COMMON.VIEW_ALL}
               <span>←</span>
@@ -442,6 +447,7 @@ const HomePage = () => {
             <Link
               to="/products?new=true"
               className="hidden sm:inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-semibold text-sm hover:gap-2 transition-all"
+              aria-label="عرض جميع أحدث المنتجات المضافة"
             >
               {STRINGS.COMMON.VIEW_ALL}
               <span>←</span>

@@ -160,7 +160,7 @@ const Header = () => {
                 alt={STRINGS.NAV.LOGO_ALT}
                 fill
                 priority
-                sizes="(max-width: 640px) 112px, (max-width: 768px) 144px, 176px"
+                sizes="(max-width: 640px) 96px, (max-width: 1024px) 128px, 160px"
                 className="object-contain"
               />
             </div>

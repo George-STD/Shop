@@ -242,9 +242,9 @@ const ProductCard = ({ product, priority = false }) => {
               <span className="text-[11px] font-normal text-gray-500">{STRINGS.PRODUCT.CURRENCY}</span>
             </span>
             {product.oldPrice && (
-              <span className="text-xs sm:text-sm text-gray-400 line-through whitespace-nowrap">
+              <span className="text-xs sm:text-sm text-gray-500 line-through whitespace-nowrap">
                 <bdi>{formatPrice(product.oldPrice)}</bdi>{' '}
-                <span className="text-[10px] font-normal text-gray-400">{STRINGS.PRODUCT.CURRENCY}</span>
+                <span className="text-[10px] font-normal text-gray-500">{STRINGS.PRODUCT.CURRENCY}</span>
               </span>
             )}
           </div>

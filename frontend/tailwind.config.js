@@ -81,8 +81,9 @@ module.exports = {
         }
       },
       fontFamily: {
-        'arabic': ['Tajawal', 'Cairo', 'sans-serif'],
-        'display': ['Aref Ruqaa', 'serif'],
+        'arabic': ['var(--font-tajawal)', 'Tajawal', 'Cairo', 'sans-serif'],
+        'display': ['var(--font-aref-ruqaa)', 'Aref Ruqaa', 'serif'],
+        'sans': ['var(--font-tajawal)', 'Tajawal', 'sans-serif'],
       },
       animation: {
         'float': 'float 3s ease-in-out infinite',
