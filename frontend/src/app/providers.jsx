@@ -36,7 +36,7 @@ export default function Providers({ children }) {
         position="top-center"
         toastOptions={{
           duration: 3000,
-          style: { fontFamily: 'Tajawal, sans-serif' },
+          style: { fontFamily: 'var(--font-tajawal), sans-serif' },
         }}
       />
     </QueryClientProvider>

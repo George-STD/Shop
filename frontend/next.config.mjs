@@ -9,9 +9,9 @@ const isDev = process.env.NODE_ENV === 'development'
 const contentSecurityPolicy = [
   "default-src 'self'",
   isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://fastly.jsdelivr.net https://unpkg.com https://apis.google.com" : "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fastly.jsdelivr.net https://unpkg.com https://apis.google.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https:",
-  "font-src 'self' data: https://fonts.gstatic.com",
+  "font-src 'self' data:",
   isDev ? "connect-src 'self' https: http://localhost:*" : "connect-src 'self' https:",
   "object-src 'none'",
   "frame-ancestors 'none'",
@@ -25,6 +25,9 @@ const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    inlineCss: true,
+  },
   outputFileTracingRoot: path.join(__dirname, '..'),
   images: {
     remotePatterns: [

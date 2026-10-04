@@ -1,17 +1,31 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination, Navigation } from 'swiper/modules';
-import { productsAPI, categoriesAPI, occasionsAPI, settingsAPI } from '../services/api';
+import dynamic from 'next/dynamic';
+import { productsAPI, categoriesAPI, occasionsAPI } from '../services/api';
 import { STRINGS } from '../constants';
 import ProductCard from '../components/product/ProductCard';
 import CategoryCard from '../components/home/CategoryCard';
 import FeatureCard from '../components/home/FeatureCard';
 import OccasionCard from '../components/home/OccasionCard';
 // import ScrollVideoSequence from '../components/home/ScrollVideoSequence';
-import 'swiper/css';
-import 'swiper/css/pagination';
-import 'swiper/css/navigation';
+
+const ProductCarousel = dynamic(() => import('../components/product/ProductCarousel'), {
+  ssr: false,
+  loading: () => (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-8">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100">
+          <div className="skeleton h-52 sm:h-64 rounded-none"></div>
+          <div className="p-4 space-y-3">
+            <div className="skeleton h-3 w-16"></div>
+            <div className="skeleton h-4 w-3/4"></div>
+            <div className="skeleton h-5 w-1/3"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  ),
+});
 
 const HomePage = () => {
   // Fetch featured products
@@ -50,12 +64,7 @@ const HomePage = () => {
     queryFn: () => occasionsAPI.getAll().then((res) => res.data.data),
   });
 
-  // Fetch loyalty settings
-  const { data: loyaltySettings } = useQuery({
-    queryKey: ['public-loyalty-settings'],
-    queryFn: () => settingsAPI.getLoyaltySettings().then((res) => res.data?.data),
-    initialData: { enabled: true },
-  });
+
 
   const features = [
     { icon: '🚚', title: STRINGS.FEATURES.FAST_SHIPPING, description: STRINGS.FEATURES.FAST_SHIPPING_DESC },
@@ -80,110 +89,7 @@ const HomePage = () => {
       {/* 3D Gift Box Unboxing Animation (Temporarily Disabled) */}
       {/* <ScrollVideoSequence /> */}
 
-      {/* Hero Section */}
-      <section className="hero-gradient relative min-h-[420px] sm:min-h-[450px] md:min-h-[550px]" id="main-hero-content">
-        <Swiper
-          modules={[Autoplay, Pagination, Navigation]}
-          spaceBetween={0}
-          slidesPerView={1}
-          autoplay={{ delay: 5000, disableOnInteraction: false }}
-          pagination={{ clickable: true }}
-          navigation
-          className="h-[420px] sm:h-[450px] md:h-[550px]"
-        >
-          {/* Slide 1: Loyalty Points & Rewards System */}
-          {loyaltySettings?.enabled !== false && (
-            <SwiperSlide>
-              <div className="h-full flex items-center bg-gradient-to-br from-purple-900 via-indigo-900 to-pink-950 text-white relative z-10 overflow-hidden">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
 
-                <div className="container-custom relative z-10">
-                  <div className="max-w-2xl">
-                    <div className="inline-flex items-center gap-2 bg-yellow-400/20 border border-yellow-400/40 backdrop-blur-md px-4 py-2 rounded-full text-xs sm:text-sm text-yellow-300 font-bold mb-5 animate-fadeInUp shadow-lg shadow-purple-900/50">
-                      <span>👑</span>
-                      <span>{STRINGS.HOME.LOYALTY_BADGE}</span>
-                    </div>
-                    <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight animate-fadeInUp">
-                      {STRINGS.HOME.LOYALTY_TITLE} <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-200">{STRINGS.HOME.LOYALTY_TITLE_HIGHLIGHT}</span>
-                    </h2>
-                    <p className="text-sm sm:text-base md:text-lg text-purple-100 mb-7 animate-fadeInUp leading-relaxed max-w-lg">
-                      {STRINGS.HOME.LOYALTY_SUBTITLE}
-                    </p>
-                    <div className="flex flex-wrap gap-3 sm:gap-4 animate-fadeInUp">
-                      <Link
-                        to="/products"
-                        className="bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-gray-950 font-extrabold text-xs sm:text-sm md:text-base px-6 sm:px-8 py-3.5 rounded-2xl shadow-xl shadow-amber-500/20 transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
-                      >
-                        {STRINGS.HOME.LOYALTY_ACTION_SHOP} ←
-                      </Link>
-                      <Link
-                        to="/account/loyalty"
-                        className="bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white font-bold text-xs sm:text-sm md:text-base px-6 sm:px-8 py-3.5 rounded-2xl transition-all flex items-center gap-2"
-                      >
-                        {STRINGS.HOME.LOYALTY_ACTION_ACCOUNT}
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </SwiperSlide>
-          )}
-          <SwiperSlide>
-            <div className="h-full flex items-center relative z-10">
-              <div className="container-custom">
-                <div className="max-w-2xl">
-                  <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full text-sm text-purple-700 font-medium mb-6 animate-fadeInUp">
-                    <span>✨</span>
-                    <span>{STRINGS.HOME.HERO_BADGE}</span>
-                  </div>
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-5 leading-tight animate-fadeInUp">
-                    {STRINGS.HOME.HERO_TITLE} <span className="text-gradient">{STRINGS.HOME.HERO_TITLE_HIGHLIGHT}</span>
-                  </h1>
-                  <p className="text-base sm:text-lg text-gray-600 mb-8 animate-fadeInUp leading-relaxed max-w-lg">
-                    {STRINGS.HOME.HERO_SUBTITLE}
-                  </p>
-                  <div className="flex flex-wrap gap-3 sm:gap-4 animate-fadeInUp">
-                    <Link to="/products" className="btn-primary text-sm sm:text-base px-6 sm:px-8">
-                      {STRINGS.HOME.SHOP_NOW} ←
-                    </Link>
-                    <Link
-                      to="/gift-finder"
-                      className="btn-secondary text-sm sm:text-base px-6 sm:px-8"
-                    >
-                      🎯 {STRINGS.HOME.FIND_GIFT}
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </SwiperSlide>
-          <SwiperSlide>
-            <div className="h-full flex items-center bg-gradient-to-br from-purple-50 via-fuchsia-50 to-pink-50 relative z-10">
-              <div className="container-custom">
-                <div className="max-w-2xl">
-                  <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 rounded-full text-sm text-white font-bold mb-6 animate-fadeInUp shadow-lg shadow-amber-500/25">
-                    <span>🔥</span>
-                    <span>{STRINGS.HOME.DISCOUNT_BADGE}</span>
-                  </div>
-                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-5 animate-fadeInUp">
-                    {STRINGS.HOME.DISCOUNT_TITLE} <span className="text-gradient">{STRINGS.HOME.DISCOUNT_HIGHLIGHT}</span>
-                  </h2>
-                  <p className="text-base sm:text-lg text-gray-600 mb-8 animate-fadeInUp leading-relaxed max-w-lg">
-                    {STRINGS.HOME.DISCOUNT_SUBTITLE}
-                  </p>
-                  <Link
-                    to="/products?sort=discount"
-                    className="btn-gold text-sm sm:text-base px-6 sm:px-8 animate-fadeInUp"
-                  >
-                    {STRINGS.HOME.SHOP_OFFERS} ←
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </SwiperSlide>
-        </Swiper>
-      </section>
 
       {/* Features */}
       <section className="py-6 sm:py-8 bg-white border-b border-gray-100">
@@ -268,8 +174,10 @@ const HomePage = () => {
             </div>
           ) : readyBoxes?.length > 0 ? (
             <div className="relative group">
-              <Swiper
-                modules={[Navigation, Pagination]}
+              <ProductCarousel
+                items={readyBoxes}
+                renderItem={(product) => <ProductCard product={product} />}
+                slideClassName="h-auto"
                 spaceBetween={16}
                 slidesPerView={2}
                 navigation={{
@@ -282,13 +190,7 @@ const HomePage = () => {
                   1280: { slidesPerView: 4, spaceBetween: 32 },
                 }}
                 className="!pb-12"
-              >
-                {readyBoxes.map((product) => (
-                  <SwiperSlide key={product._id} className="h-auto">
-                    <ProductCard product={product} />
-                  </SwiperSlide>
-                ))}
-              </Swiper>
+              />
               <button
                 type="button"
                 aria-label="عرض البوكسات التالية"
@@ -412,23 +314,18 @@ const HomePage = () => {
               ))}
             </div>
           ) : (
-            <Swiper
-              modules={[Autoplay]}
+            <ProductCarousel
+              items={bestsellers}
+              renderItem={(product) => <ProductCard product={product} />}
+              autoplay={{ delay: 4000 }}
               spaceBetween={16}
               slidesPerView={2}
-              autoplay={{ delay: 4000 }}
               breakpoints={{
                 640: { slidesPerView: 2, spaceBetween: 20 },
                 768: { slidesPerView: 3, spaceBetween: 24 },
                 1024: { slidesPerView: 4, spaceBetween: 24 },
               }}
-            >
-              {bestsellers?.map((product) => (
-                <SwiperSlide key={product._id}>
-                  <ProductCard product={product} />
-                </SwiperSlide>
-              ))}
-            </Swiper>
+            />
           )}
         </div>
       </section>
@@ -461,23 +358,18 @@ const HomePage = () => {
               ))}
             </div>
           ) : (
-            <Swiper
-              modules={[Autoplay]}
+            <ProductCarousel
+              items={newArrivals}
+              renderItem={(product) => <ProductCard product={product} />}
+              autoplay={{ delay: 4000 }}
               spaceBetween={16}
               slidesPerView={2}
-              autoplay={{ delay: 4000 }}
               breakpoints={{
                 640: { slidesPerView: 2, spaceBetween: 20 },
                 768: { slidesPerView: 3, spaceBetween: 24 },
                 1024: { slidesPerView: 4, spaceBetween: 24 },
               }}
-            >
-              {newArrivals?.map((product) => (
-                <SwiperSlide key={product._id}>
-                  <ProductCard product={product} />
-                </SwiperSlide>
-              ))}
-            </Swiper>
+            />
           )}
         </div>
       </section>

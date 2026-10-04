@@ -6,9 +6,12 @@ import JsonLd from './JsonLd';
 import { SITE_CONFIG, SEO_KEYWORDS } from '../constants';
 
 const tajawal = Tajawal({
-  subsets: ['arabic', 'latin'],
-  weight: ['300', '400', '500', '700', '800', '900'],
+  subsets: ['arabic'],
+  weight: ['400', '500', '700', '800'],
   display: 'swap',
+  preload: true,
+  adjustFontFallback: true,
+  fallback: ['Tahoma', 'Segoe UI', 'system-ui', 'sans-serif'],
   variable: '--font-tajawal',
 });
 
@@ -16,6 +19,7 @@ const arefRuqaa = Aref_Ruqaa({
   subsets: ['arabic'],
   weight: ['400', '700'],
   display: 'swap',
+  preload: false,
   variable: '--font-aref-ruqaa',
 });
 

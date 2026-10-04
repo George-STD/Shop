@@ -1,7 +1,10 @@
 import HomePageClient from './HomePageClient';
+import HeroSection from '../../components/home/hero/HeroSection';
 import { SITE_CONFIG } from '../../constants';
 
 const SITE_URL = SITE_CONFIG.SITE_URL;
+
+export const revalidate = 600;
 
 export const metadata = {
   title: {
@@ -21,5 +24,10 @@ export const metadata = {
 };
 
 export default function Page() {
-  return <HomePageClient />;
+  return (
+    <>
+      <HeroSection />
+      <HomePageClient />
+    </>
+  );
 }
