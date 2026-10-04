@@ -76,15 +76,7 @@ const Header = () => {
     [searchQuery, navigate]
   );
 
-  const { data: dbCategories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => categoriesAPI.getAll().then((res) => res.data.data),
-    staleTime: 1000 * 60 * 10,
-  });
-
-  const categories = (dbCategories && dbCategories.length > 0)
-    ? dbCategories
-    : STRINGS.HEADER.CATEGORIES;
+  const categories = STRINGS.HEADER.CATEGORIES;
 
   return (
     <header
@@ -322,7 +314,7 @@ const Header = () => {
       {/* Desktop Categories Navigation */}
       <nav
         className={`hidden lg:block border-t border-gray-100 transition-all duration-300 ${
-          isScrolled ? 'max-h-0 overflow-hidden opacity-0' : 'max-h-16 opacity-100'
+          isScrolled ? 'max-h-0 overflow-hidden opacity-0' : 'h-12 min-h-[48px] opacity-100'
         }`}
         aria-label={STRINGS.NAV.CATEGORIES}
       >

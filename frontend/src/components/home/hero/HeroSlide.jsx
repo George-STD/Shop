@@ -9,7 +9,7 @@ export default function HeroSlide({ slide, headingLevel = 2, index, total }) {
       role="group"
       aria-roledescription="slide"
       aria-label={`${index + 1} / ${total}`}
-      className={`relative h-full w-full shrink-0 snap-start snap-always flex items-center overflow-hidden ${slide.themeClassName || ''}`}
+      className={`relative h-full w-full shrink-0 snap-start snap-always flex flex-col justify-center overflow-hidden py-8 sm:py-10 md:py-16 ${slide.themeClassName || ''}`}
     >
       {slide.decorativeGradients && (
         <>
@@ -19,7 +19,7 @@ export default function HeroSlide({ slide, headingLevel = 2, index, total }) {
       )}
 
       <div className="container-custom relative z-10 w-full">
-        <div className="max-w-2xl">
+        <div className="max-w-3xl">
           {slide.badge && (
             <div
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold mb-5 ${slide.badge.className}`}
@@ -41,7 +41,7 @@ export default function HeroSlide({ slide, headingLevel = 2, index, total }) {
           </HeadingTag>
 
           <p
-            className={`text-sm sm:text-base md:text-lg mb-7 leading-relaxed max-w-lg ${slide.subtitleClassName || 'text-gray-600'}`}
+            className={`text-sm sm:text-base md:text-lg mb-7 leading-relaxed max-w-xl ${slide.subtitleClassName || 'text-gray-600'}`}
           >
             {slide.subtitle}
           </p>

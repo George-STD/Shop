@@ -110,7 +110,7 @@ const ContactFab = () => {
           type="button"
           aria-label={STRINGS.CONTACT_FAB.CONTACT_US}
           aria-expanded={isOpen}
-          className="group flex items-center sm:gap-3 rounded-full border border-gray-200 bg-white/95 p-1 sm:px-3 sm:py-2 shadow-lg backdrop-blur hover:shadow-xl transition-all"
+          className="group flex items-center sm:gap-3 rounded-full border border-gray-200 bg-white/95 p-1 sm:px-3 sm:py-2 shadow-lg backdrop-blur hover:shadow-xl transition-all sm:min-w-[140px] justify-center sm:justify-start"
           onClick={() => setIsOpen((prev) => !prev)}
         >
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md">

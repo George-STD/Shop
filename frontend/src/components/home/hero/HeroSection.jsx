@@ -31,7 +31,7 @@ export default async function HeroSection() {
       id="main-hero-content"
       aria-roledescription="carousel"
       aria-label="عروض فور يو"
-      className="hero-gradient relative h-[420px] sm:h-[450px] md:h-[550px] overflow-hidden"
+      className="hero-gradient relative h-[420px] sm:h-[450px] md:h-[550px] min-h-[420px] sm:min-h-[450px] md:min-h-[550px] max-h-[420px] sm:max-h-[450px] md:max-h-[550px] overflow-hidden"
     >
       <div
         id="hero-track"
