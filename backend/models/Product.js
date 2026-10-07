@@ -230,6 +230,18 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    // Sourcing Memory (Procurement suggestions)
+    lastKnownCost: {
+      type: Number,
+      min: 0,
+      default: null,
+      set: (v) => (v === null || v === undefined ? v : roundTo2Decimals(v)),
+    },
+    lastKnownVendor: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     seo: {
       metaTitle: String,
       metaDescription: String,

@@ -3,6 +3,7 @@ import React from 'react';
 import { FiCheck, FiTruck, FiPackage, FiX } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
 import Modal from '../../ui/Modal';
+import OrderProcurementCard from './OrderProcurementCard';
 
 const OrderDetailsModal = ({
   selectedOrder,
@@ -11,6 +12,7 @@ const OrderDetailsModal = ({
   statusLabels,
   statusColors,
   formatCurrency,
+  onOrderUpdated,
 }) => {
   if (!selectedOrder) return null;
 
@@ -19,7 +21,7 @@ const OrderDetailsModal = ({
       isOpen={!!selectedOrder}
       onClose={() => setSelectedOrder(null)}
       title={`${STRINGS.ADMIN.ORDERS.ORDER_DETAILS} #${selectedOrder.orderNumber}`}
-      maxWidth="max-w-2xl"
+      maxWidth="max-w-4xl"
     >
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Order Summary */}
@@ -140,6 +142,16 @@ const OrderDetailsModal = ({
               <span>{formatCurrency(selectedOrder.total)}</span>
             </div>
           </div>
+
+          {/* Order Procurement & Cost Accounting Engine */}
+          <OrderProcurementCard
+            order={selectedOrder}
+            onOrderUpdated={(updated) => {
+              setSelectedOrder(updated);
+              if (onOrderUpdated) onOrderUpdated(updated);
+            }}
+            formatCurrency={formatCurrency}
+          />
 
           {/* Quick Status Actions */}
           <div className="flex flex-wrap gap-2">

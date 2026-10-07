@@ -3,6 +3,39 @@ import React from 'react';
 import { FiEye, FiShoppingCart } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
 
+const getProcurementBadge = (order) => {
+  if (order?.procurement?.isSettled) {
+    return {
+      text: '💵 تمت التسوية',
+      className: 'bg-emerald-50 text-emerald-800 border-emerald-300',
+    };
+  }
+
+  const items = order?.items || [];
+  if (items.length === 0) {
+    return {
+      text: '🟢 جاهز للتقفيل',
+      className: 'bg-emerald-50 text-emerald-800 border-emerald-300',
+    };
+  }
+
+  const hasMissing = items.some(
+    (it) => !it.procurement || it.procurement.status === 'to_buy' || it.procurement.status === 'pending'
+  );
+
+  if (hasMissing) {
+    return {
+      text: '🟡 ناقص مشتريات',
+      className: 'bg-amber-50 text-amber-800 border-amber-300',
+    };
+  }
+
+  return {
+    text: '🟢 جاهز للتقفيل',
+    className: 'bg-blue-50 text-blue-800 border-blue-300',
+  };
+};
+
 const AdminOrdersTable = ({
   data,
   isLoading,
@@ -23,6 +56,7 @@ const AdminOrdersTable = ({
           { label: STRINGS.ADMIN.TABLE.CUSTOMER, className: '' },
           { label: STRINGS.ADMIN.TABLE.AMOUNT, className: '' },
           { label: STRINGS.ADMIN.TABLE.STATUS, className: '' },
+          { label: 'حالة المشتريات', className: 'hidden sm:table-cell' },
           { label: STRINGS.ADMIN.TABLE.DATE, className: 'hidden md:table-cell' },
           { label: STRINGS.ADMIN.TABLE.ACTIONS, className: '' },
         ]}
@@ -44,6 +78,7 @@ const AdminOrdersTable = ({
               <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">{STRINGS.ADMIN.TABLE.CUSTOMER}</th>
               <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">{STRINGS.ADMIN.TABLE.AMOUNT}</th>
               <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">{STRINGS.ADMIN.TABLE.STATUS}</th>
+              <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600 hidden sm:table-cell">حالة المشتريات</th>
               <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600 hidden md:table-cell">{STRINGS.ADMIN.TABLE.DATE}</th>
               <th className="text-right py-3 px-3 sm:px-6 font-medium text-gray-600">{STRINGS.ADMIN.TABLE.ACTIONS}</th>
             </tr>
@@ -51,7 +86,7 @@ const AdminOrdersTable = ({
           <tbody className="divide-y divide-gray-100">
             {(!data?.data || data.data.length === 0) ? (
               <tr>
-                <td colSpan={6} className="text-center py-16 text-gray-500">
+                <td colSpan={7} className="text-center py-16 text-gray-500">
                   <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
                     <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-1">
                       <FiShoppingCart className="w-6 h-6" />
@@ -69,9 +104,18 @@ const AdminOrdersTable = ({
                   ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName || ''}`.trim()
                   : order.guestEmail || 'عميل';
               const customerEmail = order.user?.email || order.guestEmail || order.shippingAddress?.email;
+              const procBadge = getProcurementBadge(order);
+
               return (
               <tr key={order._id} className="hover:bg-gray-50 h-14 sm:h-16">
-                <td className="py-3 px-3 sm:px-6 font-medium text-xs sm:text-sm whitespace-nowrap">#{order.orderNumber}</td>
+                <td className="py-3 px-3 sm:px-6 font-medium text-xs sm:text-sm whitespace-nowrap">
+                  <div>#{order.orderNumber}</div>
+                  <div className="sm:hidden mt-1">
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border ${procBadge.className}`}>
+                      {procBadge.text}
+                    </span>
+                  </div>
+                </td>
                 <td className="py-3 px-3 sm:px-6">
                   <div>
                     <p className="font-medium text-xs sm:text-sm">
@@ -97,6 +141,11 @@ const AdminOrdersTable = ({
                       </option>
                     ))}
                   </select>
+                </td>
+                <td className="py-3 px-3 sm:px-6 hidden sm:table-cell whitespace-nowrap">
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${procBadge.className}`}>
+                    {procBadge.text}
+                  </span>
                 </td>
                 <td className="py-3 px-3 sm:px-6 text-gray-600 text-xs sm:text-sm hidden md:table-cell">
                   {new Date(order.createdAt).toLocaleDateString('ar-EG', {

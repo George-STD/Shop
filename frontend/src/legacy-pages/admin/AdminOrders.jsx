@@ -132,6 +132,7 @@ const AdminOrders = ({ initialOrderId = null }) => {
         statusLabels={statusLabels}
         statusColors={statusColors}
         formatCurrency={formatCurrency}
+        onOrderUpdated={() => queryClient.invalidateQueries({ queryKey: ['admin-orders'] })}
       />
     </div>
   );

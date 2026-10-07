@@ -183,6 +183,7 @@ export const adminAPI = {
   getOrders: (params) => api.get('/admin/orders', { params }),
   getOrder: (id) => api.get(`/admin/orders/${id}`),
   updateOrderStatus: (id, data) => api.put(`/admin/orders/${id}/status`, data),
+  updateOrderProcurement: (id, data) => api.put(`/admin/orders/${id}/procurement`, data),
 
   // Categories
   createCategory: (data) => api.post('/admin/categories', data),

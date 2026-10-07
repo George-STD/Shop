@@ -66,6 +66,36 @@ const orderItemSchema = new mongoose.Schema(
         quantity: Number,
       },
     ],
+    procurement: {
+      status: {
+        type: String,
+        enum: ['pending', 'in_stock', 'purchased'],
+        default: 'pending',
+      },
+      costPrice: {
+        type: Number,
+        min: 0,
+        default: 0,
+        set: (v) => (v === null || v === undefined ? 0 : roundTo2Decimals(v)),
+      },
+      paidBy: {
+        type: String,
+        trim: true,
+        default: 'store_fund',
+      },
+      vendor: {
+        type: String,
+        trim: true,
+        default: '',
+      },
+      purchasedAt: {
+        type: Date,
+      },
+      notes: {
+        type: String,
+        trim: true,
+      },
+    },
   },
   { _id: true }
 );
@@ -260,6 +290,91 @@ const orderSchema = new mongoose.Schema(
     cancelledAt: Date,
     returnReason: String,
     returnedAt: Date,
+
+    // Procurement & Cost Accounting
+    procurement: {
+      actualShippingCost: {
+        type: Number,
+        min: 0,
+        default: 0,
+        set: (v) => (v === null || v === undefined ? 0 : roundTo2Decimals(v)),
+      },
+      shippingPaidBy: {
+        type: String,
+        trim: true,
+        default: 'store_fund',
+      },
+      packagingCost: {
+        type: Number,
+        min: 0,
+        default: 0,
+        set: (v) => (v === null || v === undefined ? 0 : roundTo2Decimals(v)),
+      },
+      packagingPaidBy: {
+        type: String,
+        trim: true,
+        default: 'store_fund',
+      },
+      incidentalExpenses: {
+        type: Number,
+        min: 0,
+        default: 0,
+        set: (v) => (v === null || v === undefined ? 0 : roundTo2Decimals(v)),
+      },
+      incidentalsPaidBy: {
+        type: String,
+        trim: true,
+        default: 'store_fund',
+      },
+      notes: {
+        type: String,
+        trim: true,
+      },
+      totalItemsCost: {
+        type: Number,
+        default: 0,
+        set: (v) => (v === null || v === undefined ? 0 : roundTo2Decimals(v)),
+      },
+      totalOverheadsCost: {
+        type: Number,
+        default: 0,
+        set: (v) => (v === null || v === undefined ? 0 : roundTo2Decimals(v)),
+      },
+      totalOrderCost: {
+        type: Number,
+        default: 0,
+        set: (v) => (v === null || v === undefined ? 0 : roundTo2Decimals(v)),
+      },
+      netProfit: {
+        type: Number,
+        default: 0,
+        set: (v) => (v === null || v === undefined ? 0 : roundTo2Decimals(v)),
+      },
+      profitMarginPercent: {
+        type: Number,
+        default: 0,
+      },
+      partnerBreakdown: [
+        {
+          partner: { type: String, required: true },
+          amount: {
+            type: Number,
+            default: 0,
+            set: (v) => (v === null || v === undefined ? 0 : roundTo2Decimals(v)),
+          },
+          isSettled: { type: Boolean, default: false },
+        },
+      ],
+      isSettled: {
+        type: Boolean,
+        default: false,
+      },
+      settledAt: Date,
+      settledBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    },
   },
   {
     timestamps: true,

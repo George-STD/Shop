@@ -109,6 +109,11 @@ router.put('/orders/:id/status', [
   body('trackingNumber').optional().trim()
 ], adminController.updateOrderStatus);
 
+router.put('/orders/:id/procurement', [
+  validateObjectId('id'),
+  logAdminAction('UPDATE_ORDER_PROCUREMENT')
+], adminController.updateOrderProcurement);
+
 // =====================================================
 // CATEGORIES MANAGEMENT
 // =====================================================
