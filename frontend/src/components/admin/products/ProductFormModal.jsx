@@ -565,7 +565,7 @@ const ProductFormModal = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">
                 {STRINGS.ADMIN.PRODUCT_FORM.PRICE}
@@ -599,7 +599,7 @@ const ProductFormModal = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-medium">{STRINGS.ADMIN.PRODUCT_FORM.CATEGORIES}</label>

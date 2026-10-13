@@ -241,7 +241,8 @@ const AdminLayout = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen min-h-dvh">
+      {/* min-w-0 is required: flex items default to min-width:auto, which lets wide tables stretch the whole page horizontally on mobile */}
+      <div className="flex-1 min-w-0 flex flex-col min-h-screen min-h-dvh">
         {/* Top Bar */}
         <header className="h-14 sm:h-16 bg-white shadow-sm flex items-center justify-between px-2 sm:px-4 lg:px-8">
           <div className="flex items-center gap-2 sm:gap-4">

@@ -513,11 +513,13 @@ const ProductsPage = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-16">
-                  <div className="text-6xl mb-4">📦</div>
-                  <h2 className="text-xl font-bold text-gray-800 mb-2">{STRINGS.COMMON.NO_RESULTS}</h2>
-                  <p className="text-gray-600 mb-6">{STRINGS.PRODUCTS_PAGE.NO_PRODUCTS_DESC}</p>
-                  <button onClick={clearFilters} className="btn-primary">
+                <div className="bg-white rounded-3xl p-8 sm:p-12 text-center border border-purple-100 shadow-sm max-w-md mx-auto my-8">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-purple-100 to-pink-100 flex items-center justify-center text-purple-600 mx-auto mb-4 text-3xl shadow-inner">
+                    🔍
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">{STRINGS.COMMON.NO_RESULTS}</h2>
+                  <p className="text-gray-500 text-sm mb-6 leading-relaxed">{STRINGS.PRODUCTS_PAGE.NO_PRODUCTS_DESC}</p>
+                  <button onClick={clearFilters} className="btn-primary py-3 px-6 text-sm font-bold shadow-md shadow-purple-500/20">
                     {STRINGS.PRODUCTS_PAGE.CLEAR_FILTERS}
                   </button>
                 </div>

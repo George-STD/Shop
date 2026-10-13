@@ -38,8 +38,170 @@ const AdminProductsTable = ({ products, isLoading, page, setPage, handleEdit, ha
 
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 min-h-[600px] flex flex-col justify-between">
-      <div className="overflow-x-auto custom-scrollbar">
-        <table className="w-full text-xs sm:text-sm">
+      {/* --- Mobile Card View (block md:hidden) --- */}
+      <div className="block md:hidden">
+        {/* Mobile Header: Select All */}
+        <div className="p-3 bg-gray-50/80 border-b border-gray-100 flex items-center justify-between">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-700 select-none">
+            <input 
+              type="checkbox" 
+              className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4"
+              checked={isAllSelected}
+              onChange={(e) => handleSelectAll(e.target.checked, allIds)}
+            />
+            <span>تحديد الكل ({selectedIds.length} محدد)</span>
+          </label>
+          <span className="text-[11px] text-gray-400">
+            {products?.data?.length || 0} منتجات
+          </span>
+        </div>
+
+        {/* Mobile Cards List */}
+        <div className="p-3 space-y-3">
+          {(!products?.data || products.data.length === 0) ? (
+            <div className="text-center py-16 text-gray-500">
+              <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
+                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-1">
+                  <FiPackage className="w-6 h-6" />
+                </div>
+                <p className="font-bold text-gray-700 text-sm">لا توجد منتجات تطابق هذا البحث أو التصنيف</p>
+                <p className="text-xs text-gray-400">جرب تغيير كلمات البحث أو اختيار فئة أخرى</p>
+              </div>
+            </div>
+          ) : (
+            products.data.map((product, index) => {
+              if (!product) return null;
+              const isSelected = selectedIds.includes(product._id);
+              const categoryNames = Array.isArray(product.category)
+                ? product.category.map((c) => c?.name).filter(Boolean).join(', ')
+                : product.category?.name;
+
+              return (
+                <div
+                  key={product._id || index}
+                  className={`p-3.5 rounded-2xl border transition-all ${
+                    isSelected
+                      ? 'bg-purple-50/60 border-purple-200 ring-1 ring-purple-300'
+                      : 'bg-white border-gray-100 shadow-sm'
+                  }`}
+                >
+                  {/* Top: Checkbox, Thumbnail, Title & Category */}
+                  <div className="flex items-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      className="mt-1 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer w-4 h-4 shrink-0"
+                      checked={isSelected}
+                      onChange={(e) => handleSelect(product._id, e.nativeEvent, index)}
+                    />
+                    <div className="relative w-14 h-14 min-w-[56px] min-h-[56px] rounded-xl overflow-hidden bg-gray-100 border border-gray-200/60 shrink-0">
+                      {product.images?.[0]?.url ? (
+                        <Image
+                          fill
+                          sizes="56px"
+                          src={product.images[0].url}
+                          alt={product.name || 'صورة المنتج'}
+                          className="object-cover"
+                          loading={index < 4 ? 'eager' : 'lazy'}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-base">
+                          📦
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-1.5">
+                        <h4 className="font-bold text-xs text-gray-900 line-clamp-1" title={product.name}>
+                          {product.name}
+                        </h4>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${
+                            product.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                          }`}
+                        >
+                          {product.isActive ? STRINGS.ADMIN.TABLE.ACTIVE : STRINGS.ADMIN.TABLE.HIDDEN}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
+                          {categoryNames || 'بدون فئة'}
+                        </span>
+                        {product.sku && (
+                          <span className="text-[10px] text-gray-400 font-mono">
+                            {product.sku}
+                          </span>
+                        )}
+                      </div>
+
+                      <p
+                        className="text-[10px] text-purple-600 mt-1 cursor-pointer hover:underline flex items-center gap-1"
+                        onClick={() => {
+                          navigator.clipboard.writeText(product._id);
+                          toast.success('تم نسخ معرف المنتج (ID)');
+                        }}
+                        title="انسخ معرف المنتج لاستخدامه في البوكس الجاهز"
+                      >
+                        <span>ID: {product._id?.substring(0, 8)}...</span>
+                        <span className="text-[9px] text-gray-400">(نسخ)</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Middle: Price & Stock */}
+                  <div className="flex items-center justify-between pt-2.5 mt-2.5 border-t border-gray-100 text-xs">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="font-extrabold text-sm text-gray-900">
+                        {formatCurrency(product.price)}
+                      </span>
+                      {product.oldPrice && (
+                        <span className="text-[11px] text-gray-400 line-through">
+                          {formatCurrency(product.oldPrice)}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-500 text-[11px]">المخزون:</span>
+                      <span
+                        className={`font-bold px-2 py-0.5 rounded-md text-xs ${
+                          product.stock < 10 ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        {product.stock}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bottom: Action Buttons */}
+                  <div className="grid grid-cols-2 gap-2 pt-2 mt-2 border-t border-gray-50">
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(product)}
+                      className="py-2 px-3 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 text-blue-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                    >
+                      <FiEdit2 className="w-3.5 h-3.5" />
+                      <span>{STRINGS.ADMIN.TABLE.EDIT}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(product)}
+                      className="py-2 px-3 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                    >
+                      <FiTrash2 className="w-3.5 h-3.5" />
+                      <span>{STRINGS.ADMIN.TABLE.DELETE}</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* --- Desktop Table View (hidden md:block) --- */}
+      <div className="hidden md:block overflow-x-auto custom-scrollbar">
+        <table className="w-full text-xs sm:text-sm min-w-[700px]">
           <thead className="bg-gray-50 text-xs md:text-sm">
             <tr>
               <th className="py-2 px-2 sm:py-4 sm:px-6 w-12 text-center">

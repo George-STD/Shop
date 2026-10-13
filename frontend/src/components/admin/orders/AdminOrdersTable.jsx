@@ -70,7 +70,89 @@ const AdminOrdersTable = ({
 
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 min-h-[600px] flex flex-col justify-between">
-      <div className="overflow-x-auto custom-scrollbar">
+      {/* --- Mobile Card View (block md:hidden) --- */}
+      <div className="block md:hidden p-3 space-y-3">
+        {(!data?.data || data.data.length === 0) ? (
+          <div className="text-center py-16 text-gray-500">
+            <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-1">
+                <FiShoppingCart className="w-6 h-6" />
+              </div>
+              <p className="font-bold text-gray-700 text-sm">لا توجد طلبات تطابق هذا البحث أو الفلتر</p>
+              <p className="text-xs text-gray-400">جرب البحث برقم طلب آخر أو تغيير حالة الطلب المحددة</p>
+            </div>
+          </div>
+        ) : (
+          data.data.map((order) => {
+            const customerName = order.user?.firstName
+              ? `${order.user.firstName} ${order.user.lastName || ''}`.trim()
+              : order.shippingAddress?.firstName
+                ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName || ''}`.trim()
+                : order.guestEmail || 'عميل';
+            const procBadge = getProcurementBadge(order);
+
+            return (
+              <div key={order._id} className="p-3.5 rounded-2xl border border-gray-100 bg-white shadow-sm">
+                {/* Top: Order number + total */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-bold text-xs text-gray-900 font-mono break-all">
+                      #{order.orderNumber}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1 truncate">{customerName}</p>
+                  </div>
+                  <span className="font-extrabold text-sm text-gray-900 whitespace-nowrap shrink-0">
+                    {formatCurrency(order.total)}
+                  </span>
+                </div>
+
+                {/* Middle: Procurement badge + date */}
+                <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${procBadge.className}`}>
+                    {procBadge.text}
+                  </span>
+                  <span className="text-[11px] text-gray-400">
+                    {new Date(order.createdAt).toLocaleDateString('ar-EG', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                </div>
+
+                {/* Bottom: Status + details */}
+                <div className="grid grid-cols-[1fr_auto] gap-2 pt-2.5 mt-2.5 border-t border-gray-100">
+                  <select
+                    value={order.status}
+                    onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                    className={`w-full px-3 py-2 rounded-xl text-xs font-semibold border-0 cursor-pointer ${statusColors[order.status]}`}
+                    aria-label="تغيير حالة الطلب"
+                  >
+                    {statusOptions.map((status) => (
+                      <option key={status} value={status}>
+                        {statusLabels[status]}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedOrder(order)}
+                    className="py-2 px-3 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 text-blue-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors active:scale-95"
+                    aria-label={STRINGS.ADMIN.TABLE.VIEW_DETAILS}
+                  >
+                    <FiEye className="w-3.5 h-3.5" />
+                    <span>{STRINGS.ADMIN.TABLE.VIEW_DETAILS}</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* --- Desktop Table View (hidden md:block) --- */}
+      <div className="hidden md:block overflow-x-auto custom-scrollbar">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
