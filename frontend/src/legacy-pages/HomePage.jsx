@@ -310,7 +310,7 @@ const HomePage = () => {
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{STRINGS.HOME.BESTSELLERS_SUBTITLE}</h2>
             </div>
             <Link
-              to="/products?bestseller=true"
+              to="/products?bestseller=true&sort=bestselling"
               className="hidden sm:inline-flex items-center gap-1 text-amber-600 hover:text-amber-700 font-medium text-sm hover:gap-2 transition-all"
               aria-label="عرض جميع المنتجات الأكثر مبيعاً"
             >
@@ -354,7 +354,7 @@ const HomePage = () => {
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{STRINGS.HOME.NEW_ARRIVALS_SUBTITLE}</h2>
             </div>
             <Link
-              to="/products?new=true"
+              to="/products?newArrivals=true&sort=newest"
               className="hidden sm:inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-semibold text-sm hover:gap-2 transition-all"
               aria-label="عرض جميع أحدث المنتجات المضافة"
             >

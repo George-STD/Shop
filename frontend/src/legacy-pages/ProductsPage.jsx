@@ -22,6 +22,9 @@ const ProductsPage = () => {
   const categorySlug = searchParams.get('category') || '';
   const canBeAddedToBox = searchParams.get('canBeAddedToBox') || '';
   const isReadyBox = searchParams.get('isReadyBox') || '';
+  const featured = searchParams.get('featured') || '';
+  const bestseller = searchParams.get('bestseller') || '';
+  const newArrivals = searchParams.get('newArrivals') || searchParams.get('new') || '';
 
   // Close mobile filters on Escape and lock body scroll
   useEffect(() => {
@@ -76,6 +79,9 @@ const ProductsPage = () => {
         search,
         canBeAddedToBox,
         isReadyBox,
+        featured,
+        bestseller,
+        newArrivals,
       },
     ],
     queryFn: () =>
@@ -91,6 +97,9 @@ const ProductsPage = () => {
           search,
           canBeAddedToBox: canBeAddedToBox || undefined,
           isReadyBox: isReadyBox || undefined,
+          featured: featured === 'true' ? 'true' : undefined,
+          bestseller: bestseller === 'true' ? 'true' : undefined,
+          newArrivals: newArrivals === 'true' ? 'true' : undefined,
         })
         .then((res) => res.data),
   });
@@ -171,7 +180,7 @@ const ProductsPage = () => {
     return '';
   };
 
-  const hasActiveFilters = categorySlug || minPrice || maxPrice || occasion || recipient;
+  const hasActiveFilters = categorySlug || minPrice || maxPrice || occasion || recipient || featured || bestseller || newArrivals;
 
   // Page title and description
   const pageTitle = categoryInfo?.name
@@ -400,7 +409,8 @@ const ProductsPage = () => {
                       {categoryInfo.name}
                       <button
                         onClick={() => updateFilter('category', '')}
-                        className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none"
+                        className="mr-1.5 text-gray-500 hover:text-red-500 focus:outline-none"
+                        aria-label="إزالة فلتر التصنيف"
                       >
                         <FiX size={14} />
                       </button>
@@ -411,7 +421,8 @@ const ProductsPage = () => {
                       {occasion}
                       <button
                         onClick={() => updateFilter('occasion', '')}
-                        className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none"
+                        className="mr-1.5 text-gray-500 hover:text-red-500 focus:outline-none"
+                        aria-label="إزالة فلتر المناسبة"
                       >
                         <FiX size={14} />
                       </button>
@@ -422,7 +433,8 @@ const ProductsPage = () => {
                       {recipient}
                       <button
                         onClick={() => updateFilter('recipient', '')}
-                        className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none"
+                        className="mr-1.5 text-gray-500 hover:text-red-500 focus:outline-none"
+                        aria-label="إزالة فلتر المستلم"
                       >
                         <FiX size={14} />
                       </button>
@@ -433,7 +445,44 @@ const ProductsPage = () => {
                       {getPriceLabel()}
                       <button
                         onClick={() => updatePriceFilter('', '')}
-                        className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none"
+                        className="mr-1.5 text-gray-500 hover:text-red-500 focus:outline-none"
+                        aria-label="إزالة فلتر السعر"
+                      >
+                        <FiX size={14} />
+                      </button>
+                    </span>
+                  )}
+                  {featured === 'true' && (
+                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1 rounded-full text-sm border border-purple-200">
+                      منتجات مميزة
+                      <button
+                        onClick={() => updateFilter('featured', '')}
+                        className="mr-1.5 text-gray-500 hover:text-red-500 focus:outline-none"
+                        aria-label="إزالة فلتر المنتجات المميزة"
+                      >
+                        <FiX size={14} />
+                      </button>
+                    </span>
+                  )}
+                  {bestseller === 'true' && (
+                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800 px-3 py-1 rounded-full text-sm border border-amber-200">
+                      الأكثر مبيعاً
+                      <button
+                        onClick={() => updateFilter('bestseller', '')}
+                        className="mr-1.5 text-gray-500 hover:text-red-500 focus:outline-none"
+                        aria-label="إزالة فلتر الأكثر مبيعاً"
+                      >
+                        <FiX size={14} />
+                      </button>
+                    </span>
+                  )}
+                  {newArrivals === 'true' && (
+                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-800 px-3 py-1 rounded-full text-sm border border-emerald-200">
+                      وصل حديثاً
+                      <button
+                        onClick={() => updateFilter('newArrivals', '')}
+                        className="mr-1.5 text-gray-500 hover:text-red-500 focus:outline-none"
+                        aria-label="إزالة فلتر أحدث المنتجات"
                       >
                         <FiX size={14} />
                       </button>
@@ -460,7 +509,7 @@ const ProductsPage = () => {
                   className={`grid ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1'} gap-2.5 sm:gap-4 md:gap-6 min-w-0 w-full`}
                 >
                   {products.map((product) => (
-                    <ProductCard key={product._id} product={product} />
+                    <ProductCard key={product._id} product={product} viewMode={viewMode} />
                   ))}
                 </div>
               ) : (

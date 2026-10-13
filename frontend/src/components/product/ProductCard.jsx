@@ -11,7 +11,7 @@ import { authAPI } from '../../services/api';
 /**
  * Ultra-Optimized, Fully Accessible Product Card
  */
-const ProductCard = ({ product, priority = false }) => {
+const ProductCard = ({ product, priority = false, viewMode = 'grid' }) => {
   const [mounted, setMounted] = useState(false);
   const [wishlistPending, setWishlistPending] = useState(false);
   const navigate = useNavigate();
@@ -33,10 +33,24 @@ const ProductCard = ({ product, priority = false }) => {
     )
   );
 
+  const hasOptions = Boolean(
+    (product?.sizes && product.sizes.length > 0) ||
+    (product?.colors && product.colors.length > 0) ||
+    (product?.shapes && product.shapes.length > 0) ||
+    (product?.variantGroups && product.variantGroups.length > 0) ||
+    (product?.customizableBox && product.boxSlots && product.boxSlots.length > 0)
+  );
+
   // 2. Stable Action Handlers
   const handleAddToCart = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (hasOptions) {
+      toast('يرجى تحديد خيارات ومواصفات المنتج أولاً', { icon: '✨' });
+      navigate(`/product/${product.slug}`);
+      return;
+    }
 
     const result = addItem(product, 1);
     if (!result?.success) {
@@ -50,7 +64,7 @@ const ProductCard = ({ product, priority = false }) => {
     }
 
     toast.success(STRINGS.PRODUCT.ADDED_TO_CART);
-  }, [addItem, product]);
+  }, [addItem, hasOptions, navigate, product]);
 
   const handleToggleWishlist = useCallback(async (e) => {
     e.preventDefault();
@@ -97,11 +111,19 @@ const ProductCard = ({ product, priority = false }) => {
 
   return (
     <article
-      className="card product-card group min-w-0 flex flex-col h-full overflow-hidden w-full bg-white rounded-2xl border border-gray-100/80 hover:border-purple-200 hover:shadow-xl hover:shadow-purple-500/5 transition-all duration-300"
+      className={`card product-card group min-w-0 flex ${
+        viewMode === 'list' ? 'flex-col sm:flex-row sm:min-h-[190px]' : 'flex-col'
+      } h-full overflow-hidden w-full bg-white rounded-2xl border border-gray-100/80 hover:border-purple-200 hover:shadow-xl hover:shadow-purple-500/5 transition-all duration-300`}
       aria-label={product.name}
     >
       {/* Zero-CLS Aspect Ratio Preserved Image Container */}
-      <div className="relative overflow-hidden bg-gray-50 aspect-square w-full">
+      <div
+        className={`relative overflow-hidden bg-gray-50 ${
+          viewMode === 'list'
+            ? 'aspect-square sm:aspect-auto sm:w-52 md:w-60 sm:h-full flex-shrink-0'
+            : 'aspect-square w-full'
+        }`}
+      >
         <Link
           to={`/product/${product.slug}`}
           className="block w-full h-full relative"
@@ -165,8 +187,8 @@ const ProductCard = ({ product, priority = false }) => {
             type="button"
             onClick={handleAddToCart}
             className="quick-action-btn min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
-            title={STRINGS.PRODUCT.ADD_TO_CART}
-            aria-label={`${STRINGS.PRODUCT.ADD_TO_CART} - ${product.name}`}
+            title={hasOptions ? 'تحديد الخيارات' : STRINGS.PRODUCT.ADD_TO_CART}
+            aria-label={`${hasOptions ? 'تحديد الخيارات' : STRINGS.PRODUCT.ADD_TO_CART} - ${product.name}`}
             disabled={isOutOfStock}
           >
             <FiShoppingBag size={18} aria-hidden="true" />
@@ -184,8 +206,12 @@ const ProductCard = ({ product, priority = false }) => {
       </div>
 
       {/* Content Meta Area */}
-      <div className="p-2.5 sm:p-4 flex flex-col flex-grow min-w-0 justify-between">
-        <div>
+      <div
+        className={`p-3 sm:p-4 flex flex-col ${
+          viewMode === 'list' ? 'sm:flex-row sm:items-center' : ''
+        } flex-grow min-w-0 justify-between gap-3 sm:gap-4`}
+      >
+        <div className="min-w-0 flex-1">
           {/* Category Links */}
           {product.category && (
             <div className="text-[11px] sm:text-xs text-purple-700 font-bold uppercase tracking-wider mb-1">
@@ -215,6 +241,13 @@ const ProductCard = ({ product, priority = false }) => {
             </Link>
           </h3>
 
+          {/* List Mode Description */}
+          {viewMode === 'list' && product.description && (
+            <p className="hidden sm:block text-xs text-gray-500 mt-1.5 line-clamp-2 leading-relaxed">
+              {product.description}
+            </p>
+          )}
+
           {/* Ratings */}
           {product.rating?.count > 0 && (
             <div className="flex items-center gap-1.5 mt-2 rating-stars" aria-label={`تقييم ${product.rating.average} من 5`}>
@@ -234,8 +267,14 @@ const ProductCard = ({ product, priority = false }) => {
           )}
         </div>
 
-        {/* Pricing & Mobile Quick Action */}
-        <div className="mt-3 pt-2 border-t border-gray-50">
+        {/* Pricing & Actions */}
+        <div
+          className={`${
+            viewMode === 'list'
+              ? 'sm:border-r sm:border-gray-100 sm:pr-5 sm:min-w-[180px] sm:flex-shrink-0 sm:flex sm:flex-col sm:items-end sm:justify-center'
+              : 'mt-3 pt-2 border-t border-gray-50'
+          }`}
+        >
           <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2 min-w-0">
             <span className="text-sm sm:text-base md:text-lg font-extrabold text-gray-900 whitespace-nowrap">
               <bdi>{formatPrice(product.price)}</bdi>{' '}
@@ -249,23 +288,25 @@ const ProductCard = ({ product, priority = false }) => {
             )}
           </div>
 
-          {/* Mobile Direct Add Button */}
+          {/* Action Button */}
           <button
             type="button"
             onClick={handleAddToCart}
             disabled={isOutOfStock}
-            className="w-full mt-2.5 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white py-2 sm:py-2.5 rounded-xl font-bold 
+            className={`w-full mt-2.5 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white py-2 sm:py-2.5 rounded-xl font-bold 
                        hover:from-purple-600 hover:to-fuchsia-600 hover:shadow-lg hover:shadow-purple-500/25 
                        transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none
-                       active:scale-[0.98] md:hidden text-xs sm:text-sm flex items-center justify-center gap-1.5 min-h-[44px]"
-            aria-label={`${STRINGS.PRODUCT.ADD_TO_CART} - ${product.name}`}
+                       active:scale-[0.98] ${
+                         viewMode === 'list' ? 'flex' : 'md:hidden flex'
+                       } text-xs sm:text-sm items-center justify-center gap-1.5 min-h-[44px]`}
+            aria-label={`${hasOptions ? 'تحديد الخيارات' : STRINGS.PRODUCT.ADD_TO_CART} - ${product.name}`}
           >
             {isOutOfStock ? (
               STRINGS.PRODUCT.OUT_OF_STOCK
             ) : (
               <>
                 <FiShoppingBag size={16} aria-hidden="true" />
-                <span>{STRINGS.PRODUCT.ADD_TO_CART}</span>
+                <span>{hasOptions ? 'تحديد الخيارات' : STRINGS.PRODUCT.ADD_TO_CART}</span>
               </>
             )}
           </button>
@@ -278,6 +319,7 @@ const ProductCard = ({ product, priority = false }) => {
 // 3. Strict Custom arePropsEqual Function for React.memo
 const arePropsEqual = (prevProps, nextProps) => {
   if (prevProps.priority !== nextProps.priority) return false;
+  if (prevProps.viewMode !== nextProps.viewMode) return false;
   const p = prevProps.product;
   const n = nextProps.product;
   if (p?._id !== n?._id) return false;

@@ -873,7 +873,7 @@ export const STRINGS = {
     HELPFUL_LINKS_TITLE: 'روابط قد تفيدك',
     HELPFUL_LINKS: [
       { to: '/gift-finder', label: 'باحث الهدايا' },
-      { to: '/products?category=bestseller', label: 'الأكثر مبيعاً' },
+      { to: '/products?sort=bestselling', label: 'الأكثر مبيعاً' },
       { to: '/contact', label: 'تواصل معنا' },
       { to: '/faq', label: 'الأسئلة الشائعة' },
     ],

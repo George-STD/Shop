@@ -54,7 +54,7 @@ const CartPage = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
               <Link
-                to="/build-box"
+                to="/build-a-box"
                 className="flex items-center justify-center gap-2 p-3.5 rounded-xl border border-purple-200 bg-purple-50/50 hover:bg-purple-100/70 text-purple-700 font-bold text-xs sm:text-sm transition-all"
               >
                 <FiGift className="text-purple-600" />
