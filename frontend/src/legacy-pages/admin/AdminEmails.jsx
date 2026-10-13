@@ -29,15 +29,30 @@ const AdminEmails = () => {
     },
   });
 
-  const viewEmail = async (email) => {
-    if (!email.isRead) {
-      // Fetch full email to mark as read
-      const res = await adminAPI.getEmail(email._id);
+  const syncMutation = useMutation({
+    mutationFn: () => adminAPI.syncEmails(),
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['admin-emails'] });
-      setSelectedEmail(res.data.data);
-    } else {
-      setSelectedEmail(email);
+      toast.success(res.data?.message || 'تمت مزامنة الرسائل بنجاح');
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'فشلت مزامنة الرسائل من Resend');
+    },
+  });
+
+  const viewEmail = async (email) => {
+    // If unread or body is empty, call backend getEmail to mark as read and auto-recover body from Resend
+    if (!email.isRead || !email.text) {
+      try {
+        const res = await adminAPI.getEmail(email._id);
+        queryClient.invalidateQueries({ queryKey: ['admin-emails'] });
+        setSelectedEmail(res.data.data);
+        return;
+      } catch (err) {
+        console.error('Failed to fetch full email details:', err);
+      }
     }
+    setSelectedEmail(email);
   };
 
   const handleDelete = (id) => {
@@ -77,6 +92,8 @@ const AdminEmails = () => {
       viewEmail={viewEmail}
       handleDelete={handleDelete}
       formatDate={formatDate}
+      handleSync={() => syncMutation.mutate()}
+      isSyncing={syncMutation.isPending}
     />
   );
 };

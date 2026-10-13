@@ -3,6 +3,7 @@ const router = express.Router();
 const { Webhook } = require('svix');
 const ReceivedEmail = require('../models/ReceivedEmail');
 const { webhookLimiter } = require('../middleware/auth');
+const { fetchReceivedEmailContent } = require('../utils/resendInbound');
 
 /**
  * ReDoS-Safe bounded plain-text extractor
@@ -60,7 +61,9 @@ router.post(
         return res.status(200).json({ received: true });
       }
 
-      const { from, to, subject, html, text } = event.data || {};
+      const emailData = event.data || {};
+      const emailId = emailData.email_id || emailData.id || '';
+      let { from, to, subject, html, text } = emailData;
 
       // Only accept emails sent to support@foryo.me
       const recipients = (Array.isArray(to) ? to : [to])
@@ -75,10 +78,24 @@ router.post(
         return res.status(200).json({ received: true, ignored: true });
       }
 
+      // Resend inbound webhooks only send metadata (no body). Fetch content via API if missing.
+      if (!text && !html && emailId) {
+        try {
+          const fullEmail = await fetchReceivedEmailContent(emailId);
+          if (fullEmail) {
+            text = fullEmail.text || '';
+            html = fullEmail.html || '';
+          }
+        } catch (fetchErr) {
+          console.error('Failed to fetch full email body from Resend in webhook:', fetchErr.message);
+        }
+      }
+
       const plainText = String(text || '').trim() || htmlToPlainText(html || '');
 
       try {
         await ReceivedEmail.create({
+          emailId: emailId || '',
           from: Array.isArray(from) ? from.join(', ') : from,
           to: Array.isArray(to) ? to.join(', ') : to,
           subject: subject || '(بدون عنوان)',

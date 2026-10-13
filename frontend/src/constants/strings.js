@@ -308,6 +308,8 @@ export const STRINGS = {
       FROM: 'من:',
       TO: 'إلى:',
       NO_CONTENT: 'لا يوجد محتوى',
+      SYNC_EMAILS: 'مزامنة من Resend',
+      SYNCING: 'جاري المزامنة...',
     },
     CATEGORIES: {
       TITLE: 'الفئات',

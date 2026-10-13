@@ -55,7 +55,7 @@ const AdminEmailDetail = ({ selectedEmail, setSelectedEmail, handleDelete, forma
 
           <hr />
 
-          <pre className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">
+          <pre className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed font-sans font-normal">
             {selectedEmail.text || htmlToPlainText(selectedEmail.html || '') || STRINGS.ADMIN.EMAILS.NO_CONTENT}
           </pre>
         </div>

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const receivedEmailSchema = new mongoose.Schema(
   {
+    emailId: { type: String, default: '', index: true },
     from: { type: String, required: true },
     to: { type: String, required: true },
     subject: { type: String, default: '(بدون عنوان)', maxlength: 500 },

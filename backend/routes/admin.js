@@ -174,6 +174,7 @@ router.delete('/occasions/:id', [
 // RECEIVED EMAILS
 // =====================================================
 router.get('/emails', adminController.getEmails);
+router.post('/emails/sync', adminController.syncEmailsFromResend);
 router.get('/emails/:id', validateObjectId('id'), adminController.getEmailById);
 router.delete('/emails/:id', validateObjectId('id'), adminController.deleteEmail);
 

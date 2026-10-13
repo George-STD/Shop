@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiMail, FiTrash2, FiEye, FiChevronRight, FiChevronLeft } from 'react-icons/fi';
+import { FiMail, FiTrash2, FiEye, FiChevronRight, FiChevronLeft, FiRefreshCw } from 'react-icons/fi';
 import { STRINGS } from '../../../constants';
 
 const AdminEmailList = ({
@@ -10,17 +10,34 @@ const AdminEmailList = ({
   viewEmail,
   handleDelete,
   formatDate,
+  handleSync,
+  isSyncing,
 }) => {
   return (
     <div className="space-y-6 min-h-[600px]">
       {/* Header */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm min-h-[72px]">
-        <div className="flex items-center justify-between">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm min-h-[72px]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <FiMail className="text-2xl text-purple-600" />
             <h1 className="text-xl font-bold">{STRINGS.ADMIN.EMAILS.INBOX}</h1>
+            <span className="text-xs sm:text-sm text-gray-500 bg-gray-100 px-2.5 py-0.5 rounded-full">
+              {data?.pagination?.total || 0} {STRINGS.ADMIN.EMAILS.MESSAGE_COUNT_SUFFIX}
+            </span>
           </div>
-          <span className="text-sm text-gray-500">{data?.pagination?.total || 0} {STRINGS.ADMIN.EMAILS.MESSAGE_COUNT_SUFFIX}</span>
+
+          {handleSync && (
+            <button
+              type="button"
+              onClick={handleSync}
+              disabled={isSyncing}
+              className="flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-purple-50 hover:bg-purple-100 active:bg-purple-200 text-purple-700 transition-colors disabled:opacity-50 active:scale-95 cursor-pointer"
+              title="مزامنة الرسائل وجلب المحتوى من Resend"
+            >
+              <FiRefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? STRINGS.ADMIN.EMAILS.SYNCING : STRINGS.ADMIN.EMAILS.SYNC_EMAILS}</span>
+            </button>
+          )}
         </div>
       </div>
 

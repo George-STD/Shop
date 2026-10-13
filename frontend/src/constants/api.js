@@ -78,6 +78,7 @@ export const ENDPOINTS = {
     REVIEWS: '/admin/reviews',
     OCCASIONS: '/admin/occasions',
     EMAILS: '/admin/emails',
+    EMAILS_SYNC: '/admin/emails/sync',
   },
 };
 

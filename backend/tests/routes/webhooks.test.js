@@ -15,6 +15,15 @@ jest.mock('svix', () => {
   };
 });
 
+jest.mock('../../utils/resendInbound', () => ({
+  fetchReceivedEmailContent: jest.fn().mockResolvedValue({
+    id: 'resend_email_123',
+    text: 'Body fetched from Resend API',
+    html: '<p>Body fetched from Resend API</p>'
+  }),
+  listReceivedEmails: jest.fn().mockResolvedValue([])
+}));
+
 describe('Webhooks Routes Tests', () => {
   beforeAll(() => {
     process.env.RESEND_WEBHOOK_SECRET = 'test_secret';
@@ -49,6 +58,33 @@ describe('Webhooks Routes Tests', () => {
       const emails = await ReceivedEmail.find({});
       expect(emails.length).toBe(1);
       expect(emails[0].subject).toBe('Test Subject');
+    });
+
+    it('should fetch email body via Resend API when body is missing in webhook payload', async () => {
+      const payload = {
+        type: 'email.received',
+        data: {
+          email_id: 'resend_email_123',
+          from: 'sender@example.com',
+          to: 'support@foryo.me',
+          subject: 'No Body in Webhook',
+        }
+      };
+
+      const res = await request(app)
+        .post('/api/webhooks/resend')
+        .set('svix-id', 'test_id')
+        .set('svix-timestamp', 'test_timestamp')
+        .set('svix-signature', 'valid_signature')
+        .send(payload);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.received).toBe(true);
+
+      const emails = await ReceivedEmail.find({ emailId: 'resend_email_123' });
+      expect(emails.length).toBe(1);
+      expect(emails[0].text).toBe('Body fetched from Resend API');
+      expect(emails[0].emailId).toBe('resend_email_123');
     });
 
     it('should ignore non-support emails', async () => {

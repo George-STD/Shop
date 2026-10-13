@@ -205,6 +205,7 @@ export const adminAPI = {
   getEmails: (params) => api.get('/admin/emails', { params }),
   getEmail: (id) => api.get(`/admin/emails/${id}`),
   deleteEmail: (id) => api.delete(`/admin/emails/${id}`),
+  syncEmails: () => api.post('/admin/emails/sync'),
 
   // Barcode
   barcodeLookup: (barcode) => api.get(`/admin/barcode/${barcode}`),
