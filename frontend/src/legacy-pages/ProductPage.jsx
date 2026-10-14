@@ -503,11 +503,18 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
   const handleShare = useCallback(async () => {
     if (!product) return;
     if (navigator.share) {
-      await navigator.share({
-        title: product.name,
-        text: product.description,
-        url: window.location.href,
-      });
+      try {
+        await navigator.share({
+          title: product.name,
+          text: product.description,
+          url: window.location.href,
+        });
+      } catch (err) {
+        if (err?.name !== 'AbortError') {
+          navigator.clipboard?.writeText(window.location.href);
+          toast.success(STRINGS.PRODUCT.LINK_COPIED);
+        }
+      }
     } else {
       navigator.clipboard.writeText(window.location.href);
       toast.success(STRINGS.PRODUCT.LINK_COPIED);
@@ -1013,7 +1020,7 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
               {/* Sizes Selection */}
               {product.sizes?.length > 0 && (
                 <div>
-                  <h3 className="font-medium text-gray-800 mb-3 text-sm">{STRINGS.PRODUCT.SIZE}</h3>
+                  <h3 className="font-medium text-gray-800 mb-3 text-sm">{STRINGS.PRODUCT.SIZE} <span className="text-red-500">*</span></h3>
                   <div className="flex flex-wrap gap-2">
                     {product.sizes.map((size) => {
                       const sizeName = typeof size === 'object' ? size.name : size;
@@ -1045,7 +1052,7 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
               {product.colors?.length > 0 && (
                 <div>
                   <h3 className="font-medium text-gray-800 mb-3 text-sm">
-                    {STRINGS.PRODUCT.COLOR} {selectedColor && <span className="text-gray-500">{selectedColor}</span>}
+                    {STRINGS.PRODUCT.COLOR} <span className="text-red-500">*</span> {selectedColor && <span className="text-gray-500">{selectedColor}</span>}
                   </h3>
                   <div className="flex flex-wrap gap-3">
                     {product.colors.map((color) => (
@@ -1258,15 +1265,16 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
 
               {/* Quantity Counter & Add To Cart CTA */}
               <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex items-center border border-gray-300 rounded-lg">
+                <div className={`flex items-center border border-gray-300 rounded-lg ${product.stock === 0 ? 'opacity-50 bg-gray-50' : ''}`}>
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="p-3 hover:bg-gray-100 transition-colors"
+                    disabled={product.stock === 0 || quantity <= 1}
+                    className="p-3 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     aria-label="Decrease quantity"
                   >
                     <FiMinus />
                   </button>
-                  <span className="px-4 font-semibold text-gray-800">{quantity}</span>
+                  <span className="px-4 font-semibold text-gray-800">{product.stock === 0 ? 0 : quantity}</span>
                   <button
                     onClick={() => {
                       const maxStock = Number(product.stock);
@@ -1276,9 +1284,10 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
                       }
                       setQuantity(quantity + 1);
                     }}
-                    className="p-3 hover:bg-gray-100 transition-colors"
+                    className="p-3 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     disabled={
-                      Number.isFinite(Number(product.stock)) && quantity >= Number(product.stock)
+                      product.stock === 0 ||
+                      (Number.isFinite(Number(product.stock)) && quantity >= Number(product.stock))
                     }
                     aria-label="Increase quantity"
                   >

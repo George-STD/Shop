@@ -784,7 +784,12 @@ const OrdersPage = () => {
                 </div>
                 <div>
                   <span className="font-bold">{STRINGS.ACCOUNT.STATUS}</span>{' '}
-                  {order.statusHistory?.[order.statusHistory.length - 1]?.status || '---'}
+                  {STRINGS.ADMIN?.STATUS_LABELS?.[
+                    order.status || order.statusHistory?.[order.statusHistory.length - 1]?.status
+                  ] ||
+                    order.status ||
+                    order.statusHistory?.[order.statusHistory.length - 1]?.status ||
+                    '---'}
                 </div>
                 <div>
                   <span className="font-bold">{STRINGS.ACCOUNT.DATE}</span>{' '}

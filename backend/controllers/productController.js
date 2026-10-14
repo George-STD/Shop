@@ -128,6 +128,7 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
   if (sort === 'rating') sortOption = { 'rating.average': -1 };
   if (sort === 'bestselling') sortOption = { salesCount: -1 };
   if (sort === 'newest') sortOption = { createdAt: -1 };
+  if (sort === 'discount') sortOption = { oldPrice: -1, createdAt: -1 };
 
   if (search && search.trim()) {
     const trimmedSearch = search.trim();

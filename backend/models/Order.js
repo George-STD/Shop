@@ -69,7 +69,7 @@ const orderItemSchema = new mongoose.Schema(
     procurement: {
       status: {
         type: String,
-        enum: ['pending', 'in_stock', 'purchased'],
+        enum: ['pending', 'to_buy', 'in_stock', 'purchased'],
         default: 'pending',
       },
       costPrice: {

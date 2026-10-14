@@ -72,7 +72,9 @@ const AdminReviewsList = ({
               <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
                 <div>
                   <p className="font-medium">
-                    {review.user?.firstName} {review.user?.lastName}
+                    {review.user?.firstName
+                      ? `${review.user.firstName} ${review.user.lastName || ''}`.trim()
+                      : review.guestName || 'زائر'}
                   </p>
                   <p className="text-sm text-gray-500">{review.product?.name}</p>
                 </div>

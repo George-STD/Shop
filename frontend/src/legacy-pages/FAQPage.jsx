@@ -23,9 +23,8 @@ const FAQPage = () => {
   const [openQuestions, setOpenQuestions] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
 
-  const toggleQuestion = (catIdx, qIdx) => {
-    const key = `${catIdx}-${qIdx}`;
-    setOpenQuestions((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleQuestion = (questionKey) => {
+    setOpenQuestions((prev) => ({ ...prev, [questionKey]: !prev[questionKey] }));
   };
 
   const filteredFaqs = searchQuery
@@ -86,15 +85,15 @@ const FAQPage = () => {
                         className="bg-white rounded-xl overflow-hidden"
                       >
                         <button
-                          onClick={() => toggleQuestion(catIdx, qIdx)}
+                          onClick={() => toggleQuestion(item.q)}
                           className="w-full flex items-center justify-between p-5 text-right"
                         >
                           <span className="font-medium">{item.q}</span>
                           <FiChevronDown
-                            className={`transition-transform ${openQuestions[`${catIdx}-${qIdx}`] ? 'rotate-180' : ''}`}
+                            className={`transition-transform ${openQuestions[item.q] ? 'rotate-180' : ''}`}
                           />
                         </button>
-                        {openQuestions[`${catIdx}-${qIdx}`] && (
+                        {openQuestions[item.q] && (
                           <div className="px-5 pb-5 text-gray-600">{item.a}</div>
                         )}
                       </div>
@@ -146,17 +145,17 @@ const FAQPage = () => {
                     {faqs[activeCategory].questions.map((item, idx) => (
                       <div key={idx} className="border border-gray-100 rounded-xl overflow-hidden">
                         <button
-                          onClick={() => toggleQuestion(activeCategory, idx)}
+                          onClick={() => toggleQuestion(item.q)}
                           className="w-full flex items-center justify-between p-5 text-right hover:bg-gray-50"
                         >
                           <span className="font-medium">{item.q}</span>
                           <FiChevronDown
                             className={`transition-transform flex-shrink-0 mr-4 ${
-                              openQuestions[`${activeCategory}-${idx}`] ? 'rotate-180' : ''
+                              openQuestions[item.q] ? 'rotate-180' : ''
                             }`}
                           />
                         </button>
-                        {openQuestions[`${activeCategory}-${idx}`] && (
+                        {openQuestions[item.q] && (
                           <div className="px-5 pb-5 text-gray-600 border-t border-gray-100 pt-4">
                             {item.a}
                           </div>

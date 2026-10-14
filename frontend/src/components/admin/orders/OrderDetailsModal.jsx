@@ -46,13 +46,18 @@ const OrderDetailsModal = ({
           <div className="border rounded-xl p-4">
             <h3 className="font-bold mb-3">{STRINGS.ADMIN.ORDERS.CUSTOMER_INFO}</h3>
             <p>
-              <strong>{STRINGS.ADMIN.ORDERS.NAME}</strong> {selectedOrder.user?.firstName} {selectedOrder.user?.lastName}
+              <strong>{STRINGS.ADMIN.ORDERS.NAME}</strong>{' '}
+              {selectedOrder.user?.firstName
+                ? `${selectedOrder.user.firstName} ${selectedOrder.user.lastName || ''}`.trim()
+                : `${selectedOrder.shippingAddress?.firstName || ''} ${selectedOrder.shippingAddress?.lastName || ''}`.trim() || 'عميل'}
             </p>
             <p>
-              <strong>{STRINGS.ADMIN.ORDERS.EMAIL}</strong> {selectedOrder.user?.email}
+              <strong>{STRINGS.ADMIN.ORDERS.EMAIL}</strong>{' '}
+              {selectedOrder.user?.email || selectedOrder.guestEmail || '-'}
             </p>
             <p>
-              <strong>{STRINGS.ADMIN.ORDERS.PHONE}</strong> {selectedOrder.user?.phone}
+              <strong>{STRINGS.ADMIN.ORDERS.PHONE}</strong>{' '}
+              {selectedOrder.user?.phone || selectedOrder.shippingAddress?.phone || selectedOrder.guestPhone || '-'}
             </p>
           </div>
 
@@ -77,13 +82,13 @@ const OrderDetailsModal = ({
             <div className="space-y-3">
               {selectedOrder.items?.map((item, index) => (
                 <div key={index} className="flex items-center gap-3">
-                  {item.product?.images?.[0] && (
+                  {(item.product?.images?.[0]?.url || item.image) && (
                     <Image
-                    width={48}
-                    height={48}
-                    sizes="48px"
-                      src={item.product.images[0].url}
-                      alt={item.product.name}
+                      width={48}
+                      height={48}
+                      sizes="48px"
+                      src={item.product?.images?.[0]?.url || item.image}
+                      alt={item.product?.name || item.name || 'صورة المنتج'}
                       className="w-12 h-12 object-cover rounded-lg"
                     />
                   )}
@@ -131,10 +136,16 @@ const OrderDetailsModal = ({
               <span>{STRINGS.ADMIN.ORDERS.SHIPPING}</span>
               <span>{formatCurrency(selectedOrder.shippingCost || 0)}</span>
             </div>
-            {selectedOrder.discount > 0 && (
+            {(Number(selectedOrder.discount?.amount ?? selectedOrder.discount) || 0) > 0 && (
               <div className="flex justify-between mb-2 text-green-600">
                 <span>{STRINGS.ADMIN.ORDERS.DISCOUNT}</span>
-                <span>-{formatCurrency(selectedOrder.discount)}</span>
+                <span>-{formatCurrency(Number(selectedOrder.discount?.amount ?? selectedOrder.discount))}</span>
+              </div>
+            )}
+            {(Number(selectedOrder.pointsDiscount) || 0) > 0 && (
+              <div className="flex justify-between mb-2 text-green-600">
+                <span>خصم نقاط الولاء</span>
+                <span>-{formatCurrency(selectedOrder.pointsDiscount)}</span>
               </div>
             )}
             <div className="flex justify-between font-bold text-lg pt-2 border-t">

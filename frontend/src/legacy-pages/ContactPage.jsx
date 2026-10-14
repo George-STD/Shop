@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { FiMail, FiMapPin, FiClock, FiSend, FiMessageCircle, FiCheckCircle } from 'react-icons/fi';
 import { FaInstagram, FaFacebookF, FaYoutube, FaWhatsapp } from 'react-icons/fa';
 import { STRINGS } from '../constants';
@@ -143,8 +144,10 @@ const ContactPage = () => {
             <div className="lg:col-span-2">
               <div className="bg-white rounded-2xl p-8 shadow-sm">
                 <div className="flex items-center gap-3 mb-6">
-                  <FiMessageCircle className="text-3xl text-purple-600" />
+                  <FiMessageCircle className="text-3xl text-purple-600 shrink-0" />
                   <div>
+                    <h2 className="text-xl font-bold text-gray-800">أرسل لنا رسالة</h2>
+                    <p className="text-sm text-gray-500">يسعدنا الرد على جميع استفساراتك في أسرع وقت</p>
                   </div>
                 </div>
 
@@ -280,12 +283,12 @@ const ContactPage = () => {
                   <h3 className="font-bold text-gray-800">{STRINGS.CONTACT_PAGE.HAVE_QUESTION}</h3>
                   <p className="text-gray-600">
                     {STRINGS.CONTACT_PAGE.CHECK_FAQ_1}{' '}
-                    <a
-                      href="/faq"
+                    <Link
+                      to="/faq"
                       className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 hover:underline"
                     >
                       {STRINGS.CONTACT_PAGE.CHECK_FAQ_2}
-                    </a>{' '}
+                    </Link>{' '}
                     {STRINGS.CONTACT_PAGE.CHECK_FAQ_3}
                   </p>
                 </div>

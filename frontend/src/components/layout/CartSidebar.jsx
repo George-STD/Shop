@@ -220,9 +220,13 @@ const CartSidebar = () => {
           ) : (
             <div className="space-y-3">
               {items.map((item, index) => {
-                const itemEffectivePrice = item.boxId
-                  ? item.price * (1 - (item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE) / 100)
-                  : item.price;
+                const addonsTotal = Array.isArray(item.addons)
+                  ? item.addons.reduce((sum, a) => sum + (Number(a?.price) || 0), 0)
+                  : 0;
+                const itemEffectivePrice =
+                  (item.boxId
+                    ? item.price * (1 - (item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE) / 100)
+                    : item.price) + addonsTotal;
 
                 return (
                   <div
@@ -270,6 +274,11 @@ const CartSidebar = () => {
                             {item.selectedColor && `${STRINGS.PRODUCT.COLOR} ${item.selectedColor}`}
                             {(item.selectedSize || item.selectedColor) && item.selectedShape && ' | '}
                             {item.selectedShape && `${STRINGS.PRODUCT.SHAPE} ${item.selectedShape}`}
+                          </p>
+                        )}
+                        {item.addons?.length > 0 && (
+                          <p className="text-[10px] text-purple-600 mt-0.5 truncate">
+                            {item.addons.map((a) => `+ ${a.name}`).join(' ، ')}
                           </p>
                         )}
                       </div>

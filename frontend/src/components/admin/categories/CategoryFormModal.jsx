@@ -16,9 +16,10 @@ const CategoryFormModal = ({
 
   const generateSlug = (name) => {
     return name
+      .trim()
       .toLowerCase()
       .replace(/\s+/g, '-')
-      .replace(/[^\w\-]+/g, '')
+      .replace(/[^\p{L}\p{N}\-]+/gu, '')
       .replace(/\-\-+/g, '-');
   };
 

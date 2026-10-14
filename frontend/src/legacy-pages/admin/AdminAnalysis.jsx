@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminAPI } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -22,6 +22,18 @@ const AdminAnalysis = () => {
   const [isLoyaltyModalOpen, setIsLoyaltyModalOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!showExportMenu) return;
+    const handleClickOutside = (e) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showExportMenu]);
 
   const { data: analysisData, isLoading: isAnalysisLoading, refetch: refetchAnalysis } = useQuery({
     queryKey: ['admin-analysis', period],
@@ -127,7 +139,7 @@ const AdminAnalysis = () => {
           </button>
 
           {/* Export Reports Dropdown */}
-          <div className="relative">
+          <div className="relative" ref={exportMenuRef}>
             <button
               disabled={exporting}
               onClick={() => setShowExportMenu((prev) => !prev)}

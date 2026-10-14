@@ -299,6 +299,7 @@ const AdminAIAssistant = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
         title="المساعد الذكي (Admin)"
+        aria-label="المساعد الذكي (Admin)"
       >
         <span className="text-2xl">✨</span>
       </button>

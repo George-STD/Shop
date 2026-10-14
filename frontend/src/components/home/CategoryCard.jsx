@@ -35,11 +35,13 @@ const CategoryCard = ({ category }) => {
           </h3>
           {category.productsCount > 0 && (
             <p className="text-white/80 text-xs sm:text-sm mt-1 transform translate-y-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:translate-y-2 md:group-hover:translate-y-0 transition-all duration-300">
-              {STRINGS.HOME.PRODUCTS_COUNT(category.productsCount)}
+              {typeof STRINGS.HOME.PRODUCTS_COUNT === 'function'
+                ? STRINGS.HOME.PRODUCTS_COUNT(category.productsCount)
+                : `${category.productsCount} منتج`}
             </p>
           )}
           <div className="mt-1.5 flex items-center gap-1 text-white/90 text-xs font-medium transform translate-y-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:translate-y-2 md:group-hover:translate-y-0 transition-all duration-300">
-            <span>{STRINGS.HOME.BROWSE}</span>
+            <span>{STRINGS.HOME.BROWSE || 'تصفح الآن'}</span>
             <span className="transform group-hover:-translate-x-1 transition-transform duration-300">
               ←
             </span>

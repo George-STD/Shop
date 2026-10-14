@@ -147,6 +147,18 @@ const CartPage = () => {
                             ))}
                           </div>
                         )}
+                        {item.addons?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {item.addons.map((addon, i) => (
+                              <span
+                                key={i}
+                                className="inline-block bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-md border border-purple-100"
+                              >
+                                + {addon.name} ({addon.price} {STRINGS.PRODUCT.CURRENCY})
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <button
                         onClick={() =>
@@ -202,19 +214,25 @@ const CartPage = () => {
 
                       <div className="text-left dir-ltr" dir="ltr">
                         <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                          {(item.boxId
-                            ? item.price * (1 - (item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE) / 100)
-                            : item.price) * item.quantity}{' '}
+                          {new Intl.NumberFormat('ar-EG').format(
+                            ((item.boxId
+                              ? item.price * (1 - (item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE) / 100)
+                              : item.price) +
+                              (Array.isArray(item.addons)
+                                ? item.addons.reduce((s, a) => s + (Number(a?.price) || 0), 0)
+                                : 0)) *
+                              item.quantity
+                          )}{' '}
                           {STRINGS.PRODUCT.CURRENCY}
                         </span>
                         {item.boxId ? (
                           <span className="text-sm text-gray-400 line-through mr-2">
-                            {item.price * item.quantity} {STRINGS.PRODUCT.CURRENCY}
+                            {new Intl.NumberFormat('ar-EG').format(item.price * item.quantity)} {STRINGS.PRODUCT.CURRENCY}
                           </span>
                         ) : (
                           item.oldPrice && (
                             <span className="text-sm text-gray-400 line-through mr-2">
-                              {item.oldPrice * item.quantity} {STRINGS.PRODUCT.CURRENCY}
+                              {new Intl.NumberFormat('ar-EG').format(item.oldPrice * item.quantity)} {STRINGS.PRODUCT.CURRENCY}
                             </span>
                           )
                         )}
@@ -242,7 +260,7 @@ const CartPage = () => {
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between">
                     <span className="text-gray-600">{STRINGS.CART.SUBTOTAL}</span>
-                    <span>{subtotal} {STRINGS.PRODUCT.CURRENCY}</span>
+                    <span>{new Intl.NumberFormat('ar-EG').format(subtotal)} {STRINGS.PRODUCT.CURRENCY}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-600">{STRINGS.CART.SHIPPING}</span>
@@ -256,7 +274,7 @@ const CartPage = () => {
                   <div className="border-t pt-4 flex justify-between text-lg font-bold">
                     <span>{STRINGS.CART.TOTAL}</span>
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                      {total} {STRINGS.PRODUCT.CURRENCY}
+                      {new Intl.NumberFormat('ar-EG').format(total)} {STRINGS.PRODUCT.CURRENCY}
                     </span>
                   </div>
                 </div>

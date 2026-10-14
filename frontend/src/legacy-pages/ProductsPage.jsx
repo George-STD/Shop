@@ -125,6 +125,7 @@ const ProductsPage = () => {
     { value: 'price_desc', label: STRINGS.PRODUCTS_PAGE.PRICE_DESC },
     { value: 'rating', label: STRINGS.PRODUCTS_PAGE.HIGHEST_RATING },
     { value: 'bestselling', label: STRINGS.PRODUCTS_PAGE.BESTSELLING },
+    { value: 'discount', label: STRINGS.PRODUCTS_PAGE.DISCOUNT || 'الأعلى خصماً' },
   ];
 
   const recipients = STRINGS.PRODUCTS_PAGE.RECIPIENTS;
@@ -144,6 +145,7 @@ const ProductsPage = () => {
         newParams.set(key, value);
       } else {
         newParams.delete(key);
+        if (key === 'newArrivals') newParams.delete('new');
       }
       newParams.set('page', '1'); // Reset to first page on filter change
     }

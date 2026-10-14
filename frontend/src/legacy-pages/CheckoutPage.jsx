@@ -17,6 +17,7 @@ const ShippingFormStep = memo(function ShippingFormStep({
   onChange,
   onNext,
   isAuthenticated,
+  user,
   governorates,
 }) {
   return (
@@ -77,16 +78,16 @@ const ShippingFormStep = memo(function ShippingFormStep({
             name="email"
             value={formData.email}
             onChange={onChange}
-            disabled={isAuthenticated}
+            disabled={isAuthenticated && Boolean(user?.email)}
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? 'error-email' : undefined}
-            className={`input-field text-sm ${isAuthenticated ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''} ${
+            className={`input-field text-sm ${isAuthenticated && user?.email ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''} ${
               errors.email ? 'border-red-500 ring-1 ring-red-500' : ''
             }`}
             placeholder="example@mail.com"
             required
           />
-          {isAuthenticated && (
+          {isAuthenticated && user?.email && (
             <p className="text-[11px] text-gray-400 mt-1">البريد الإلكتروني مرتبط بحسابك المسجّل.</p>
           )}
           {errors.email && (
@@ -216,6 +217,22 @@ const ShippingFormStep = memo(function ShippingFormStep({
               {errors.street}
             </p>
           )}
+        </div>
+
+        {/* Building */}
+        <div>
+          <label htmlFor="checkout-building" className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5">
+            رقم / اسم العمارة
+          </label>
+          <input
+            id="checkout-building"
+            type="text"
+            name="building"
+            value={formData.building}
+            onChange={onChange}
+            className="input-field text-sm"
+            placeholder="رقم أو اسم العمارة"
+          />
         </div>
 
         {/* Floor */}
@@ -445,28 +462,39 @@ const OrderReviewStep = memo(function OrderReviewStep({
           {STRINGS.CART.ITEMS} ({items.length})
         </h3>
         <div className="space-y-3">
-          {items.map((item, index) => (
-            <div key={`${item.id}-${index}`} className="flex gap-3 bg-gray-50/70 p-2.5 rounded-xl border border-gray-100">
-              <div className="relative w-14 h-14 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
-                <Image
-                  src={item.image || SITE_CONFIG.PLACEHOLDER_IMAGE}
-                  alt={item.name}
-                  fill
-                  sizes="56px"
-                  className="object-cover"
-                />
+          {items.map((item, index) => {
+            const discountPercent = item.boxId
+              ? item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE
+              : 0;
+            const addonsTotal = Array.isArray(item.addons)
+              ? item.addons.reduce((sum, a) => sum + (Number(a?.price) || 0), 0)
+              : 0;
+            const unitPrice = Math.round((item.price * (1 - discountPercent / 100) + addonsTotal) * 100) / 100;
+            const lineTotal = Math.round(unitPrice * item.quantity * 100) / 100;
+
+            return (
+              <div key={`${item.id}-${index}`} className="flex gap-3 bg-gray-50/70 p-2.5 rounded-xl border border-gray-100">
+                <div className="relative w-14 h-14 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                  <Image
+                    src={item.image || SITE_CONFIG.PLACEHOLDER_IMAGE}
+                    alt={item.name}
+                    fill
+                    sizes="56px"
+                    className="object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{item.name}</p>
+                  <p className="text-[11px] text-gray-500">
+                    {STRINGS.CART.QUANTITY} {item.quantity} × {unitPrice} {STRINGS.PRODUCT.CURRENCY}
+                  </p>
+                </div>
+                <div className="flex items-center font-bold text-xs sm:text-sm text-gray-900">
+                  <bdi>{lineTotal}</bdi> {STRINGS.PRODUCT.CURRENCY}
+                </div>
               </div>
-              <div className="flex-1 min-w-0 flex flex-col justify-center">
-                <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{item.name}</p>
-                <p className="text-[11px] text-gray-500">
-                  {STRINGS.CART.QUANTITY} {item.quantity} × {item.price} {STRINGS.PRODUCT.CURRENCY}
-                </p>
-              </div>
-              <div className="flex items-center font-bold text-xs sm:text-sm text-gray-900">
-                <bdi>{item.price * item.quantity}</bdi> {STRINGS.PRODUCT.CURRENCY}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -850,6 +878,7 @@ const CheckoutPage = () => {
                   onChange={handleChange}
                   onNext={handleNextStep1}
                   isAuthenticated={isAuthenticated}
+                  user={user}
                   governorates={governorates}
                 />
               )}
@@ -904,7 +933,21 @@ const CheckoutPage = () => {
                           </span>
                         )}
                         <p className="text-xs text-gray-500 font-medium">
-                          <bdi>{item.price}</bdi> {STRINGS.PRODUCT.CURRENCY}
+                          <bdi>
+                            {Math.round(
+                              (item.price *
+                                (1 -
+                                  (item.boxId
+                                    ? item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE
+                                    : 0) /
+                                    100) +
+                                (Array.isArray(item.addons)
+                                  ? item.addons.reduce((s, a) => s + (Number(a?.price) || 0), 0)
+                                  : 0)) *
+                                100
+                            ) / 100}
+                          </bdi>{' '}
+                          {STRINGS.PRODUCT.CURRENCY}
                         </p>
                       </div>
                     </div>
@@ -949,9 +992,16 @@ const CheckoutPage = () => {
                 {/* Totals Breakdown */}
                 <div className="space-y-2.5 pt-3 border-t border-gray-100 text-xs sm:text-sm">
                   <div className="flex justify-between text-gray-500">
-                    <span>{STRINGS.CART.SUBTOTAL}</span>
+                    <span>
+                      {STRINGS.CART.SUBTOTAL}
+                      {items.some((i) => i.boxId) && (
+                        <span className="text-[10px] text-purple-600 mr-1 font-medium">
+                          (شامل تغليف البوكس {BUSINESS_CONFIG.BOX_BASE_PRICE_EGP} {STRINGS.PRODUCT.CURRENCY})
+                        </span>
+                      )}
+                    </span>
                     <span className="font-semibold text-gray-800">
-                      <bdi>{subtotal}</bdi> {STRINGS.PRODUCT.CURRENCY}
+                      <bdi>{Math.round(subtotal * 100) / 100}</bdi> {STRINGS.PRODUCT.CURRENCY}
                     </span>
                   </div>
                   <div className="flex justify-between text-gray-500">

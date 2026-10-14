@@ -35,6 +35,7 @@ export const STRINGS = {
     SENDING: 'جاري الإرسال...',
     VERIFYING: 'جاري التحقق...',
     CHANGING: 'جاري التغيير...',
+    PROCESSING: 'جاري المعالجة...',
     SAVING: 'جاري الحفظ...',
     NOT_AVAILABLE: 'غير متوفر',
     ONLY: 'فقط',
@@ -61,6 +62,7 @@ export const STRINGS = {
     ADMIN: 'لوحة التحكم',
     TRACK_ORDER: 'تتبع طلبك',
     STORES: 'متجرنا',
+    MENU: 'القائمة الرئيسية',
     CONTACT: 'اتصل بنا',
   },
   
@@ -140,6 +142,9 @@ export const STRINGS = {
     EMAILS: 'البريد الوارد',
     ROLE_ADMIN: 'مدير',
     ROLE_USER: 'مستخدم',
+    ANALYSIS: {
+      TITLE: 'التحليلات والتتبع',
+    },
     LOGOUT: 'تسجيل الخروج',
     BACK_TO_SITE: 'العودة للموقع',
     TABLE: {
@@ -366,6 +371,15 @@ export const STRINGS = {
       OCCASION_DELETED: 'تم حذف المناسبة',
       ERROR_OCCURRED: 'حدث خطأ',
       DELETE_CATEGORY_ERROR: 'حدث خطأ أثناء حذف الفئة',
+      CATEGORY_CREATED: 'تمت إضافة التصنيف بنجاح',
+      CATEGORY_UPDATED: 'تم تحديث التصنيف بنجاح',
+      CATEGORY_DELETED: 'تم حذف التصنيف بنجاح',
+      ORDER_UPDATED: 'تم تحديث حالة الطلب بنجاح',
+      PRODUCT_CREATED: 'تمت إضافة المنتج بنجاح',
+      PRODUCT_UPDATED: 'تم تحديث المنتج بنجاح',
+      PRODUCT_DELETED: 'تم حذف المنتج بنجاح',
+      USER_UPDATED: 'تم تحديث بيانات المستخدم بنجاح',
+      USER_DELETED: 'تم حذف المستخدم بنجاح',
     },
     PAGES: {
       MANAGE_OCCASIONS: 'إدارة المناسبات',
@@ -430,6 +444,8 @@ export const STRINGS = {
     FEATURED_SUBTITLE: 'منتجات مختارة',
     FEATURED_VIEW_ALL: 'عرض جميع المنتجات المميزة',
     CATEGORIES_SUBTITLE: 'اختر من بين مجموعتنا الواسعة من التصنيفات',
+    BROWSE: 'تصفح الآن',
+    PRODUCTS_COUNT: (count) => `${count} منتج`,
   },
 
   // =====================================================
@@ -452,6 +468,7 @@ export const STRINGS = {
   PRODUCT: {
     ADD_TO_CART: 'أضف للسلة',
     ADDED_TO_CART: 'تمت الإضافة إلى السلة',
+    REMOVED_FROM_CART: 'تم الحذف من السلة',
     ADD_TO_WISHLIST: 'أضف للأمنيات',
     ADDED_TO_WISHLIST: 'تمت الإضافة إلى قائمة الأمنيات',
     REMOVE_FROM_WISHLIST: 'إزالة من الأمنيات',
@@ -545,6 +562,7 @@ export const STRINGS = {
     REMOVE: 'حذف',
     UPDATE_CART: 'تحديث السلة',
     MAX_STOCK_REACHED: 'الحد الأقصى المتاح هو ',
+    CLEARED_SUCCESS: 'تم إفراغ سلة المشتريات',
     IN_BOX: '📦 في البوكس',
     CLEAR_CART: 'إفراغ السلة',
     QUANTITY: 'الكمية:',
@@ -560,6 +578,7 @@ export const STRINGS = {
     EMPTY_DESC: 'أضف منتجاتك المفضلة واحتفظ بها لوقت لاحق',
     EMPTY_MESSAGE: 'أضف منتجاتك المفضلة واحتفظ بها لوقت لاحق',
     LOGIN_REQUIRED: 'سجل دخول أولاً لإضافة منتجات لقائمة الأمنيات',
+    CLEARED_SUCCESS: 'تم إفراغ قائمة المفضلة',
   },
   // =====================================================
   // STORES PAGE
@@ -1388,6 +1407,7 @@ export const STRINGS = {
     PRICE_DESC: 'السعر: من الأعلى للأقل',
     HIGHEST_RATING: 'الأعلى تقييماً',
     BESTSELLING: 'الأكثر مبيعاً',
+    DISCOUNT: 'الأعلى خصماً',
     RECIPIENTS: ['زوجة', 'زوج', 'أم', 'أب', 'أخت', 'أخ', 'صديقة', 'صديق', 'أطفال', 'عروسين'],
     PRICE_RANGES: [
       { label: 'أقل من 200', min: 0, max: 200 },

@@ -9,6 +9,7 @@ const BulkVisionUploader = ({ isOpen, onClose, categories = [], occasionsList = 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
+  const cancelProcessingRef = useRef(false);
 
   // Reset all state when modal opens or closes
   useEffect(() => {
@@ -73,10 +74,12 @@ const BulkVisionUploader = ({ isOpen, onClose, categories = [], occasionsList = 
     const idleItems = items.filter((i) => i.status === 'idle' || i.status === 'error');
     if (idleItems.length === 0) return toast('لا توجد صور جديدة للمعالجة');
 
+    cancelProcessingRef.current = false;
     setIsProcessing(true);
     let successCount = 0;
 
     for (const item of idleItems) {
+      if (cancelProcessingRef.current) break;
       updateItem(item.id, { status: 'processing' });
       try {
         const formData = new FormData();
@@ -135,6 +138,7 @@ const BulkVisionUploader = ({ isOpen, onClose, categories = [], occasionsList = 
 
       // Add a small delay between requests to avoid Gemini free tier rate limits (15 RPM)
       // Only delay if there are more items to process
+      if (cancelProcessingRef.current) break;
       if (idleItems.indexOf(item) < idleItems.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, 4500));
       }
@@ -280,6 +284,19 @@ const BulkVisionUploader = ({ isOpen, onClose, categories = [], occasionsList = 
                     {isProcessing ? <FiCpu className="animate-spin" /> : <FiCpu />}
                     {isProcessing ? 'جاري التحليل...' : 'بدء التحليل بالذكاء الاصطناعي'}
                   </button>
+                  {isProcessing && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        cancelProcessingRef.current = true;
+                        setIsProcessing(false);
+                        toast('تم إيقاف عملية التحليل');
+                      }}
+                      className="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors"
+                    >
+                      <FiX /> إيقاف
+                    </button>
+                  )}
                   <button
                     onClick={saveAll}
                     disabled={isSaving || successCount === 0}

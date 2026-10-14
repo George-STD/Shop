@@ -11,7 +11,7 @@ import {
   FiHeart,
   FiCheckCircle,
 } from 'react-icons/fi';
-import { STRINGS, BUSINESS_CONFIG } from '../../constants';
+import { STRINGS, BUSINESS_CONFIG, SITE_CONFIG } from '../../constants';
 import toast from 'react-hot-toast';
 
 const Footer = () => {
@@ -256,7 +256,7 @@ const Footer = () => {
       <div className="border-t border-gray-800/50">
         <div className="container-custom py-5">
           <p className="text-center text-gray-400 text-xs flex items-center justify-center gap-1">
-            © {currentYear} {BUSINESS_CONFIG.SITE_NAME_EN}. {STRINGS.FOOTER.MADE_WITH}{' '}
+            © {currentYear} {SITE_CONFIG.SITE_NAME_EN || BUSINESS_CONFIG.SITE_NAME_EN || 'For You'}. {STRINGS.FOOTER.MADE_WITH}{' '}
             <FiHeart className="text-pink-500 fill-pink-500" size={12} /> {STRINGS.FOOTER.RIGHTS_RESERVED}
           </p>
         </div>

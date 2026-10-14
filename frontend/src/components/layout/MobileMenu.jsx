@@ -92,7 +92,7 @@ const MobileMenu = () => {
       {/* Menu Slide-Out Panel */}
       <div
         ref={panelRef}
-        className="absolute top-0 right-0 h-full w-84 max-w-[88vw] bg-white shadow-2xl overflow-y-auto panel-slide-right flex flex-col justify-between"
+        className="absolute top-0 right-0 h-full w-80 sm:w-[336px] max-w-[88vw] bg-white shadow-2xl overflow-y-auto panel-slide-right flex flex-col justify-between"
       >
         <div>
           {/* Header */}

@@ -15,7 +15,7 @@ export default function ReviewOrderClient({ orderNumber }) {
 
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
-  const [comment, setComment] = useState('ممتاز جداً');
+  const [comment, setComment] = useState('');
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
 

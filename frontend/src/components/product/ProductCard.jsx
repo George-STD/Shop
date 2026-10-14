@@ -38,7 +38,7 @@ const ProductCard = ({ product, priority = false, viewMode = 'grid' }) => {
     (product?.colors && product.colors.length > 0) ||
     (product?.shapes && product.shapes.length > 0) ||
     (product?.variantGroups && product.variantGroups.length > 0) ||
-    (product?.customizableBox && product.boxSlots && product.boxSlots.length > 0)
+    ((product?.isCustomBox || product?.customizableBox) && product.boxSlots && product.boxSlots.length > 0)
   );
 
   // 2. Stable Action Handlers

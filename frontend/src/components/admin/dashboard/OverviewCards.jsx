@@ -30,7 +30,7 @@ const OverviewCards = ({ stats, formatCurrency }) => {
       title: STRINGS.ADMIN.DASHBOARD.TOTAL_REVENUE,
       value: formatCurrency(stats?.overview?.totalRevenue || 0),
       icon: FiDollarSign,
-      color: 'bg-gradient-to-r from-purple-50 to-pink-500',
+      color: 'bg-gradient-to-r from-purple-600 to-pink-600',
       isRevenue: true,
     },
   ];
