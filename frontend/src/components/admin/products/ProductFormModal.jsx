@@ -373,6 +373,18 @@ const ProductFormModal = ({
                     }}
                     className="w-8 h-8 border rounded"
                   />
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="المخزون (اختياري)"
+                    value={color.stock ?? ''}
+                    onChange={(e) => {
+                      const newColors = [...formData.colors];
+                      newColors[idx].stock = e.target.value === '' ? null : Math.max(0, parseInt(e.target.value, 10) || 0);
+                      setFormData({ ...formData, colors: newColors });
+                    }}
+                    className="w-28 border rounded-lg px-2 py-1 text-xs"
+                  />
                   <button
                     type="button"
                     onClick={() => {
@@ -917,6 +929,21 @@ const ProductFormModal = ({
                             setFormData({ ...formData, variantGroups: newGroups });
                           }}
                           className="flex-1 border rounded px-2 py-1 text-xs"
+                        />
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="المخزون (اختياري)"
+                          value={opt.stock ?? ''}
+                          onChange={(e) => {
+                            const newGroups = [...formData.variantGroups];
+                            const newOpts = [...newGroups[gIdx].options];
+                            const nextStock = e.target.value === '' ? null : Math.max(0, parseInt(e.target.value, 10) || 0);
+                            newOpts[oIdx] = { ...newOpts[oIdx], stock: nextStock };
+                            newGroups[gIdx] = { ...newGroups[gIdx], options: newOpts };
+                            setFormData({ ...formData, variantGroups: newGroups });
+                          }}
+                          className="w-28 border rounded px-2 py-1 text-xs"
                         />
                         {opt.thumbnail && (
                           <Image

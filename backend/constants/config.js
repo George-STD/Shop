@@ -24,7 +24,7 @@ const CONFIG = {
     METHODS: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
     CREDENTIALS: true,
     MAX_AGE: 86400,
-    ALLOWED_HEADERS: ['Content-Type', 'Authorization', 'If-None-Match', 'X-Requested-With'],
+    ALLOWED_HEADERS: ['Content-Type', 'Authorization', 'If-None-Match', 'X-Requested-With', 'Idempotency-Key'],
     EXPOSED_HEADERS: ['ETag', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset', 'Retry-After', 'X-Cache'],
   },
 
@@ -125,9 +125,12 @@ const CONFIG = {
   PAYMENT_METHOD: {
     COD: 'cod',
     INSTAPAY: 'instapay',
+    PAYMOB: 'paymob',
+    PAYMOB_CARD: 'paymob_card',
+    PAYMOB_WALLET: 'paymob_wallet',
   },
 
-  PAYMENT_METHODS: ['cod', 'instapay'],
+  PAYMENT_METHODS: ['cod', 'instapay', 'paymob', 'paymob_card', 'paymob_wallet'],
 
   // =====================================================
   // USER ROLES
@@ -219,5 +222,3 @@ CONFIG.getShippingCostByGovernorate = (governorate) => {
 };
 
 module.exports = CONFIG;
-
-

@@ -6,7 +6,7 @@ import { productsAPI, categoriesAPI, occasionsAPI } from '../services/api';
 import ProductCard from '../components/product/ProductCard';
 import { STRINGS } from '../constants';
 
-const ProductsPage = () => {
+const ProductsPage = ({ initialData }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
@@ -64,6 +64,21 @@ const ProductsPage = () => {
     enabled: !!categorySlug,
   });
 
+  const isDefaultCatalogQuery =
+    !categorySlug &&
+    page === 1 &&
+    sort === 'newest' &&
+    !minPrice &&
+    !maxPrice &&
+    !occasion &&
+    !recipient &&
+    !search &&
+    !canBeAddedToBox &&
+    !isReadyBox &&
+    !featured &&
+    !bestseller &&
+    !newArrivals;
+
   // Fetch products - use categorySlug directly
   const { data: productsData, isLoading } = useQuery({
     queryKey: [
@@ -102,18 +117,21 @@ const ProductsPage = () => {
           newArrivals: newArrivals === 'true' ? 'true' : undefined,
         })
         .then((res) => res.data),
+    initialData: isDefaultCatalogQuery ? initialData?.productsData : undefined,
   });
 
   // Fetch categories for filter
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesAPI.getAll().then((res) => res.data.data),
+    initialData: initialData?.categories,
   });
 
   // Fetch occasions for filter
   const { data: occasions } = useQuery({
     queryKey: ['occasions'],
     queryFn: () => occasionsAPI.getAll().then((res) => res.data.data),
+    initialData: initialData?.occasions,
   });
 
   const products = productsData?.data || [];

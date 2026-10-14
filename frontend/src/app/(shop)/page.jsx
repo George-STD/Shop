@@ -1,6 +1,7 @@
 import HomePageClient from './HomePageClient';
 import HeroSection from '../../components/home/hero/HeroSection';
 import { SITE_CONFIG } from '../../constants';
+import { getInitialHomeCatalog } from '../../lib/serverCatalog';
 
 const SITE_URL = SITE_CONFIG.SITE_URL;
 
@@ -23,11 +24,13 @@ export const metadata = {
   },
 };
 
-export default function Page() {
+export default async function Page() {
+  const initialData = await getInitialHomeCatalog();
+
   return (
     <>
       <HeroSection />
-      <HomePageClient />
+      <HomePageClient initialData={initialData} />
     </>
   );
 }

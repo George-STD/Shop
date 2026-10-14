@@ -23,12 +23,16 @@ const server = http.createServer((request, response) => {
   const url = new URL(request.url, 'http://127.0.0.1:4010');
   if (request.method === 'GET' && url.pathname === '/api/health') return send(response, 200, { success: true });
   if (request.method === 'GET' && url.pathname === '/api/products') return send(response, 200, { success: true, data: [product], pagination: { total: 1, pages: 1, page: 1 } });
+  if (request.method === 'GET' && (url.pathname === '/api/products/featured' || url.pathname === '/api/products/bestsellers' || url.pathname === '/api/products/new')) {
+    return send(response, 200, { success: true, data: [product] });
+  }
   if (request.method === 'GET' && url.pathname === `/api/products/slug/${product.slug}`) return send(response, 200, { success: true, data: product });
   if (request.method === 'GET' && url.pathname === `/api/products/${product._id}/related`) return send(response, 200, { success: true, data: [] });
   if (request.method === 'GET' && url.pathname.startsWith('/api/categories')) return send(response, 200, { success: true, data: [] });
   if (request.method === 'GET' && url.pathname.startsWith('/api/occasions')) return send(response, 200, { success: true, data: [] });
   if (request.method === 'GET' && url.pathname === '/api/auth/me') return send(response, 200, { success: true, data: { _id: 'user-1', firstName: 'اختبار', lastName: 'المستخدم', email: 'e2e@example.com', phone: '01012345678', role: 'user', loyaltyPoints: 0 } });
   if (request.method === 'GET' && url.pathname === '/api/settings/loyalty') return send(response, 200, { success: true, data: { enabled: false, egpPerPointRedeemed: 0.1 } });
+  if (request.method === 'GET' && url.pathname === '/api/settings/payment') return send(response, 200, { success: true, data: { paymobEnabled: false, cardEnabled: false, walletEnabled: false, mode: 'test' } });
   if (request.method === 'GET' && url.pathname.startsWith('/api/reviews/product/')) return send(response, 200, { success: true, data: [], pagination: { total: 0 } });
   if (request.method === 'POST' && url.pathname === '/api/orders') return send(response, 200, { success: true, data: { orderNumber: 'E2E-1001', total: 595 } });
   if (url.pathname.startsWith('/api/auth/wishlist/')) return send(response, request.method === 'DELETE' ? 204 : 200, { success: true });

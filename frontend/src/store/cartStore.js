@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { BUSINESS_CONFIG, STORAGE_KEYS } from '../constants';
 
 const parseStock = (value) => {
+  if (value === null || value === undefined || value === '') return null;
   const stock = Number(value);
   if (!Number.isFinite(stock)) return null;
   return Math.max(0, Math.floor(stock));
@@ -44,11 +45,19 @@ export const useCartStore = create(
 
       addItem: (product, quantity = 1, options = {}) => {
         const requestedQuantity = Math.max(1, Math.floor(Number(quantity) || 1));
-        const stockLimit = parseStock(product?.stock);
-        const maxAllowed = stockLimit ?? Number.MAX_SAFE_INTEGER;
+        const productStockLimit = parseStock(product?.stock);
+        const variantStockLimit = parseStock(options?.variantStock);
+        const effectiveKeyLimit =
+          productStockLimit !== null && variantStockLimit !== null
+            ? Math.min(productStockLimit, variantStockLimit)
+            : variantStockLimit ?? productStockLimit;
+        const maxProductAllowed = productStockLimit ?? Number.MAX_SAFE_INTEGER;
+        const maxVariantAllowed = effectiveKeyLimit ?? Number.MAX_SAFE_INTEGER;
 
         if (!product?._id) return { success: false, reason: 'invalid_product' };
-        if (stockLimit === 0) return { success: false, reason: 'out_of_stock', maxStock: 0 };
+        if (productStockLimit === 0 || variantStockLimit === 0) {
+          return { success: false, reason: 'out_of_stock', maxStock: 0 };
+        }
 
         const variantsKey = options.selectedVariants
           ? JSON.stringify(options.selectedVariants)
@@ -60,8 +69,9 @@ export const useCartStore = create(
           price: product.price,
           oldPrice: product.oldPrice,
           image: product.images?.[0]?.url,
-          quantity: Math.min(requestedQuantity, maxAllowed),
-          stock: stockLimit,
+          quantity: Math.min(requestedQuantity, maxVariantAllowed),
+          stock: productStockLimit,
+          variantStock: variantStockLimit,
           selectedSize: options.selectedSize,
           selectedColor: options.selectedColor,
           selectedShape: options.selectedShape,
@@ -73,7 +83,12 @@ export const useCartStore = create(
           boxDiscount: options.boxDiscount,
         };
         const itemKey = getItemKey(incoming);
-        let result = { success: true, quantity: incoming.quantity, capped: incoming.quantity < requestedQuantity, maxStock: stockLimit };
+        let result = {
+          success: true,
+          quantity: incoming.quantity,
+          capped: incoming.quantity < requestedQuantity,
+          maxStock: effectiveKeyLimit,
+        };
 
         set((state) => {
           const existingIndex = state.items.findIndex((item) => getItemKey(item) === itemKey);
@@ -81,11 +96,12 @@ export const useCartStore = create(
             (sum, item, idx) => (item.id === product._id && idx !== existingIndex ? sum + (Number(item.quantity) || 0) : sum),
             0
           );
-          const remainingForThisKey = Math.max(0, maxAllowed - otherVariantsQty);
+          const remainingForProduct = Math.max(0, maxProductAllowed - otherVariantsQty);
+          const remainingForThisKey = Math.min(remainingForProduct, maxVariantAllowed);
 
           if (existingIndex === -1) {
             if (remainingForThisKey === 0) {
-              result = { success: false, quantity: 0, capped: true, maxStock: stockLimit, reason: 'stock_limit_reached' };
+              result = { success: false, quantity: 0, capped: true, maxStock: effectiveKeyLimit, reason: 'stock_limit_reached' };
               return state;
             }
             const clampedIncoming = {
@@ -96,7 +112,7 @@ export const useCartStore = create(
               success: true,
               quantity: clampedIncoming.quantity,
               capped: clampedIncoming.quantity < requestedQuantity,
-              maxStock: stockLimit,
+              maxStock: effectiveKeyLimit,
             };
             return { items: [...state.items, clampedIncoming] };
           }
@@ -107,7 +123,7 @@ export const useCartStore = create(
             success: nextQuantity > currentItem.quantity,
             quantity: nextQuantity,
             capped: nextQuantity < (Number(currentItem.quantity) || 0) + requestedQuantity,
-            maxStock: stockLimit,
+            maxStock: effectiveKeyLimit,
             reason: nextQuantity === currentItem.quantity ? 'stock_limit_reached' : undefined,
           };
           if (nextQuantity === currentItem.quantity) return state;
@@ -116,7 +132,8 @@ export const useCartStore = create(
           items[existingIndex] = {
             ...currentItem,
             quantity: nextQuantity,
-            ...(stockLimit !== null ? { stock: stockLimit } : {}),
+            ...(productStockLimit !== null ? { stock: productStockLimit } : {}),
+            ...(variantStockLimit !== null ? { variantStock: variantStockLimit } : {}),
           };
           return { items };
         });
@@ -158,14 +175,21 @@ export const useCartStore = create(
           );
           const items = state.items.map((item) => {
             if (getItemKey(item) !== targetKey) return item;
-            const stockLimit = parseStock(item.stock);
-            const maxForThisKey = Math.max(1, (stockLimit ?? Number.MAX_SAFE_INTEGER) - otherVariantsQty);
+            const productStockLimit = parseStock(item.stock);
+            const variantStockLimit = parseStock(item.variantStock);
+            const maxProductForKey = Math.max(1, (productStockLimit ?? Number.MAX_SAFE_INTEGER) - otherVariantsQty);
+            const maxVariantForKey = variantStockLimit !== null ? Math.max(1, variantStockLimit) : Number.MAX_SAFE_INTEGER;
+            const maxForThisKey = Math.min(maxProductForKey, maxVariantForKey);
             const nextQuantity = Math.min(requestedQuantity, maxForThisKey);
+            const effectiveLimit =
+              productStockLimit !== null && variantStockLimit !== null
+                ? Math.min(productStockLimit, variantStockLimit)
+                : variantStockLimit ?? productStockLimit;
             result = {
               success: true,
               quantity: nextQuantity,
               capped: nextQuantity < requestedQuantity,
-              maxStock: stockLimit,
+              maxStock: effectiveLimit,
             };
             if (nextQuantity === item.quantity) return item;
             changed = true;

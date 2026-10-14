@@ -4,7 +4,7 @@ const { roundTo2Decimals } = require('../utils/money');
 /**
  * Master Product Schema
  * Represents standalone gift items, pre-assembled ready boxes (isReadyBox), and customizable boxes (isCustomBox).
- * Hardened for 10M MAU: Integer stock validation, IEEE-754 money precision, and query-aligned ESR indexes.
+ * Hardened for 10M MAU: Integer stock validation, variant-level SKU stock, IEEE-754 money precision, and query-aligned ESR indexes.
  */
 const productSchema = new mongoose.Schema(
   {
@@ -130,6 +130,15 @@ const productSchema = new mongoose.Schema(
           min: [0, 'سعر المقاس لا يمكن أن يكون سالباً'],
           set: (v) => (v === null || v === undefined ? v : roundTo2Decimals(v)),
         },
+        stock: {
+          type: Number,
+          min: [0, 'مخزون المقاس لا يمكن أن يكون سالباً'],
+          default: null,
+        },
+        sku: {
+          type: String,
+          trim: true,
+        },
       },
     ],
     colors: [
@@ -137,12 +146,26 @@ const productSchema = new mongoose.Schema(
         name: String,
         hex: String,
         image: String,
+        stock: {
+          type: Number,
+          min: [0, 'مخزون اللون لا يمكن أن يكون سالباً'],
+          default: null,
+        },
+        sku: {
+          type: String,
+          trim: true,
+        },
       },
     ],
     shapes: [
       {
         name: String,
         images: [String],
+        stock: {
+          type: Number,
+          min: [0, 'مخزون الشكل لا يمكن أن يكون سالباً'],
+          default: null,
+        },
       },
     ],
     addons: [
@@ -165,6 +188,20 @@ const productSchema = new mongoose.Schema(
           {
             name: String,
             thumbnail: String,
+            stock: {
+              type: Number,
+              min: [0, 'مخزون الخيار لا يمكن أن يكون سالباً'],
+              default: null,
+            },
+            priceDelta: {
+              type: Number,
+              default: 0,
+              set: (v) => (v === null || v === undefined ? 0 : roundTo2Decimals(v)),
+            },
+            sku: {
+              type: String,
+              trim: true,
+            },
           },
         ],
       },

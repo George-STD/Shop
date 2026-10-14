@@ -1,8 +1,10 @@
 const crypto = require('crypto');
+const { redisClient } = require('../utils/redisClient');
 
 /**
- * High-Performance In-Memory LRU + TTL Cache
- * Prevents redundant MongoDB reads on hot public catalog routes (featured, categories, occasions).
+ * High-Performance L1 (In-Memory LRU) + L2 (Distributed Redis) Cache
+ * Prevents redundant MongoDB reads on hot public catalog routes (featured, categories, occasions)
+ * and keeps multiple backend instances synchronized when Redis is enabled.
  */
 class TtlCache {
   constructor(maxEntries = 2000, defaultTtlMs = 30_000) {
@@ -35,14 +37,22 @@ class TtlCache {
       if (oldestKey) this.store.delete(oldestKey);
     }
 
-    this.store.set(key, {
+    const payload = {
       ...value,
       expiresAt: Date.now() + ttlMs,
-    });
+    };
+    this.store.set(key, payload);
+
+    if (redisClient.connected) {
+      redisClient.set(`cache:${key}`, payload, ttlMs).catch(() => {});
+    }
   }
 
   delete(key) {
     this.store.delete(key);
+    if (redisClient.connected) {
+      redisClient.del(`cache:${key}`).catch(() => {});
+    }
   }
 
   deleteByPrefix(prefix) {
@@ -51,10 +61,16 @@ class TtlCache {
         this.store.delete(key);
       }
     }
+    if (redisClient.connected) {
+      redisClient.delByPrefix(`cache:${prefix}`).catch(() => {});
+    }
   }
 
   clear() {
     this.store.clear();
+    if (redisClient.connected) {
+      redisClient.delByPrefix('cache:').catch(() => {});
+    }
   }
 
   cleanExpired() {
@@ -89,20 +105,30 @@ const generateETag = (body) => {
  * @param {object} [options] - { perUser = false, allowAuth = false }
  */
 const rememberGet = (namespace, ttlMs = 30_000, { perUser = false, allowAuth = false } = {}) => {
-  return (req, res, next) => {
+  return async (req, res, next) => {
     // Only cache GET requests, bypassed in test env
     if (req.method !== 'GET' || process.env.NODE_ENV === 'test') {
       return next();
     }
 
     // Skip authorized requests unless explicitly configured for perUser or allowAuth
-    if (req.headers.authorization && !perUser && !allowAuth) {
+    if ((req.headers.authorization || req.headers.cookie?.includes('token=')) && !perUser && !allowAuth) {
       return next();
     }
 
     const identity = perUser ? (req.user?._id || 'anon') : 'public';
     const key = `${namespace}:${identity}:${req.originalUrl}`;
-    const cached = catalogCache.get(key);
+    let cached = catalogCache.get(key);
+
+    // Check L2 Distributed Redis Cache on L1 miss
+    if (!cached && redisClient.connected) {
+      const remoteCached = await redisClient.get(`cache:${key}`);
+      if (remoteCached && (!remoteCached.expiresAt || Date.now() < remoteCached.expiresAt)) {
+        cached = remoteCached;
+        const remainingTtl = remoteCached.expiresAt ? Math.max(1000, remoteCached.expiresAt - Date.now()) : ttlMs;
+        catalogCache.store.set(key, { ...remoteCached, expiresAt: Date.now() + remainingTtl });
+      }
+    }
 
     if (cached) {
       res.set('X-Cache', 'HIT');

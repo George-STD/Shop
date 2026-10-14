@@ -9,9 +9,18 @@ const {
 const { rememberGet } = require('../middleware/cache');
 const ReceivedEmail = require('../models/ReceivedEmail');
 const asyncHandler = require('../utils/asyncHandler');
+const { getPublicPaymentConfig } = require('../services/paymobService');
 
 // Public / User endpoint to fetch current loyalty settings
 router.get('/loyalty', rememberGet('settings', 60_000), getLoyaltySettings);
+
+// Public endpoint to fetch active online payment gateway configuration (Paymob status)
+router.get('/payment', (req, res) => {
+  res.json({
+    success: true,
+    data: getPublicPaymentConfig(),
+  });
+});
 
 // Public endpoint to submit Contact Us form into ReceivedEmail (Admin Inbox)
 router.post(

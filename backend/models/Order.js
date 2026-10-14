@@ -214,7 +214,7 @@ const orderSchema = new mongoose.Schema(
     // Payment
     paymentMethod: {
       type: String,
-      enum: ['cod', 'instapay'],
+      enum: ['cod', 'instapay', 'paymob', 'paymob_card', 'paymob_wallet'],
       required: true,
     },
     paymentStatus: {
@@ -225,6 +225,10 @@ const orderSchema = new mongoose.Schema(
     paymentDetails: {
       transactionId: String,
       paidAt: Date,
+      gateway: String,
+      intentionId: String,
+      paymobOrderId: String,
+      paymentUrl: String,
     },
 
     // Order Status
@@ -428,6 +432,7 @@ orderSchema.pre('save', async function (next) {
 // -----------------------------------------------------------------------------
 orderSchema.index({ status: 1, createdAt: -1 });
 orderSchema.index({ paymentStatus: 1, status: 1, createdAt: -1 });
+orderSchema.index({ 'paymentDetails.paymobOrderId': 1 }, { sparse: true });
 orderSchema.index({ 'items.product': 1, user: 1, status: 1 }); // Verified purchase acceleration index
 orderSchema.index({ user: 1, createdAt: -1 });
 orderSchema.index({ guestEmail: 1, createdAt: -1 });

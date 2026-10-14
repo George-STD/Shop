@@ -287,7 +287,32 @@ const PaymentMethodStep = memo(function PaymentMethodStep({
   onChange,
   onBack,
   onNext,
+  paymentSettings,
 }) {
+  const methods = useMemo(() => {
+    const base = [
+      { value: 'cod', label: STRINGS.CHECKOUT.COD, icon: '💵' },
+      { value: 'instapay', label: STRINGS.CHECKOUT.INSTAPAY, icon: '📱' },
+    ];
+    if (paymentSettings?.paymobEnabled) {
+      if (paymentSettings.cardEnabled !== false) {
+        base.push({
+          value: 'paymob_card',
+          label: 'الدفع الإلكتروني بالبطاقة البنكية (Visa / Mastercard - Paymob)',
+          icon: '💳',
+        });
+      }
+      if (paymentSettings.walletEnabled) {
+        base.push({
+          value: 'paymob_wallet',
+          label: 'الدفع بالمحفظة الإلكترونية (فودافون / أورنج / اتصالات - Paymob)',
+          icon: '📲',
+        });
+      }
+    }
+    return base;
+  }, [paymentSettings]);
+
   return (
     <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100" role="group" aria-label={STRINGS.CHECKOUT.PAYMENT_METHOD}>
       <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
@@ -296,10 +321,7 @@ const PaymentMethodStep = memo(function PaymentMethodStep({
       </h2>
 
       <div className="space-y-3" role="radiogroup" aria-label={STRINGS.CHECKOUT.PAYMENT_METHOD}>
-        {[
-          { value: 'cod', label: STRINGS.CHECKOUT.COD, icon: '💵' },
-          { value: 'instapay', label: STRINGS.CHECKOUT.INSTAPAY, icon: '📱' },
-        ].map((method) => (
+        {methods.map((method) => (
           <label
             key={method.value}
             className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${
@@ -352,6 +374,20 @@ const PaymentMethodStep = memo(function PaymentMethodStep({
           </div>
           <p className="text-xs text-purple-800 leading-relaxed font-medium">
             يرجى تحويل المبلغ الإجمالي إلى الرقم أعلاه عبر InstaPay. بعد تأكيد الطلب، سيرسل لك بريد إلكتروني بتفاصيل التحويل.
+          </p>
+        </div>
+      )}
+
+      {formData.paymentMethod.startsWith('paymob') && (
+        <div className="mt-6 p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex flex-col gap-2 animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <span className="text-xl" aria-hidden="true">🔒</span>
+            <span className="font-bold text-emerald-950 text-sm sm:text-base">
+              بوابة دفع مؤمّنة بالكامل عبر Paymob
+            </span>
+          </div>
+          <p className="text-xs text-emerald-800 leading-relaxed font-medium">
+            بمجرد الضغط على تأكيد الطلب في الخطوة التالية، سيتم تحويلك تلقائياً إلى صفحة الدفع المشفرة لإتمام السداد وتأكيد طلبك فوراً.
           </p>
         </div>
       )}
@@ -451,6 +487,11 @@ const OrderReviewStep = memo(function OrderReviewStep({
                 رقم التحويل: <strong className="font-mono text-purple-700 dir-ltr" dir="ltr">{BUSINESS_CONFIG.INSTAPAY_NUMBER}</strong>
               </span>
             </div>
+          )}
+          {formData.paymentMethod.startsWith('paymob') && (
+            <span className="text-emerald-700 font-bold flex items-center gap-1.5">
+              💳 الدفع الإلكتروني الفوري عبر Paymob
+            </span>
           )}
         </div>
       </div>
@@ -586,10 +627,16 @@ const CheckoutPage = () => {
     }
   }, [isHydrated, isAuthenticated, items.length, navigate]);
 
-  // 3. React Query Loyalty Settings
+  // 3. React Query Loyalty & Payment Settings
   const { data: loyaltySettings } = useQuery({
     queryKey: ['public-loyalty-settings'],
     queryFn: () => settingsAPI.getLoyaltySettings().then((res) => res.data?.data),
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const { data: paymentSettings } = useQuery({
+    queryKey: ['public-payment-settings'],
+    queryFn: () => settingsAPI.getPaymentSettings().then((res) => res.data?.data),
     staleTime: 1000 * 60 * 10,
   });
 
@@ -779,6 +826,17 @@ const CheckoutPage = () => {
         const finalOrder = response.data.data;
         orderCompletedRef.current = true;
         clearCart();
+        try {
+          sessionStorage.removeItem('hadaya:checkout:idempotency-key');
+        } catch (_) {}
+
+        const paymentUrl = finalOrder?.paymentDetails?.paymentUrl;
+        if (paymentUrl && typeof window !== 'undefined') {
+          toast.loading('جاري تحويلك لبوابة الدفع الآمنة Paymob...', { duration: 4000 });
+          window.location.assign(paymentUrl);
+          return;
+        }
+
         if (typeof finalOrder?.total === 'number' && Math.abs(finalOrder.total - total) > 0.01) {
           toast(
             `تم تأكيد طلبك بنجاح بإجمالي ${finalOrder.total} ج.م (تحديث تلقائي وفق أحدث الأسعار)`,
@@ -787,9 +845,6 @@ const CheckoutPage = () => {
         } else {
           toast.success(STRINGS.CHECKOUT.ORDER_SUCCESS);
         }
-        try {
-          sessionStorage.removeItem('hadaya:checkout:idempotency-key');
-        } catch (_) {}
         navigate(`/account/orders?success=true&order=${finalOrder.orderNumber}`);
       }
     } catch (error) {
@@ -907,6 +962,7 @@ const CheckoutPage = () => {
                   onChange={handleChange}
                   onBack={handleBackToStep1}
                   onNext={handleNextStep2}
+                  paymentSettings={paymentSettings}
                 />
               )}
 

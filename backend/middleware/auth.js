@@ -2,6 +2,35 @@ const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
 const { CONFIG, MESSAGES } = require('../constants');
+const { HybridRateLimitStore } = require('../utils/redisClient');
+
+// =====================================================
+// COOKIE PARSER HELPER (Zero-Dependency httpOnly JWT Extraction)
+// =====================================================
+const extractTokenFromCookies = (req) => {
+  if (req.cookies && typeof req.cookies.token === 'string' && req.cookies.token.trim()) {
+    return req.cookies.token.trim();
+  }
+  const cookieHeader = req.headers?.cookie;
+  if (!cookieHeader || typeof cookieHeader !== 'string') return null;
+
+  const pairs = cookieHeader.split(';');
+  for (const pair of pairs) {
+    const eqIdx = pair.indexOf('=');
+    if (eqIdx === -1) continue;
+    const key = pair.slice(0, eqIdx).trim();
+    if (key === 'token') {
+      const rawVal = pair.slice(eqIdx + 1).trim();
+      if (!rawVal) return null;
+      try {
+        return decodeURIComponent(rawVal);
+      } catch (_) {
+        return rawVal;
+      }
+    }
+  }
+  return null;
+};
 
 // =====================================================
 // CLIENT IP EXTRACTION & IPV6 /64 AGGREGATION
@@ -52,7 +81,7 @@ const evictUserFromAuthzCache = (userId) => {
 setInterval(cleanAuthzCache, 30_000).unref();
 
 // =====================================================
-// PROTECT MIDDLEWARE - Verify JWT Token with HS256 & Cache
+// PROTECT MIDDLEWARE - Verify JWT Token (Bearer or httpOnly Cookie) with HS256 & Cache
 // =====================================================
 const protect = async (req, res, next) => {
   try {
@@ -60,6 +89,8 @@ const protect = async (req, res, next) => {
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
+    } else {
+      token = extractTokenFromCookies(req);
     }
 
     if (!token) {
@@ -195,21 +226,22 @@ const isPerfTestingRequest = (req) => {
   );
 };
 
-const limiterBase = {
+const createLimiterConfig = (prefix, customOptions) => ({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   validate: false,
+  store: new HybridRateLimitStore(`rl:${prefix}:`),
   skip: (req) =>
     isPerfTestingRequest(req) ||
     req.method === 'OPTIONS' ||
     req.method === 'HEAD' ||
     req.path === '/health' ||
     req.path === '/api/health',
-};
+  ...customOptions,
+});
 
 // General API rate limiter
-const apiLimiter = rateLimit({
-  ...limiterBase,
+const apiLimiter = rateLimit(createLimiterConfig('api', {
   windowMs: CONFIG.RATE_LIMIT.API.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.API.MAX_REQUESTS,
   limit: CONFIG.RATE_LIMIT.API.MAX_REQUESTS,
@@ -218,11 +250,10 @@ const apiLimiter = rateLimit({
     success: false,
     message: MESSAGES.RATE_LIMIT.API,
   },
-});
+}));
 
 // Strict rate limiter for admin routes
-const adminLimiter = rateLimit({
-  ...limiterBase,
+const adminLimiter = rateLimit(createLimiterConfig('admin', {
   windowMs: CONFIG.RATE_LIMIT.ADMIN.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.ADMIN.MAX_REQUESTS,
   limit: CONFIG.RATE_LIMIT.ADMIN.MAX_REQUESTS,
@@ -231,11 +262,10 @@ const adminLimiter = rateLimit({
     success: false,
     message: MESSAGES.RATE_LIMIT.ADMIN,
   },
-});
+}));
 
 // Very strict rate limiter for login attempts (IP + Email key generator)
-const loginLimiter = rateLimit({
-  ...limiterBase,
+const loginLimiter = rateLimit(createLimiterConfig('login', {
   windowMs: CONFIG.RATE_LIMIT.LOGIN.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.LOGIN.MAX_REQUESTS,
   limit: CONFIG.RATE_LIMIT.LOGIN.MAX_REQUESTS,
@@ -245,11 +275,10 @@ const loginLimiter = rateLimit({
     success: false,
     message: MESSAGES.RATE_LIMIT.LOGIN,
   },
-});
+}));
 
 // Dedicated rate limiter for forgot-password requests (IP + Email key generator)
-const forgotPasswordLimiter = rateLimit({
-  ...limiterBase,
+const forgotPasswordLimiter = rateLimit(createLimiterConfig('forgot', {
   windowMs: CONFIG.RATE_LIMIT.LOGIN.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.LOGIN.MAX_REQUESTS,
   limit: CONFIG.RATE_LIMIT.LOGIN.MAX_REQUESTS,
@@ -258,11 +287,10 @@ const forgotPasswordLimiter = rateLimit({
     success: false,
     message: MESSAGES.RATE_LIMIT.LOGIN,
   },
-});
+}));
 
 // Rate limiter for verification code attempts (IP + Target Email/Phone)
-const verifyLimiter = rateLimit({
-  ...limiterBase,
+const verifyLimiter = rateLimit(createLimiterConfig('verify', {
   windowMs: CONFIG.RATE_LIMIT.VERIFY.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.VERIFY.MAX_REQUESTS,
   limit: CONFIG.RATE_LIMIT.VERIFY.MAX_REQUESTS,
@@ -271,11 +299,10 @@ const verifyLimiter = rateLimit({
     success: false,
     message: MESSAGES.RATE_LIMIT.VERIFY,
   },
-});
+}));
 
 // Rate limiter for registration (IP + Target Email)
-const registerLimiter = rateLimit({
-  ...limiterBase,
+const registerLimiter = rateLimit(createLimiterConfig('register', {
   windowMs: CONFIG.RATE_LIMIT.REGISTER.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.REGISTER.MAX_REQUESTS,
   limit: CONFIG.RATE_LIMIT.REGISTER.MAX_REQUESTS,
@@ -284,11 +311,10 @@ const registerLimiter = rateLimit({
     success: false,
     message: MESSAGES.RATE_LIMIT.REGISTER,
   },
-});
+}));
 
 // Dedicated rate limiter for checkout and order creation (prevents inventory locking and card spamming)
-const checkoutLimiter = rateLimit({
-  ...limiterBase,
+const checkoutLimiter = rateLimit(createLimiterConfig('checkout', {
   windowMs: 15 * 60 * 1000,
   max: 15,
   limit: 15,
@@ -297,11 +323,10 @@ const checkoutLimiter = rateLimit({
     success: false,
     message: 'تم تجاوز الحد الأقصى لإنشاء الطلبات مؤقتاً. يرجى الانتظار بضع دقائق قبل المحاولة مجدداً.',
   },
-});
+}));
 
 // Rate limiter for AI routes
-const aiLimiter = rateLimit({
-  ...limiterBase,
+const aiLimiter = rateLimit(createLimiterConfig('ai', {
   windowMs: CONFIG.RATE_LIMIT.AI.WINDOW_MS,
   max: CONFIG.RATE_LIMIT.AI.MAX_REQUESTS,
   limit: CONFIG.RATE_LIMIT.AI.MAX_REQUESTS,
@@ -310,11 +335,10 @@ const aiLimiter = rateLimit({
     success: false,
     message: MESSAGES.RATE_LIMIT.AI,
   },
-});
+}));
 
 // Public rate limiter for Gift Finder AI
-const publicAiLimiter = rateLimit({
-  ...limiterBase,
+const publicAiLimiter = rateLimit(createLimiterConfig('public-ai', {
   windowMs: CONFIG.RATE_LIMIT.AI.WINDOW_MS,
   max: 6,
   limit: 6,
@@ -323,11 +347,10 @@ const publicAiLimiter = rateLimit({
     success: false,
     message: 'تم تجاوز الحد المسموح به لطلبات الذكاء الاصطناعي. يرجى المحاولة بعد 15 دقيقة.',
   },
-});
+}));
 
 // Rate limiter for image uploads
-const uploadLimiter = rateLimit({
-  ...limiterBase,
+const uploadLimiter = rateLimit(createLimiterConfig('upload', {
   windowMs: 15 * 60 * 1000,
   max: 60,
   limit: 60,
@@ -336,11 +359,10 @@ const uploadLimiter = rateLimit({
     success: false,
     message: 'تم تجاوز الحد الأقصى لعمليات رفع الصور. حاول لاحقاً.',
   },
-});
+}));
 
 // Rate limiter for Webhooks (120 req / minute)
-const webhookLimiter = rateLimit({
-  ...limiterBase,
+const webhookLimiter = rateLimit(createLimiterConfig('webhook', {
   windowMs: 60 * 1000,
   max: 120,
   limit: 120,
@@ -349,7 +371,7 @@ const webhookLimiter = rateLimit({
     success: false,
     message: 'Webhook rate limit exceeded',
   },
-});
+}));
 
 // =====================================================
 // VALIDATE OBJECT ID - Prevent NoSQL injection
@@ -475,4 +497,5 @@ module.exports = {
   clientIp,
   evictUserFromAuthzCache,
   checkoutLimiter,
+  extractTokenFromCookies,
 };

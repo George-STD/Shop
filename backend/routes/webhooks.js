@@ -2,8 +2,12 @@ const express = require('express');
 const router = express.Router();
 const { Webhook } = require('svix');
 const ReceivedEmail = require('../models/ReceivedEmail');
+const Order = require('../models/Order');
+const OrderDailyStats = require('../models/OrderDailyStats');
 const { webhookLimiter } = require('../middleware/auth');
 const { fetchReceivedEmailContent } = require('../utils/resendInbound');
+const { verifyPaymobHmac } = require('../services/paymobService');
+const { bustCatalog } = require('../middleware/cache');
 
 /**
  * ReDoS-Safe bounded plain-text extractor
@@ -111,6 +115,107 @@ router.post(
     } catch (error) {
       console.error('Webhook fatal processing error:', error);
       res.status(500).json({ error: 'Failed to process webhook' });
+    }
+  }
+);
+
+// POST /api/webhooks/paymob — Paymob Accept Transaction Processed Callback with HMAC-SHA512 Verification
+router.post(
+  '/paymob',
+  webhookLimiter,
+  express.json({ limit: '512kb' }),
+  async (req, res) => {
+    try {
+      const hmacSecret = process.env.PAYMOB_HMAC_SECRET;
+      if (!hmacSecret) {
+        console.error('PAYMOB_HMAC_SECRET is not configured');
+        return res.status(500).json({ success: false, message: 'Paymob webhook secret not configured' });
+      }
+
+      const receivedHmac = req.query?.hmac || req.headers['x-paymob-hmac'];
+      const txObj = req.body?.obj || req.body;
+
+      if (!receivedHmac || !txObj || typeof txObj !== 'object') {
+        return res.status(400).json({ success: false, message: 'Invalid Paymob webhook payload' });
+      }
+
+      if (!verifyPaymobHmac(txObj, receivedHmac, hmacSecret)) {
+        return res.status(401).json({ success: false, message: 'Invalid Paymob HMAC signature' });
+      }
+
+      // Resolve order by merchant_order_id / special_reference / paymobOrderId
+      const merchantOrderRef =
+        txObj.order?.merchant_order_id ||
+        txObj.special_reference ||
+        txObj.payment_key_claims?.extra?.orderNumber;
+      const paymobOrderId = txObj.order?.id ? String(txObj.order.id) : null;
+
+      let order = null;
+      if (merchantOrderRef) {
+        order = await Order.findOne({ orderNumber: String(merchantOrderRef).trim() });
+      }
+      if (!order && paymobOrderId) {
+        order = await Order.findOne({ 'paymentDetails.paymobOrderId': paymobOrderId });
+      }
+
+      if (!order) {
+        return res.status(200).json({ received: true, matched: false });
+      }
+
+      const transactionId = txObj.id ? String(txObj.id) : undefined;
+      const isSuccess = txObj.success === true && txObj.pending === false;
+      const isRefunded = txObj.is_refunded === true || txObj.is_voided === true;
+      const isFailed = txObj.success === false && txObj.pending === false;
+
+      if (!order.paymentDetails) {
+        order.paymentDetails = {};
+      }
+      order.paymentDetails.gateway = 'paymob';
+      if (transactionId) order.paymentDetails.transactionId = transactionId;
+      if (paymobOrderId) order.paymentDetails.paymobOrderId = paymobOrderId;
+
+      if (isRefunded) {
+        order.paymentStatus = 'refunded';
+        order.statusHistory.push({
+          status: order.status,
+          date: new Date(),
+          note: `تم استرداد المبلغ عبر Paymob (عملية رقم #${transactionId || 'N/A'})`,
+        });
+      } else if (isSuccess && order.paymentStatus !== 'paid') {
+        order.paymentStatus = 'paid';
+        order.paymentDetails.paidAt = new Date();
+        if (order.status === 'pending') {
+          order.status = 'confirmed';
+          order.statusHistory.push({
+            status: 'confirmed',
+            date: new Date(),
+            note: `تم تأكيد الدفع الإلكتروني تلقائياً عبر Paymob (عملية رقم #${transactionId || 'N/A'})`,
+          });
+        }
+
+        // Update daily confirmed revenue rollup
+        const dateKey = new Date(order.createdAt || Date.now()).toISOString().slice(0, 10);
+        OrderDailyStats.updateOne(
+          { date: dateKey },
+          { $inc: { confirmedRevenue: Number(order.total) || 0 } },
+          { upsert: true }
+        ).catch(() => {});
+      } else if (isFailed && order.paymentStatus === 'pending') {
+        order.paymentStatus = 'failed';
+        order.statusHistory.push({
+          status: order.status,
+          date: new Date(),
+          note: `فشلت محاولة الدفع عبر Paymob (عملية رقم #${transactionId || 'N/A'})`,
+        });
+      }
+
+      await order.save();
+      bustCatalog('admin-stats');
+
+      return res.status(200).json({ received: true, matched: true, paymentStatus: order.paymentStatus });
+    } catch (error) {
+      console.error('Paymob webhook processing error:', error);
+      return res.status(500).json({ success: false, message: 'Failed to process Paymob webhook' });
     }
   }
 );

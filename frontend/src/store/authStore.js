@@ -24,16 +24,20 @@ export const useAuthStore = create(
       setAuth: (user, token) => {
         if (typeof window !== 'undefined') {
           try {
-            if (token) localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+            if (token) {
+              localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+            } else if (!user) {
+              localStorage.removeItem(STORAGE_KEYS.TOKEN);
+            }
           } catch (_) {}
         }
-        set({ user, token: token || null, isAuthenticated: Boolean(user && token) });
+        set({ user, token: token || null, isAuthenticated: Boolean(user) });
       },
 
       logout: async () => {
         try {
           const token = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null;
-          if (token) {
+          if (token || get().isAuthenticated) {
             const { authAPI } = await import('../services/api');
             await authAPI.logout().catch(() => {});
           }
@@ -70,7 +74,7 @@ export const useAuthStore = create(
             token = localStorage.getItem(STORAGE_KEYS.TOKEN);
           } catch (_) {}
         }
-        if (state?.isAuthenticated && token) {
+        if (state?.isAuthenticated && state?.user) {
           state.setAuth(state.user, token);
         } else if (state?.isAuthenticated) {
           state.setAuth(null, null);

@@ -41,6 +41,35 @@ const generateToken = (id, tokenVersion = 0) => {
   });
 };
 
+// Set httpOnly Secure Cookie for XSS-resilient session management
+const getAuthCookieOptions = () => {
+  const isProd = process.env.NODE_ENV === 'production';
+  const options = {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: process.env.COOKIE_SAMESITE || 'lax',
+    path: '/',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  };
+  if (process.env.COOKIE_DOMAIN) {
+    options.domain = process.env.COOKIE_DOMAIN;
+  }
+  return options;
+};
+
+const setAuthCookie = (res, token) => {
+  if (res && typeof res.cookie === 'function' && token) {
+    res.cookie('token', token, getAuthCookieOptions());
+  }
+};
+
+const clearAuthCookie = (res) => {
+  if (res && typeof res.clearCookie === 'function') {
+    const { maxAge, ...clearOpts } = getAuthCookieOptions();
+    res.clearCookie('token', clearOpts);
+  }
+};
+
 exports.register = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return sendError(res, { statusCode: 400, message: MESSAGES.GENERAL.VALIDATION_ERROR, errors: errors.array() });
@@ -124,6 +153,7 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   });
 
   const token = generateToken(user._id, user.tokenVersion || 0);
+  setAuthCookie(res, token);
 
   sendSuccess(res, {
     message: MESSAGES.AUTH.VERIFICATION_SUCCESS,
@@ -216,6 +246,7 @@ exports.login = asyncHandler(async (req, res) => {
 
   await User.findByIdAndUpdate(user._id, { $set: { lastLogin: new Date() } });
   const token = generateToken(user._id, user.tokenVersion || 0);
+  setAuthCookie(res, token);
 
   sendSuccess(res, {
     message: MESSAGES.AUTH.LOGIN_SUCCESS,
@@ -270,6 +301,7 @@ exports.changePassword = asyncHandler(async (req, res) => {
   });
   evictUserFromAuthzCache(req.user._id);
   const token = generateToken(user._id, nextTokenVersion);
+  setAuthCookie(res, token);
   sendSuccess(res, { message: MESSAGES.AUTH.PASSWORD_CHANGED, data: { token } });
 }, MESSAGES.GENERAL.ERROR);
 
@@ -425,8 +457,9 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 }, MESSAGES.GENERAL.ERROR);
 
 exports.logout = asyncHandler(async (req, res) => {
-  // Invalidate all outstanding JWT tokens by incrementing tokenVersion
+  // Invalidate all outstanding JWT tokens by incrementing tokenVersion and clearing httpOnly cookie
   await User.findByIdAndUpdate(req.user._id, { $inc: { tokenVersion: 1 } });
   evictUserFromAuthzCache(req.user._id);
+  clearAuthCookie(res);
   sendSuccess(res, { message: 'تم تسجيل الخروج بنجاح' });
 }, MESSAGES.GENERAL.ERROR);

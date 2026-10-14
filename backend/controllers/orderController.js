@@ -7,10 +7,11 @@ const { CONFIG, MESSAGES } = require('../constants');
 const { sendSuccess, sendError, sendCreated, sendNotFound, sendForbidden, sendBadRequest, sendPaginated } = require('../utils/response');
 const asyncHandler = require('../utils/asyncHandler');
 const { processReadyBoxes } = require('./productController');
-const { addEgp, subEgp, mulEgp, applyPercentDiscount, roundTo2Decimals } = require('../utils/money');
+const { addEgp, subEgp, mulEgp, applyPercentDiscount } = require('../utils/money');
 const { bustCatalog } = require('../middleware/cache');
 const LoyaltyLedger = require('../models/LoyaltyLedger');
 const OrderDailyStats = require('../models/OrderDailyStats');
+const { isPaymobConfigured, createPaymobCheckoutSession } = require('../services/paymobService');
 
 // =====================================================
 // HELPERS
@@ -39,8 +40,10 @@ const parseQuantity = (value) => {
   return quantity;
 };
 
+const isFiniteStock = (val) => typeof val === 'number' && Number.isFinite(val);
+
 /**
- * Shared logic: validate items, resolve products, build order items array.
+ * Shared logic: validate items, resolve products, check product & SKU variant stock, build order items array.
  * Used by both the session and non-session paths to eliminate duplication.
  *
  * @param {Array}  items      - Raw items from the request body
@@ -92,17 +95,55 @@ const buildOrderItems = (items, productMap) => {
       normalizedAddons.push({ name: productAddon.name, price: addonPrice });
     }
 
-    // Price calculation
+    // Price calculation & Variant-Level SKU Stock Validation
     let finalPrice = product.price;
     
-    // Override price if size is selected
+    // 1. Size check (price override + optional size stock)
     if (item.selectedSize && Array.isArray(product.sizes) && product.sizes.length > 0) {
       const selectedSizeObj = product.sizes.find(s => s.name === item.selectedSize);
       if (!selectedSizeObj) {
         throw createClientError(`المقاس المختار غير صحيح: ${item.selectedSize}`);
       }
-      // Use size price if valid, otherwise fallback to product base price
+      if (isFiniteStock(selectedSizeObj.stock) && selectedSizeObj.stock < quantity) {
+        throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${product.name} (مقاس ${item.selectedSize})`);
+      }
       finalPrice = (selectedSizeObj.price !== undefined && selectedSizeObj.price !== null) ? Number(selectedSizeObj.price) : product.price;
+    }
+
+    // 2. Color stock check (if color has finite stock)
+    if (item.selectedColor && Array.isArray(product.colors) && product.colors.length > 0) {
+      const selectedColorObj = product.colors.find(c => c.name === item.selectedColor);
+      if (selectedColorObj && isFiniteStock(selectedColorObj.stock) && selectedColorObj.stock < quantity) {
+        throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${product.name} (لون ${item.selectedColor})`);
+      }
+    }
+
+    // 3. Shape stock check (if shape has finite stock)
+    if (item.selectedShape && Array.isArray(product.shapes) && product.shapes.length > 0) {
+      const selectedShapeObj = product.shapes.find(sh => sh.name === item.selectedShape);
+      if (selectedShapeObj && isFiniteStock(selectedShapeObj.stock) && selectedShapeObj.stock < quantity) {
+        throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${product.name} (شكل ${item.selectedShape})`);
+      }
+    }
+
+    // 4. VariantGroups option stock & priceDelta check
+    if (item.selectedVariants && typeof item.selectedVariants === 'object' && Array.isArray(product.variantGroups)) {
+      const entries = item.selectedVariants instanceof Map
+        ? Array.from(item.selectedVariants.entries())
+        : Object.entries(item.selectedVariants);
+
+      for (const [groupName, optName] of entries) {
+        const group = product.variantGroups.find(g => g.name === groupName);
+        if (!group || !Array.isArray(group.options)) continue;
+        const opt = group.options.find(o => o.name === optName);
+        if (!opt) continue;
+        if (isFiniteStock(opt.stock) && opt.stock < quantity) {
+          throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${product.name} (${groupName}: ${optName})`);
+        }
+        if (typeof opt.priceDelta === 'number' && opt.priceDelta !== 0) {
+          finalPrice = addEgp(finalPrice, opt.priceDelta);
+        }
+      }
     }
 
     // Apply box logic
@@ -238,6 +279,154 @@ const buildOrderData = async ({ userId, guestEmail, orderItems, subtotal, boxGro
 };
 
 /**
+ * Atomically deduct variant-level SKU stock if the selected size/color/shape/variantGroup option defines a numeric stock.
+ */
+const deductVariantLevelStock = async (item, opts = {}) => {
+  const qty = Number(item.quantity) || 1;
+
+  if (item.selectedSize) {
+    const sizeUpdate = await Product.updateOne(
+      {
+        _id: item.product,
+        sizes: { $elemMatch: { name: item.selectedSize, stock: { $ne: null } } },
+      },
+      { $inc: { 'sizes.$.stock': -qty } },
+      opts
+    );
+    if (sizeUpdate.matchedCount > 0) {
+      const checkDoc = await Product.findOne(
+        { _id: item.product, sizes: { $elemMatch: { name: item.selectedSize, stock: { $lt: 0 } } } },
+        { _id: 1 },
+        opts
+      );
+      if (checkDoc) {
+        await Product.updateOne(
+          { _id: item.product, 'sizes.name': item.selectedSize },
+          { $inc: { 'sizes.$.stock': qty } },
+          opts
+        );
+        throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${item.name} (مقاس ${item.selectedSize})`);
+      }
+    }
+  }
+
+  if (item.selectedColor) {
+    const colorUpdate = await Product.updateOne(
+      {
+        _id: item.product,
+        colors: { $elemMatch: { name: item.selectedColor, stock: { $ne: null } } },
+      },
+      { $inc: { 'colors.$.stock': -qty } },
+      opts
+    );
+    if (colorUpdate.matchedCount > 0) {
+      const checkDoc = await Product.findOne(
+        { _id: item.product, colors: { $elemMatch: { name: item.selectedColor, stock: { $lt: 0 } } } },
+        { _id: 1 },
+        opts
+      );
+      if (checkDoc) {
+        await Product.updateOne(
+          { _id: item.product, 'colors.name': item.selectedColor },
+          { $inc: { 'colors.$.stock': qty } },
+          opts
+        );
+        throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${item.name} (لون ${item.selectedColor})`);
+      }
+    }
+  }
+
+  if (item.selectedShape) {
+    await Product.updateOne(
+      {
+        _id: item.product,
+        shapes: { $elemMatch: { name: item.selectedShape, stock: { $gte: qty } } },
+      },
+      { $inc: { 'shapes.$.stock': -qty } },
+      opts
+    );
+  }
+
+  if (item.selectedVariants) {
+    const entries = item.selectedVariants instanceof Map
+      ? Array.from(item.selectedVariants.entries())
+      : Object.entries(item.selectedVariants);
+    for (const [groupName, optName] of entries) {
+      await Product.updateOne(
+        { _id: item.product },
+        { $inc: { 'variantGroups.$[g].options.$[o].stock': -qty } },
+        {
+          ...opts,
+          arrayFilters: [
+            { 'g.name': groupName },
+            { 'o.name': optName, 'o.stock': { $ne: null, $gte: qty } },
+          ],
+        }
+      );
+    }
+  }
+};
+
+/**
+ * Restore variant-level SKU stock on order cancellation/return/rollback.
+ */
+const restoreVariantLevelStock = async (item, opts = {}) => {
+  const qty = Number(item.quantity) || 1;
+
+  if (item.selectedSize) {
+    await Product.updateOne(
+      {
+        _id: item.product,
+        sizes: { $elemMatch: { name: item.selectedSize, stock: { $ne: null } } },
+      },
+      { $inc: { 'sizes.$.stock': qty } },
+      opts
+    );
+  }
+
+  if (item.selectedColor) {
+    await Product.updateOne(
+      {
+        _id: item.product,
+        colors: { $elemMatch: { name: item.selectedColor, stock: { $ne: null } } },
+      },
+      { $inc: { 'colors.$.stock': qty } },
+      opts
+    );
+  }
+
+  if (item.selectedShape) {
+    await Product.updateOne(
+      {
+        _id: item.product,
+        shapes: { $elemMatch: { name: item.selectedShape, stock: { $ne: null } } },
+      },
+      { $inc: { 'shapes.$.stock': qty } },
+      opts
+    );
+  }
+
+  if (item.selectedVariants) {
+    const entries = item.selectedVariants instanceof Map
+      ? Array.from(item.selectedVariants.entries())
+      : Object.entries(item.selectedVariants);
+    for (const [groupName, optName] of entries) {
+      await Product.updateOne(
+        { _id: item.product },
+        { $inc: { 'variantGroups.$[g].options.$[o].stock': qty } },
+        {
+          ...opts,
+          arrayFilters: [
+            { 'g.name': groupName },
+            { 'o.name': optName, 'o.stock': { $ne: null } },
+          ],
+        }
+      );
+    }
+  }
+};
+
+/**
  * Deduct stock for each order item. Returns the list of updated items for rollback.
  */
 const deductStock = async (orderItems, session) => {
@@ -268,6 +457,7 @@ const deductStock = async (orderItems, session) => {
         if (stockUpdate.modifiedCount !== 1) {
           throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${item.name}`);
         }
+        await deductVariantLevelStock(item, opts);
         deductedItems.push(item);
       }
     }
@@ -312,6 +502,7 @@ const rollbackStock = async (items, session) => {
         { $inc: { stock: item.quantity, salesCount: -item.quantity } },
         opts
       );
+      await restoreVariantLevelStock(item, opts);
     }
   }
 };
@@ -397,13 +588,18 @@ exports.createOrder = asyncHandler(async (req, res) => {
   }
 
   const userId = req.user._id;
-  const { items, guestEmail, idempotencyKey } = req.body;
+  const { items, guestEmail, idempotencyKey, paymentMethod } = req.body;
 
   if (!items || items.length === 0) {
     return sendBadRequest(res, MESSAGES.ORDERS.NO_ITEMS);
   }
   if (guestEmail && req.user?.email && guestEmail.toLowerCase() !== req.user.email.toLowerCase()) {
     return sendBadRequest(res, MESSAGES.ORDERS.EMAIL_MISMATCH);
+  }
+
+  const isPaymobPayment = typeof paymentMethod === 'string' && paymentMethod.startsWith('paymob');
+  if (isPaymobPayment && !isPaymobConfigured()) {
+    return sendBadRequest(res, 'وسيلة الدفع الإلكتروني غير مفعلة حالياً، يرجى اختيار الدفع عند الاستلام أو إنستاباي');
   }
 
   // Check idempotency upfront to avoid re-running order creation / deducting stock twice
@@ -575,6 +771,23 @@ const rollbackLoyaltyPoints = async (userId, pointsRedeemed) => {
     session.endSession();
   }
 
+  // Generate Paymob Checkout Session if paymentMethod is Paymob
+  if (order && isPaymobPayment) {
+    try {
+      const paymentSession = await createPaymobCheckoutSession(order, req.user);
+      order.paymentDetails = {
+        ...(order.paymentDetails || {}),
+        gateway: 'paymob',
+        intentionId: paymentSession.intentionId,
+        paymobOrderId: paymentSession.paymobOrderId,
+        paymentUrl: paymentSession.paymentUrl,
+      };
+      await order.save();
+    } catch (paymobErr) {
+      console.error('Paymob session creation error:', paymobErr.message);
+    }
+  }
+
   bustCatalog('products');
   bustCatalog('admin-stats');
 
@@ -600,7 +813,9 @@ const rollbackLoyaltyPoints = async (userId, pointsRedeemed) => {
   if (order) {
     const dateKey = new Date(order.createdAt || Date.now()).toISOString().slice(0, 10);
     const itemsSold = (order.items || []).reduce((acc, it) => acc + (Number(it.quantity) || 0), 0);
-    const payField = order.paymentMethod === 'instapay' ? 'paymentMethods.instapay' : 'paymentMethods.cod';
+    const validPayMethods = ['cod', 'instapay', 'paymob', 'paymob_card', 'paymob_wallet'];
+    const methodKey = validPayMethods.includes(order.paymentMethod) ? order.paymentMethod : 'cod';
+    const payField = `paymentMethods.${methodKey}`;
     OrderDailyStats.updateOne(
       { date: dateKey },
       {

@@ -8,6 +8,7 @@ const clearStoredAuthSession = () => {
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   timeout: REQUEST_DEFAULTS?.TIMEOUT || 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -25,9 +26,9 @@ const isColdStartOrNetworkError = (error) => {
   return false;
 };
 
-// TODO (Security): Transition from localStorage JWT storage to httpOnly cookies.
-// Storing JWT tokens in localStorage exposes them to potential XSS exfiltration if any third-party script or inline injection succeeds.
-// Future migration plan: Issue SameSite=Lax httpOnly cookies from Express backend during login/register/refresh.
+// Dual-mode session transport:
+// 1. Browser automatically sends httpOnly SameSite cookie via withCredentials: true.
+// 2. If a Bearer token is present in localStorage (cross-domain fallback / E2E fixtures), attach Authorization header.
 api.interceptors.request.use((config) => {
   if (typeof window === 'undefined') {
     return config;
@@ -255,6 +256,7 @@ export const adminAPI = {
 
 export const settingsAPI = {
   getLoyaltySettings: () => api.get('/settings/loyalty'),
+  getPaymentSettings: () => api.get('/settings/payment'),
   submitContact: (data) => api.post('/settings/contact', data),
 };
 

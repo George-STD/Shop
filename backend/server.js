@@ -9,6 +9,7 @@ require('dotenv').config();
 const { CONFIG, MESSAGES } = require('./constants');
 const { connectToDatabase, mongoHealthFence, getMongoStateLabel } = require('./config/mongo');
 const { startPeriodicCleanup, stopPeriodicCleanup } = require('./services/cleanupService');
+const { redisClient, getRedisStateLabel } = require('./utils/redisClient');
 
 const app = express();
 let server;
@@ -40,6 +41,12 @@ const gracefulShutdown = async (reason, exitCode = 0) => {
     await closeServer();
   } catch (error) {
     console.error('Error while closing HTTP server:', error);
+  }
+
+  try {
+    await redisClient.close();
+  } catch (error) {
+    console.error('Error while closing Redis connection:', error);
   }
 
   try {
@@ -149,8 +156,9 @@ app.get('/health', (req, res) => {
 // ── Full System Health Check ──
 app.get('/api/health', (req, res) => {
   const database = getMongoStateLabel(mongoose.connection.readyState);
+  const cache = getRedisStateLabel();
   const status = database === 'connected' ? 'ok' : 'degraded';
-  res.status(status === 'ok' ? 200 : 503).json({ status, database, message: MESSAGES.HEALTH.OK });
+  res.status(status === 'ok' ? 200 : 503).json({ status, database, cache, message: MESSAGES.HEALTH.OK });
 });
 
 // ── Database 503 Fence (Fails fast in <1ms if MongoDB is disconnected) ──
@@ -208,6 +216,7 @@ const startServer = async () => {
   try {
     validateEnvironment();
     await connectToDatabase();
+    redisClient.connect();
     startPeriodicCleanup();
 
     const PORT = process.env.PORT || 5000;

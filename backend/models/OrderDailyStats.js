@@ -40,6 +40,9 @@ const orderDailyStatsSchema = new mongoose.Schema(
     paymentMethods: {
       cod: { type: Number, default: 0 },
       instapay: { type: Number, default: 0 },
+      paymob: { type: Number, default: 0 },
+      paymob_card: { type: Number, default: 0 },
+      paymob_wallet: { type: Number, default: 0 },
     },
     itemsSold: {
       type: Number,

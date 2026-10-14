@@ -348,16 +348,60 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
     setTouchEnd(null);
   }, [touchStart, touchEnd, displayImages.length, activeBoxImage, mainOverrideImage]);
 
-  // Effective price & total price memoized
+  // Effective price & variant-level SKU stock memoized
   const effectiveBasePrice = useMemo(() => {
     if (!product) return 0;
     const selectedSizeObj = Array.isArray(product.sizes)
       ? product.sizes.find((s) => (s?.name || s) === selectedSize)
       : null;
-    return selectedSizeObj && selectedSizeObj.price != null
-      ? Number(selectedSizeObj.price)
-      : product.price;
-  }, [product, selectedSize]);
+    let base =
+      selectedSizeObj && selectedSizeObj.price != null
+        ? Number(selectedSizeObj.price)
+        : Number(product.price) || 0;
+    if (Array.isArray(product.variantGroups) && selectedVariants) {
+      for (const group of product.variantGroups) {
+        const chosen = selectedVariants[group.name];
+        if (!chosen || !Array.isArray(group.options)) continue;
+        const opt = group.options.find((o) => o.name === chosen);
+        if (opt && typeof opt.priceDelta === 'number') {
+          base += opt.priceDelta;
+        }
+      }
+    }
+    return base;
+  }, [product, selectedSize, selectedVariants]);
+
+  const effectiveMaxStock = useMemo(() => {
+    if (!product) return 0;
+    let limit = Number.isFinite(Number(product.stock)) ? Math.max(0, Number(product.stock)) : null;
+    const clampLimit = (val) => {
+      if (typeof val === 'number' && Number.isFinite(val)) {
+        const clean = Math.max(0, Math.floor(val));
+        limit = limit === null ? clean : Math.min(limit, clean);
+      }
+    };
+    if (selectedSize && Array.isArray(product.sizes)) {
+      const sz = product.sizes.find((s) => (s?.name || s) === selectedSize);
+      if (sz) clampLimit(sz.stock);
+    }
+    if (selectedColor && Array.isArray(product.colors)) {
+      const cl = product.colors.find((c) => c?.name === selectedColor);
+      if (cl) clampLimit(cl.stock);
+    }
+    if (selectedShape && Array.isArray(product.shapes)) {
+      const sh = product.shapes.find((s) => s?.name === selectedShape);
+      if (sh) clampLimit(sh.stock);
+    }
+    if (Array.isArray(product.variantGroups) && selectedVariants) {
+      for (const group of product.variantGroups) {
+        const chosen = selectedVariants[group.name];
+        if (!chosen || !Array.isArray(group.options)) continue;
+        const opt = group.options.find((o) => o.name === chosen);
+        if (opt) clampLimit(opt.stock);
+      }
+    }
+    return limit;
+  }, [product, selectedSize, selectedColor, selectedShape, selectedVariants]);
 
   const totalPrice = useMemo(() => {
     const addonsTotal = selectedAddons.reduce(
@@ -438,6 +482,7 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
       selectedColor,
       selectedShape,
       selectedVariants: product.variantGroups?.length > 0 ? selectedVariants : undefined,
+      variantStock: effectiveMaxStock,
       addons: selectedAddons,
       boxSelections: product.isCustomBox
         ? Object.entries(boxSelections)
@@ -471,6 +516,7 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
     selectedAddons,
     addItem,
     effectiveBasePrice,
+    effectiveMaxStock,
     quantity,
   ]);
 
@@ -1265,29 +1311,28 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
 
               {/* Quantity Counter & Add To Cart CTA */}
               <div className="flex flex-col sm:flex-row gap-4">
-                <div className={`flex items-center border border-gray-300 rounded-lg ${product.stock === 0 ? 'opacity-50 bg-gray-50' : ''}`}>
+                <div className={`flex items-center border border-gray-300 rounded-lg ${effectiveMaxStock === 0 ? 'opacity-50 bg-gray-50' : ''}`}>
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={product.stock === 0 || quantity <= 1}
+                    disabled={effectiveMaxStock === 0 || quantity <= 1}
                     className="p-3 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     aria-label="Decrease quantity"
                   >
                     <FiMinus />
                   </button>
-                  <span className="px-4 font-semibold text-gray-800">{product.stock === 0 ? 0 : quantity}</span>
+                  <span className="px-4 font-semibold text-gray-800">{effectiveMaxStock === 0 ? 0 : quantity}</span>
                   <button
                     onClick={() => {
-                      const maxStock = Number(product.stock);
-                      if (Number.isFinite(maxStock)) {
-                        setQuantity(Math.min(quantity + 1, Math.max(1, maxStock)));
+                      if (effectiveMaxStock !== null && Number.isFinite(effectiveMaxStock)) {
+                        setQuantity(Math.min(quantity + 1, Math.max(1, effectiveMaxStock)));
                         return;
                       }
                       setQuantity(quantity + 1);
                     }}
                     className="p-3 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     disabled={
-                      product.stock === 0 ||
-                      (Number.isFinite(Number(product.stock)) && quantity >= Number(product.stock))
+                      effectiveMaxStock === 0 ||
+                      (effectiveMaxStock !== null && Number.isFinite(effectiveMaxStock) && quantity >= effectiveMaxStock)
                     }
                     aria-label="Increase quantity"
                   >
@@ -1297,18 +1342,18 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
 
                 <button
                   onClick={handleAddToCart}
-                  disabled={product.stock === 0}
+                  disabled={effectiveMaxStock === 0}
                   className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-base font-bold py-3.5"
                 >
-                  {product.stock === 0
+                  {effectiveMaxStock === 0
                     ? STRINGS.PRODUCT.OUT_OF_STOCK
                     : `${STRINGS.PRODUCT.ADD_TO_CART_TOTAL}${totalPrice} ${STRINGS.PRODUCT.CURRENCY}`}
                 </button>
               </div>
 
-              {Number.isFinite(Number(product.stock)) && (
+              {effectiveMaxStock !== null && Number.isFinite(effectiveMaxStock) && (
                 <p className="text-sm text-gray-500">
-                  {STRINGS.PRODUCT.AVAILABLE_NOW} {Math.max(0, Number(product.stock))} {STRINGS.PRODUCT.PIECE}
+                  {STRINGS.PRODUCT.AVAILABLE_NOW} {Math.max(0, effectiveMaxStock)} {STRINGS.PRODUCT.PIECE}
                 </p>
               )}
 

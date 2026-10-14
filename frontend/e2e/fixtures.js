@@ -45,6 +45,9 @@ async function installApiFixtures(page, { wishlistMode = 'success', wishlistDela
     if (request.method() === 'GET' && path === '/api/products') {
       return route.fulfill({ json: { success: true, data: [PRODUCT], pagination: { total: 1, pages: 1, page: 1 } } });
     }
+    if (request.method() === 'GET' && (path === '/api/products/featured' || path === '/api/products/bestsellers' || path === '/api/products/new')) {
+      return route.fulfill({ json: { success: true, data: [PRODUCT] } });
+    }
     if (request.method() === 'GET' && path === `/api/products/slug/${PRODUCT.slug}`) {
       return route.fulfill({ json: { success: true, data: PRODUCT } });
     }
@@ -62,6 +65,9 @@ async function installApiFixtures(page, { wishlistMode = 'success', wishlistDela
     }
     if (request.method() === 'GET' && path === '/api/settings/loyalty') {
       return route.fulfill({ json: { success: true, data: { enabled: false, egpPerPointRedeemed: 0.1 } } });
+    }
+    if (request.method() === 'GET' && path === '/api/settings/payment') {
+      return route.fulfill({ json: { success: true, data: { paymobEnabled: false, cardEnabled: false, walletEnabled: false, mode: 'test' } } });
     }
     if (request.method() === 'GET' && path.includes('/api/reviews/product/')) {
       return route.fulfill({ json: { success: true, data: [], pagination: { total: 0 } } });

@@ -33,41 +33,47 @@ const ProductCarousel = dynamic(() => import('../components/product/ProductCarou
   ),
 });
 
-const HomePage = () => {
-  // Fetch featured products
+const HomePage = ({ initialData }) => {
+  // Fetch featured products (hydrated from Server Component when available)
   const { data: featuredProducts, isLoading: loadingFeatured } = useQuery({
     queryKey: ['products', 'featured'],
     queryFn: () => productsAPI.getFeatured(8).then((res) => res.data.data),
+    initialData: initialData?.featuredProducts,
   });
 
   // Fetch bestsellers
   const { data: bestsellers, isLoading: loadingBestsellers } = useQuery({
     queryKey: ['products', 'bestsellers'],
     queryFn: () => productsAPI.getBestsellers(8).then((res) => res.data.data),
+    initialData: initialData?.bestsellers,
   });
 
   // Fetch new arrivals
   const { data: newArrivals, isLoading: loadingNew } = useQuery({
     queryKey: ['products', 'new'],
     queryFn: () => productsAPI.getNew(8).then((res) => res.data.data),
+    initialData: initialData?.newArrivals,
   });
 
   // Fetch Ready Boxes
   const { data: readyBoxes, isLoading: loadingReadyBoxes } = useQuery({
     queryKey: ['products', 'readyBoxes'],
     queryFn: () => productsAPI.getAll({ isReadyBox: true, limit: 8 }).then((res) => res.data.data),
+    initialData: initialData?.readyBoxes,
   });
 
   // Fetch categories
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesAPI.getAll().then((res) => res.data.data),
+    initialData: initialData?.categories,
   });
 
   // Fetch occasions
   const { data: occasions } = useQuery({
     queryKey: ['occasions'],
     queryFn: () => occasionsAPI.getAll().then((res) => res.data.data),
+    initialData: initialData?.occasions,
   });
 
 
