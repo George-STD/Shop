@@ -8,6 +8,9 @@ const { sendSuccess, sendError, sendCreated, sendNotFound, sendForbidden, sendBa
 const asyncHandler = require('../utils/asyncHandler');
 const { processReadyBoxes } = require('./productController');
 const { addEgp, subEgp, mulEgp, applyPercentDiscount, roundTo2Decimals } = require('../utils/money');
+const { bustCatalog } = require('../middleware/cache');
+const LoyaltyLedger = require('../models/LoyaltyLedger');
+const OrderDailyStats = require('../models/OrderDailyStats');
 
 // =====================================================
 // HELPERS
@@ -56,7 +59,7 @@ const buildOrderItems = (items, productMap) => {
     if (!quantity) throw createClientError(MESSAGES.ORDERS.INVALID_QUANTITY);
 
     const product = productMap.get(productId);
-    if (!product) throw createClientError(`${MESSAGES.ORDERS.PRODUCT_NOT_FOUND_TEMPLATE}: ${productId}`);
+    if (!product || product.isActive === false) throw createClientError(`${MESSAGES.ORDERS.PRODUCT_NOT_FOUND_TEMPLATE}: ${product?.name || productId}`);
     
     if (product.isReadyBox) {
       if (!product.includedProducts || product.includedProducts.length === 0) {
@@ -572,6 +575,47 @@ const rollbackLoyaltyPoints = async (userId, pointsRedeemed) => {
     session.endSession();
   }
 
+  bustCatalog('products');
+  bustCatalog('admin-stats');
+
+  // Record LoyaltyLedger entry if points were redeemed (non-blocking)
+  if (order && order.pointsRedeemed > 0 && userId) {
+    LoyaltyLedger.updateOne(
+      { idempotencyKey: `order:${order._id}:redeem` },
+      {
+        $setOnInsert: {
+          user: userId,
+          points: -Math.abs(order.pointsRedeemed),
+          type: 'REDEEMED',
+          reason: `استبدال نقاط في الطلب #${order.orderNumber || order._id}`,
+          order: order._id,
+          idempotencyKey: `order:${order._id}:redeem`,
+        },
+      },
+      { upsert: true }
+    ).catch((err) => console.error('LoyaltyLedger redeem log error:', err.message));
+  }
+
+  // Update OrderDailyStats rollup (non-blocking)
+  if (order) {
+    const dateKey = new Date(order.createdAt || Date.now()).toISOString().slice(0, 10);
+    const itemsSold = (order.items || []).reduce((acc, it) => acc + (Number(it.quantity) || 0), 0);
+    const payField = order.paymentMethod === 'instapay' ? 'paymentMethods.instapay' : 'paymentMethods.cod';
+    OrderDailyStats.updateOne(
+      { date: dateKey },
+      {
+        $inc: {
+          totalOrders: 1,
+          totalRevenue: Number(order.total) || 0,
+          'ordersByStatus.pending': 1,
+          [payField]: 1,
+          itemsSold,
+        },
+      },
+      { upsert: true }
+    ).catch((err) => console.error('OrderDailyStats update error:', err.message));
+  }
+
   // Send confirmation email (non-blocking)
   try {
     const emailTo = req.user?.email || guestEmail;
@@ -646,6 +690,8 @@ exports.cancelOrder = async (req, res) => {
     await rollbackStock(order.items, session);
 
     await session.commitTransaction();
+    bustCatalog('products');
+    bustCatalog('admin-stats');
     return sendSuccess(res, { data: order, message: MESSAGES.ORDERS.CANCELLED });
   } catch (error) {
     if (session.inTransaction()) await session.abortTransaction();
@@ -691,6 +737,8 @@ exports.cancelOrder = async (req, res) => {
 
         // Restore stock for cancelled order items using rollbackStock
         await rollbackStock(order.items);
+        bustCatalog('products');
+        bustCatalog('admin-stats');
         return sendSuccess(res, { data: order, message: MESSAGES.ORDERS.CANCELLED });
       } catch (fallbackError) {
         if (fallbackError?.isClientError) {

@@ -24,13 +24,17 @@ const AdminCategories = () => {
   });
 
   const { data: categories, isLoading } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => categoriesAPI.getAll().then((res) => res.data.data),
+    queryKey: ['admin-categories'],
+    queryFn: () =>
+      (adminAPI.getCategories ? adminAPI.getCategories() : categoriesAPI.getAll()).then(
+        (res) => res.data.data
+      ),
   });
 
   const createMutation = useMutation({
     mutationFn: (data) => adminAPI.createCategory(data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setShowModal(false);
       resetForm();
@@ -44,6 +48,7 @@ const AdminCategories = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => adminAPI.updateCategory(id, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       setShowModal(false);
       resetForm();
@@ -57,6 +62,7 @@ const AdminCategories = () => {
   const deleteMutation = useMutation({
     mutationFn: (id) => adminAPI.deleteCategory(id),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       toast.success(STRINGS.ADMIN.NOTIFICATIONS.CATEGORY_DELETED || 'تم حذف التصنيف بنجاح');
     },

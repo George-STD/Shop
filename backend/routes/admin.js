@@ -117,6 +117,8 @@ router.put('/orders/:id/procurement', [
 // =====================================================
 // CATEGORIES MANAGEMENT
 // =====================================================
+router.get('/categories', adminController.getCategories);
+
 router.post('/categories', [
   logAdminAction('CREATE_CATEGORY'),
   body('name').trim().notEmpty().withMessage('اسم الفئة مطلوب'),

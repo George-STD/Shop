@@ -57,6 +57,9 @@ async function installApiFixtures(page, { wishlistMode = 'success', wishlistDela
     if (request.method() === 'GET' && path.startsWith('/api/occasions')) {
       return route.fulfill({ json: { success: true, data: [] } });
     }
+    if (request.method() === 'GET' && path === '/api/auth/me') {
+      return route.fulfill({ json: { success: true, data: USER } });
+    }
     if (request.method() === 'GET' && path === '/api/settings/loyalty') {
       return route.fulfill({ json: { success: true, data: { enabled: false, egpPerPointRedeemed: 0.1 } } });
     }

@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const { GoogleGenAI } = require('@google/genai');
 
 const { protect, admin, adminLimiter, aiLimiter } = require('../middleware/auth');
+const { bustCatalog } = require('../middleware/cache');
 const asyncHandler = require('../utils/asyncHandler');
 
 // Models
@@ -567,6 +568,10 @@ router.post('/execute', asyncHandler(async (req, res) => {
     finalUpdate,
     { runValidators: true }
   );
+
+  bustCatalog('products');
+  bustCatalog('categories');
+  bustCatalog('admin-stats');
 
   // Audit Log
   logAudit({

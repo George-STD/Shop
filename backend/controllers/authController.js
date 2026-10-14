@@ -130,7 +130,11 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
     data: {
       user: {
         id: user._id, firstName: user.firstName, lastName: user.lastName,
-        email: user.email, phone: user.phone, role: user.role
+        email: user.email, phone: user.phone, role: user.role,
+        loyaltyPoints: user.loyaltyPoints || 0,
+        pointsHistory: user.pointsHistory || [],
+        wishlist: user.wishlist || [],
+        addresses: user.addresses || []
       },
       token
     }
@@ -218,7 +222,11 @@ exports.login = asyncHandler(async (req, res) => {
     data: {
       user: {
         id: user._id, firstName: user.firstName, lastName: user.lastName,
-        email: user.email, phone: user.phone, role: user.role
+        email: user.email, phone: user.phone, role: user.role,
+        loyaltyPoints: user.loyaltyPoints || 0,
+        pointsHistory: user.pointsHistory || [],
+        wishlist: user.wishlist || [],
+        addresses: user.addresses || []
       },
       token
     }
@@ -226,7 +234,7 @@ exports.login = asyncHandler(async (req, res) => {
 }, MESSAGES.GENERAL.ERROR);
 
 exports.getMe = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).populate('wishlist', 'name slug price images');
+  const user = await User.findById(req.user._id).populate('wishlist', 'name slug price oldPrice stock images');
   if (!user) return sendNotFound(res, MESSAGES.AUTH.USER_NOT_FOUND);
   sendSuccess(res, { data: user });
 }, MESSAGES.GENERAL.ERROR);
@@ -241,6 +249,7 @@ exports.updateProfile = asyncHandler(async (req, res) => {
     { firstName, lastName, phone },
     { new: true, runValidators: true }
   );
+  evictUserFromAuthzCache(req.user._id);
 
   sendSuccess(res, { data: user, message: MESSAGES.AUTH.PROFILE_UPDATED });
 }, MESSAGES.GENERAL.ERROR);
@@ -253,13 +262,15 @@ exports.changePassword = asyncHandler(async (req, res) => {
     return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.PASSWORD_INCORRECT });
   }
 
+  const nextTokenVersion = (user.tokenVersion || 0) + 1;
   const hashedNewPassword = await bcrypt.hash(newPassword, 12);
   await User.findByIdAndUpdate(req.user._id, {
-    $set: { password: hashedNewPassword, passwordChangedAt: new Date() },
+    $set: { password: hashedNewPassword, passwordChangedAt: new Date(Date.now() - 1000) },
     $inc: { tokenVersion: 1 }
   });
   evictUserFromAuthzCache(req.user._id);
-  sendSuccess(res, { message: MESSAGES.AUTH.PASSWORD_CHANGED });
+  const token = generateToken(user._id, nextTokenVersion);
+  sendSuccess(res, { message: MESSAGES.AUTH.PASSWORD_CHANGED, data: { token } });
 }, MESSAGES.GENERAL.ERROR);
 
 exports.requestEmailChange = asyncHandler(async (req, res) => {
@@ -322,7 +333,8 @@ exports.verifyEmailChange = asyncHandler(async (req, res) => {
     $unset: { pendingEmail: 1, emailChangeCode: 1, emailChangeExpires: 1 }
   });
 
-  const updatedUser = await User.findById(user._id).select('-password').populate('wishlist', 'name slug price images');
+  evictUserFromAuthzCache(user._id);
+  const updatedUser = await User.findById(user._id).select('-password').populate('wishlist', 'name slug price oldPrice stock images');
   return sendSuccess(res, { message: MESSAGES.AUTH.EMAIL_CHANGE_SUCCESS, data: { user: updatedUser } });
 }, MESSAGES.GENERAL.ERROR);
 
@@ -337,11 +349,13 @@ exports.addToWishlist = asyncHandler(async (req, res) => {
   }
 
   await User.findByIdAndUpdate(req.user._id, { $addToSet: { wishlist: productIdStr } });
+  evictUserFromAuthzCache(req.user._id);
   sendSuccess(res, { message: MESSAGES.WISHLIST.ADDED });
 }, MESSAGES.GENERAL.ERROR);
 
 exports.removeFromWishlist = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(req.user._id, { $pull: { wishlist: req.params.productId } });
+  evictUserFromAuthzCache(req.user._id);
   sendSuccess(res, { message: MESSAGES.WISHLIST.REMOVED });
 }, MESSAGES.GENERAL.ERROR);
 

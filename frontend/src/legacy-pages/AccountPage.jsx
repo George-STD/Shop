@@ -20,7 +20,7 @@ import { settingsAPI } from '../services/api';
 import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { STRINGS, STORAGE_KEYS } from '../constants';
-import { useAuthStore } from '../store';
+import { useAuthStore, useWishlistStore } from '../store';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
 // Login/Register Component
@@ -31,7 +31,8 @@ const AuthForm = () => {
   const { setAuth } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
-  const redirectTo = location.state?.from || null;
+  const rawFrom = location.state?.from;
+  const redirectTo = typeof rawFrom === 'string' ? rawFrom : rawFrom?.pathname || null;
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -94,6 +95,9 @@ const AuthForm = () => {
     try {
       const res = await authAPI.login({ email: formData.email, password: formData.password });
       setAuth(res.data.data.user, res.data.data.token);
+      if (res.data.data.user?.wishlist) {
+        useWishlistStore.getState().syncWishlist(res.data.data.user.wishlist);
+      }
       toast.success(STRINGS.AUTH.LOGIN_SUCCESS);
       // Redirect to checkout if came from there
       if (redirectTo) {
@@ -145,6 +149,9 @@ const AuthForm = () => {
     try {
       const res = await authAPI.verifyEmail({ email: verifyEmail, code });
       setAuth(res.data.data.user, res.data.data.token);
+      if (res.data.data.user?.wishlist) {
+        useWishlistStore.getState().syncWishlist(res.data.data.user.wishlist);
+      }
       toast.success(STRINGS.AUTH.VERIFICATION_SUCCESS);
       // Redirect to checkout if came from there
       if (redirectTo) {
@@ -636,8 +643,26 @@ const AuthForm = () => {
 
 // Dashboard Component
 const Dashboard = () => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateUser } = useAuthStore();
   const location = useLocation();
+
+  useEffect(() => {
+    let active = true;
+    authAPI
+      .getMe()
+      .then((res) => {
+        if (active && res.data?.data) {
+          updateUser(res.data.data);
+          if (Array.isArray(res.data.data.wishlist)) {
+            useWishlistStore.getState().syncWishlist(res.data.data.wishlist);
+          }
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [updateUser]);
 
   const { data: loyaltySettings } = useQuery({
     queryKey: ['public-loyalty-settings'],
@@ -762,10 +787,29 @@ import { useQuery } from '@tanstack/react-query';
 import { ordersAPI } from '../services/api';
 
 const OrdersPage = () => {
-  const { data, isLoading } = useQuery({
+  const { updateUser } = useAuthStore();
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['my-orders'],
     queryFn: () => ordersAPI.getAll().then((res) => res.data.data),
   });
+  const [cancellingId, setCancellingId] = useState(null);
+
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm('هل أنت متأكد من رغبتك في إلغاء هذا الطلب؟')) return;
+    setCancellingId(orderId);
+    try {
+      await ordersAPI.cancel(orderId, 'إلغاء بواسطة العميل');
+      toast.success('تم إلغاء الطلب بنجاح');
+      refetch();
+      authAPI.getMe().then((res) => {
+        if (res.data?.data) updateUser(res.data.data);
+      }).catch(() => {});
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'تعذر إلغاء الطلب');
+    } finally {
+      setCancellingId(null);
+    }
+  };
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">{STRINGS.ACCOUNT.MY_ORDERS}</h1>
@@ -795,14 +839,26 @@ const OrdersPage = () => {
                   <span className="font-bold">{STRINGS.ACCOUNT.DATE}</span>{' '}
                   {new Date(order.createdAt).toLocaleString('ar-EG')}
                 </div>
-                <div>
-                  <span className="font-bold">{STRINGS.ACCOUNT.TOTAL}</span> {order.total} {STRINGS.PRODUCT.CURRENCY}
+                <div className="flex items-center gap-3">
+                  <span>
+                    <span className="font-bold">{STRINGS.ACCOUNT.TOTAL}</span> {order.total} {STRINGS.PRODUCT.CURRENCY}
+                  </span>
+                  {(order.status === 'pending' || order.status === 'confirmed') && (
+                    <button
+                      type="button"
+                      disabled={cancellingId === order._id}
+                      onClick={() => handleCancelOrder(order._id)}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 font-semibold transition-colors disabled:opacity-50"
+                    >
+                      {cancellingId === order._id ? 'جاري الإلغاء...' : 'إلغاء الطلب'}
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
-                {order.items.map((item) => (
+                {order.items.map((item, idx) => (
                   <div
-                    key={item.product}
+                    key={item._id || `${item.product}-${idx}`}
                     className="flex items-center gap-2 border rounded p-2 bg-white w-full sm:w-auto"
                   >
                     {item.image && (
@@ -910,10 +966,13 @@ const SettingsPage = () => {
 
     setLoading(true);
     try {
-      await authAPI.changePassword({
+      const res = await authAPI.changePassword({
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });
+      if (res.data?.data?.token) {
+        setAuth(user, res.data.data.token);
+      }
       toast.success(STRINGS.AUTH.PASSWORD_CHANGED_SUCCESS);
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error) {

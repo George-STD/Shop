@@ -21,3 +21,5 @@ out/
 # Testing
 coverage/
 out.txt
+playwright-report/
+test-results/

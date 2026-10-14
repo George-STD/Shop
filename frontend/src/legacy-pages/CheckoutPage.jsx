@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiCheck, FiCreditCard, FiTruck, FiAward, FiCopy, FiPackage } from 'react-icons/fi';
 import { useCartStore, useAuthStore } from '../store';
-import { ordersAPI, settingsAPI } from '../services/api';
+import { ordersAPI, settingsAPI, authAPI } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
 import { BUSINESS_CONFIG, STRINGS, SITE_CONFIG, getShippingCost } from '../constants';
 import toast from 'react-hot-toast';
@@ -551,7 +551,25 @@ const CheckoutPage = () => {
 
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
+  const updateUser = useAuthStore((state) => state.updateUser);
   const authHydrated = useAuthStore((state) => state._hasHydrated);
+
+  // Refresh user profile & loyalty points balance on Checkout mount
+  useEffect(() => {
+    if (!authHydrated || !isAuthenticated) return;
+    let active = true;
+    authAPI
+      .getMe()
+      .then((res) => {
+        if (active && res.data?.data) {
+          updateUser(res.data.data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [authHydrated, isAuthenticated, updateUser]);
 
   const isHydrated = cartHydrated && authHydrated;
 

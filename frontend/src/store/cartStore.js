@@ -77,10 +77,32 @@ export const useCartStore = create(
 
         set((state) => {
           const existingIndex = state.items.findIndex((item) => getItemKey(item) === itemKey);
-          if (existingIndex === -1) return { items: [...state.items, incoming] };
+          const otherVariantsQty = state.items.reduce(
+            (sum, item, idx) => (item.id === product._id && idx !== existingIndex ? sum + (Number(item.quantity) || 0) : sum),
+            0
+          );
+          const remainingForThisKey = Math.max(0, maxAllowed - otherVariantsQty);
+
+          if (existingIndex === -1) {
+            if (remainingForThisKey === 0) {
+              result = { success: false, quantity: 0, capped: true, maxStock: stockLimit, reason: 'stock_limit_reached' };
+              return state;
+            }
+            const clampedIncoming = {
+              ...incoming,
+              quantity: Math.min(requestedQuantity, remainingForThisKey),
+            };
+            result = {
+              success: true,
+              quantity: clampedIncoming.quantity,
+              capped: clampedIncoming.quantity < requestedQuantity,
+              maxStock: stockLimit,
+            };
+            return { items: [...state.items, clampedIncoming] };
+          }
 
           const currentItem = state.items[existingIndex];
-          const nextQuantity = Math.min((Number(currentItem.quantity) || 0) + requestedQuantity, maxAllowed);
+          const nextQuantity = Math.min((Number(currentItem.quantity) || 0) + requestedQuantity, remainingForThisKey);
           result = {
             success: nextQuantity > currentItem.quantity,
             quantity: nextQuantity,
@@ -105,8 +127,21 @@ export const useCartStore = create(
       removeItem: (id, selectedSize, selectedColor, selectedShape, _variantsKey, boxId) => {
         const targetKey = getItemKey({ id, selectedSize, selectedColor, selectedShape, _variantsKey, boxId });
         set((state) => {
-          const items = state.items.filter((item) => getItemKey(item) !== targetKey);
-          return items.length === state.items.length ? state : { items };
+          let items = state.items.filter((item) => getItemKey(item) !== targetKey);
+          if (items.length === state.items.length) return state;
+
+          // If removing an item from a custom box drops that box below BOX_MIN_ITEMS, unwrap remaining items into normal cart items
+          if (boxId) {
+            const remainingBoxQty = items
+              .filter((i) => i.boxId === boxId)
+              .reduce((sum, i) => sum + (Number(i.quantity) || 1), 0);
+            if (remainingBoxQty > 0 && remainingBoxQty < BUSINESS_CONFIG.BOX_MIN_ITEMS) {
+              items = items.map((i) =>
+                i.boxId === boxId ? { ...i, boxId: undefined, boxDiscount: undefined } : i
+              );
+            }
+          }
+          return { items };
         });
       },
 
@@ -117,10 +152,15 @@ export const useCartStore = create(
 
         set((state) => {
           let changed = false;
+          const otherVariantsQty = state.items.reduce(
+            (sum, item) => (item.id === id && getItemKey(item) !== targetKey ? sum + (Number(item.quantity) || 0) : sum),
+            0
+          );
           const items = state.items.map((item) => {
             if (getItemKey(item) !== targetKey) return item;
             const stockLimit = parseStock(item.stock);
-            const nextQuantity = Math.min(requestedQuantity, stockLimit ?? Number.MAX_SAFE_INTEGER);
+            const maxForThisKey = Math.max(1, (stockLimit ?? Number.MAX_SAFE_INTEGER) - otherVariantsQty);
+            const nextQuantity = Math.min(requestedQuantity, maxForThisKey);
             result = {
               success: true,
               quantity: nextQuantity,

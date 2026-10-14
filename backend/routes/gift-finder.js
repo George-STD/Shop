@@ -51,6 +51,12 @@ router.post('/ai-recommend', publicAiLimiter, sanitizeInput, asyncHandler(async 
   // Calculate dynamic prices for ready boxes with autoCalculatePrice: true
   await processReadyBoxes(readyBoxes);
 
+  // Prefer in-stock ready boxes so AI does not recommend unavailable items
+  const inStockBoxes = readyBoxes.filter((box) => Number(box.stock) > 0);
+  if (inStockBoxes.length > 0) {
+    readyBoxes = inStockBoxes;
+  }
+
   // 2. Prepare lightweight box inventory summary for Gemini AI
   const boxInventory = readyBoxes.map((box, index) => {
     const includedNames = (box.includedProducts || [])

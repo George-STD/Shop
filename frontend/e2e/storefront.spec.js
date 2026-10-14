@@ -24,7 +24,7 @@ test.describe('critical storefront paths', () => {
     await expect(page).toHaveURL(/\/checkout/);
     await expect(page.getByLabel(/الاسم الأول/)).toHaveValue('اختبار');
     await page.getByLabel(/الهاتف/).fill('01012345678');
-    await page.getByLabel(/المحافظة/).selectOption({ label: 'القاهرة' });
+    await page.getByLabel(/المحافظة/).selectOption({ value: 'القاهرة' });
     await page.getByLabel(/العنوان التفصيلي/).fill('شارع الاختبار 1');
     await page.getByRole('button', { name: 'التالي' }).click();
     await page.getByRole('button', { name: 'التالي' }).click();

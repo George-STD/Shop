@@ -55,6 +55,7 @@ const WishlistPage = () => {
     }
 
     removeItem(product.id);
+    authAPI.removeFromWishlist(product.id).catch(() => {});
   };
 
   return (
@@ -177,7 +178,11 @@ const WishlistPage = () => {
         isOpen={isClearModalOpen}
         onClose={() => setIsClearModalOpen(false)}
         onConfirm={() => {
+          const currentItems = [...items];
           clearWishlist();
+          currentItems.forEach((item) => {
+            if (item?.id) authAPI.removeFromWishlist(item.id).catch(() => {});
+          });
           setIsClearModalOpen(false);
           toast.success(STRINGS.WISHLIST.CLEARED_SUCCESS || 'تم إفراغ قائمة المفضلة');
         }}

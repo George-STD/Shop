@@ -63,21 +63,34 @@ export function useNavigate() {
 export function useLocation() {
   const pathname = usePathname() || '/';
   const search = typeof window !== 'undefined' ? window.location.search || '' : '';
-  
-  // Read and consume navigationState so it doesn't linger across unrelated future routes
-  const state = navigationState;
-  
+
+  // Preserve navigationState across re-renders on the same pathname, and clear on route change
+  const [routeState, setRouteState] = useState(() => ({
+    pathname,
+    state: navigationState,
+  }));
+
   useEffect(() => {
-    if (navigationState !== null) {
+    if (routeState.pathname !== pathname) {
+      const nextState = navigationState;
       navigationState = null;
+      setRouteState({ pathname, state: nextState });
+    } else if (navigationState !== null) {
+      const nextState = navigationState;
+      navigationState = null;
+      if (routeState.state !== nextState) {
+        setRouteState({ pathname, state: nextState });
+      }
     }
-  }, [pathname]);
+  }, [pathname, routeState.pathname, routeState.state]);
+
+  const activeState = routeState.pathname === pathname ? routeState.state : navigationState;
 
   return {
     pathname,
     search,
     hash: '',
-    state,
+    state: activeState,
   };
 }
 

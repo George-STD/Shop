@@ -69,7 +69,7 @@ const AdminLayout = ({ children }) => {
 
   // Protect admin routes - redirect if not admin
   if (!isAuthenticated) {
-    return <Navigate to="/account" state={{ from: location }} replace />;
+    return <Navigate to="/account" state={{ from: location.pathname }} replace />;
   }
 
   if (user?.role !== 'admin') {

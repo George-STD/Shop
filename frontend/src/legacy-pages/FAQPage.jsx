@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   FiChevronDown,
   FiSearch,
@@ -172,9 +173,9 @@ const FAQPage = () => {
           <div className="mt-12 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-8 text-center">
             <h2 className="text-2xl font-bold mb-2">{STRINGS.FAQ_PAGE.NOT_FOUND_ANSWER}</h2>
             <p className="text-gray-600 mb-6">{STRINGS.FAQ_PAGE.CUSTOMER_SERVICE_READY}</p>
-            <a href="/contact" className="btn-primary inline-block">
+            <Link to="/contact" className="btn-primary inline-block">
               {STRINGS.FAQ_PAGE.CONTACT_US}
-            </a>
+            </Link>
           </div>
         </div>
       </div>

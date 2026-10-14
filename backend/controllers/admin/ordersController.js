@@ -6,6 +6,8 @@ const { sendTrackingEmail, sendDeliveredReviewEmail } = require('../../utils/mai
 const asyncHandler = require('../../utils/asyncHandler');
 const { escapeRegex, parsePagination, buildPaginationMeta } = require('../../utils/helpers');
 const { addEgp, subEgp, mulEgp, roundTo2Decimals } = require('../../utils/money');
+const { bustCatalog } = require('../../middleware/cache');
+const LoyaltyLedger = require('../../models/LoyaltyLedger');
 
 // =====================================================
 // ORDERS MANAGEMENT (Admin)
@@ -21,7 +23,14 @@ exports.getOrders = asyncHandler(async (req, res) => {
     if (req.query.endDate) queryObj.createdAt.$lte = new Date(req.query.endDate);
   }
   if (req.query.search) {
-    queryObj.$or = [{ orderNumber: { $regex: escapeRegex(req.query.search), $options: 'i' } }];
+    const searchRegex = { $regex: escapeRegex(req.query.search.trim()), $options: 'i' };
+    queryObj.$or = [
+      { orderNumber: searchRegex },
+      { guestEmail: searchRegex },
+      { 'shippingAddress.phone': searchRegex },
+      { 'shippingAddress.firstName': searchRegex },
+      { 'shippingAddress.lastName': searchRegex },
+    ];
   }
 
   const [orders, total] = await Promise.all([
@@ -146,8 +155,26 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
       return res.status(404).json({ success: false, message: 'الطلب غير موجود' });
     }
     await session.commitTransaction();
+    bustCatalog('products');
+    bustCatalog('admin-stats');
 
     const { order, previousStatus } = result;
+    if (status === 'delivered' && previousStatus !== 'delivered' && order.pointsEarned > 0 && order.user) {
+      LoyaltyLedger.updateOne(
+        { idempotencyKey: `order:${order._id}:earn` },
+        {
+          $setOnInsert: {
+            user: order.user,
+            points: order.pointsEarned,
+            type: 'EARNED',
+            reason: `مكافأة إتمام الطلب #${order.orderNumber || order._id}`,
+            order: order._id,
+            idempotencyKey: `order:${order._id}:earn`,
+          },
+        },
+        { upsert: true }
+      ).catch((err) => console.error('LoyaltyLedger earn log error:', err.message));
+    }
     if (status === 'shipped' && (trackingNumber || order.trackingNumber)) {
       try {
         let emailTo = order.guestEmail || order.shippingAddress?.email;
@@ -186,6 +213,8 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
 
     const result = await processStatusChange();
     if (result.notFound) return res.status(404).json({ success: false, message: 'الطلب غير موجود' });
+    bustCatalog('products');
+    bustCatalog('admin-stats');
 
     const { order, previousStatus } = result;
     if (status === 'shipped' && (trackingNumber || order.trackingNumber)) {

@@ -297,7 +297,7 @@ const ProductCard = ({ product, priority = false, viewMode = 'grid' }) => {
                        hover:from-purple-600 hover:to-fuchsia-600 hover:shadow-lg hover:shadow-purple-500/25 
                        transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none
                        active:scale-[0.98] ${
-                         viewMode === 'list' ? 'flex' : 'md:hidden flex'
+                         viewMode === 'list' ? 'flex' : 'lg:hidden flex'
                        } text-xs sm:text-sm items-center justify-center gap-1.5 min-h-[44px]`}
             aria-label={`${hasOptions ? 'تحديد الخيارات' : STRINGS.PRODUCT.ADD_TO_CART} - ${product.name}`}
           >

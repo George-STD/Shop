@@ -11,6 +11,14 @@ const { bustCatalog } = require('../../middleware/cache');
 
 const ALLOWED_CATEGORY_FIELDS = ['name', 'slug', 'description', 'image', 'icon', 'parent', 'order', 'isActive', 'seo', 'showInBox'];
 
+exports.getCategories = asyncHandler(async (req, res) => {
+  const categories = await Category.find()
+    .populate('parent', 'name slug')
+    .sort({ order: 1, createdAt: -1 })
+    .lean();
+  res.json({ success: true, data: categories });
+}, 'حدث خطأ أثناء جلب الفئات');
+
 const filterAllowedCategoryFields = (data) => {
   const filtered = {};
   ALLOWED_CATEGORY_FIELDS.forEach(field => {

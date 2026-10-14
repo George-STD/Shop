@@ -195,6 +195,12 @@ const ProductsPage = () => {
     categoryInfo?.seo?.metaDescription ||
     STRINGS.PRODUCTS_PAGE.SHOP_ALL;
 
+  useEffect(() => {
+    if (typeof document !== 'undefined' && pageTitle) {
+      document.title = pageTitle;
+    }
+  }, [pageTitle]);
+
   return (
     <>
       <div className="bg-gray-50 min-h-screen min-h-dvh">

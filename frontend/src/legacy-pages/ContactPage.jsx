@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FiMail, FiMapPin, FiClock, FiSend, FiMessageCircle, FiCheckCircle } from 'react-icons/fi';
 import { FaInstagram, FaFacebookF, FaYoutube, FaWhatsapp } from 'react-icons/fa';
 import { STRINGS } from '../constants';
+import { settingsAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const ContactPage = () => {
@@ -18,10 +19,15 @@ const ContactPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    toast.success(STRINGS.CONTACT_PAGE.SUCCESS_MESSAGE || 'تم إرسال رسالتك بنجاح!');
-    setSubmitted(true);
-    setLoading(false);
+    try {
+      await settingsAPI.submitContact(formData);
+      toast.success(STRINGS.CONTACT_PAGE.SUCCESS_MESSAGE || 'تم إرسال رسالتك بنجاح!');
+      setSubmitted(true);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'حدث خطأ أثناء إرسال الرسالة، يرجى المحاولة مرة أخرى.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const contactInfo = [
@@ -128,6 +134,7 @@ const ContactPage = () => {
                 </div>
                 <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden">
                   <iframe
+                    title="موقع متجر فور يو على الخريطة"
                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3455.123!2d31.3!3d30.01!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzDCsDAwJzM2LjAiTiAzMcKwMTgnMDAuMCJF!5e0!3m2!1sar!2seg"
                     width="100%"
                     height="100%"

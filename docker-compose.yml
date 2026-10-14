@@ -60,6 +60,7 @@ services:
       - PORT=5000
       - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:27017/hadaya_db}
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
       - JWT_EXPIRE=${JWT_EXPIRE:-7d}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}

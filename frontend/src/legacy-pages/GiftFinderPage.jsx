@@ -186,7 +186,11 @@ const GiftFinderPage = () => {
   };
 
   const handleAddToCart = (product) => {
-    addItem(product, 1);
+    const result = addItem(product, 1);
+    if (!result?.success) {
+      toast.error('عذراً، هذا البوكس غير متوفر بالكمية المطلوبة حالياً');
+      return;
+    }
     toast.success(`تمت إضافة "${product.name}" إلى سلة التسوق! 🛒`);
   };
 

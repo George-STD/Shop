@@ -51,7 +51,7 @@ export const useWishlistStore = create(
           const id = typeof item === 'string' ? item : item._id || item.id;
           if (!id) return;
           const existing = map.get(id);
-          if (typeof item === 'object') {
+          if (typeof item === 'object' && (item.name || existing?.name)) {
             map.set(id, {
               id,
               name: item.name || existing?.name,
@@ -61,8 +61,6 @@ export const useWishlistStore = create(
               image: item.images?.[0]?.url || item.image || existing?.image,
               stock: parseStock(item.stock) ?? existing?.stock ?? null,
             });
-          } else if (!existing) {
-            map.set(id, { id });
           }
         });
         set({ items: Array.from(map.values()) });

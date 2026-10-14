@@ -13,6 +13,7 @@ const contentSecurityPolicy = [
   "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https:",
   "font-src 'self' data:",
   isDev ? "connect-src 'self' https: http://localhost:*" : "connect-src 'self' https:",
+  "frame-src 'self' https://www.google.com https://maps.google.com",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "base-uri 'self'",

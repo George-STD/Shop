@@ -59,10 +59,10 @@ exports.createProduct = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
 
-  const slug = req.body.name.toLowerCase().trim()
+  const baseSlugInput = (req.body.slug || req.body.name || 'product').toLowerCase().trim();
+  const slug = baseSlugInput
     .replace(/\s+/g, '-')
-    .replace(/[\u0600-\u06FF]/g, '')
-    .replace(/[^\w\-]+/g, '')
+    .replace(/[^\p{L}\p{N}\-]+/gu, '')
     .replace(/\-\-+/g, '-')
     .replace(/^-+/, '')
     .replace(/-+$/, '') || 'product';
@@ -92,10 +92,10 @@ exports.createBulkProducts = asyncHandler(async (req, res) => {
   }
 
   const productsToCreate = productsData.map((data, index) => {
-    const slug = (data.name || 'product').toLowerCase().trim()
+    const baseSlugInput = (data.slug || data.name || 'product').toLowerCase().trim();
+    const slug = baseSlugInput
       .replace(/\s+/g, '-')
-      .replace(/[\u0600-\u06FF]/g, '')
-      .replace(/[^\w\-]+/g, '')
+      .replace(/[^\p{L}\p{N}\-]+/gu, '')
       .replace(/\-\-+/g, '-')
       .replace(/^-+/, '')
       .replace(/-+$/, '') || 'product';

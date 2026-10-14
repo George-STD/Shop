@@ -2,6 +2,7 @@ const Review = require('../../models/Review');
 const { logAudit } = require('../../utils/auditLogger');
 const asyncHandler = require('../../utils/asyncHandler');
 const { parsePagination, buildPaginationMeta } = require('../../utils/helpers');
+const { bustCatalog } = require('../../middleware/cache');
 
 // =====================================================
 // REVIEWS MANAGEMENT
@@ -40,6 +41,11 @@ exports.approveReview = asyncHandler(async (req, res) => {
     { new: true }
   );
 
+  if (review?.product) {
+    await Review.calcAverageRating(review.product._id || review.product);
+  }
+  bustCatalog('products');
+
   if (req.user?._id) {
     logAudit({
       entityType: 'Product',
@@ -62,6 +68,11 @@ exports.approveReview = asyncHandler(async (req, res) => {
 exports.deleteReview = asyncHandler(async (req, res) => {
   const review = await Review.findByIdAndDelete(req.params.id);
   if (!review) return res.status(404).json({ success: false, message: 'التقييم غير موجود' });
+
+  if (review.product) {
+    await Review.calcAverageRating(review.product._id || review.product);
+  }
+  bustCatalog('products');
 
   if (req.user?._id) {
     logAudit({

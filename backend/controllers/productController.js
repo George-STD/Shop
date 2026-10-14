@@ -62,6 +62,12 @@ const processReadyBoxes = async (products) => {
 
 exports.processReadyBoxes = processReadyBoxes;
 
+const clampLimit = (value, defaultLimit) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 1) return defaultLimit;
+  return Math.min(CONFIG.PAGINATION.MAX_LIMIT, Math.floor(parsed));
+};
+
 /**
  * Get all products with filters
  */
@@ -185,10 +191,10 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
  * Get featured products
  */
 exports.getFeaturedProducts = asyncHandler(async (req, res) => {
-  const { limit = CONFIG.LIMITS.FEATURED_PRODUCTS } = req.query;
+  const finalLimit = clampLimit(req.query.limit, CONFIG.LIMITS.FEATURED_PRODUCTS);
   const products = await Product.find({ isActive: true, isFeatured: true })
     .populate('category', 'name slug')
-    .limit(Number(limit))
+    .limit(finalLimit)
     .lean();
   const processedProducts = await processReadyBoxes(products);
   return sendSuccess(res, { data: processedProducts });
@@ -198,11 +204,11 @@ exports.getFeaturedProducts = asyncHandler(async (req, res) => {
  * Get bestselling products
  */
 exports.getBestsellers = asyncHandler(async (req, res) => {
-  const { limit = CONFIG.LIMITS.BESTSELLER_PRODUCTS } = req.query;
+  const finalLimit = clampLimit(req.query.limit, CONFIG.LIMITS.BESTSELLER_PRODUCTS);
   const products = await Product.find({ isActive: true, isBestseller: true })
     .populate('category', 'name slug')
     .sort({ salesCount: -1 })
-    .limit(Number(limit))
+    .limit(finalLimit)
     .lean();
   const processedProducts = await processReadyBoxes(products);
   return sendSuccess(res, { data: processedProducts });
@@ -212,8 +218,7 @@ exports.getBestsellers = asyncHandler(async (req, res) => {
  * Get new arrivals
  */
 exports.getNewArrivals = asyncHandler(async (req, res) => {
-  const { limit = CONFIG.LIMITS.NEW_ARRIVALS } = req.query;
-  const limitNum = Number(limit);
+  const limitNum = clampLimit(req.query.limit, CONFIG.LIMITS.NEW_ARRIVALS);
   let products = await Product.find({ isActive: true, isNewArrival: true })
     .populate('category', 'name slug')
     .sort({ createdAt: -1 })
@@ -238,13 +243,13 @@ exports.getNewArrivals = asyncHandler(async (req, res) => {
  * Get products by occasion
  */
 exports.getProductsByOccasion = asyncHandler(async (req, res) => {
-  const { limit = CONFIG.LIMITS.BY_OCCASION } = req.query;
+  const finalLimit = clampLimit(req.query.limit, CONFIG.LIMITS.BY_OCCASION);
   const products = await Product.find({ 
     isActive: true, 
     occasions: req.params.occasion 
   })
     .populate('category', 'name slug')
-    .limit(Number(limit))
+    .limit(finalLimit)
     .lean();
   const processedProducts = await processReadyBoxes(products);
   return sendSuccess(res, { data: processedProducts });
@@ -254,13 +259,13 @@ exports.getProductsByOccasion = asyncHandler(async (req, res) => {
  * Get products by recipient
  */
 exports.getProductsByRecipient = asyncHandler(async (req, res) => {
-  const { limit = CONFIG.LIMITS.BY_RECIPIENT } = req.query;
+  const finalLimit = clampLimit(req.query.limit, CONFIG.LIMITS.BY_RECIPIENT);
   const products = await Product.find({ 
     isActive: true, 
     recipients: req.params.recipient 
   })
     .populate('category', 'name slug')
-    .limit(Number(limit))
+    .limit(finalLimit)
     .lean();
   const processedProducts = await processReadyBoxes(products);
   return sendSuccess(res, { data: processedProducts });
@@ -293,7 +298,7 @@ exports.getProductById = asyncHandler(async (req, res) => {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     return sendNotFound(res, MESSAGES.PRODUCTS.NOT_FOUND);
   }
-  const product = await Product.findById(req.params.id)
+  const product = await Product.findOne({ _id: req.params.id, isActive: true })
     .populate('category', 'name slug');
   if (!product) return sendNotFound(res, MESSAGES.PRODUCTS.NOT_FOUND);
   const processedProduct = await processReadyBoxes(product);

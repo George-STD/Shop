@@ -46,8 +46,16 @@ api.interceptors.response.use(
   async (error) => {
     const config = error.config || {};
 
-    // Retry on Render cold-start or gateway timeout (up to 3 retries: 4s, 8s, 12s)
-    if (isColdStartOrNetworkError(error) && !config.__skipColdStartRetry) {
+    const method = (config.method || 'get').toLowerCase();
+    const isIdempotentMethod = method === 'get' || method === 'head' || method === 'options';
+    const hasIdempotencyKey = Boolean(
+      config.headers?.['Idempotency-Key'] ||
+      config.headers?.['idempotency-key'] ||
+      (typeof config.data === 'string' && config.data.includes('"idempotencyKey"'))
+    );
+
+    // Retry on Render cold-start or gateway timeout (only for idempotent requests)
+    if (isColdStartOrNetworkError(error) && !config.__skipColdStartRetry && (isIdempotentMethod || hasIdempotencyKey)) {
       config.__retryCount = (config.__retryCount || 0) + 1;
       if (config.__retryCount <= 3) {
         const delayMs = config.__retryCount * 4000;
@@ -186,6 +194,7 @@ export const adminAPI = {
   updateOrderProcurement: (id, data) => api.put(`/admin/orders/${id}/procurement`, data),
 
   // Categories
+  getCategories: () => api.get('/admin/categories'),
   createCategory: (data) => api.post('/admin/categories', data),
   updateCategory: (id, data) => api.put(`/admin/categories/${id}`, data),
   deleteCategory: (id) => api.delete(`/admin/categories/${id}`),
@@ -245,7 +254,8 @@ export const adminAPI = {
 };
 
 export const settingsAPI = {
-  getLoyaltySettings: () => api.get('/settings/loyalty')
+  getLoyaltySettings: () => api.get('/settings/loyalty'),
+  submitContact: (data) => api.post('/settings/contact', data),
 };
 
 export default api;

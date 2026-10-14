@@ -4,6 +4,7 @@ const { validationResult } = require('express-validator');
 const { logAudit } = require('../../utils/auditLogger');
 const asyncHandler = require('../../utils/asyncHandler');
 const { escapeRegex, parsePagination, buildPaginationMeta } = require('../../utils/helpers');
+const { evictUserFromAuthzCache } = require('../../middleware/auth');
 
 const ADMIN_USER_EXCLUDED_FIELDS =
   '-password -resetPasswordToken -resetPasswordExpires ' +
@@ -87,6 +88,7 @@ exports.updateUser = asyncHandler(async (req, res) => {
 
   const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true })
     .select('-password -resetPasswordToken -resetPasswordExpires');
+  evictUserFromAuthzCache(req.params.id);
 
   if (Object.keys(changes).length > 0 && req.user?._id) {
     logAudit({
@@ -111,6 +113,7 @@ exports.deleteUser = asyncHandler(async (req, res) => {
   if (!existingUser) return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
 
   const user = await User.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
+  evictUserFromAuthzCache(req.params.id);
 
   if (req.user?._id) {
     logAudit({
