@@ -324,6 +324,109 @@ const ProductFormModal = ({
             </div>
           </div>
 
+          {/* Allow size selection toggle */}
+          <div>
+            <label className="block text-sm font-medium mb-1">هل يتوفر المنتج بمقاسات أو أحجام متعددة؟</label>
+            <input
+              type="checkbox"
+              checked={Boolean(formData.hasSizes)}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  hasSizes: e.target.checked,
+                  sizes: e.target.checked
+                    ? formData.sizes?.length
+                      ? formData.sizes
+                      : [{ name: '', price: formData.price || '', stock: null, sku: '' }]
+                    : [],
+                })
+              }
+              className="mr-2"
+            />
+            <span>{STRINGS.ADMIN.PRODUCT_FORM.YES}</span>
+          </div>
+
+          {formData.hasSizes && (
+            <div className="space-y-2 bg-purple-50/40 p-3 rounded-xl border border-purple-100">
+              <label className="block text-sm font-medium mb-1">المقاسات والأحجام (مع السعر والمخزون لكل مقاس)</label>
+              {(formData.sizes || []).map((size, idx) => (
+                <div key={idx} className="flex flex-wrap items-center gap-2 mb-2">
+                  <input
+                    type="text"
+                    placeholder="اسم المقاس (مثال: كبير / XL)"
+                    value={size.name || ''}
+                    onChange={(e) => {
+                      const newSizes = [...(formData.sizes || [])];
+                      newSizes[idx] = { ...newSizes[idx], name: e.target.value };
+                      setFormData({ ...formData, sizes: newSizes });
+                    }}
+                    className="flex-1 min-w-[120px] border rounded-lg px-2 py-1 text-sm"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="سعر المقاس (ج.م)"
+                    value={size.price ?? ''}
+                    onChange={(e) => {
+                      const newSizes = [...(formData.sizes || [])];
+                      newSizes[idx] = { ...newSizes[idx], price: e.target.value };
+                      setFormData({ ...formData, sizes: newSizes });
+                    }}
+                    className="w-28 border rounded-lg px-2 py-1 text-xs"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="المخزون (اختياري)"
+                    value={size.stock ?? ''}
+                    onChange={(e) => {
+                      const newSizes = [...(formData.sizes || [])];
+                      newSizes[idx] = {
+                        ...newSizes[idx],
+                        stock: e.target.value === '' ? null : Math.max(0, parseInt(e.target.value, 10) || 0),
+                      };
+                      setFormData({ ...formData, sizes: newSizes });
+                    }}
+                    className="w-28 border rounded-lg px-2 py-1 text-xs"
+                  />
+                  <input
+                    type="text"
+                    placeholder="SKU (اختياري)"
+                    value={size.sku || ''}
+                    onChange={(e) => {
+                      const newSizes = [...(formData.sizes || [])];
+                      newSizes[idx] = { ...newSizes[idx], sku: e.target.value };
+                      setFormData({ ...formData, sizes: newSizes });
+                    }}
+                    className="w-28 border rounded-lg px-2 py-1 text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newSizes = (formData.sizes || []).filter((_, i) => i !== idx);
+                      setFormData({ ...formData, sizes: newSizes });
+                    }}
+                    className="text-red-500 px-2 text-sm"
+                  >
+                    {STRINGS.ADMIN.PRODUCT_FORM.DELETE}
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    sizes: [...(formData.sizes || []), { name: '', price: formData.price || '', stock: null, sku: '' }],
+                  })
+                }
+                className="text-purple-600 text-sm font-medium hover:underline"
+              >
+                + إضافة مقاس جديد
+              </button>
+            </div>
+          )}
+
           {/* Allow color selection toggle */}
           <div>
             <label className="block text-sm font-medium mb-1">{STRINGS.ADMIN.PRODUCT_FORM.CAN_CHOOSE_COLOR}</label>
@@ -447,6 +550,21 @@ const ProductFormModal = ({
                         setFormData({ ...formData, shapes: newShapes });
                       }}
                       className="flex-1 min-w-[120px] border rounded-lg px-2 py-1"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="المخزون (اختياري)"
+                      value={shape.stock ?? ''}
+                      onChange={(e) => {
+                        const newShapes = [...formData.shapes];
+                        newShapes[idx] = {
+                          ...newShapes[idx],
+                          stock: e.target.value === '' ? null : Math.max(0, parseInt(e.target.value, 10) || 0),
+                        };
+                        setFormData({ ...formData, shapes: newShapes });
+                      }}
+                      className="w-28 border rounded-lg px-2 py-1 text-xs bg-white"
                     />
                     <button
                       type="button"

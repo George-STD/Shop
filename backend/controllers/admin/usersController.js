@@ -86,8 +86,12 @@ exports.updateUser = asyncHandler(async (req, res) => {
     }
   });
 
-  const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true })
-    .select('-password -resetPasswordToken -resetPasswordExpires');
+  const updateDoc = { $set: updates };
+  if (changes.role || changes.isActive) {
+    updateDoc.$inc = { tokenVersion: 1 };
+  }
+  const user = await User.findByIdAndUpdate(req.params.id, updateDoc, { new: true, runValidators: true })
+    .select(ADMIN_USER_EXCLUDED_FIELDS);
   evictUserFromAuthzCache(req.params.id);
 
   if (Object.keys(changes).length > 0 && req.user?._id) {
@@ -112,7 +116,7 @@ exports.deleteUser = asyncHandler(async (req, res) => {
   const existingUser = await User.findById(req.params.id);
   if (!existingUser) return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
 
-  const user = await User.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
+  const user = await User.findByIdAndUpdate(req.params.id, { $set: { isActive: false }, $inc: { tokenVersion: 1 } }, { new: true }).select(ADMIN_USER_EXCLUDED_FIELDS);
   evictUserFromAuthzCache(req.params.id);
 
   if (req.user?._id) {

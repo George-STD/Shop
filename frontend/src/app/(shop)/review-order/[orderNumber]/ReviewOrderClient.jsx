@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { FiStar, FiCheckCircle, FiPackage, FiHeart, FiGift, FiAlertCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../../../services/api';
+import { useAuthStore } from '../../../../store';
 
 export default function ReviewOrderClient({ orderNumber }) {
   const [order, setOrder] = useState(null);
@@ -16,8 +17,10 @@ export default function ReviewOrderClient({ orderNumber }) {
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
+  const authUser = useAuthStore((state) => state.user);
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
+  const [maskedEmailHint, setMaskedEmailHint] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -30,7 +33,13 @@ export default function ReviewOrderClient({ orderNumber }) {
         if (res.data?.success) {
           setOrder(res.data.data);
           if (res.data.data.customerName) setGuestName(res.data.data.customerName);
-          if (res.data.data.customerEmail) setGuestEmail(res.data.data.customerEmail);
+          if (res.data.data.customerEmail) {
+            if (res.data.data.customerEmail.includes('*')) {
+              setMaskedEmailHint(res.data.data.customerEmail);
+            } else {
+              setGuestEmail(res.data.data.customerEmail);
+            }
+          }
         } else {
           setError('لم نتمكن من جلب بيانات الطلب.');
         }
@@ -46,6 +55,12 @@ export default function ReviewOrderClient({ orderNumber }) {
       fetchOrderInfo();
     }
   }, [orderNumber]);
+
+  useEffect(() => {
+    if (authUser?.email && !guestEmail) {
+      setGuestEmail(authUser.email);
+    }
+  }, [authUser, guestEmail]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -255,13 +270,17 @@ export default function ReviewOrderClient({ orderNumber }) {
               />
             </div>
             <div>
-              <label className="block text-gray-700 text-xs font-semibold mb-1">البريد الإلكتروني:</label>
+              <label className="block text-gray-700 text-xs font-semibold mb-1">
+                البريد الإلكتروني المسجل بالطلب {maskedEmailHint ? `(${maskedEmailHint})` : ''}:
+              </label>
               <input
                 type="email"
                 value={guestEmail}
                 onChange={(e) => setGuestEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                placeholder="email@example.com"
+                required={!authUser}
+                dir="ltr"
+                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-left"
+                placeholder={maskedEmailHint ? `أدخل بريدك المطابق لـ ${maskedEmailHint}` : 'email@example.com'}
               />
             </div>
           </div>

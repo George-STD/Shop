@@ -8,6 +8,16 @@ const parseStock = (value) => {
   return Math.max(0, Math.floor(stock));
 };
 
+const detectHasOptions = (product) =>
+  Boolean(
+    product?.hasOptions ||
+      product?.sizes?.length > 0 ||
+      product?.colors?.length > 0 ||
+      product?.shapes?.length > 0 ||
+      product?.variantGroups?.length > 0 ||
+      (product?.isCustomBox && product?.boxSlots?.length > 0)
+  );
+
 export const useWishlistStore = create(
   persist(
     (set, get) => ({
@@ -28,6 +38,7 @@ export const useWishlistStore = create(
               oldPrice: product.oldPrice,
               image: product.images?.[0]?.url,
               stock: parseStock(product.stock),
+              hasOptions: detectHasOptions(product),
             },
           ],
         }));
@@ -60,6 +71,7 @@ export const useWishlistStore = create(
               oldPrice: item.oldPrice ?? existing?.oldPrice,
               image: item.images?.[0]?.url || item.image || existing?.image,
               stock: parseStock(item.stock) ?? existing?.stock ?? null,
+              hasOptions: detectHasOptions(item) || Boolean(existing?.hasOptions),
             });
           }
         });

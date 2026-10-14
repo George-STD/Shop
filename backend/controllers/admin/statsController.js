@@ -291,7 +291,24 @@ exports.getExportReport = asyncHandler(async (req, res) => {
             : o.guestEmail || 'زائر',
           'الهاتف': o.user?.phone || o.shippingAddress?.phone || '-',
           'إجمالي المبلغ (ج.م)': o.total,
-          'طريقة الدفع': o.paymentMethod === 'cod' ? 'الدفع عند الاستلام' : 'إنستا باي',
+          'طريقة الدفع':
+            o.paymentMethod === 'cod'
+              ? 'الدفع عند الاستلام'
+              : o.paymentMethod === 'instapay'
+                ? 'إنستا باي'
+                : o.paymentMethod === 'paymob_card'
+                  ? 'بطاقة بنكية (Paymob)'
+                  : o.paymentMethod === 'paymob_wallet'
+                    ? 'محفظة إلكترونية (Paymob)'
+                    : o.paymentMethod || '-',
+          'حالة الدفع':
+            o.paymentStatus === 'paid'
+              ? 'مدفوع'
+              : o.paymentStatus === 'refunded'
+                ? 'مسترد'
+                : o.paymentStatus === 'failed'
+                  ? 'فشل الدفع'
+                  : 'بانتظار الدفع',
           'خصم النقاط (ج.م)': o.pointsDiscount || 0,
           'حالة الطلب': o.status,
         });

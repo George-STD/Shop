@@ -63,12 +63,22 @@ async function sendEmail({ to, subject, html }) {
 /**
  * Send order confirmation email
  */
+const PAYMENT_METHOD_LABELS = {
+  cod: 'الدفع عند الاستلام (كاش)',
+  instapay: 'إنستاباي (InstaPay)',
+  paymob_card: 'بطاقة بنكية (Visa / Mastercard عبر Paymob)',
+  paymob_wallet: 'محفظة إلكترونية (Vodafone / Orange / WE / Etisalat)',
+};
+
 async function sendOrderConfirmationEmail(to, order) {
   const subject = `تأكيد طلبك من ${BRAND_NAME}`;
   const isInstaPay = order.paymentMethod === 'instapay';
+  const isPaymob = typeof order.paymentMethod === 'string' && order.paymentMethod.startsWith('paymob');
+  const paymentLabel = PAYMENT_METHOD_LABELS[order.paymentMethod] || 'الدفع عند الاستلام (كاش)';
   const safeOrderNum = escapeHtml(order.orderNumber || order._id);
   const safeTotal = escapeHtml(order.total);
   const safeInstaPayNum = escapeHtml(process.env.INSTAPAY_NUMBER || '+201286153004');
+  const safePaymentUrl = order.paymentDetails?.paymentUrl ? escapeHtml(order.paymentDetails.paymentUrl) : '';
 
   const html = `
     <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #eee;">
@@ -79,13 +89,20 @@ async function sendOrderConfirmationEmail(to, order) {
         <h2 style="color: #1f2937; margin-top: 0;">شكرًا لطلبك! 🎁</h2>
         <p style="color: #6b7280; font-size: 15px;">رقم الطلب: <b style="color: #1f2937;">${safeOrderNum}</b></p>
         <p style="color: #6b7280; font-size: 15px;">المجموع الإجمالي: <b style="color: #a855f7;">${safeTotal} ج.م</b></p>
-        <p style="color: #6b7280; font-size: 15px;">طريقة الدفع: <b>${isInstaPay ? 'إنستاباي (InstaPay)' : 'الدفع عند الاستلام (كاش)'}</b></p>
+        <p style="color: #6b7280; font-size: 15px;">طريقة الدفع: <b>${escapeHtml(paymentLabel)}</b></p>
         
         ${isInstaPay ? `
           <div style="margin: 20px 0; padding: 20px; background-color: #fdf4ff; border: 2px dashed #c084fc; border-radius: 12px; text-align: center;">
             <p style="margin: 0 0 6px 0; color: #7e22ce; font-weight: bold; font-size: 16px;">📱 تفاصيل الدفع عبر إنستاباي (InstaPay)</p>
             <p style="margin: 8px 0; color: #581c87; font-size: 22px; font-weight: 800; letter-spacing: 1px; direction: ltr;">${safeInstaPayNum}</p>
             <p style="margin: 6px 0 0 0; color: #6b21a8; font-size: 13px; line-height: 1.5;">يرجى تحويل المبلغ الإجمالي (<b>${safeTotal} ج.م</b>) إلى هذا الرقم عبر تطبيق InstaPay لإتمام ومعالجة الطلب.</p>
+          </div>
+        ` : ''}
+
+        ${isPaymob && safePaymentUrl && order.paymentStatus !== 'paid' ? `
+          <div style="margin: 20px 0; padding: 20px; background-color: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 12px; text-align: center;">
+            <p style="margin: 0 0 12px 0; color: #5b21b6; font-weight: bold; font-size: 15px;">💳 في حال لم تكمل عملية الدفع الإلكتروني بعد، يمكنك إتمامها عبر الرابط الآمن:</p>
+            <a href="${safePaymentUrl}" style="display: inline-block; background: linear-gradient(135deg, #7c3aed, #db2777); color: #fff; text-decoration: none; padding: 12px 28px; border-radius: 10px; font-weight: bold; font-size: 14px;">إتمام الدفع الإلكتروني الآن</a>
           </div>
         ` : ''}
 

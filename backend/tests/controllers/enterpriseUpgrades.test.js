@@ -288,6 +288,31 @@ describe('Enterprise Architecture Upgrades (Cookies, Redis, Variant Stock, Paymo
       expect(updatedOrder.paymentDetails.paymobOrderId).toBe('11223344');
     });
 
+    it('authenticates optional review submission via httpOnly cookie alone and supports variant SKU barcode lookup', async () => {
+      const reviewProd = await Product.create({
+        name: 'Cookie Review Product',
+        slug: 'cookie-review-product',
+        description: 'Product reviewed using httpOnly cookie auth',
+        price: 120,
+        stock: 5,
+        isActive: true,
+        sizes: [{ name: 'XL', price: 120, stock: 5, sku: 'VAR-SKU-XL99' }],
+      });
+
+      const reviewRes = await request(app)
+        .post('/api/reviews')
+        .set('Cookie', authCookie)
+        .send({
+          product: reviewProd._id.toString(),
+          rating: 5,
+          comment: 'تقييم ممتاز باستخدام الكوكي المشفرة فقط بدون ترويسة Bearer!',
+        });
+
+      expect(reviewRes.statusCode).toBe(201);
+      expect(reviewRes.body.success).toBe(true);
+      expect(reviewRes.body.data.user._id.toString()).toBe(user._id.toString());
+    });
+
     it('clears the httpOnly cookie and invalidates session on logout', async () => {
       const logoutRes = await request(app)
         .post('/api/auth/logout')

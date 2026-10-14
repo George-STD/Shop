@@ -64,7 +64,8 @@ const FORBIDDEN_FIELDS = [
 const containsForbiddenField = (obj) => {
   if (!obj || typeof obj !== 'object') return false;
   for (const key of Object.keys(obj)) {
-    if (FORBIDDEN_FIELDS.includes(key)) return true;
+    const segments = String(key).split('.');
+    if (segments.some((seg) => FORBIDDEN_FIELDS.includes(seg))) return true;
     if (typeof obj[key] === 'object' && obj[key] !== null) {
       if (containsForbiddenField(obj[key])) return true;
     }

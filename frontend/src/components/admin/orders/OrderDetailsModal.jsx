@@ -25,7 +25,7 @@ const OrderDetailsModal = ({
     >
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Order Summary */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div>
               <p className="text-xs sm:text-sm text-gray-500">{STRINGS.ADMIN.TABLE.STATUS}</p>
               <span
@@ -39,6 +39,47 @@ const OrderDetailsModal = ({
               <p className="font-medium mt-1 text-sm">
                 {new Date(selectedOrder.createdAt).toLocaleDateString('ar-EG')}
               </p>
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500">طريقة الدفع</p>
+              <p className="font-medium mt-1 text-xs sm:text-sm">
+                {selectedOrder.paymentMethod === 'cod'
+                  ? 'الدفع عند الاستلام'
+                  : selectedOrder.paymentMethod === 'instapay'
+                    ? 'إنستاباي (InstaPay)'
+                    : selectedOrder.paymentMethod === 'paymob_card'
+                      ? 'بطاقة بنكية (Paymob)'
+                      : selectedOrder.paymentMethod === 'paymob_wallet'
+                        ? 'محفظة إلكترونية (Paymob)'
+                        : selectedOrder.paymentMethod || '-'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm text-gray-500">حالة الدفع</p>
+              <span
+                className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                  selectedOrder.paymentStatus === 'paid'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : selectedOrder.paymentStatus === 'failed'
+                      ? 'bg-red-100 text-red-700'
+                      : selectedOrder.paymentStatus === 'refunded'
+                        ? 'bg-amber-100 text-amber-700'
+                        : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                {selectedOrder.paymentStatus === 'paid'
+                  ? 'مدفوع ✓'
+                  : selectedOrder.paymentStatus === 'failed'
+                    ? 'فشل الدفع'
+                    : selectedOrder.paymentStatus === 'refunded'
+                      ? 'مسترد'
+                      : 'بانتظار الدفع'}
+              </span>
+              {selectedOrder.paymentDetails?.transactionId && (
+                <p className="text-[11px] text-gray-500 mt-1" dir="ltr">
+                  TXN: {selectedOrder.paymentDetails.transactionId}
+                </p>
+              )}
             </div>
           </div>
 
@@ -95,6 +136,9 @@ const OrderDetailsModal = ({
                   <div className="flex-1">
                     <p className="font-medium">{item.product?.name || item.name}</p>
                     <p className="text-sm text-gray-500">{STRINGS.ADMIN.ORDERS.QUANTITY} {item.quantity}</p>
+                    {item.selectedSize && (
+                      <p className="text-xs text-gray-500">المقاس: {item.selectedSize}</p>
+                    )}
                     {item.selectedColor && (
                       <p className="text-xs text-gray-500">{STRINGS.ADMIN.ORDERS.COLOR} {item.selectedColor}</p>
                     )}
@@ -106,6 +150,15 @@ const OrderDetailsModal = ({
                         {Object.entries(item.selectedVariants).map(([group, value]) => (
                           <p key={group}>
                             {group}: {value}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                    {item.addons?.length > 0 && (
+                      <div className="text-xs text-emerald-700 mt-0.5">
+                        {item.addons.map((addon, aIdx) => (
+                          <p key={aIdx}>
+                            + {addon.name} ({formatCurrency(addon.price)})
                           </p>
                         ))}
                       </div>

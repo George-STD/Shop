@@ -321,8 +321,8 @@ const CartSidebar = () => {
                             onClick={() => handleIncreaseQuantity(item)}
                             className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:border-purple-300 hover:bg-purple-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             disabled={
-                              Number.isFinite(Number(item.stock)) &&
-                              item.quantity >= Number(item.stock)
+                              Number.isFinite(Number(item.variantStock ?? item.stock)) &&
+                              item.quantity >= Number(item.variantStock ?? item.stock)
                             }
                             aria-label="زيادة الكمية"
                           >

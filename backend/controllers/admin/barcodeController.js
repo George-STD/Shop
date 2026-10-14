@@ -71,8 +71,15 @@ exports.barcodeLookup = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'رقم الباركود غير صالح' });
   }
 
-  // 1. Search local database first (exact SKU match)
-  let localProduct = await Product.findOne({ sku: barcode }).populate('category', 'name slug');
+  // 1. Search local database first (exact SKU match across product or variant SKUs)
+  let localProduct = await Product.findOne({
+    $or: [
+      { sku: barcode },
+      { 'sizes.sku': barcode },
+      { 'colors.sku': barcode },
+      { 'variantGroups.options.sku': barcode },
+    ],
+  }).populate('category', 'name slug');
   if (localProduct) {
     return res.json({
       success: true,
@@ -82,8 +89,14 @@ exports.barcodeLookup = asyncHandler(async (req, res) => {
   }
 
   // 2. Try partial SKU match
+  const safeBarcodeRegex = { $regex: escapeRegex(barcode), $options: 'i' };
   localProduct = await Product.findOne({
-    sku: { $regex: escapeRegex(barcode), $options: 'i' },
+    $or: [
+      { sku: safeBarcodeRegex },
+      { 'sizes.sku': safeBarcodeRegex },
+      { 'colors.sku': safeBarcodeRegex },
+      { 'variantGroups.options.sku': safeBarcodeRegex },
+    ],
   }).populate('category', 'name slug');
   if (localProduct) {
     return res.json({

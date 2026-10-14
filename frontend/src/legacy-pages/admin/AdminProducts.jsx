@@ -32,6 +32,8 @@ const AdminProducts = () => {
     stock: '',
     sku: '',
     images: [{ url: '', alt: '', variantTags: {} }],
+    hasSizes: false,
+    sizes: [],
     hasColors: false,
     colors: [],
     hasShapes: false,
@@ -168,6 +170,8 @@ const AdminProducts = () => {
             variantTags: img.variantTags || {},
           }))
         : [{ url: '', alt: '', variantTags: {} }],
+      hasSizes: product.sizes && product.sizes.length > 0,
+      sizes: product.sizes || [],
       hasColors: product.colors && product.colors.length > 0,
       colors: product.colors || [],
       hasShapes: product.shapes && product.shapes.length > 0,
@@ -204,6 +208,16 @@ const AdminProducts = () => {
             quantity: Number(p.quantity)
           }))
         : [],
+      sizes: formData.hasSizes
+        ? (formData.sizes || [])
+            .filter((s) => s.name)
+            .map((s) => ({
+              name: s.name,
+              price: Number(s.price) || Number(formData.price) || 0,
+              stock: s.stock === '' || s.stock === null || s.stock === undefined ? null : Math.max(0, Number(s.stock) || 0),
+              sku: s.sku || undefined,
+            }))
+        : [],
       variantGroups: formData.hasVariantGroups
         ? formData.variantGroups
             .filter((g) => g.name)
@@ -213,6 +227,7 @@ const AdminProducts = () => {
             }))
         : [],
     };
+    delete data.hasSizes;
     delete data.hasColors;
     delete data.hasShapes;
     delete data.hasVariantGroups;

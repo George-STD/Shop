@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { FiHeart, FiTrash2, FiShoppingCart, FiShoppingBag } from 'react-icons/fi';
 import { useWishlistStore, useCartStore, useAuthStore } from '../store';
 import { STRINGS, SITE_CONFIG } from '../constants';
@@ -9,6 +9,7 @@ import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const WishlistPage = () => {
+  const navigate = useNavigate();
   const { items, removeItem, clearWishlist } = useWishlistStore();
   const { addItem } = useCartStore();
   const { isAuthenticated, _hasHydrated } = useAuthStore();
@@ -32,6 +33,11 @@ const WishlistPage = () => {
   }
 
   const handleAddToCart = (product) => {
+    if (product.hasOptions && product.slug) {
+      toast('يرجى اختيار المقاس أو اللون المفضل أولاً', { icon: '✨' });
+      navigate(`/product/${product.slug}`);
+      return;
+    }
     const cartProduct = {
       _id: product.id,
       name: product.name,

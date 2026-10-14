@@ -839,10 +839,25 @@ const OrdersPage = () => {
                   <span className="font-bold">{STRINGS.ACCOUNT.DATE}</span>{' '}
                   {new Date(order.createdAt).toLocaleString('ar-EG')}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <span>
                     <span className="font-bold">{STRINGS.ACCOUNT.TOTAL}</span> {order.total} {STRINGS.PRODUCT.CURRENCY}
                   </span>
+                  {order.paymentStatus === 'paid' && (
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold">
+                      مدفوع إلكترونياً ✓
+                    </span>
+                  )}
+                  {order.status === 'pending' &&
+                    order.paymentStatus !== 'paid' &&
+                    order.paymentDetails?.paymentUrl && (
+                      <a
+                        href={order.paymentDetails.paymentUrl}
+                        className="text-xs px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-95 font-semibold transition-all shadow-sm"
+                      >
+                        إتمام الدفع الإلكتروني 💳
+                      </a>
+                    )}
                   {(order.status === 'pending' || order.status === 'confirmed') && (
                     <button
                       type="button"

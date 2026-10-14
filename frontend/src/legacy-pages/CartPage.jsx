@@ -204,8 +204,8 @@ const CartPage = () => {
                           aria-label={`زيادة كمية ${item.name}`}
                           className="p-2 hover:bg-gray-100"
                           disabled={
-                            Number.isFinite(Number(item.stock)) &&
-                            item.quantity >= Number(item.stock)
+                            Number.isFinite(Number(item.variantStock ?? item.stock)) &&
+                            item.quantity >= Number(item.variantStock ?? item.stock)
                           }
                         >
                           <FiPlus size={16} />

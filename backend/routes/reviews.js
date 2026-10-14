@@ -8,7 +8,8 @@ const Review = require('../models/Review');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
-const { protect, apiLimiter, validateObjectId, clientIp } = require('../middleware/auth');
+const { protect, apiLimiter, validateObjectId, clientIp, extractTokenFromCookies } = require('../middleware/auth');
+const { bustCatalog } = require('../middleware/cache');
 const { MESSAGES, CONFIG } = require('../constants');
 const { sendSuccess, sendError, sendNotFound, sendForbidden, sendBadRequest, sendCreated } = require('../utils/response');
 
@@ -26,7 +27,10 @@ const orderInfoLimiter = rateLimit({
 
 // Optional auth helper — verifies token, tokenVersion and active status
 const getOptionalUserId = async (req) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
+  const headerToken = req.headers.authorization?.startsWith('Bearer ')
+    ? req.headers.authorization.slice(7).trim()
+    : null;
+  const token = headerToken || extractTokenFromCookies(req);
   if (!token) return null;
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
@@ -231,6 +235,10 @@ router.post('/', apiLimiter, [
       }
     }
 
+    if (isVerifiedPurchase) {
+      bustCatalog('products');
+    }
+
     const reviewSuccessMessage = isVerifiedPurchase
       ? MESSAGES.REVIEWS.CREATED
       : 'تم استلام تقييمك بنجاح وسيتم نشره بعد مراجعة الإدارة.';
@@ -271,6 +279,7 @@ router.put('/:id', protect, validateObjectId('id'), async (req, res) => {
     review.isEdited = true;
 
     await review.save();
+    bustCatalog('products');
 
     return sendSuccess(res, { data: review, message: MESSAGES.REVIEWS.UPDATED });
   } catch (error) {
@@ -350,6 +359,7 @@ router.delete('/:id', protect, validateObjectId('id'), async (req, res) => {
     }
 
     await review.deleteOne();
+    bustCatalog('products');
 
     return sendSuccess(res, { message: MESSAGES.REVIEWS.DELETED });
   } catch (error) {
@@ -534,8 +544,34 @@ router.post('/batch-order-review', apiLimiter, [
         }));
         await Product.bulkWrite(bulkProductOps);
       }
+      bustCatalog('products');
     } catch (err) {
       console.error('Error batch recalculating ratings for products:', err);
+    }
+
+    // 4. Award loyalty points for verified order review if user is linked
+    const rewardTargetUserId = userId || orderUserId;
+    if (rewardTargetUserId) {
+      try {
+        const Settings = require('../models/Settings');
+        const { applyLoyaltyDelta } = require('../utils/loyalty');
+        const settings = await Settings.getSettings();
+        if (settings?.loyalty?.enabled && settings?.loyalty?.pointsPerReview > 0) {
+          for (const rv of createdReviews) {
+            const pIdStr = String(rv.product);
+            await applyLoyaltyDelta({
+              userId: rewardTargetUserId,
+              pointsDelta: settings.loyalty.pointsPerReview,
+              type: 'EARNED',
+              reason: `مكافأة تقييم موثوق للمنتج ${pIdStr}`,
+              idempotencyKey: `review:${rewardTargetUserId}:${pIdStr}`,
+              metadata: { productId: pIdStr, reviewId: String(rv._id), orderId: String(order._id) },
+            });
+          }
+        }
+      } catch (loyaltyErr) {
+        console.error('Loyalty points for batch review error:', loyaltyErr);
+      }
     }
 
     return sendSuccess(res, {
