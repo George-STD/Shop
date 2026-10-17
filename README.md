@@ -67,7 +67,7 @@
 1. **باحث الهدايا الذكي (AI Gift Finder):** مسار عام محمي (`/api/gift-finder/ai-recommend`) يحلل شخصية المستلم واهتماماته والمناسبة والميزانية ويرشح أفضل 5 بوكسات هدايا متطابقة فوراً من المخزون الحالي.
 2. **المساعد البصري للكتالوج (AI Vision Assistant):** مسار إداري (`/api/ai-vision`) يحلل صور المنتجات بالذكاء الاصطناعي ويستخرج الأوصاف التسويقية والألوان والأقسام والمناسبات المناسبة تلقائياً.
 3. **الوكيل الإداري الذكي (Autonomous Admin AI Agent):** وكيل ذكي للمسؤولين (`/api/ai-agent`) يساعد في الاستعلام عن التقارير وتحليل بيانات المتجر، مع **سياج حماية أمني صارم (Forbidden Fields Guard)** يمنع الوكيل منعاً باتاً من التعديل أو الوصول لحقول كلمات المرور والصلاحيات والبيانات الحساسة.
-4. **مدير النماذج التكيفي (Smart Fallback Model Manager):** نظام إدارة ذكي في [backend/utils/geminiModelManager.js](file:///e:/Coding/Gift%20shop/backend/utils/geminiModelManager.js) يقوم بالتبديل التلقائي بين النماذج (`gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-1.5-flash`) في أجزاء من الثانية عند الوصول لحدود الحصة (Rate Limits).
+4. **مدير النماذج التكيفي (Smart Fallback Model Manager):** نظام إدارة ذكي في [backend/utils/geminiModelManager.js](file:///e:/Coding/Gift%20shop/backend/utils/geminiModelManager.js) يقوم بالتبديل التلقائي التنازلي من أذكى نموذج للأخف (`gemini-3.8-flash` ثم `gemini-3.7-flash` فـ `gemini-3.6-flash` و `gemini-3-flash` وصولاً إلى `gemini-3.5-flash-lite` و `gemini-3.1-flash-lite` و `gemini-2.5-flash` و `gemini-2.5-flash-lite`) في أجزاء من الثانية عند الوصول لحدود الحصة (Rate Limits).
 
 ---
 

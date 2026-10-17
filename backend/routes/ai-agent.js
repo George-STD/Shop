@@ -28,7 +28,7 @@ function getAiClient() {
   return _aiClient;
 }
 
-const { MODEL_TIERS, getModelStatus, recordSuccess, markRpmExhausted } = require('../utils/geminiModelManager');
+const { MODEL_TIERS, getModelStatus, getUsage, recordSuccess, markRpmExhausted, markRpdExhausted } = require('../utils/geminiModelManager');
 
 const MODELS_MAP = {
   Product,
@@ -461,7 +461,14 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
     } catch (error) {
       console.error(`Agent chat error with model ${tier.id}:`, error.message);
       const is429 = error.status === 429 || error.message?.includes('429') || error.message?.toLowerCase().includes('quota') || error.status === 503;
-      if (is429) markRpmExhausted(tier.id, tier);
+      if (is429) {
+        const usage = getUsage(tier.id);
+        if (usage.dailyCount >= tier.rpd - 1) {
+          markRpdExhausted(tier.id, tier);
+        } else {
+          markRpmExhausted(tier.id, tier);
+        }
+      }
       currentModelIndex++;
     }
   }

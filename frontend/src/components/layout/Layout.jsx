@@ -1,4 +1,3 @@
-import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import MobileMenu from './MobileMenu';
@@ -21,7 +20,7 @@ const Layout = ({ children }) => {
 
       <Header />
 
-      <main id="main-content" className="flex-grow">{children || <Outlet />}</main>
+      <main id="main-content" className="flex-grow">{children}</main>
 
       <Footer />
 

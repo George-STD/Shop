@@ -283,87 +283,151 @@ const buildOrderData = async ({ userId, guestEmail, orderItems, subtotal, boxGro
  */
 const deductVariantLevelStock = async (item, opts = {}) => {
   const qty = Number(item.quantity) || 1;
+  const rollbackActions = [];
 
-  if (item.selectedSize) {
-    const sizeUpdate = await Product.updateOne(
-      {
-        _id: item.product,
-        sizes: { $elemMatch: { name: item.selectedSize, stock: { $ne: null } } },
-      },
-      { $inc: { 'sizes.$.stock': -qty } },
-      opts
-    );
-    if (sizeUpdate.matchedCount > 0) {
-      const checkDoc = await Product.findOne(
-        { _id: item.product, sizes: { $elemMatch: { name: item.selectedSize, stock: { $lt: 0 } } } },
-        { _id: 1 },
-        opts
-      );
-      if (checkDoc) {
-        await Product.updateOne(
-          { _id: item.product, 'sizes.name': item.selectedSize },
-          { $inc: { 'sizes.$.stock': qty } },
-          opts
-        );
-        throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${item.name} (مقاس ${item.selectedSize})`);
-      }
-    }
-  }
-
-  if (item.selectedColor) {
-    const colorUpdate = await Product.updateOne(
-      {
-        _id: item.product,
-        colors: { $elemMatch: { name: item.selectedColor, stock: { $ne: null } } },
-      },
-      { $inc: { 'colors.$.stock': -qty } },
-      opts
-    );
-    if (colorUpdate.matchedCount > 0) {
-      const checkDoc = await Product.findOne(
-        { _id: item.product, colors: { $elemMatch: { name: item.selectedColor, stock: { $lt: 0 } } } },
-        { _id: 1 },
-        opts
-      );
-      if (checkDoc) {
-        await Product.updateOne(
-          { _id: item.product, 'colors.name': item.selectedColor },
-          { $inc: { 'colors.$.stock': qty } },
-          opts
-        );
-        throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${item.name} (لون ${item.selectedColor})`);
-      }
-    }
-  }
-
-  if (item.selectedShape) {
-    await Product.updateOne(
-      {
-        _id: item.product,
-        shapes: { $elemMatch: { name: item.selectedShape, stock: { $gte: qty } } },
-      },
-      { $inc: { 'shapes.$.stock': -qty } },
-      opts
-    );
-  }
-
-  if (item.selectedVariants) {
-    const entries = item.selectedVariants instanceof Map
-      ? Array.from(item.selectedVariants.entries())
-      : Object.entries(item.selectedVariants);
-    for (const [groupName, optName] of entries) {
-      await Product.updateOne(
-        { _id: item.product },
-        { $inc: { 'variantGroups.$[g].options.$[o].stock': -qty } },
+  try {
+    if (item.selectedSize) {
+      const sizeUpdate = await Product.updateOne(
         {
-          ...opts,
-          arrayFilters: [
-            { 'g.name': groupName },
-            { 'o.name': optName, 'o.stock': { $ne: null, $gte: qty } },
-          ],
-        }
+          _id: item.product,
+          sizes: { $elemMatch: { name: item.selectedSize, stock: { $gte: qty } } },
+        },
+        { $inc: { 'sizes.$.stock': -qty } },
+        opts
       );
+      if (sizeUpdate.modifiedCount > 0) {
+        rollbackActions.push(() =>
+          Product.updateOne(
+            { _id: item.product, 'sizes.name': item.selectedSize },
+            { $inc: { 'sizes.$.stock': qty } },
+            opts
+          )
+        );
+      } else {
+        const insufficientDoc = await Product.findOne(
+          { _id: item.product, sizes: { $elemMatch: { name: item.selectedSize, stock: { $type: 'number', $lt: qty } } } },
+          { _id: 1 },
+          opts
+        );
+        if (insufficientDoc) {
+          throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${item.name} (مقاس ${item.selectedSize})`);
+        }
+      }
     }
+
+    if (item.selectedColor) {
+      const colorUpdate = await Product.updateOne(
+        {
+          _id: item.product,
+          colors: { $elemMatch: { name: item.selectedColor, stock: { $gte: qty } } },
+        },
+        { $inc: { 'colors.$.stock': -qty } },
+        opts
+      );
+      if (colorUpdate.modifiedCount > 0) {
+        rollbackActions.push(() =>
+          Product.updateOne(
+            { _id: item.product, 'colors.name': item.selectedColor },
+            { $inc: { 'colors.$.stock': qty } },
+            opts
+          )
+        );
+      } else {
+        const insufficientDoc = await Product.findOne(
+          { _id: item.product, colors: { $elemMatch: { name: item.selectedColor, stock: { $type: 'number', $lt: qty } } } },
+          { _id: 1 },
+          opts
+        );
+        if (insufficientDoc) {
+          throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${item.name} (لون ${item.selectedColor})`);
+        }
+      }
+    }
+
+    if (item.selectedShape) {
+      const shapeUpdate = await Product.updateOne(
+        {
+          _id: item.product,
+          shapes: { $elemMatch: { name: item.selectedShape, stock: { $gte: qty } } },
+        },
+        { $inc: { 'shapes.$.stock': -qty } },
+        opts
+      );
+      if (shapeUpdate.modifiedCount > 0) {
+        rollbackActions.push(() =>
+          Product.updateOne(
+            { _id: item.product, 'shapes.name': item.selectedShape },
+            { $inc: { 'shapes.$.stock': qty } },
+            opts
+          )
+        );
+      } else {
+        const insufficientDoc = await Product.findOne(
+          { _id: item.product, shapes: { $elemMatch: { name: item.selectedShape, stock: { $type: 'number', $lt: qty } } } },
+          { _id: 1 },
+          opts
+        );
+        if (insufficientDoc) {
+          throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${item.name} (شكل ${item.selectedShape})`);
+        }
+      }
+    }
+
+    if (item.selectedVariants) {
+      const entries = item.selectedVariants instanceof Map
+        ? Array.from(item.selectedVariants.entries())
+        : Object.entries(item.selectedVariants);
+      for (const [groupName, optName] of entries) {
+        const varUpdate = await Product.updateOne(
+          { _id: item.product },
+          { $inc: { 'variantGroups.$[g].options.$[o].stock': -qty } },
+          {
+            ...opts,
+            arrayFilters: [
+              { 'g.name': groupName },
+              { 'o.name': optName, 'o.stock': { $ne: null, $gte: qty } },
+            ],
+          }
+        );
+        if (varUpdate.modifiedCount > 0) {
+          rollbackActions.push(() =>
+            Product.updateOne(
+              { _id: item.product },
+              { $inc: { 'variantGroups.$[g].options.$[o].stock': qty } },
+              {
+                ...opts,
+                arrayFilters: [
+                  { 'g.name': groupName },
+                  { 'o.name': optName, 'o.stock': { $ne: null } },
+                ],
+              }
+            )
+          );
+        } else {
+          const insufficientDoc = await Product.findOne(
+            {
+              _id: item.product,
+              variantGroups: {
+                $elemMatch: {
+                  name: groupName,
+                  options: { $elemMatch: { name: optName, stock: { $type: 'number', $lt: qty } } },
+                },
+              },
+            },
+            { _id: 1 },
+            opts
+          );
+          if (insufficientDoc) {
+            throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${item.name} (${groupName}: ${optName})`);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    for (const undo of rollbackActions) {
+      await undo();
+    }
+    throw err;
   }
 };
 
@@ -457,7 +521,16 @@ const deductStock = async (orderItems, session) => {
         if (stockUpdate.modifiedCount !== 1) {
           throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${item.name}`);
         }
-        await deductVariantLevelStock(item, opts);
+        try {
+          await deductVariantLevelStock(item, opts);
+        } catch (variantErr) {
+          await Product.updateOne(
+            { _id: item.product },
+            { $inc: { stock: item.quantity, salesCount: -item.quantity } },
+            opts
+          );
+          throw variantErr;
+        }
         deductedItems.push(item);
       }
     }

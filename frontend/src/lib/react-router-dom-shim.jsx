@@ -34,10 +34,70 @@ export function Link({ to, href, children, ...props }) {
   );
 }
 
-// Browser History "state" passed via navigate(to, { state }) / location.state.
-// Next.js's router.push does not forward a custom state object, so we keep it
-// in module scope as a lightweight stand-in for react-router's location.state.
+const NAV_STATE_STORAGE_KEY = '__foryo_nav_state__';
 let navigationState = null;
+
+const writeNavigationState = (state) => {
+  navigationState = state ?? null;
+  if (typeof window === 'undefined') return;
+  try {
+    if (navigationState === null || navigationState === undefined) {
+      window.sessionStorage.removeItem(NAV_STATE_STORAGE_KEY);
+    } else {
+      window.sessionStorage.setItem(NAV_STATE_STORAGE_KEY, JSON.stringify(navigationState));
+    }
+  } catch (_) {}
+};
+
+const readNavigationState = () => {
+  if (navigationState !== null) return navigationState;
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(NAV_STATE_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) {
+    return null;
+  }
+};
+
+// Singleton history observer so multiple useSearchParams() hooks never clobber
+// each other or Next.js App Router's history.pushState/replaceState wrappers on unmount.
+const searchListeners = new Set();
+let historyObserverInstalled = false;
+
+const notifySearchListeners = () => {
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(() => {
+      searchListeners.forEach((fn) => fn());
+    });
+  } else {
+    setTimeout(() => {
+      searchListeners.forEach((fn) => fn());
+    }, 0);
+  }
+};
+
+const ensureHistoryObserver = () => {
+  if (historyObserverInstalled || typeof window === 'undefined') return;
+  historyObserverInstalled = true;
+
+  const origPush = window.history.pushState.bind(window.history);
+  const origReplace = window.history.replaceState.bind(window.history);
+
+  window.history.pushState = function (...args) {
+    const result = origPush(...args);
+    notifySearchListeners();
+    return result;
+  };
+
+  window.history.replaceState = function (...args) {
+    const result = origReplace(...args);
+    notifySearchListeners();
+    return result;
+  };
+
+  window.addEventListener('popstate', notifySearchListeners);
+};
 
 export function useNavigate() {
   const router = useRouter();
@@ -47,10 +107,9 @@ export function useNavigate() {
       return;
     }
     if (options?.state !== undefined) {
-      navigationState = options.state;
+      writeNavigationState(options.state);
     } else {
-      // Navigating without explicit state resets any previously stored state.
-      navigationState = null;
+      writeNavigationState(null);
     }
     if (options?.replace) {
       router.replace(to);
@@ -64,27 +123,25 @@ export function useLocation() {
   const pathname = usePathname() || '/';
   const search = typeof window !== 'undefined' ? window.location.search || '' : '';
 
-  // Preserve navigationState across re-renders on the same pathname, and clear on route change
   const [routeState, setRouteState] = useState(() => ({
     pathname,
-    state: navigationState,
+    state: readNavigationState(),
   }));
 
   useEffect(() => {
+    const pending = readNavigationState();
     if (routeState.pathname !== pathname) {
-      const nextState = navigationState;
-      navigationState = null;
-      setRouteState({ pathname, state: nextState });
-    } else if (navigationState !== null) {
-      const nextState = navigationState;
-      navigationState = null;
-      if (routeState.state !== nextState) {
-        setRouteState({ pathname, state: nextState });
+      writeNavigationState(null);
+      setRouteState({ pathname, state: pending });
+    } else if (pending !== null) {
+      writeNavigationState(null);
+      if (routeState.state !== pending) {
+        setRouteState({ pathname, state: pending });
       }
     }
   }, [pathname, routeState.pathname, routeState.state]);
 
-  const activeState = routeState.pathname === pathname ? routeState.state : navigationState;
+  const activeState = routeState.pathname === pathname ? routeState.state : readNavigationState();
 
   return {
     pathname,
@@ -107,35 +164,16 @@ export function useSearchParams() {
 
   const [searchText, setSearchText] = useState(getSearch);
 
-  // Re-sync whenever the pathname changes (Next.js client navigation)
-  // or on popstate (browser back/forward)
   useEffect(() => {
     setSearchText(getSearch());
   }, [pathname]);
 
   useEffect(() => {
-    const onPopState = () => setSearchText(getSearch());
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
-  }, []);
-
-  // Also patch pushState/replaceState to detect navigation from Next.js Link
-  useEffect(() => {
-    const origPush = history.pushState.bind(history);
-    const origReplace = history.replaceState.bind(history);
-
-    history.pushState = function (...args) {
-      origPush(...args);
-      setSearchText(getSearch());
-    };
-    history.replaceState = function (...args) {
-      origReplace(...args);
-      setSearchText(getSearch());
-    };
-
+    ensureHistoryObserver();
+    const syncSearch = () => setSearchText(getSearch());
+    searchListeners.add(syncSearch);
     return () => {
-      history.pushState = origPush;
-      history.replaceState = origReplace;
+      searchListeners.delete(syncSearch);
     };
   }, []);
 
@@ -159,6 +197,7 @@ export function useSearchParams() {
     }
 
     const query = nextParams.toString();
+    setSearchText(query);
     const nextUrl = query ? `${pathname}?${query}` : pathname;
     router.push(nextUrl);
   };
@@ -171,7 +210,7 @@ export function Navigate({ to, replace, state }) {
 
   useEffect(() => {
     if (state !== undefined) {
-      navigationState = state;
+      writeNavigationState(state);
     }
     if (replace) router.replace(to);
     else router.push(to);

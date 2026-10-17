@@ -99,7 +99,7 @@ describe('Enterprise Architecture Upgrades (Cookies, Redis, Variant Stock, Paymo
       variantProduct = await Product.create({
         name: 'Variant Gift Mug',
         slug: 'variant-gift-mug',
-        description: 'Mug with per-size and per-color inventory',
+        description: 'Mug with per-size, per-color, per-shape, and per-variantGroup inventory',
         price: 150,
         stock: 10,
         isActive: true,
@@ -110,6 +110,17 @@ describe('Enterprise Architecture Upgrades (Cookies, Redis, Variant Stock, Paymo
         colors: [
           { name: 'أحمر', hex: '#ff0000', stock: 1, sku: 'MUG-RED' },
           { name: 'أزرق', hex: '#0000ff', stock: 9, sku: 'MUG-BLUE' },
+        ],
+        shapes: [
+          { name: 'دائري', images: [], stock: 3 },
+        ],
+        variantGroups: [
+          {
+            name: 'التغليف',
+            options: [
+              { name: 'فاخر', stock: 2, priceDelta: 20, sku: 'WRAP-LUX' },
+            ],
+          },
         ],
       });
     });
@@ -125,6 +136,8 @@ describe('Enterprise Architecture Upgrades (Cookies, Redis, Variant Stock, Paymo
               quantity: 2, // 'أحمر' only has stock: 1
               selectedSize: 'M',
               selectedColor: 'أحمر',
+              selectedShape: 'دائري',
+              selectedVariants: { التغليف: 'فاخر' },
             },
           ],
           shippingAddress: {
@@ -152,6 +165,8 @@ describe('Enterprise Architecture Upgrades (Cookies, Redis, Variant Stock, Paymo
               quantity: 1,
               selectedSize: 'M',
               selectedColor: 'أحمر',
+              selectedShape: 'دائري',
+              selectedVariants: { التغليف: 'فاخر' },
             },
           ],
           shippingAddress: {
@@ -172,6 +187,8 @@ describe('Enterprise Architecture Upgrades (Cookies, Redis, Variant Stock, Paymo
       expect(afterOrderProd.stock).toBe(9);
       expect(afterOrderProd.sizes.find((s) => s.name === 'M').stock).toBe(1);
       expect(afterOrderProd.colors.find((c) => c.name === 'أحمر').stock).toBe(0);
+      expect(afterOrderProd.shapes.find((sh) => sh.name === 'دائري').stock).toBe(2);
+      expect(afterOrderProd.variantGroups[0].options[0].stock).toBe(1);
 
       // Cancel the order and verify variant stock is restored
       const cancelRes = await request(app)
@@ -185,6 +202,8 @@ describe('Enterprise Architecture Upgrades (Cookies, Redis, Variant Stock, Paymo
       expect(afterCancelProd.stock).toBe(10);
       expect(afterCancelProd.sizes.find((s) => s.name === 'M').stock).toBe(2);
       expect(afterCancelProd.colors.find((c) => c.name === 'أحمر').stock).toBe(1);
+      expect(afterCancelProd.shapes.find((sh) => sh.name === 'دائري').stock).toBe(3);
+      expect(afterCancelProd.variantGroups[0].options[0].stock).toBe(2);
     });
   });
 

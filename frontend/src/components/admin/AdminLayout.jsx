@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
+import { Link, useLocation, Navigate } from 'react-router-dom';
 import { FiHome, FiUsers, FiPackage, FiShoppingCart, FiGrid, FiStar, FiSettings, FiLogOut, FiMenu, FiX, FiChevronLeft, FiMail, FiBarChart2 } from 'react-icons/fi';
 import { useAuthStore } from '../../store';
 import { STRINGS } from '../../constants';
@@ -271,7 +271,7 @@ const AdminLayout = ({ children }) => {
         </header>
 
         {/* Page Content */}
-        <main id="admin-main-content" className="flex-1 p-2 sm:p-4 lg:p-8 overflow-auto">{children || <Outlet />}</main>
+        <main id="admin-main-content" className="flex-1 p-2 sm:p-4 lg:p-8 overflow-auto">{children}</main>
       </div>
       
       {/* AI Assistant */}
