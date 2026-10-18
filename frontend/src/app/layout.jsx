@@ -47,9 +47,6 @@ export const metadata = {
     address: false,
     telephone: false,
   },
-  alternates: {
-    canonical: SITE_URL,
-  },
   openGraph: {
     type: 'website',
     locale: SITE_CONFIG.LOCALE,

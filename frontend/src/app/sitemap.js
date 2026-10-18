@@ -111,14 +111,37 @@ export default async function sitemap() {
     if (res && res.ok) {
       const data = await res.json().catch(() => ({}));
       const categories = data.data || [];
-      categoryPages = categories.map((cat) => ({
-        url: `${baseUrl}/products?category=${cat.slug}`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.7,
-      }));
+      categoryPages = categories
+        .filter((cat) => cat?.slug)
+        .map((cat) => ({
+          url: `${baseUrl}/products?category=${encodeURIComponent(cat.slug)}`,
+          lastModified: new Date(cat.updatedAt || Date.now()),
+          changeFrequency: 'weekly',
+          priority: 0.7,
+        }));
     }
   } catch (_) {}
 
-  return [...staticPages, ...categoryPages, ...productPages];
+  // Dynamic occasion pages
+  let occasionPages = [];
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch(`${API_BASE_URL}/occasions`, { signal: controller.signal, next: { revalidate: 86400 } }).catch(() => null);
+    clearTimeout(timeoutId);
+    if (res && res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const occasions = data.data || [];
+      occasionPages = occasions
+        .filter((occ) => occ?.name)
+        .map((occ) => ({
+          url: `${baseUrl}/products?occasion=${encodeURIComponent(occ.name)}`,
+          lastModified: new Date(occ.updatedAt || Date.now()),
+          changeFrequency: 'weekly',
+          priority: 0.65,
+        }));
+    }
+  } catch (_) {}
+
+  return [...staticPages, ...categoryPages, ...occasionPages, ...productPages];
 }

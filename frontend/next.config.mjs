@@ -31,11 +31,13 @@ const nextConfig = {
   },
   outputFileTracingRoot: path.join(__dirname, '..'),
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       { protocol: 'https', hostname: '**.cloudinary.com' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'via.placeholder.com' },
+      { protocol: 'https', hostname: 'iili.io' },
       { protocol: 'https', hostname: 'www.foryo.me' },
       { protocol: 'https', hostname: 'foryo.me' },
     ],

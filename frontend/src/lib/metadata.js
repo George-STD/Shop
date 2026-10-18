@@ -31,7 +31,8 @@ export function generateMetadata({ title, description, path, image, extra = {} }
       title: `${title} | ${SITE_NAME}`,
       description,
       url: canonicalUrl,
-      images: [{ url: ogImage }],
+      siteName: SITE_NAME,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: `${title} | ${SITE_NAME}` }],
       locale: SITE_CONFIG.LOCALE,
       type: 'website',
     },
@@ -50,12 +51,13 @@ export function generateMetadata({ title, description, path, image, extra = {} }
  * @param {Object} product - Product data
  */
 export function generateProductMetadata(product) {
-  const title = product.name;
+  const title = product.seo?.metaTitle || product.name;
   const description =
+    product.seo?.metaDescription ||
     product.description?.substring(0, 160) ||
-    `اشتري ${product.name} من فور يو - متجر الهدايا الأول في مصر. شحن سريع وتغليف مجاني.`;
+    `اشتري ${product.name} من فور يو - متجر الهدايا الأول في مصر. شحن سريع وتغليف فاخر.`;
   const path = `${ROUTES.PRODUCT}/${product.slug}`;
-  const image = product.images?.[0] || `${SITE_URL}${SITE_CONFIG.OG_IMAGE}`;
+  const image = product.images?.[0]?.url || product.images?.[0] || `${SITE_URL}${SITE_CONFIG.OG_IMAGE}`;
 
   return {
     title,
@@ -67,7 +69,8 @@ export function generateProductMetadata(product) {
       title: `${title} | ${SITE_NAME}`,
       description,
       url: `${SITE_URL}${path}`,
-      images: [{ url: image, alt: product.name }],
+      siteName: SITE_NAME,
+      images: [{ url: image, width: 800, height: 800, alt: product.name }],
       locale: SITE_CONFIG.LOCALE,
       type: 'website',
     },
@@ -101,20 +104,23 @@ export const PAGE_METADATA = {
   cart: generateMetadata({
     title: 'سلة التسوق',
     description:
-      'راجع منتجاتك في سلة التسوق قبل إتمام عملية الشراء. تغليف هدايا مجاني وشحن سريع لجميع أنحاء مصر.',
+      'راجع منتجاتك في سلة التسوق قبل إتمام عملية الشراء. تغليف هدايا فاخر وشحن سريع لجميع أنحاء مصر.',
     path: ROUTES.CART,
+    extra: { robots: { index: false, follow: false } },
   }),
 
   checkout: generateMetadata({
     title: 'إتمام الطلب',
     description: 'أكمل طلبك بأمان. الدفع عند الاستلام متاح. شحن سريع لجميع محافظات مصر.',
     path: ROUTES.CHECKOUT,
+    extra: { robots: { index: false, follow: false } },
   }),
 
   wishlist: generateMetadata({
     title: 'قائمة الأمنيات',
     description: 'منتجاتك المفضلة في مكان واحد. احفظ الهدايا التي تعجبك واشتريها لاحقاً.',
     path: ROUTES.WISHLIST,
+    extra: { robots: { index: false, follow: false } },
   }),
 
   giftFinder: generateMetadata({
@@ -141,6 +147,7 @@ export const PAGE_METADATA = {
     title: 'حسابي',
     description: 'إدارة حسابك في فور يو. تتبع طلباتك، تحديث بياناتك الشخصية وإدارة قائمة الأمنيات.',
     path: ROUTES.ACCOUNT,
+    extra: { robots: { index: false, follow: false } },
   }),
 
   // Info pages

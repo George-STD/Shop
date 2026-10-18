@@ -10,6 +10,39 @@
 const escapeRegex = (str) => String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
+ * Normalize Arabic text by stripping tashkeel/tatweel and unifying common letter variants.
+ * @param {string} str
+ * @returns {string}
+ */
+const normalizeArabicText = (str) =>
+  String(str || '')
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي')
+    .trim();
+
+/**
+ * Build a safe, case-insensitive regex pattern string that matches Arabic character equivalence classes
+ * (أ/إ/آ/ا, ة/ه, ى/ي/ئ, ؤ/و) and ignores optional diacritics.
+ * @param {string} str - Raw user search token
+ * @returns {string} Regex pattern string
+ */
+const buildArabicSearchRegex = (str) => {
+  const cleaned = String(str || '')
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+    .trim();
+  const escaped = escapeRegex(cleaned);
+  return escaped
+    .replace(/[أإآا]/g, '[أإآا]')
+    .replace(/[ةه]/g, '[ةه]')
+    .replace(/[ىيئ]/g, '[ىيئ]')
+    .replace(/[ؤو]/g, '[ؤو]');
+};
+
+/**
  * Parse pagination query params with sensible defaults.
  * @param {Object}  query            - Express req.query
  * @param {number} [defaultLimit=20] - Default items per page
@@ -48,7 +81,10 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = 8000) => {
 
 module.exports = {
   escapeRegex,
+  normalizeArabicText,
+  buildArabicSearchRegex,
   parsePagination,
   buildPaginationMeta,
   fetchWithTimeout,
 };
+

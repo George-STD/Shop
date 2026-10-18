@@ -13,6 +13,8 @@ export default function robots() {
           `${ROUTES.ACCOUNT}/`,
           ROUTES.CHECKOUT,
           ROUTES.CART,
+          '/review-order',
+          '/review-order/',
         ],
       },
     ],

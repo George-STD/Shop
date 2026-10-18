@@ -4,7 +4,8 @@ const Category = require('../models/Category');
 const { CONFIG, MESSAGES } = require('../constants');
 const { sendSuccess, sendError, sendNotFound, sendPaginated } = require('../utils/response');
 const asyncHandler = require('../utils/asyncHandler');
-const { escapeRegex } = require('../utils/helpers');
+const { escapeRegex, buildArabicSearchRegex } = require('../utils/helpers');
+const { roundTo2Decimals } = require('../utils/money');
 
 const processReadyBoxes = async (products) => {
   if (!products) return products;
@@ -15,7 +16,7 @@ const processReadyBoxes = async (products) => {
   if (readyBoxes.length > 0) {
     await Product.populate(readyBoxes, {
       path: 'includedProducts.product',
-      select: 'name stock price oldPrice boxDiscount images'
+      select: 'name slug stock price oldPrice boxDiscount images'
     });
 
     readyBoxes.forEach(p => {
@@ -30,31 +31,29 @@ const processReadyBoxes = async (products) => {
             if (availableForThis < minStock) minStock = availableForThis;
             
             if (p.autoCalculatePrice) {
-              let itemCurrentPrice = item.product.price;
-              const itemOldPrice = item.product.oldPrice || item.product.price;
+              let itemCurrentPrice = Number(item.product.price) || 0;
+              const itemOldPrice = Number(item.product.oldPrice || item.product.price) || 0;
               
               if (item.product.boxDiscount > 0) {
-                itemCurrentPrice = itemOldPrice - (itemOldPrice * item.product.boxDiscount / 100);
+                itemCurrentPrice = roundTo2Decimals(itemOldPrice - (itemOldPrice * item.product.boxDiscount / 100));
               }
               
-              computedPrice += itemCurrentPrice * item.quantity;
-              computedOldPrice += itemOldPrice * item.quantity;
+              computedPrice = roundTo2Decimals(computedPrice + itemCurrentPrice * item.quantity);
+              computedOldPrice = roundTo2Decimals(computedOldPrice + itemOldPrice * item.quantity);
             }
           }
         });
         
-        p.stock = minStock === Infinity ? 0 : minStock;
+        p.stock = minStock === Infinity ? 0 : Math.max(0, minStock);
         
         if (p.autoCalculatePrice) {
-          p.price = computedPrice;
-          p.oldPrice = computedOldPrice > computedPrice ? computedOldPrice : null;
+          p.price = roundTo2Decimals(computedPrice);
+          p.oldPrice = computedOldPrice > computedPrice ? roundTo2Decimals(computedOldPrice) : null;
           p.discount = p.oldPrice ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
         }
       } else {
         p.stock = 0;
       }
-      
-      // Clean up the populated object if needed, or leave it so frontend can see what's inside
     });
   }
   return isArray ? items : items[0];
@@ -87,7 +86,11 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
     bestseller,
     newArrivals,
     canBeAddedToBox,
-    isReadyBox
+    isReadyBox,
+    inStock,
+    rating,
+    minRating,
+    budgetRange
   } = req.query;
 
   const query = { isActive: true };
@@ -95,9 +98,12 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
   if (category) {
     query.category = { $in: [String(category)] };
   } else if (categorySlug) {
-    const categoryDoc = await Category.findOne({ slug: String(categorySlug) });
+    const categoryDoc = await Category.findOne({ slug: String(categorySlug) }).lean();
     if (categoryDoc) {
-      query.category = { $in: [categoryDoc._id] };
+      const subCategories = await Category.find({ parent: categoryDoc._id, isActive: true }).select('_id').lean();
+      query.category = { $in: [categoryDoc._id, ...subCategories.map((c) => c._id)] };
+    } else {
+      query._id = { $in: [] };
     }
   }
 
@@ -109,6 +115,19 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
   if (recipient) {
     const recipients = Array.isArray(recipient) ? recipient.map(String) : [String(recipient)];
     query.recipients = { $in: recipients };
+  }
+
+  if (budgetRange) {
+    query.budgetRange = String(budgetRange);
+  }
+
+  if (inStock === 'true') {
+    query.stock = { $gt: 0 };
+  }
+
+  const minRatingVal = Number(rating ?? minRating);
+  if (Number.isFinite(minRatingVal) && minRatingVal > 0) {
+    query['rating.average'] = { $gte: minRatingVal };
   }
 
   if (minPrice || maxPrice) {
@@ -131,16 +150,32 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
   let sortOption = { createdAt: -1 };
   if (sort === 'price_asc') sortOption = { price: 1 };
   if (sort === 'price_desc') sortOption = { price: -1 };
-  if (sort === 'rating') sortOption = { 'rating.average': -1 };
+  if (sort === 'rating') sortOption = { 'rating.average': -1, 'rating.count': -1 };
   if (sort === 'bestselling') sortOption = { salesCount: -1 };
   if (sort === 'newest') sortOption = { createdAt: -1 };
-  if (sort === 'discount') sortOption = { oldPrice: -1, createdAt: -1 };
+  if (sort === 'discount') sortOption = { discount: -1, oldPrice: -1, createdAt: -1 };
 
-  if (search && search.trim()) {
-    const trimmedSearch = search.trim();
-    query.$text = { $search: trimmedSearch };
-    if (!sort) {
-      sortOption = { score: { $meta: 'textScore' }, createdAt: -1 };
+  if (search && String(search).trim()) {
+    const trimmedSearch = String(search).trim();
+    const tokens = trimmedSearch.split(/\s+/).filter(Boolean).slice(0, 6);
+    const tokenConditions = tokens.map((token) => {
+      const rx = new RegExp(buildArabicSearchRegex(token), 'i');
+      return {
+        $or: [
+          { name: rx },
+          { shortDescription: rx },
+          { description: rx },
+          { tags: rx },
+          { sku: rx },
+          { occasions: rx }
+        ]
+      };
+    });
+
+    if (tokenConditions.length === 1) {
+      query.$or = tokenConditions[0].$or;
+    } else if (tokenConditions.length > 1) {
+      query.$and = [...(query.$and || []), ...tokenConditions];
     }
   }
 
@@ -148,39 +183,15 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
   const pageNumber = Math.max(1, Number(page) || CONFIG.PAGINATION.DEFAULT_PAGE);
   const skip = (pageNumber - 1) * finalLimit;
 
-  let products;
-  let total;
-
-  try {
-    products = await Product.find(query)
+  const [products, total] = await Promise.all([
+    Product.find(query)
       .populate('category', 'name slug')
       .sort(sortOption)
       .skip(skip)
       .limit(finalLimit)
-      .lean();
-    total = await Product.countDocuments(query);
-  } catch (searchError) {
-    if (query.$text && (searchError.code === 27 || searchError.message?.includes('text index required'))) {
-      delete query.$text;
-      const searchRegex = new RegExp(escapeRegex(search.trim()), 'i');
-      query.$or = [
-        { name: searchRegex },
-        { description: searchRegex },
-        { tags: searchRegex },
-        { shortDescription: searchRegex }
-      ];
-      sortOption = { createdAt: -1 };
-      products = await Product.find(query)
-        .populate('category', 'name slug')
-        .sort(sortOption)
-        .skip(skip)
-        .limit(finalLimit)
-        .lean();
-      total = await Product.countDocuments(query);
-    } else {
-      throw searchError;
-    }
-  }
+      .lean(),
+    Product.countDocuments(query)
+  ]);
 
   const processedProducts = await processReadyBoxes(products);
 
@@ -272,21 +283,34 @@ exports.getProductsByRecipient = asyncHandler(async (req, res) => {
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);
 
 /**
- * Get single product by slug
+ * Get single product by slug (with automatic ObjectId fallback)
  */
 exports.getProductBySlug = asyncHandler(async (req, res) => {
-  const product = await Product.findOne({ 
+  let product = await Product.findOne({ 
     slug: req.params.slug,
     isActive: true 
-  }).populate('category', 'name slug');
+  })
+    .populate('category', 'name slug')
+    .lean();
+
+  if (!product && mongoose.Types.ObjectId.isValid(req.params.slug)) {
+    product = await Product.findOne({
+      _id: req.params.slug,
+      isActive: true
+    })
+      .populate('category', 'name slug')
+      .lean();
+  }
 
   if (!product) return sendNotFound(res, MESSAGES.PRODUCTS.NOT_FOUND);
 
   const processedProduct = await processReadyBoxes(product);
-  processedProduct.views += 1;
+  processedProduct.views = (Number(processedProduct.views) || 0) + 1;
   
   // Save the view count to original document without awaiting its result to speed up
-  Product.updateOne({ _id: processedProduct._id }, { $inc: { views: 1 } }).exec();
+  Product.updateOne({ _id: processedProduct._id }, { $inc: { views: 1 } })
+    .exec()
+    .catch((err) => console.error('Failed to increment product views:', err.message));
 
   return sendSuccess(res, { data: processedProduct });
 }, MESSAGES.PRODUCTS.GENERIC_ERROR);

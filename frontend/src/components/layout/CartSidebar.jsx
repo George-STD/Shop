@@ -276,6 +276,18 @@ const CartSidebar = () => {
                             {item.selectedShape && `${STRINGS.PRODUCT.SHAPE} ${item.selectedShape}`}
                           </p>
                         )}
+                        {item.selectedVariants && Object.keys(item.selectedVariants).length > 0 && (
+                          <p className="text-[11px] text-gray-400 mt-0.5 truncate">
+                            {Object.entries(item.selectedVariants)
+                              .map(([g, v]) => `${g}: ${v}`)
+                              .join(' | ')}
+                          </p>
+                        )}
+                        {item.boxSelections?.length > 0 && (
+                          <p className="text-[11px] text-gray-400 mt-0.5 truncate">
+                            {item.boxSelections.map((s) => `${s.slotLabel}: ${s.chosenOption}`).join(' | ')}
+                          </p>
+                        )}
                         {item.addons?.length > 0 && (
                           <p className="text-[10px] text-purple-600 mt-0.5 truncate">
                             {item.addons.map((a) => `+ ${a.name}`).join(' ، ')}
@@ -321,6 +333,9 @@ const CartSidebar = () => {
                             onClick={() => handleIncreaseQuantity(item)}
                             className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center hover:border-purple-300 hover:bg-purple-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             disabled={
+                              (item.variantStock ?? item.stock) !== null &&
+                              (item.variantStock ?? item.stock) !== undefined &&
+                              (item.variantStock ?? item.stock) !== '' &&
                               Number.isFinite(Number(item.variantStock ?? item.stock)) &&
                               item.quantity >= Number(item.variantStock ?? item.stock)
                             }
@@ -352,6 +367,17 @@ const CartSidebar = () => {
           <div className="border-t border-gray-100 p-4 sm:p-5 space-y-4 bg-gray-50/80">
             {/* Subtotal Breakdown */}
             <div className="space-y-2 text-xs sm:text-sm">
+              {(() => {
+                const customBoxesCount = new Set(items.filter((i) => i.boxId).map((i) => i.boxId)).size;
+                return customBoxesCount > 0 ? (
+                  <div className="flex justify-between text-purple-600 text-xs">
+                    <span>تغليف البوكس المخصص ({customBoxesCount})</span>
+                    <span className="font-semibold">
+                      <bdi>{formatPrice(customBoxesCount * BUSINESS_CONFIG.BOX_BASE_PRICE_EGP)}</bdi> {STRINGS.PRODUCT.CURRENCY} (مشمول)
+                    </span>
+                  </div>
+                ) : null;
+              })()}
               <div className="flex justify-between text-gray-500">
                 <span>{STRINGS.CART.SUBTOTAL}</span>
                 <span className="font-semibold text-gray-800">

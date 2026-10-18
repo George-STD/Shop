@@ -35,7 +35,7 @@ const BuildBoxPage = () => {
   const { items: boxItems, addItem, removeItem, clearBox, getTotal } = useBuildBoxStore();
   const maxItems = BUSINESS_CONFIG.BOX_MAX_ITEMS;
   const minItems = BUSINESS_CONFIG.BOX_MIN_ITEMS;
-  const { addItem: addCartItem } = useCartStore();
+  const { items: cartItems, addItem: addCartItem, removeItem: removeCartItem } = useCartStore();
   const navigate = useNavigate();
 
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -71,6 +71,7 @@ const BuildBoxPage = () => {
 
     const boxId = `box_${Date.now()}`;
     let successCount = 0;
+    const addedItemIds = [];
 
     boxItems.forEach((item) => {
       const result = addCartItem(
@@ -91,14 +92,18 @@ const BuildBoxPage = () => {
 
       if (result.success) {
         successCount++;
+        addedItemIds.push(item.id);
       }
     });
 
-    if (successCount > 0) {
+    if (successCount >= minItems) {
       toast.success(`${STRINGS.BUILD_BOX_PAGE.BOX_ADDED_SUCCESS} (${successCount} ${STRINGS.BUILD_BOX_PAGE.TO_CART}`);
       clearBox();
       navigate('/cart');
     } else {
+      addedItemIds.forEach((id) => {
+        removeCartItem(id, { boxId });
+      });
       toast.error(STRINGS.BUILD_BOX_PAGE.BOX_ADD_ERROR);
     }
   };
@@ -117,8 +122,12 @@ const BuildBoxPage = () => {
       return;
     }
 
-    const existingCount = boxItems.filter((item) => item.id === product._id).length;
-    if (existingCount >= product.stock) {
+    const existingInBox = boxItems.filter((item) => item.id === product._id).length;
+    const existingInCart = cartItems
+      .filter((item) => item.id === product._id)
+      .reduce((sum, item) => sum + (item.quantity || 1), 0);
+    const hasStockLimit = product.stock !== null && product.stock !== undefined && Number.isFinite(Number(product.stock));
+    if (hasStockLimit && existingInBox + existingInCart >= Number(product.stock)) {
       toast.error(`${STRINGS.BUILD_BOX_PAGE.MAX_STOCK_REACHED} ${product.stock} ${STRINGS.COMMON.ONLY}`);
       return;
     }
@@ -326,7 +335,7 @@ const BuildBoxPage = () => {
                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-purple-600 shadow-sm mb-3">
                       <FiFilter className="w-6 h-6" />
                     </div>
-                    <h4 className="font-bold text-lg text-purple-900 mb-1">يوجد المزيد من المنتجات!</h4>
+                    <h3 className="font-bold text-lg text-purple-900 mb-1">يوجد المزيد من المنتجات!</h3>
                     <p className="text-sm text-purple-700/80 max-w-md">
                       قم بتحديد فئة معينة من الأعلى لتضييق نطاق البحث وعرض المنتجات المناسبة لك بسهولة.
                     </p>
@@ -461,7 +470,7 @@ const BuildBoxPage = () => {
                         <div className="flex items-center gap-2 mt-1">
                           <span className="font-bold text-sm text-purple-600">
                             {formatPrice(
-                              item.price * (1 - (item.boxDiscount !== undefined ? item.boxDiscount : 25) / 100)
+                              item.price * (1 - (item.boxDiscount !== undefined ? item.boxDiscount : BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE) / 100)
                             )}{' '}
                             {STRINGS.PRODUCT.CURRENCY}
                           </span>

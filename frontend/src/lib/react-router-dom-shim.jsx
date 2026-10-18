@@ -121,12 +121,24 @@ export function useNavigate() {
 
 export function useLocation() {
   const pathname = usePathname() || '/';
-  const search = typeof window !== 'undefined' ? window.location.search || '' : '';
+  const [search, setSearch] = useState('');
 
   const [routeState, setRouteState] = useState(() => ({
     pathname,
-    state: readNavigationState(),
+    state: null,
   }));
+
+  useEffect(() => {
+    const syncSearch = () => {
+      setSearch(typeof window !== 'undefined' ? window.location.search || '' : '');
+    };
+    syncSearch();
+    ensureHistoryObserver();
+    searchListeners.add(syncSearch);
+    return () => {
+      searchListeners.delete(syncSearch);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     const pending = readNavigationState();
@@ -162,7 +174,7 @@ export function useSearchParams() {
   const getSearch = () =>
     typeof window !== 'undefined' ? window.location.search.replace(/^\?/, '') : '';
 
-  const [searchText, setSearchText] = useState(getSearch);
+  const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
     setSearchText(getSearch());
@@ -171,6 +183,7 @@ export function useSearchParams() {
   useEffect(() => {
     ensureHistoryObserver();
     const syncSearch = () => setSearchText(getSearch());
+    syncSearch();
     searchListeners.add(syncSearch);
     return () => {
       searchListeners.delete(syncSearch);

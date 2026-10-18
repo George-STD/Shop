@@ -176,6 +176,8 @@ const ReviewForm = memo(function ReviewForm({ productId, refreshReviews }) {
   );
 });
 
+const RECENTLY_VIEWED_KEY = 'foryou-recently-viewed';
+
 /**
  * Granular & Memoized Master Product Page
  */
@@ -206,9 +208,31 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
   const [boxSelections, setBoxSelections] = useState({});
   const [selectedVariants, setSelectedVariants] = useState({});
 
+  // Review interactive filter & sort states
+  const [reviewStarFilter, setReviewStarFilter] = useState(null);
+  const [reviewSort, setReviewSort] = useState('newest');
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
+
   const [activeTab, setActiveTab] = useState(
     searchParams.get('tab') === 'reviews' ? 'reviews' : 'description'
   );
+
+  // Reset all product-specific state when navigating between products
+  const defaultsAppliedRef = useRef(false);
+  useEffect(() => {
+    setQuantity(1);
+    setSelectedSize(null);
+    setSelectedColor(null);
+    setSelectedShape(null);
+    setSelectedAddons([]);
+    setBoxSelections({});
+    setSelectedVariants({});
+    setActiveImageIdx(0);
+    setActiveBoxImage(null);
+    setReviewStarFilter(null);
+    setReviewSort('newest');
+    defaultsAppliedRef.current = false;
+  }, [slug]);
 
   // 1. Granular Zustand Selectors (Prevents full-tree re-rendering on unrelated store updates)
   const addItem = useCartStore((state) => state.addItem);
@@ -229,6 +253,34 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
     initialData: initialProduct && (!slug || initialProduct.slug === slug) ? initialProduct : undefined,
     staleTime: 1000 * 60 * 5,
   });
+
+  // Track and load Recently Viewed Products in localStorage
+  useEffect(() => {
+    if (!product?._id || typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem(RECENTLY_VIEWED_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      const list = Array.isArray(parsed) ? parsed : [];
+      const others = list.filter((item) => item && item._id && item._id !== product._id);
+      setRecentlyViewed(others.slice(0, 4));
+
+      const snapshot = {
+        _id: product._id,
+        name: product.name,
+        slug: product.slug,
+        price: product.price,
+        oldPrice: product.oldPrice,
+        stock: product.stock,
+        images: product.images?.slice(0, 1) || [],
+        category: product.category,
+        rating: product.rating,
+        isNewArrival: product.isNewArrival,
+        isBestseller: product.isBestseller,
+      };
+      const updated = [snapshot, ...others].slice(0, 10);
+      window.localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(updated));
+    } catch (_) {}
+  }, [product]);
 
   const inWishlist = useWishlistStore(
     useCallback(
@@ -251,7 +303,6 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
   });
 
   // Default variant selection on load
-  const defaultsAppliedRef = useRef(false);
   useEffect(() => {
     if (!product?.variantGroups?.length || defaultsAppliedRef.current) return;
     const defaults = {};
@@ -373,10 +424,15 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
 
   const effectiveMaxStock = useMemo(() => {
     if (!product) return 0;
-    let limit = Number.isFinite(Number(product.stock)) ? Math.max(0, Number(product.stock)) : null;
+    const hasBaseStock =
+      product.stock !== null &&
+      product.stock !== undefined &&
+      product.stock !== '' &&
+      Number.isFinite(Number(product.stock));
+    let limit = hasBaseStock ? Math.max(0, Number(product.stock)) : null;
     const clampLimit = (val) => {
-      if (typeof val === 'number' && Number.isFinite(val)) {
-        const clean = Math.max(0, Math.floor(val));
+      if (val !== null && val !== undefined && val !== '' && Number.isFinite(Number(val))) {
+        const clean = Math.max(0, Math.floor(Number(val)));
         limit = limit === null ? clean : Math.min(limit, clean);
       }
     };
@@ -403,6 +459,13 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
     return limit;
   }, [product, selectedSize, selectedColor, selectedShape, selectedVariants]);
 
+  // Clamp quantity if switching to a variant with lower stock
+  useEffect(() => {
+    if (effectiveMaxStock !== null && Number.isFinite(effectiveMaxStock) && effectiveMaxStock > 0) {
+      setQuantity((prev) => (prev > effectiveMaxStock ? effectiveMaxStock : prev));
+    }
+  }, [effectiveMaxStock]);
+
   const totalPrice = useMemo(() => {
     const addonsTotal = selectedAddons.reduce(
       (sum, addon) => sum + (Number(addon.price) || 0),
@@ -411,114 +474,138 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
     return (effectiveBasePrice + addonsTotal) * quantity;
   }, [effectiveBasePrice, quantity, selectedAddons]);
 
-  // Dynamic JSON-LD structured data for Google Crawlers
-  const jsonLd = useMemo(() => {
-    if (!product) return null;
-    return {
-      '@context': 'https://schema.org',
-      '@type': 'Product',
-      name: product.name,
-      image: product.images?.map((img) => img.url) || [],
-      description: product.description,
-      sku: product.sku || product._id,
-      brand: {
-        '@type': 'Brand',
-        name: 'Hadaya Gifts',
-      },
-      offers: {
-        '@type': 'Offer',
-      url: slug ? `/product/${slug}` : '',
-      priceCurrency: 'EGP',
-      price: product.price,
-        itemCondition: 'https://schema.org/NewCondition',
-        availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      },
-      ...(product.rating?.count > 0 && {
-        aggregateRating: {
-          '@type': 'AggregateRating',
-          ratingValue: product.rating.average,
-          reviewCount: product.rating.count,
-        },
-      }),
-    };
-  }, [product, slug]);
+  // Dynamic Arabic delivery date estimate
+  const deliveryEstimateText = useMemo(() => {
+    try {
+      const now = new Date();
+      const minDate = new Date(now);
+      const maxDate = new Date(now);
+      minDate.setDate(now.getDate() + 1);
+      maxDate.setDate(now.getDate() + 3);
+      const fmt = new Intl.DateTimeFormat('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
+      return `${fmt.format(minDate)} - ${fmt.format(maxDate)}`;
+    } catch (_) {
+      return 'خلال 1 - 3 أيام عمل';
+    }
+  }, []);
 
   // Add to cart handler
-  const handleAddToCart = useCallback(() => {
-    if (!product) return;
-    if (product.sizes?.length > 0 && !selectedSize) {
-      toast.error(STRINGS.PRODUCT.PLEASE_SELECT_SIZE);
-      return;
-    }
-    if (product.colors?.length > 0 && !selectedColor) {
-      toast.error(STRINGS.PRODUCT.PLEASE_SELECT_COLOR);
-      return;
-    }
-    if (product.shapes?.length > 0 && !selectedShape) {
-      toast.error(STRINGS.PRODUCT.PLEASE_SELECT_SHAPE);
-      return;
-    }
+  const handleAddToCart = useCallback(
+    ({ silentToast = false } = {}) => {
+      if (!product) return false;
+      if (product.sizes?.length > 0 && !selectedSize) {
+        toast.error(STRINGS.PRODUCT.PLEASE_SELECT_SIZE);
+        return false;
+      }
+      if (product.colors?.length > 0 && !selectedColor) {
+        toast.error(STRINGS.PRODUCT.PLEASE_SELECT_COLOR);
+        return false;
+      }
+      if (product.shapes?.length > 0 && !selectedShape) {
+        toast.error(STRINGS.PRODUCT.PLEASE_SELECT_SHAPE);
+        return false;
+      }
 
-    if (product.variantGroups?.length > 0) {
-      for (const group of product.variantGroups) {
-        if (!selectedVariants[group.name]) {
-          toast.error(`${STRINGS.PRODUCT.PLEASE_SELECT}${group.name}`);
-          return;
+      if (product.variantGroups?.length > 0) {
+        for (const group of product.variantGroups) {
+          if (!selectedVariants[group.name]) {
+            toast.error(`${STRINGS.PRODUCT.PLEASE_SELECT}${group.name}`);
+            return false;
+          }
         }
       }
-    }
 
-    if (product.isCustomBox && product.boxSlots?.length > 0) {
-      for (const slot of product.boxSlots) {
-        if (slot.required && !boxSelections[slot.slotLabel]) {
-          toast.error(`${STRINGS.PRODUCT.PLEASE_SELECT}${slot.slotLabel}`);
-          return;
+      if (product.isCustomBox && product.boxSlots?.length > 0) {
+        for (const slot of product.boxSlots) {
+          if (slot.required && !boxSelections[slot.slotLabel]) {
+            toast.error(`${STRINGS.PRODUCT.PLEASE_SELECT}${slot.slotLabel}`);
+            return false;
+          }
         }
       }
-    }
 
-    const result = addItem({ ...product, price: effectiveBasePrice }, quantity, {
-      selectedSize: typeof selectedSize === 'object' ? selectedSize?.name : selectedSize,
+      const result = addItem({ ...product, price: effectiveBasePrice }, quantity, {
+        selectedSize: typeof selectedSize === 'object' ? selectedSize?.name : selectedSize,
+        selectedColor,
+        selectedShape,
+        selectedVariants: product.variantGroups?.length > 0 ? selectedVariants : undefined,
+        variantStock: effectiveMaxStock,
+        addons: selectedAddons,
+        boxSelections: product.isCustomBox
+          ? Object.entries(boxSelections)
+              .filter(([, opt]) => opt)
+              .map(([slotLabel, opt]) => ({
+                slotLabel,
+                chosenOption: opt.name,
+                image: getOptImages(opt)[0] || '',
+              }))
+          : undefined,
+      });
+
+      if (!result?.success) {
+        toast.error(STRINGS.PRODUCT.OUT_OF_STOCK_QTY);
+        return false;
+      }
+
+      if (result.capped && result.maxStock !== null) {
+        toast.success(`${STRINGS.PRODUCT.ADDED_MAX_STOCK}${result.maxStock})`);
+        return true;
+      }
+
+      if (!silentToast) {
+        toast.success(STRINGS.PRODUCT.ADDED_TO_CART);
+      }
+      return true;
+    },
+    [
+      product,
+      selectedSize,
       selectedColor,
       selectedShape,
-      selectedVariants: product.variantGroups?.length > 0 ? selectedVariants : undefined,
-      variantStock: effectiveMaxStock,
-      addons: selectedAddons,
-      boxSelections: product.isCustomBox
-        ? Object.entries(boxSelections)
-            .filter(([, opt]) => opt)
-            .map(([slotLabel, opt]) => ({
-              slotLabel,
-              chosenOption: opt.name,
-              image: getOptImages(opt)[0] || '',
-            }))
-        : undefined,
+      selectedVariants,
+      boxSelections,
+      selectedAddons,
+      addItem,
+      effectiveBasePrice,
+      effectiveMaxStock,
+      quantity,
+    ]
+  );
+
+  // Instant "Buy Now" handler (Amazon-style)
+  const handleBuyNow = useCallback(() => {
+    const added = handleAddToCart({ silentToast: true });
+    if (added) {
+      navigate('/checkout');
+    }
+  }, [handleAddToCart, navigate]);
+
+  // Review histogram and interactive filtering/sorting
+  const allReviews = useMemo(() => reviewsData?.data || [], [reviewsData?.data]);
+  const reviewStats = useMemo(() => {
+    const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    allReviews.forEach((r) => {
+      const star = Math.min(5, Math.max(1, Math.round(Number(r.rating) || 5)));
+      counts[star] = (counts[star] || 0) + 1;
     });
+    const total = allReviews.length;
+    return { counts, total };
+  }, [allReviews]);
 
-    if (!result?.success) {
-      toast.error(STRINGS.PRODUCT.OUT_OF_STOCK_QTY);
-      return;
+  const filteredReviews = useMemo(() => {
+    let list = [...allReviews];
+    if (reviewStarFilter !== null) {
+      list = list.filter((r) => Math.round(Number(r.rating)) === reviewStarFilter);
     }
-
-    if (result.capped && result.maxStock !== null) {
-      toast.success(`${STRINGS.PRODUCT.ADDED_MAX_STOCK}${result.maxStock})`);
-      return;
+    if (reviewSort === 'highest') {
+      list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else if (reviewSort === 'lowest') {
+      list.sort((a, b) => (a.rating || 0) - (b.rating || 0));
+    } else {
+      list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     }
-
-    toast.success(STRINGS.PRODUCT.ADDED_TO_CART);
-  }, [
-    product,
-    selectedSize,
-    selectedColor,
-    selectedShape,
-    selectedVariants,
-    boxSelections,
-    selectedAddons,
-    addItem,
-    effectiveBasePrice,
-    effectiveMaxStock,
-    quantity,
-  ]);
+    return list;
+  }, [allReviews, reviewStarFilter, reviewSort]);
 
   const handleToggleWishlist = useCallback(async () => {
     if (!isAuthenticated) {
@@ -634,14 +721,6 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
 
   return (
     <>
-      {/* Dynamic SEO JSON-LD injection */}
-      {jsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
-        />
-      )}
-
       <div className="bg-gray-50 min-h-screen min-h-dvh">
         {/* Breadcrumbs */}
         <div className="bg-white border-b">
@@ -1309,19 +1388,34 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
                 </div>
               )}
 
-              {/* Quantity Counter & Add To Cart CTA */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className={`flex items-center border border-gray-300 rounded-lg ${effectiveMaxStock === 0 ? 'opacity-50 bg-gray-50' : ''}`}>
+              {/* Amazon-Style Delivery Estimate Banner */}
+              <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/70 rounded-2xl flex items-start gap-3 text-xs sm:text-sm text-emerald-950">
+                <FiTruck className="text-emerald-600 text-lg flex-shrink-0 mt-0.5" aria-hidden="true" />
+                <div>
+                  <span className="font-bold text-emerald-800">توصيل سريع لباب البيت: </span>
+                  <span>متوقع الوصول خلال </span>
+                  <strong className="underline decoration-emerald-400">{deliveryEstimateText}</strong>
+                  <span className="block text-[11px] text-emerald-700/80 mt-0.5">
+                    شحن آمن ومغلف بعناية فائقة لجميع محافظات مصر (القاهرة 95 ج.م • المحافظات 125 ج.م)
+                  </span>
+                </div>
+              </div>
+
+              {/* Quantity Counter & Add To Cart / Buy Now CTAs */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className={`flex items-center justify-center border border-gray-300 rounded-xl ${effectiveMaxStock === 0 ? 'opacity-50 bg-gray-50' : 'bg-white'}`}>
                   <button
+                    type="button"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     disabled={effectiveMaxStock === 0 || quantity <= 1}
-                    className="p-3 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="p-3.5 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed rounded-r-xl"
                     aria-label="Decrease quantity"
                   >
                     <FiMinus />
                   </button>
-                  <span className="px-4 font-semibold text-gray-800">{effectiveMaxStock === 0 ? 0 : quantity}</span>
+                  <span className="px-4 font-bold text-gray-800">{effectiveMaxStock === 0 ? 0 : quantity}</span>
                   <button
+                    type="button"
                     onClick={() => {
                       if (effectiveMaxStock !== null && Number.isFinite(effectiveMaxStock)) {
                         setQuantity(Math.min(quantity + 1, Math.max(1, effectiveMaxStock)));
@@ -1329,7 +1423,7 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
                       }
                       setQuantity(quantity + 1);
                     }}
-                    className="p-3 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="p-3.5 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed rounded-l-xl"
                     disabled={
                       effectiveMaxStock === 0 ||
                       (effectiveMaxStock !== null && Number.isFinite(effectiveMaxStock) && quantity >= effectiveMaxStock)
@@ -1341,19 +1435,32 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
                 </div>
 
                 <button
-                  onClick={handleAddToCart}
+                  type="button"
+                  onClick={() => handleAddToCart()}
                   disabled={effectiveMaxStock === 0}
-                  className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-base font-bold py-3.5"
+                  className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base font-bold py-3.5 rounded-xl"
                 >
                   {effectiveMaxStock === 0
                     ? STRINGS.PRODUCT.OUT_OF_STOCK
                     : `${STRINGS.PRODUCT.ADD_TO_CART_TOTAL}${totalPrice} ${STRINGS.PRODUCT.CURRENCY}`}
                 </button>
+
+                {effectiveMaxStock !== 0 && (
+                  <button
+                    type="button"
+                    onClick={handleBuyNow}
+                    className="sm:w-auto px-6 py-3.5 rounded-xl font-bold text-sm sm:text-base bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+                  >
+                    اشترِ الآن ⚡
+                  </button>
+                )}
               </div>
 
               {effectiveMaxStock !== null && Number.isFinite(effectiveMaxStock) && (
-                <p className="text-sm text-gray-500">
-                  {STRINGS.PRODUCT.AVAILABLE_NOW} {Math.max(0, effectiveMaxStock)} {STRINGS.PRODUCT.PIECE}
+                <p className={`text-sm font-medium ${effectiveMaxStock > 0 && effectiveMaxStock <= 5 ? 'text-amber-600 font-bold' : 'text-gray-500'}`}>
+                  {effectiveMaxStock > 0 && effectiveMaxStock <= 5
+                    ? `🔥 سارع بالشراء! متبقي ${effectiveMaxStock} ${STRINGS.PRODUCT.PIECE} فقط في المخزون`
+                    : `${STRINGS.PRODUCT.AVAILABLE_NOW} ${Math.max(0, effectiveMaxStock)} ${STRINGS.PRODUCT.PIECE}`}
                 </p>
               )}
 
@@ -1397,14 +1504,16 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
             </div>
           </div>
 
-          {/* Description & Reviews Tabs */}
+          {/* Description & Reviews Tabs (Both kept in DOM for SEO indexing) */}
           <div className="mt-12">
             <div className="flex border-b" role="tablist">
               {['description', 'reviews'].map((tab) => (
                 <button
                   key={tab}
+                  id={`tab-${tab}`}
                   role="tab"
                   aria-selected={activeTab === tab}
+                  aria-controls={`panel-${tab}`}
                   onClick={() => setActiveTab(tab)}
                   className={`px-6 py-3 font-medium transition-colors text-base ${
                     activeTab === tab
@@ -1414,85 +1523,176 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
                 >
                   {tab === 'description'
                     ? STRINGS.PRODUCT.DESCRIPTION
-                    : `${STRINGS.PRODUCT.REVIEWS} (${reviewsData?.pagination?.total || 0})`}
+                    : `${STRINGS.PRODUCT.REVIEWS} (${reviewsData?.pagination?.total || allReviews.length || 0})`}
                 </button>
               ))}
             </div>
 
             <div className="py-8">
-              {activeTab === 'description' ? (
-                <div className="prose prose-lg max-w-none">
-                  <p className="text-gray-600 leading-relaxed text-base">{product.description}</p>
+              {/* Description Panel */}
+              <div
+                id="panel-description"
+                role="tabpanel"
+                aria-labelledby="tab-description"
+                className={activeTab === 'description' ? 'prose prose-lg max-w-none' : 'hidden'}
+              >
+                <p className="text-gray-700 leading-relaxed text-base whitespace-pre-line">{product.description}</p>
 
-                  {product.tags?.length > 0 && (
-                    <div className="mt-6">
-                      <h3 className="font-bold text-gray-800 mb-3 text-sm">{STRINGS.PRODUCT.KEYWORDS}</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {product.tags.map((tag) => (
-                          <Link
-                            key={tag}
-                            to={`/products?search=${tag}`}
-                            className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium hover:bg-purple-100 transition-colors"
-                          >
-                            #{tag}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div>
-                  <ReviewForm
-                    productId={product._id}
-                    refreshReviews={refreshReviews}
-                  />
-
-                  {reviewsData?.data?.length > 0 ? (
-                    <div className="space-y-4">
-                      {reviewsData.data.map((review) => (
-                        <div key={review._id} className="bg-white p-6 rounded-xl border shadow-sm">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-gray-800">
-                                  {review.user?.firstName || review.guestName}
-                                </span>
-                                {review.isVerifiedPurchase && (
-                                  <span className="text-green-600 text-xs flex items-center gap-1 font-semibold">
-                                    <FiCheck size={14} />
-                                    {STRINGS.PRODUCT.VERIFIED_BUYER}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex text-yellow-400 text-sm mt-1 rating-stars">
-                                {[...Array(5)].map((_, i) => (
-                                  <span key={i}>{i < review.rating ? '★' : '☆'}</span>
-                                ))}
-                              </div>
-                            </div>
-                            <span className="text-xs text-gray-400">
-                              {new Date(review.createdAt).toLocaleDateString('ar-EG')}
-                            </span>
-                          </div>
-                          {review.title && (
-                            <h4 className="font-semibold text-gray-800 mt-3 text-sm">{review.title}</h4>
-                          )}
-                          <p className="text-gray-600 mt-2 text-sm leading-relaxed">{review.comment}</p>
-                        </div>
+                {product.tags?.length > 0 && (
+                  <div className="mt-6">
+                    <h2 className="font-bold text-gray-800 mb-3 text-sm">{STRINGS.PRODUCT.KEYWORDS}</h2>
+                    <div className="flex flex-wrap gap-2">
+                      {product.tags.map((tag) => (
+                        <Link
+                          key={tag}
+                          to={`/products?search=${encodeURIComponent(tag)}`}
+                          className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium hover:bg-purple-100 transition-colors"
+                        >
+                          #{tag}
+                        </Link>
                       ))}
                     </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <div className="text-5xl mb-4">⭐</div>
-                      <h3 className="text-lg font-medium text-gray-800 mb-2">
-                        {STRINGS.PRODUCT.NO_REVIEWS}
-                      </h3>
-                      <p className="text-gray-600 text-sm">{STRINGS.PRODUCT.BE_FIRST_TO_REVIEW}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Reviews Panel */}
+              <div
+                id="panel-reviews"
+                role="tabpanel"
+                aria-labelledby="tab-reviews"
+                className={activeTab === 'reviews' ? 'block' : 'hidden'}
+              >
+                {/* Amazon-Style Rating Breakdown & Histogram */}
+                {allReviews.length > 0 && (
+                  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm mb-8 grid md:grid-cols-12 gap-6 items-center">
+                    <div className="md:col-span-4 text-center md:border-l border-gray-100 md:pl-6">
+                      <div className="text-4xl font-extrabold text-gray-900">
+                        {Number(product.rating?.average || 5).toFixed(1)}
+                        <span className="text-lg font-normal text-gray-400"> / 5</span>
+                      </div>
+                      <div className="flex justify-center text-yellow-400 text-xl my-1.5">
+                        {[...Array(5)].map((_, i) => (
+                          <span key={i}>{i < Math.round(product.rating?.average || 5) ? '★' : '☆'}</span>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        بناءً على {reviewStats.total} تقييم من عملائنا
+                      </p>
                     </div>
-                  )}
-                </div>
-              )}
+
+                    <div className="md:col-span-8 space-y-2">
+                      {[5, 4, 3, 2, 1].map((star) => {
+                        const count = reviewStats.counts[star] || 0;
+                        const pct = reviewStats.total > 0 ? Math.round((count / reviewStats.total) * 100) : 0;
+                        const isFiltered = reviewStarFilter === star;
+                        return (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewStarFilter(isFiltered ? null : star)}
+                            className={`w-full flex items-center gap-3 text-xs sm:text-sm py-1 px-2 rounded-lg transition-colors ${
+                              isFiltered ? 'bg-purple-50 font-bold text-purple-800' : 'hover:bg-gray-50 text-gray-700'
+                            }`}
+                          >
+                            <span className="w-14 text-right font-medium flex items-center gap-1">
+                              <span>{star} نجوم</span>
+                            </span>
+                            <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-amber-400 rounded-full transition-all duration-500"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="w-12 text-left text-xs text-gray-500">{pct}% ({count})</span>
+                          </button>
+                        );
+                      })}
+                      {reviewStarFilter !== null && (
+                        <div className="pt-2 flex items-center justify-between text-xs text-purple-700">
+                          <span>عرض التقييمات ذات {reviewStarFilter} نجوم فقط</span>
+                          <button
+                            type="button"
+                            onClick={() => setReviewStarFilter(null)}
+                            className="underline font-bold hover:text-purple-900"
+                          >
+                            إظهار كل التقييمات
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <ReviewForm
+                  productId={product._id}
+                  refreshReviews={refreshReviews}
+                />
+
+                {allReviews.length > 0 && (
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-gray-800 text-base">
+                      آراء العملاء ({filteredReviews.length})
+                    </h3>
+                    <select
+                      value={reviewSort}
+                      onChange={(e) => setReviewSort(e.target.value)}
+                      className="text-xs sm:text-sm border border-gray-200 rounded-xl px-3 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      aria-label="ترتيب التقييمات"
+                    >
+                      <option value="newest">الأحدث أولاً</option>
+                      <option value="highest">الأعلى تقييماً</option>
+                      <option value="lowest">الأقل تقييماً</option>
+                    </select>
+                  </div>
+                )}
+
+                {filteredReviews.length > 0 ? (
+                  <div className="space-y-4">
+                    {filteredReviews.map((review) => (
+                      <div key={review._id} className="bg-white p-6 rounded-xl border shadow-sm">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-gray-800">
+                                {review.user?.firstName || review.guestName}
+                              </span>
+                              {review.isVerifiedPurchase && (
+                                <span className="text-green-600 text-xs flex items-center gap-1 font-semibold bg-green-50 px-2 py-0.5 rounded-full">
+                                  <FiCheck size={12} />
+                                  {STRINGS.PRODUCT.VERIFIED_BUYER}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex text-yellow-400 text-sm mt-1 rating-stars">
+                              {[...Array(5)].map((_, i) => (
+                                <span key={i}>{i < review.rating ? '★' : '☆'}</span>
+                              ))}
+                            </div>
+                          </div>
+                          <span className="text-xs text-gray-400">
+                            {new Date(review.createdAt).toLocaleDateString('ar-EG')}
+                          </span>
+                        </div>
+                        {review.title && (
+                          <h4 className="font-semibold text-gray-800 mt-3 text-sm">{review.title}</h4>
+                        )}
+                        <p className="text-gray-600 mt-2 text-sm leading-relaxed">{review.comment}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-5xl mb-4">⭐</div>
+                    <h3 className="text-lg font-medium text-gray-800 mb-2">
+                      {reviewStarFilter !== null
+                        ? `لا توجد تقييمات بـ ${reviewStarFilter} نجوم حالياً`
+                        : STRINGS.PRODUCT.NO_REVIEWS}
+                    </h3>
+                    <p className="text-gray-600 text-sm">{STRINGS.PRODUCT.BE_FIRST_TO_REVIEW}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1503,6 +1703,20 @@ const ProductPage = ({ initialProduct, slug: propSlug }) => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                 {relatedProducts.map((p) => (
                   <ProductCard key={p._id} product={p} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recently Viewed Products Grid (Amazon-Style Personalization) */}
+          {recentlyViewed.length > 0 && (
+            <div className="mt-12 pt-8 border-t border-gray-200/70">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6">
+                المنتجات التي شاهدتها مؤخراً
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+                {recentlyViewed.map((p) => (
+                  <ProductCard key={`recent-${p._id}`} product={p} />
                 ))}
               </div>
             </div>

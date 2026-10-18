@@ -86,6 +86,8 @@ const FAQPage = () => {
                         className="bg-white rounded-xl overflow-hidden"
                       >
                         <button
+                          type="button"
+                          aria-expanded={Boolean(openQuestions[item.q])}
                           onClick={() => toggleQuestion(item.q)}
                           className="w-full flex items-center justify-between p-5 text-right"
                         >
@@ -94,9 +96,9 @@ const FAQPage = () => {
                             className={`transition-transform ${openQuestions[item.q] ? 'rotate-180' : ''}`}
                           />
                         </button>
-                        {openQuestions[item.q] && (
-                          <div className="px-5 pb-5 text-gray-600">{item.a}</div>
-                        )}
+                        <div className={openQuestions[item.q] ? 'px-5 pb-5 text-gray-600' : 'hidden'}>
+                          {item.a}
+                        </div>
                       </div>
                     ))
                   )}
@@ -114,6 +116,7 @@ const FAQPage = () => {
                     {faqs.map((cat, idx) => (
                       <button
                         key={idx}
+                        type="button"
                         onClick={() => setActiveCategory(idx)}
                         className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors font-medium ${
                           activeCategory === idx
@@ -146,6 +149,8 @@ const FAQPage = () => {
                     {faqs[activeCategory].questions.map((item, idx) => (
                       <div key={idx} className="border border-gray-100 rounded-xl overflow-hidden">
                         <button
+                          type="button"
+                          aria-expanded={Boolean(openQuestions[item.q])}
                           onClick={() => toggleQuestion(item.q)}
                           className="w-full flex items-center justify-between p-5 text-right hover:bg-gray-50"
                         >
@@ -156,11 +161,15 @@ const FAQPage = () => {
                             }`}
                           />
                         </button>
-                        {openQuestions[item.q] && (
-                          <div className="px-5 pb-5 text-gray-600 border-t border-gray-100 pt-4">
-                            {item.a}
-                          </div>
-                        )}
+                        <div
+                          className={
+                            openQuestions[item.q]
+                              ? 'px-5 pb-5 text-gray-600 border-t border-gray-100 pt-4'
+                              : 'hidden'
+                          }
+                        >
+                          {item.a}
+                        </div>
                       </div>
                     ))}
                   </div>

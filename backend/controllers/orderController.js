@@ -55,6 +55,16 @@ const buildOrderItems = (items, productMap) => {
   const orderItems = [];
   const boxGroups = new Set();
   const boxCounts = new Map();
+  const cumulativeProductQty = new Map();
+
+  const addRequiredProductQty = (prodObj, addQty, label) => {
+    const pid = String(prodObj._id);
+    const nextTotal = (cumulativeProductQty.get(pid) || 0) + addQty;
+    if (prodObj.stock < nextTotal) {
+      throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${label || prodObj.name}`);
+    }
+    cumulativeProductQty.set(pid, nextTotal);
+  };
 
   for (const item of items) {
     const productId = String(item.productId);
@@ -70,14 +80,12 @@ const buildOrderItems = (items, productMap) => {
       }
       product.includedProducts.forEach(boxItem => {
         const itemObj = boxItem.product;
-        if (!itemObj) throw createClientError(`أحد محتويات الصندوق غير متوفرة`);
+        if (!itemObj || itemObj.isActive === false) throw createClientError(`أحد محتويات الصندوق غير متوفرة`);
         const requiredSubQuantity = boxItem.quantity * quantity;
-        if (itemObj.stock < requiredSubQuantity) {
-          throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${itemObj.name} (داخل البوكس)`);
-        }
+        addRequiredProductQty(itemObj, requiredSubQuantity, `${itemObj.name} (داخل البوكس)`);
       });
     } else {
-      if (product.stock < quantity) throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${product.name}`);
+      addRequiredProductQty(product, quantity, product.name);
     }
 
     // Process addons
@@ -499,16 +507,29 @@ const deductStock = async (orderItems, session) => {
   try {
     for (const item of orderItems) {
       if (item.isReadyBox && item.includedProducts) {
-        for (const boxItem of item.includedProducts) {
-          const requiredSubQty = boxItem.quantity * item.quantity;
-          const stockUpdate = await Product.updateOne(
-            { _id: (boxItem.product._id || boxItem.product), stock: { $gte: requiredSubQty } },
-            { $inc: { stock: -requiredSubQty, salesCount: requiredSubQty } },
-            opts
-          );
-          if (stockUpdate.modifiedCount !== 1) {
-            throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: (داخل البوكس)`);
+        const deductedSubItems = [];
+        try {
+          for (const boxItem of item.includedProducts) {
+            const requiredSubQty = boxItem.quantity * item.quantity;
+            const stockUpdate = await Product.updateOne(
+              { _id: (boxItem.product._id || boxItem.product), stock: { $gte: requiredSubQty } },
+              { $inc: { stock: -requiredSubQty, salesCount: requiredSubQty } },
+              opts
+            );
+            if (stockUpdate.modifiedCount !== 1) {
+              throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: (داخل البوكس)`);
+            }
+            deductedSubItems.push(boxItem);
           }
+        } catch (subErr) {
+          if (deductedSubItems.length > 0) {
+            deductedItems.push({
+              ...item,
+              includedProducts: deductedSubItems,
+              _skipParentSalesRollback: true,
+            });
+          }
+          throw subErr;
         }
         await Product.updateOne({ _id: item.product }, { $inc: { salesCount: item.quantity } }, opts);
         deductedItems.push(item);
@@ -568,7 +589,9 @@ const rollbackStock = async (items, session) => {
           opts
         );
       }
-      await Product.updateOne({ _id: item.product }, { $inc: { salesCount: -item.quantity } }, opts);
+      if (!item._skipParentSalesRollback) {
+        await Product.updateOne({ _id: item.product }, { $inc: { salesCount: -item.quantity } }, opts);
+      }
     } else {
       await Product.updateOne(
         { _id: item.product },
@@ -588,12 +611,16 @@ const handleOrderLoyaltyRefundOrDeduction = async (order, session) => {
   if (!order || !order.user) return;
   const User = require('../models/User');
   const opts = session ? { session } : {};
+  const orderUpdates = {};
 
   // 1. Restore redeemed points if any
   if (order.pointsRedeemed > 0) {
     const redeemedToRefund = order.pointsRedeemed;
     order.pointsRedeemed = 0;
     order.pointsDiscount = 0;
+    orderUpdates.pointsRedeemed = 0;
+    orderUpdates.pointsDiscount = 0;
+
     await User.updateOne(
       { _id: order.user },
       {
@@ -614,12 +641,29 @@ const handleOrderLoyaltyRefundOrDeduction = async (order, session) => {
       },
       opts
     );
+
+    LoyaltyLedger.updateOne(
+      { idempotencyKey: `order:${order._id}:refund` },
+      {
+        $setOnInsert: {
+          user: order.user,
+          points: Math.abs(redeemedToRefund),
+          type: 'REFUNDED',
+          reason: `استرجاع نقاط الطلب الملغى #${order.orderNumber || order._id}`,
+          order: order._id,
+          idempotencyKey: `order:${order._id}:refund`,
+        },
+      },
+      { upsert: true }
+    ).catch((err) => console.error('LoyaltyLedger refund log error:', err.message));
   }
 
   // 2. Deduct earned points if order was previously marked delivered
   if (order.pointsEarned > 0) {
     const earnedToDeduct = order.pointsEarned;
     order.pointsEarned = 0;
+    orderUpdates.pointsEarned = 0;
+
     await User.updateOne(
       { _id: order.user },
       {
@@ -642,6 +686,25 @@ const handleOrderLoyaltyRefundOrDeduction = async (order, session) => {
     );
     // Ensure points don't go below 0
     await User.updateOne({ _id: order.user, loyaltyPoints: { $lt: 0 } }, { $set: { loyaltyPoints: 0 } }, opts);
+
+    LoyaltyLedger.updateOne(
+      { idempotencyKey: `order:${order._id}:deduct` },
+      {
+        $setOnInsert: {
+          user: order.user,
+          points: -Math.abs(earnedToDeduct),
+          type: 'DEDUCTED',
+          reason: `إلغاء نقاط الطلب الملغى #${order.orderNumber || order._id}`,
+          order: order._id,
+          idempotencyKey: `order:${order._id}:deduct`,
+        },
+      },
+      { upsert: true }
+    ).catch((err) => console.error('LoyaltyLedger deduct log error:', err.message));
+  }
+
+  if (!session && Object.keys(orderUpdates).length > 0 && order._id) {
+    await Order.updateOne({ _id: order._id }, { $set: orderUpdates });
   }
 };
 
@@ -957,7 +1020,7 @@ exports.trackOrder = asyncHandler(async (req, res) => {
   return sendSuccess(res, { data: order });
 }, MESSAGES.ORDERS.GENERIC_ERROR);
 
-exports.cancelOrder = async (req, res) => {
+exports.cancelOrder = asyncHandler(async (req, res) => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
@@ -1044,4 +1107,5 @@ exports.cancelOrder = async (req, res) => {
   } finally {
     session.endSession();
   }
-};
+}, MESSAGES.ORDERS.GENERIC_ERROR);
+

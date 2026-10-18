@@ -96,7 +96,14 @@ const ProductCard = ({ product, priority = false, viewMode = 'grid' }) => {
   }, [addToWishlist, inWishlist, isAuthenticated, navigate, product, removeFromWishlist, wishlistPending]);
 
   const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
-  const isOutOfStock = Number(product.stock) === 0;
+  const hasStockValue =
+    product?.stock !== null &&
+    product?.stock !== undefined &&
+    product?.stock !== '' &&
+    Number.isFinite(Number(product?.stock));
+  const numericStock = hasStockValue ? Number(product.stock) : null;
+  const isOutOfStock = numericStock !== null && numericStock <= 0;
+  const isLowStock = numericStock !== null && numericStock > 0 && numericStock <= 5;
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('ar-EG').format(price);
@@ -154,6 +161,11 @@ const ProductCard = ({ product, priority = false, viewMode = 'grid' }) => {
           {product.isBestseller && (
             <span className="badge badge-bestseller shadow-sm text-[10px] sm:text-xs font-bold px-2 py-0.5">
               {STRINGS.PRODUCT.BESTSELLER}
+            </span>
+          )}
+          {isLowStock && (
+            <span className="bg-amber-500/95 text-white rounded-full shadow-sm text-[10px] font-bold px-2 py-0.5">
+              متبقي {numericStock} فقط!
             </span>
           )}
         </div>

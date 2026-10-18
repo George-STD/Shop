@@ -55,8 +55,12 @@ router.get('/tree', cacheCategories, async (req, res) => {
       }
     }
 
+    const visited = new Set();
     const attachChildren = (node) => {
-      const children = childrenByParent.get(node._id.toString()) || [];
+      const idStr = node._id.toString();
+      if (visited.has(idStr)) return;
+      visited.add(idStr);
+      const children = childrenByParent.get(idStr) || [];
       node.children = children;
       for (const child of children) {
         attachChildren(child);
@@ -126,7 +130,11 @@ router.get('/slug/:slug', cacheCategories, async (req, res) => {
 // @access  Public
 router.get('/:id', cacheCategories, async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id)
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return sendNotFound(res, MESSAGES.CATEGORIES.NOT_FOUND);
+    }
+    const category = await Category.findOne({ _id: req.params.id, isActive: true })
       .populate('parent', 'name slug')
       .lean();
 
@@ -146,6 +154,10 @@ router.get('/:id', cacheCategories, async (req, res) => {
 // @access  Public
 router.get('/:id/subcategories', cacheCategories, async (req, res) => {
   try {
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return sendNotFound(res, MESSAGES.CATEGORIES.NOT_FOUND);
+    }
     const subcategories = await Category.find({ 
       parent: req.params.id,
       isActive: true 
@@ -159,3 +171,4 @@ router.get('/:id/subcategories', cacheCategories, async (req, res) => {
 });
 
 module.exports = router;
+

@@ -2,21 +2,59 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import Image from 'next/image';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { FiSearch, FiUser, FiHeart, FiShoppingBag, FiMenu, FiSettings } from 'react-icons/fi';
+import { FiSearch, FiUser, FiHeart, FiShoppingBag, FiMenu, FiSettings, FiArrowLeft, FiTrendingUp } from 'react-icons/fi';
 import { useCartStore, useWishlistStore, useAuthStore, useUIStore } from '../../store';
-import { categoriesAPI } from '../../services/api';
-import { STRINGS } from '../../constants';
+import { categoriesAPI, productsAPI } from '../../services/api';
+import { STRINGS, SITE_CONFIG } from '../../constants';
+import { optimizeCloudinaryUrl } from '../../utils/optimizeImage';
+
+const POPULAR_SEARCHES = ['بوكس هدايا', 'ساعة', 'مج', 'شوكولاتة', 'عيد ميلاد', 'خطوبة'];
 
 /**
- * Granularly Optimized & Accessible Main Header
+ * Granularly Optimized & Accessible Main Header with Live Instant Search
  */
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const scrolledRef = useRef(false);
+  const desktopSearchRef = useRef(null);
+  const mobileSearchRef = useRef(null);
+
+  // Debounce search query for live autocomplete
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery.trim());
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Close autocomplete on outside click or Escape
+  useEffect(() => {
+    if (!isSearchFocused) return undefined;
+    const handleOutsideClick = (e) => {
+      const inDesktop = desktopSearchRef.current && desktopSearchRef.current.contains(e.target);
+      const inMobile = mobileSearchRef.current && mobileSearchRef.current.contains(e.target);
+      if (!inDesktop && !inMobile) {
+        setIsSearchFocused(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isSearchFocused]);
 
   // 1. Atomic Zustand Selectors (Prevents re-renders across the entire navbar tree on unrelated state changes)
   const cartCount = useCartStore((state) =>
@@ -70,11 +108,24 @@ const Header = () => {
       if (query) {
         navigate(`/products?search=${encodeURIComponent(query)}`);
         setSearchQuery('');
+        setIsSearchFocused(false);
         setIsSearchVisible(false);
       }
     },
     [searchQuery, navigate]
   );
+
+  // Live search autocomplete query
+  const { data: liveSearchData, isFetching: isSearchingLive } = useQuery({
+    queryKey: ['live-search', debouncedQuery],
+    queryFn: () =>
+      productsAPI.getAll({ search: debouncedQuery, limit: 6 }).then((res) => res.data),
+    enabled: isSearchFocused && debouncedQuery.length >= 2,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const liveProducts = liveSearchData?.data || [];
+  const liveTotal = liveSearchData?.pagination?.total || liveProducts.length;
 
   const { data: dbCategories } = useQuery({
     queryKey: ['categories'],
@@ -166,7 +217,13 @@ const Header = () => {
           </Link>
 
           {/* Desktop Search Form */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-xl mx-4" role="search" aria-label="البحث عن المنتجات">
+          <form
+            ref={desktopSearchRef}
+            onSubmit={handleSearch}
+            className="hidden md:flex flex-1 max-w-xl mx-4 relative"
+            role="search"
+            aria-label="البحث عن المنتجات"
+          >
             <div className="relative w-full group">
               <label htmlFor="desktop-search" className="sr-only">
                 {STRINGS.SEARCH.PLACEHOLDER}
@@ -175,8 +232,13 @@ const Header = () => {
                 id="desktop-search"
                 name="search"
                 type="search"
+                autoComplete="off"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchFocused(true);
+                }}
                 placeholder={STRINGS.SEARCH.PLACEHOLDER}
                 className="w-full pl-14 pr-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:bg-white transition-all duration-300 group-hover:border-purple-300 text-sm"
               />
@@ -188,6 +250,128 @@ const Header = () => {
                 <FiSearch size={18} aria-hidden="true" />
               </button>
             </div>
+
+            {/* Live Instant Search Autocomplete Dropdown (Desktop) */}
+            {isSearchFocused && (
+              <div className="absolute top-full right-0 left-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-fadeInUp">
+                {debouncedQuery.length < 2 ? (
+                  <div className="p-4">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 mb-2.5">
+                      <FiTrendingUp className="text-purple-600" aria-hidden="true" />
+                      <span>عمليات بحث شائعة</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {POPULAR_SEARCHES.map((term) => (
+                        <button
+                          key={term}
+                          type="button"
+                          onClick={() => {
+                            setSearchQuery(term);
+                            setIsSearchFocused(false);
+                            navigate(`/products?search=${encodeURIComponent(term)}`);
+                          }}
+                          className="px-3 py-1.5 bg-purple-50/70 hover:bg-purple-100 text-purple-700 text-xs font-medium rounded-full border border-purple-100 transition-colors"
+                        >
+                          {term}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : isSearchingLive ? (
+                  <div className="p-6 text-center text-gray-500 text-sm flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                    <span>جاري البحث عن أفضل الهدايا...</span>
+                  </div>
+                ) : liveProducts.length === 0 ? (
+                  <div className="p-5 text-center">
+                    <p className="text-sm font-semibold text-gray-700">
+                      لم نجد نتائج مطابقة لـ «{debouncedQuery}»
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      جرب البحث بكلمات أخرى أو استخدم باحث الهدايا الذكي
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                      {liveProducts.map((product) => {
+                        const thumbUrl =
+                          optimizeCloudinaryUrl(product.images?.[0]?.url, 120) ||
+                          product.images?.[0]?.url ||
+                          SITE_CONFIG.PLACEHOLDER_IMAGE;
+                        const isOut =
+                          product.stock !== null &&
+                          product.stock !== undefined &&
+                          product.stock !== '' &&
+                          Number.isFinite(Number(product.stock)) &&
+                          Number(product.stock) <= 0;
+
+                        return (
+                          <Link
+                            key={product._id}
+                            to={`/product/${product.slug || product._id}`}
+                            onClick={() => {
+                              setIsSearchFocused(false);
+                              setSearchQuery('');
+                            }}
+                            className="flex items-center gap-3 p-3 hover:bg-purple-50/60 transition-colors group/item"
+                          >
+                            <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
+                              <Image
+                                src={thumbUrl}
+                                alt={product.name}
+                                fill
+                                sizes="48px"
+                                className="object-cover group-hover/item:scale-105 transition-transform"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-800 group-hover/item:text-purple-700 truncate">
+                                {product.name}
+                              </p>
+                              <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+                                {product.rating?.count > 0 && (
+                                  <span className="text-amber-500 font-bold">
+                                    ★ {Number(product.rating.average || 0).toFixed(1)}
+                                  </span>
+                                )}
+                                {isOut ? (
+                                  <span className="text-red-500 font-semibold">نفذت الكمية</span>
+                                ) : (
+                                  <span className="text-emerald-600 font-medium">متوفر</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-left flex-shrink-0">
+                              <span className="text-sm font-extrabold text-purple-700 block">
+                                <bdi>{new Intl.NumberFormat('ar-EG').format(product.price)}</bdi>{' '}
+                                <span className="text-[10px] font-normal text-gray-500">
+                                  {STRINGS.PRODUCT.CURRENCY}
+                                </span>
+                              </span>
+                              {product.oldPrice > product.price && (
+                                <span className="text-[11px] text-gray-400 line-through block">
+                                  <bdi>{new Intl.NumberFormat('ar-EG').format(product.oldPrice)}</bdi>
+                                </span>
+                              )}
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 px-4 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold flex items-center justify-center gap-1.5 border-t border-purple-100 transition-colors"
+                    >
+                      <span>
+                        عرض كل النتائج لـ «{debouncedQuery}» ({liveTotal})
+                      </span>
+                      <FiArrowLeft size={14} aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </form>
 
           {/* Action Icons */}
@@ -286,9 +470,10 @@ const Header = () => {
         {/* Mobile Search Input Row */}
         {isSearchVisible && (
           <form
+            ref={mobileSearchRef}
             id="mobile-search-form"
             onSubmit={handleSearch}
-            className="md:hidden mt-3 animate-fadeInUp"
+            className="md:hidden mt-3 animate-fadeInUp relative"
             role="search"
             aria-label="البحث عن المنتجات للهواتف"
           >
@@ -300,8 +485,13 @@ const Header = () => {
                 id="mobile-search"
                 name="search"
                 type="search"
+                autoComplete="off"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchFocused(true);
+                }}
                 placeholder={STRINGS.SEARCH.PLACEHOLDER}
                 className="w-full pl-14 pr-5 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all text-sm"
                 autoFocus
@@ -314,6 +504,69 @@ const Header = () => {
                 <FiSearch size={18} aria-hidden="true" />
               </button>
             </div>
+
+            {/* Live Instant Search Autocomplete Dropdown (Mobile) */}
+            {isSearchFocused && debouncedQuery.length >= 2 && (
+              <div className="absolute top-full right-0 left-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
+                {isSearchingLive ? (
+                  <div className="p-4 text-center text-gray-500 text-xs flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                    <span>جاري البحث...</span>
+                  </div>
+                ) : liveProducts.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-gray-500">
+                    لم نجد نتائج مطابقة لـ «{debouncedQuery}»
+                  </div>
+                ) : (
+                  <div>
+                    <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                      {liveProducts.map((product) => {
+                        const thumbUrl =
+                          optimizeCloudinaryUrl(product.images?.[0]?.url, 120) ||
+                          product.images?.[0]?.url ||
+                          SITE_CONFIG.PLACEHOLDER_IMAGE;
+                        return (
+                          <Link
+                            key={product._id}
+                            to={`/product/${product.slug || product._id}`}
+                            onClick={() => {
+                              setIsSearchFocused(false);
+                              setIsSearchVisible(false);
+                              setSearchQuery('');
+                            }}
+                            className="flex items-center gap-3 p-2.5 hover:bg-purple-50/60 transition-colors"
+                          >
+                            <div className="relative w-11 h-11 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                              <Image
+                                src={thumbUrl}
+                                alt={product.name}
+                                fill
+                                sizes="44px"
+                                className="object-cover"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-gray-800 truncate">{product.name}</p>
+                              <span className="text-xs font-bold text-purple-700">
+                                <bdi>{new Intl.NumberFormat('ar-EG').format(product.price)}</bdi>{' '}
+                                {STRINGS.PRODUCT.CURRENCY}
+                              </span>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full py-2 px-3 bg-purple-50 text-purple-700 text-xs font-bold flex items-center justify-center gap-1 border-t border-purple-100"
+                    >
+                      <span>عرض كل النتائج ({liveTotal})</span>
+                      <FiArrowLeft size={13} aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </form>
         )}
       </div>
@@ -344,8 +597,8 @@ const Header = () => {
             {categories.map((category) => {
               const isCategoryActive =
                 location.pathname === '/products' &&
-                category.slug &&
-                location.search.includes(`category=${encodeURIComponent(category.slug)}`);
+                Boolean(category.slug) &&
+                new URLSearchParams(location.search).get('category') === category.slug;
               return (
                 <li key={category.slug || category._id} role="none" className="shrink-0">
                   <Link

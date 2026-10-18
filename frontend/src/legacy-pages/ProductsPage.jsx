@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { FiGrid, FiList, FiFilter, FiX, FiChevronDown } from 'react-icons/fi';
+import { FiGrid, FiList, FiFilter, FiX, FiStar } from 'react-icons/fi';
 import { productsAPI, categoriesAPI, occasionsAPI } from '../services/api';
 import ProductCard from '../components/product/ProductCard';
 import { STRINGS } from '../constants';
@@ -25,6 +25,8 @@ const ProductsPage = ({ initialData }) => {
   const featured = searchParams.get('featured') || '';
   const bestseller = searchParams.get('bestseller') || '';
   const newArrivals = searchParams.get('newArrivals') || searchParams.get('new') || '';
+  const inStock = searchParams.get('inStock') || '';
+  const minRating = searchParams.get('minRating') || '';
 
   // Close mobile filters on Escape and lock body scroll
   useEffect(() => {
@@ -77,7 +79,9 @@ const ProductsPage = ({ initialData }) => {
     !isReadyBox &&
     !featured &&
     !bestseller &&
-    !newArrivals;
+    !newArrivals &&
+    !inStock &&
+    !minRating;
 
   // Fetch products - use categorySlug directly
   const { data: productsData, isLoading } = useQuery({
@@ -97,6 +101,8 @@ const ProductsPage = ({ initialData }) => {
         featured,
         bestseller,
         newArrivals,
+        inStock,
+        minRating,
       },
     ],
     queryFn: () =>
@@ -115,6 +121,8 @@ const ProductsPage = ({ initialData }) => {
           featured: featured === 'true' ? 'true' : undefined,
           bestseller: bestseller === 'true' ? 'true' : undefined,
           newArrivals: newArrivals === 'true' ? 'true' : undefined,
+          inStock: inStock === 'true' ? 'true' : undefined,
+          minRating: minRating || undefined,
         })
         .then((res) => res.data),
     initialData: isDefaultCatalogQuery ? initialData?.productsData : undefined,
@@ -200,18 +208,24 @@ const ProductsPage = ({ initialData }) => {
     return '';
   };
 
-  const hasActiveFilters = categorySlug || minPrice || maxPrice || occasion || recipient || featured || bestseller || newArrivals;
+  const hasActiveFilters =
+    categorySlug ||
+    minPrice ||
+    maxPrice ||
+    occasion ||
+    recipient ||
+    featured ||
+    bestseller ||
+    newArrivals ||
+    inStock ||
+    minRating;
 
-  // Page title and description
+  // Page title
   const pageTitle = categoryInfo?.name
     ? `${categoryInfo.name} | For You`
     : search
       ? `${STRINGS.PRODUCTS_PAGE.SEARCH_RESULTS}: ${search} | For You`
       : `${STRINGS.PRODUCTS_PAGE.ALL_PRODUCTS} | For You`;
-
-  const pageDescription =
-    categoryInfo?.seo?.metaDescription ||
-    STRINGS.PRODUCTS_PAGE.SHOP_ALL;
 
   useEffect(() => {
     if (typeof document !== 'undefined' && pageTitle) {
@@ -349,7 +363,7 @@ const ProductsPage = ({ initialData }) => {
                 )}
 
                 {/* Recipients */}
-                <div>
+                <div className="mb-6">
                   <h3 className="font-medium text-gray-700 mb-3">{STRINGS.PRODUCTS_PAGE.RECIPIENT}</h3>
                   <div className="flex flex-wrap gap-2">
                     {recipients.map((rec) => (
@@ -366,6 +380,52 @@ const ProductsPage = ({ initialData }) => {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Rating Filter (Amazon-style) */}
+                <div className="mb-6">
+                  <h3 className="font-medium text-gray-700 mb-3">تقييم العملاء</h3>
+                  <div className="space-y-1.5">
+                    {[4, 3].map((stars) => {
+                      const isSelected = minRating === String(stars);
+                      return (
+                        <button
+                          key={stars}
+                          type="button"
+                          onClick={() => updateFilter('minRating', isSelected ? '' : String(stars))}
+                          className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm border transition-all ${
+                            isSelected
+                              ? 'bg-amber-50 border-amber-400 text-amber-900 font-bold'
+                              : 'border-transparent text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center text-yellow-400">
+                            {[...Array(5)].map((_, i) => (
+                              <FiStar
+                                key={i}
+                                size={14}
+                                className={i < stars ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+                              />
+                            ))}
+                          </div>
+                          <span>{stars} نجوم فأكثر</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Availability Filter */}
+                <div>
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={inStock === 'true'}
+                      onChange={(e) => updateFilter('inStock', e.target.checked ? 'true' : '')}
+                      className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">متوفر في المخزون فقط</span>
+                  </label>
                 </div>
               </div>
             </aside>
@@ -509,6 +569,30 @@ const ProductsPage = ({ initialData }) => {
                         onClick={() => updateFilter('newArrivals', '')}
                         className="mr-1.5 text-gray-500 hover:text-red-500 focus:outline-none"
                         aria-label="إزالة فلتر أحدث المنتجات"
+                      >
+                        <FiX size={14} />
+                      </button>
+                    </span>
+                  )}
+                  {inStock === 'true' && (
+                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-800 px-3 py-1 rounded-full text-sm border border-emerald-200">
+                      متوفر في المخزون
+                      <button
+                        onClick={() => updateFilter('inStock', '')}
+                        className="mr-1.5 text-gray-500 hover:text-red-500 focus:outline-none"
+                        aria-label="إزالة فلتر التوفر في المخزون"
+                      >
+                        <FiX size={14} />
+                      </button>
+                    </span>
+                  )}
+                  {minRating && (
+                    <span className="inline-flex items-center gap-1 bg-gradient-to-r from-yellow-100 to-amber-100 text-amber-900 px-3 py-1 rounded-full text-sm border border-amber-200">
+                      {minRating}★ فأكثر
+                      <button
+                        onClick={() => updateFilter('minRating', '')}
+                        className="mr-1.5 text-gray-500 hover:text-red-500 focus:outline-none"
+                        aria-label="إزالة فلتر التقييم"
                       >
                         <FiX size={14} />
                       </button>
@@ -727,6 +811,49 @@ const ProductsPage = ({ initialData }) => {
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  {/* Rating Filter */}
+                  <div>
+                    <h3 className="font-medium text-gray-700 mb-3">تقييم العملاء</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {[4, 3].map((stars) => {
+                        const isSelected = minRating === String(stars);
+                        return (
+                          <button
+                            key={stars}
+                            type="button"
+                            onClick={() => {
+                              updateFilter('minRating', isSelected ? '' : String(stars));
+                              setShowFilters(false);
+                            }}
+                            className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm ${
+                              isSelected
+                                ? 'bg-amber-50 border-amber-400 text-amber-900 font-bold'
+                                : 'border-gray-300 text-gray-700'
+                            }`}
+                          >
+                            <FiStar className="fill-yellow-400 text-yellow-400" size={14} />
+                            <span>{stars} نجوم فأكثر</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Availability Filter */}
+                  <div>
+                    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={inStock === 'true'}
+                        onChange={(e) => {
+                          updateFilter('inStock', e.target.checked ? 'true' : '');
+                        }}
+                        className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700">متوفر في المخزون فقط</span>
+                    </label>
                   </div>
                 </div>
               </div>

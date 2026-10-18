@@ -238,8 +238,8 @@ const MobileMenu = () => {
                 const name = category.name;
                 const isCategoryActive =
                   location.pathname === '/products' &&
-                  slug &&
-                  location.search.includes(`category=${encodeURIComponent(slug)}`);
+                  Boolean(slug) &&
+                  new URLSearchParams(location.search).get('category') === slug;
                 return (
                   <li key={slug || category._id} role="none">
                     <Link

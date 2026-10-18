@@ -34,7 +34,7 @@ exports.approveReview = asyncHandler(async (req, res) => {
   const existingReview = await Review.findById(req.params.id);
   if (!existingReview) return res.status(404).json({ success: false, message: 'التقييم غير موجود' });
 
-  const isApproved = Boolean(req.body.isApproved);
+  const isApproved = req.body.isApproved === true || req.body.isApproved === 'true';
   const review = await Review.findByIdAndUpdate(
     req.params.id,
     { isApproved },

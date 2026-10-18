@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { STORAGE_KEYS } from '../constants';
 
 const parseStock = (value) => {
+  if (value === null || value === undefined || value === '') return null;
   const stock = Number(value);
   if (!Number.isFinite(stock)) return null;
   return Math.max(0, Math.floor(stock));

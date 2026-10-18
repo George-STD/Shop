@@ -39,7 +39,7 @@ const LoyaltyPointsCard = ({ user, loyaltySettings }) => {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold text-yellow-300">
               <FiAward className="w-4 h-4" />
-              برنامج نقاط هدايا للمكافآت
+              برنامج نقاط فور يو للمكافآت
             </div>
             <h2 className="text-3xl font-extrabold tracking-tight">
               {points.toLocaleString('ar-EG')} <span className="text-lg font-medium text-purple-200">نقطة</span>

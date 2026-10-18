@@ -202,8 +202,11 @@ const CartPage = () => {
                         <button
                           onClick={() => increaseQuantity(item)}
                           aria-label={`زيادة كمية ${item.name}`}
-                          className="p-2 hover:bg-gray-100"
+                          className="p-2 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
                           disabled={
+                            (item.variantStock ?? item.stock) !== null &&
+                            (item.variantStock ?? item.stock) !== undefined &&
+                            (item.variantStock ?? item.stock) !== '' &&
                             Number.isFinite(Number(item.variantStock ?? item.stock)) &&
                             item.quantity >= Number(item.variantStock ?? item.stock)
                           }
@@ -258,6 +261,15 @@ const CartPage = () => {
                 <h2 className="text-xl font-bold text-gray-800 mb-6">{STRINGS.CART.ORDER_SUMMARY}</h2>
 
                 <div className="space-y-4 mb-6">
+                  {(() => {
+                    const customBoxesCount = new Set(items.filter((i) => i.boxId).map((i) => i.boxId)).size;
+                    return customBoxesCount > 0 ? (
+                      <div className="flex justify-between text-sm text-purple-600">
+                        <span>تغليف البوكس المخصص ({customBoxesCount})</span>
+                        <span>{new Intl.NumberFormat('ar-EG').format(customBoxesCount * BUSINESS_CONFIG.BOX_BASE_PRICE_EGP)} {STRINGS.PRODUCT.CURRENCY} (مشمول)</span>
+                      </div>
+                    ) : null;
+                  })()}
                   <div className="flex justify-between">
                     <span className="text-gray-600">{STRINGS.CART.SUBTOTAL}</span>
                     <span>{new Intl.NumberFormat('ar-EG').format(subtotal)} {STRINGS.PRODUCT.CURRENCY}</span>

@@ -12,6 +12,35 @@ const parseStock = (value) => {
 const getItemKey = ({ id, selectedSize, selectedColor, selectedShape, _variantsKey, boxId }) =>
   [id, selectedSize, selectedColor, selectedShape, _variantsKey || '', boxId || ''].join('::');
 
+const unwrapAndDedupeBoxItems = (items, boxId) => {
+  if (!boxId) return items;
+  const remainingBoxQty = items
+    .filter((i) => i.boxId === boxId)
+    .reduce((sum, i) => sum + (Number(i.quantity) || 1), 0);
+
+  if (remainingBoxQty > 0 && remainingBoxQty < BUSINESS_CONFIG.BOX_MIN_ITEMS) {
+    const unwrapped = items.map((i) =>
+      i.boxId === boxId ? { ...i, boxId: undefined, boxDiscount: undefined } : i
+    );
+    const mergedMap = new Map();
+    for (const item of unwrapped) {
+      const key = getItemKey(item);
+      if (mergedMap.has(key)) {
+        const existing = mergedMap.get(key);
+        const limit = parseStock(existing.variantStock ?? existing.stock) ?? Number.MAX_SAFE_INTEGER;
+        mergedMap.set(key, {
+          ...existing,
+          quantity: Math.min(limit, (Number(existing.quantity) || 1) + (Number(item.quantity) || 1)),
+        });
+      } else {
+        mergedMap.set(key, item);
+      }
+    }
+    return Array.from(mergedMap.values());
+  }
+  return items;
+};
+
 const getPrice = (item) => {
   const discountPercent = item.boxId
     ? item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE
@@ -59,9 +88,17 @@ export const useCartStore = create(
           return { success: false, reason: 'out_of_stock', maxStock: 0 };
         }
 
-        const variantsKey = options.selectedVariants
-          ? JSON.stringify(options.selectedVariants)
-          : '';
+        const keyParts = [];
+        if (options.selectedVariants && Object.keys(options.selectedVariants).length > 0) {
+          keyParts.push(JSON.stringify(options.selectedVariants));
+        }
+        if (Array.isArray(options.addons) && options.addons.length > 0) {
+          keyParts.push('addons:' + options.addons.map((a) => a?.name || '').sort().join(','));
+        }
+        if (Array.isArray(options.boxSelections) && options.boxSelections.length > 0) {
+          keyParts.push('boxSel:' + options.boxSelections.map((s) => `${s?.slotLabel}:${s?.chosenOption}`).join(','));
+        }
+        const variantsKey = keyParts.join('|');
         const incoming = {
           id: product._id,
           name: product.name,
@@ -142,22 +179,39 @@ export const useCartStore = create(
       },
 
       removeItem: (id, selectedSize, selectedColor, selectedShape, _variantsKey, boxId) => {
-        const targetKey = getItemKey({ id, selectedSize, selectedColor, selectedShape, _variantsKey, boxId });
+        let size = selectedSize;
+        let color = selectedColor;
+        let shape = selectedShape;
+        let vKey = _variantsKey;
+        let bId = boxId;
+
+        if (selectedSize && typeof selectedSize === 'object' && !Array.isArray(selectedSize)) {
+          size = selectedSize.selectedSize;
+          color = selectedSize.selectedColor;
+          shape = selectedSize.selectedShape;
+          vKey = selectedSize._variantsKey;
+          bId = selectedSize.boxId;
+        }
+
+        const targetKey = getItemKey({
+          id,
+          selectedSize: size,
+          selectedColor: color,
+          selectedShape: shape,
+          _variantsKey: vKey,
+          boxId: bId,
+        });
+
         set((state) => {
-          let items = state.items.filter((item) => getItemKey(item) !== targetKey);
+          let items = state.items.filter((item) => {
+            if (getItemKey(item) === targetKey) return false;
+            if (bId && item.id === id && item.boxId === bId && !size && !color && !shape) return false;
+            return true;
+          });
           if (items.length === state.items.length) return state;
 
-          // If removing an item from a custom box drops that box below BOX_MIN_ITEMS, unwrap remaining items into normal cart items
-          if (boxId) {
-            const remainingBoxQty = items
-              .filter((i) => i.boxId === boxId)
-              .reduce((sum, i) => sum + (Number(i.quantity) || 1), 0);
-            if (remainingBoxQty > 0 && remainingBoxQty < BUSINESS_CONFIG.BOX_MIN_ITEMS) {
-              items = items.map((i) =>
-                i.boxId === boxId ? { ...i, boxId: undefined, boxDiscount: undefined } : i
-              );
-            }
-          }
+          // If removing an item from a custom box drops that box below BOX_MIN_ITEMS, unwrap and merge remaining items
+          items = unwrapAndDedupeBoxItems(items, bId);
           return { items };
         });
       },
@@ -173,7 +227,7 @@ export const useCartStore = create(
             (sum, item) => (item.id === id && getItemKey(item) !== targetKey ? sum + (Number(item.quantity) || 0) : sum),
             0
           );
-          const items = state.items.map((item) => {
+          let items = state.items.map((item) => {
             if (getItemKey(item) !== targetKey) return item;
             const productStockLimit = parseStock(item.stock);
             const variantStockLimit = parseStock(item.variantStock);
@@ -195,7 +249,9 @@ export const useCartStore = create(
             changed = true;
             return { ...item, quantity: nextQuantity };
           });
-          return changed ? { items } : state;
+          if (!changed) return state;
+          items = unwrapAndDedupeBoxItems(items, boxId);
+          return { items };
         });
         return result;
       },

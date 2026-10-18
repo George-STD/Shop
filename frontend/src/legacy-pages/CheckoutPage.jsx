@@ -526,7 +526,24 @@ const OrderReviewStep = memo(function OrderReviewStep({
                 </div>
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
                   <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{item.name}</p>
-                  <p className="text-[11px] text-gray-500">
+                  <div className="flex flex-wrap gap-1 mt-0.5 text-[10px] text-gray-500">
+                    {item.selectedSize && <span className="bg-white px-1.5 py-0.5 rounded border border-gray-200">{item.selectedSize}</span>}
+                    {item.selectedColor && <span className="bg-white px-1.5 py-0.5 rounded border border-gray-200">{item.selectedColor}</span>}
+                    {item.selectedShape && <span className="bg-white px-1.5 py-0.5 rounded border border-gray-200">{item.selectedShape}</span>}
+                    {item.selectedVariants &&
+                      Object.entries(item.selectedVariants).map(([k, v]) => (
+                        <span key={k} className="bg-white px-1.5 py-0.5 rounded border border-gray-200">
+                          {k}: {v}
+                        </span>
+                      ))}
+                    {Array.isArray(item.addons) &&
+                      item.addons.map((addon, aIdx) => (
+                        <span key={aIdx} className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-100">
+                          + {addon.name}
+                        </span>
+                      ))}
+                  </div>
+                  <p className="text-[11px] text-gray-500 mt-0.5">
                     {STRINGS.CART.QUANTITY} {item.quantity} × {unitPrice} {STRINGS.PRODUCT.CURRENCY}
                   </p>
                 </div>
@@ -710,7 +727,20 @@ const CheckoutPage = () => {
     return getShippingCost(formData.governorate);
   }, [formData.governorate]);
   const egpPerPoint = loyaltySettings?.egpPerPointRedeemed || 0.1;
-  const pointsDiscount = useMemo(() => pointsToRedeem * egpPerPoint, [pointsToRedeem, egpPerPoint]);
+  const maxRedeemablePoints = useMemo(() => {
+    const userPoints = user?.loyaltyPoints || 0;
+    if (!userPoints || egpPerPoint <= 0) return 0;
+    const maxPointsForOrder = Math.floor((subtotal + shippingCost) / egpPerPoint);
+    return Math.min(userPoints, maxPointsForOrder);
+  }, [user?.loyaltyPoints, subtotal, shippingCost, egpPerPoint]);
+  const effectivePointsToRedeem = useMemo(
+    () => (pointsToRedeem > 0 ? Math.min(pointsToRedeem, maxRedeemablePoints) : 0),
+    [pointsToRedeem, maxRedeemablePoints]
+  );
+  const pointsDiscount = useMemo(
+    () => Math.min(subtotal + shippingCost, effectivePointsToRedeem * egpPerPoint),
+    [subtotal, shippingCost, effectivePointsToRedeem, egpPerPoint]
+  );
   const total = useMemo(
     () => Math.max(0, subtotal + shippingCost - pointsDiscount),
     [subtotal, shippingCost, pointsDiscount]
@@ -817,7 +847,7 @@ const CheckoutPage = () => {
         customerNote: formData.customerNote,
         guestEmail: formData.email,
         idempotencyKey,
-        pointsToRedeem: pointsToRedeem > 0 ? pointsToRedeem : undefined,
+        pointsToRedeem: effectivePointsToRedeem > 0 ? effectivePointsToRedeem : undefined,
       };
 
       const response = await ordersAPI.create(orderData);
@@ -853,7 +883,7 @@ const CheckoutPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [clearCart, formData, idempotencyKey, isOnline, items, navigate, pointsToRedeem, total]);
+  }, [clearCart, effectivePointsToRedeem, formData, idempotencyKey, isOnline, items, navigate, total]);
 
   if (!isHydrated) {
     return (
@@ -985,47 +1015,66 @@ const CheckoutPage = () => {
 
                 {/* Items Mini List with Next.js Image */}
                 <div className="space-y-3.5 max-h-80 overflow-y-auto pr-1">
-                  {items.map((item, index) => (
-                    <div key={`${item.id}-${index}`} className="flex gap-3 items-center">
-                      <div className="relative w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-200/60">
-                        <Image
-                          src={item.image || SITE_CONFIG.PLACEHOLDER_IMAGE}
-                          alt={item.name}
-                          fill
-                          sizes="56px"
-                          className="object-cover"
-                        />
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-purple-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
-                          {item.quantity}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{item.name}</p>
-                        {item.boxId && (
-                          <span className="inline-block bg-purple-100 text-purple-700 text-[9px] font-bold px-1.5 py-0.2 rounded-full mt-0.5">
-                            {STRINGS.CART.IN_BOX}
+                  {items.map((item, index) => {
+                    const unitPrice =
+                      Math.round(
+                        (item.price *
+                          (1 -
+                            (item.boxId
+                              ? item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE
+                              : 0) /
+                              100) +
+                          (Array.isArray(item.addons)
+                            ? item.addons.reduce((s, a) => s + (Number(a?.price) || 0), 0)
+                            : 0)) *
+                          100
+                      ) / 100;
+                    const lineTotal = Math.round(unitPrice * (item.quantity || 1) * 100) / 100;
+
+                    return (
+                      <div key={`${item.id}-${index}`} className="flex gap-3 items-center">
+                        <div className="relative w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-200/60">
+                          <Image
+                            src={item.image || SITE_CONFIG.PLACEHOLDER_IMAGE}
+                            alt={item.name}
+                            fill
+                            sizes="56px"
+                            className="object-cover"
+                          />
+                          <span className="absolute -top-1 -right-1 w-5 h-5 bg-purple-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
+                            {item.quantity}
                           </span>
-                        )}
-                        <p className="text-xs text-gray-500 font-medium">
-                          <bdi>
-                            {Math.round(
-                              (item.price *
-                                (1 -
-                                  (item.boxId
-                                    ? item.boxDiscount ?? BUSINESS_CONFIG.BOX_DISCOUNT_PERCENTAGE
-                                    : 0) /
-                                    100) +
-                                (Array.isArray(item.addons)
-                                  ? item.addons.reduce((s, a) => s + (Number(a?.price) || 0), 0)
-                                  : 0)) *
-                                100
-                            ) / 100}
-                          </bdi>{' '}
-                          {STRINGS.PRODUCT.CURRENCY}
-                        </p>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">{item.name}</p>
+                          {item.boxId && (
+                            <span className="inline-block bg-purple-100 text-purple-700 text-[9px] font-bold px-1.5 py-0.2 rounded-full mt-0.5">
+                              {STRINGS.CART.IN_BOX}
+                            </span>
+                          )}
+                          <div className="flex flex-wrap gap-1 mt-0.5 text-[10px] text-gray-500">
+                            {item.selectedSize && <span className="bg-gray-100 px-1.5 py-0.5 rounded">{item.selectedSize}</span>}
+                            {item.selectedColor && <span className="bg-gray-100 px-1.5 py-0.5 rounded">{item.selectedColor}</span>}
+                            {item.selectedShape && <span className="bg-gray-100 px-1.5 py-0.5 rounded">{item.selectedShape}</span>}
+                            {item.selectedVariants &&
+                              Object.entries(item.selectedVariants).map(([k, v]) => (
+                                <span key={k} className="bg-gray-100 px-1.5 py-0.5 rounded">
+                                  {k}: {v}
+                                </span>
+                              ))}
+                          </div>
+                          <p className="text-xs text-gray-500 font-medium mt-0.5">
+                            <bdi>{lineTotal}</bdi> {STRINGS.PRODUCT.CURRENCY}
+                            {item.quantity > 1 && (
+                              <span className="text-[10px] text-gray-400 mr-1">
+                                ({item.quantity} × {unitPrice})
+                              </span>
+                            )}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Loyalty Points Redemption Widget */}
@@ -1046,9 +1095,9 @@ const CheckoutPage = () => {
                         <input
                           type="checkbox"
                           id="redeemPoints"
-                          checked={pointsToRedeem > 0}
+                          checked={effectivePointsToRedeem > 0}
                           onChange={(e) => {
-                            setPointsToRedeem(e.target.checked ? user.loyaltyPoints : 0);
+                            setPointsToRedeem(e.target.checked ? maxRedeemablePoints : 0);
                           }}
                           className="w-4 h-4 mt-0.5 flex-shrink-0 text-purple-600 rounded focus:ring-purple-500 cursor-pointer"
                         />
@@ -1056,8 +1105,8 @@ const CheckoutPage = () => {
                           htmlFor="redeemPoints"
                           className="text-xs text-gray-700 font-medium cursor-pointer leading-relaxed"
                         >
-                          خصم نقاط الرصيد ({user.loyaltyPoints} نقطة = -
-                          {(user.loyaltyPoints * egpPerPoint).toFixed(2)} {STRINGS.PRODUCT.CURRENCY})
+                          خصم نقاط الرصيد ({maxRedeemablePoints} نقطة = -
+                          {Math.min(subtotal + shippingCost, maxRedeemablePoints * egpPerPoint).toFixed(2)} {STRINGS.PRODUCT.CURRENCY})
                         </label>
                       </div>
                     </div>

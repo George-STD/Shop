@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 
 const WishlistPage = () => {
   const navigate = useNavigate();
-  const { items, removeItem, clearWishlist } = useWishlistStore();
+  const { items, removeItem, clearWishlist, _hasHydrated: wishlistHydrated } = useWishlistStore();
   const { addItem } = useCartStore();
   const { isAuthenticated, _hasHydrated } = useAuthStore();
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
@@ -20,7 +20,7 @@ const WishlistPage = () => {
     authAPI.removeFromWishlist(id).catch(() => {});
   };
 
-  if (!_hasHydrated) {
+  if (!_hasHydrated || !wishlistHydrated) {
     return (
       <div className="min-h-[60vh] min-h-[60dvh] flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
@@ -33,6 +33,10 @@ const WishlistPage = () => {
   }
 
   const handleAddToCart = (product) => {
+    if (product.stock === 0) {
+      toast.error(STRINGS.PRODUCT.OUT_OF_STOCK);
+      return;
+    }
     if (product.hasOptions && product.slug) {
       toast('يرجى اختيار المقاس أو اللون المفضل أولاً', { icon: '✨' });
       navigate(`/product/${product.slug}`);
@@ -122,59 +126,68 @@ const WishlistPage = () => {
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {items.map((product) => (
-                <div
-                  key={product.id}
-                  className="bg-white rounded-2xl overflow-hidden shadow-sm group"
-                >
-                  <div className="relative aspect-square overflow-hidden bg-gray-50">
-                    <Image
-                      fill
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                      src={product.image || SITE_CONFIG.PLACEHOLDER_IMAGE}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemove(product.id)}
-                      aria-label={`حذف ${product.name} من المفضلة`}
-                      className="absolute top-3 left-3 p-2 bg-white rounded-full shadow-md text-red-500 hover:bg-red-50 transition-colors"
-                    >
-                      <FiTrash2 />
-                    </button>
-                  </div>
-
-                  <div className="p-4">
-                    <Link to={`/product/${product.slug}`} className="block">
-                      <h3 className="font-medium text-gray-800 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2 line-clamp-2">
-                        {product.name}
-                      </h3>
-                    </Link>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {product.oldPrice && (
-                          <span className="text-gray-400 line-through text-sm">
-                            {product.oldPrice} {STRINGS.PRODUCT.CURRENCY}
-                          </span>
-                        )}
-                        <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                          {product.price} {STRINGS.PRODUCT.CURRENCY}
+              {items.map((product) => {
+                const isOutOfStock = product.stock === 0;
+                return (
+                  <div
+                    key={product.id}
+                    className="bg-white rounded-2xl overflow-hidden shadow-sm group"
+                  >
+                    <div className="relative aspect-square overflow-hidden bg-gray-50">
+                      <Image
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        src={product.image || SITE_CONFIG.PLACEHOLDER_IMAGE}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      {isOutOfStock && (
+                        <span className="absolute top-3 right-3 bg-gray-900/80 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                          {STRINGS.PRODUCT.OUT_OF_STOCK}
                         </span>
-                      </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleRemove(product.id)}
+                        aria-label={`حذف ${product.name} من المفضلة`}
+                        className="absolute top-3 left-3 p-2 bg-white rounded-full shadow-md text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        <FiTrash2 />
+                      </button>
                     </div>
 
-                    <button
-                      onClick={() => handleAddToCart(product)}
-                      className="mt-4 w-full btn-primary flex items-center justify-center gap-2"
-                    >
-                      <FiShoppingCart />
-                      {STRINGS.PRODUCT.ADD_TO_CART}
-                    </button>
+                    <div className="p-4">
+                      <Link to={`/product/${product.slug}`} className="block">
+                        <h3 className="font-medium text-gray-800 hover:text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-2 line-clamp-2">
+                          {product.name}
+                        </h3>
+                      </Link>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {product.oldPrice && (
+                            <span className="text-gray-400 line-through text-sm">
+                              {product.oldPrice} {STRINGS.PRODUCT.CURRENCY}
+                            </span>
+                          )}
+                          <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+                            {product.price} {STRINGS.PRODUCT.CURRENCY}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleAddToCart(product)}
+                        disabled={isOutOfStock}
+                        className="mt-4 w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <FiShoppingCart />
+                        {isOutOfStock ? STRINGS.PRODUCT.OUT_OF_STOCK : STRINGS.PRODUCT.ADD_TO_CART}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

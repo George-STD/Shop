@@ -1,7 +1,7 @@
 const Product = require('../../models/Product');
 const { validationResult } = require('express-validator');
 const asyncHandler = require('../../utils/asyncHandler');
-const { escapeRegex, parsePagination, buildPaginationMeta } = require('../../utils/helpers');
+const { escapeRegex, buildArabicSearchRegex, parsePagination, buildPaginationMeta } = require('../../utils/helpers');
 const logAudit = require('../../utils/auditLogger');
 const { processReadyBoxes } = require('../productController');
 const { bustCatalog } = require('../../middleware/cache');
@@ -24,11 +24,12 @@ exports.getProducts = asyncHandler(async (req, res) => {
   const { page, limit, skip } = parsePagination(req.query, 10);
   const query = {};
 
-  if (search) {
+  if (search && String(search).trim()) {
+    const rx = { $regex: buildArabicSearchRegex(String(search).trim()), $options: 'i' };
     query.$or = [
-      { name: { $regex: escapeRegex(search), $options: 'i' } },
-      { description: { $regex: escapeRegex(search), $options: 'i' } },
-      { sku: { $regex: escapeRegex(search), $options: 'i' } }
+      { name: rx },
+      { description: rx },
+      { sku: rx }
     ];
   }
   if (category) query.category = { $in: [category] };
@@ -70,7 +71,20 @@ exports.createProduct = asyncHandler(async (req, res) => {
   const sku = req.body.sku || ('SKU-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
 
   const filteredData = filterAllowedProductFields(req.body);
-  const product = await Product.create({ ...filteredData, slug: uniqueSlug, sku });
+  let product = await Product.create({ ...filteredData, slug: uniqueSlug, sku });
+
+  if (product.isReadyBox) {
+    const processed = await processReadyBoxes(product.toObject());
+    await Product.updateOne(
+      { _id: product._id },
+      { $set: { price: processed.price, oldPrice: processed.oldPrice, discount: processed.discount, stock: processed.stock } }
+    );
+    product.price = processed.price;
+    product.oldPrice = processed.oldPrice;
+    product.discount = processed.discount;
+    product.stock = processed.stock;
+  }
+
   bustCatalog('products');
   
   await logAudit({
@@ -118,8 +132,33 @@ exports.createBulkProducts = asyncHandler(async (req, res) => {
 exports.updateProduct = asyncHandler(async (req, res) => {
   const updates = filterAllowedProductFields(req.body);
 
+  if (updates.price !== undefined || updates.oldPrice !== undefined) {
+    const existing = await Product.findById(req.params.id).select('price oldPrice').lean();
+    if (existing) {
+      const nextPrice = updates.price !== undefined ? Number(updates.price) : Number(existing.price);
+      const nextOldPrice = updates.oldPrice !== undefined ? Number(updates.oldPrice) : Number(existing.oldPrice);
+      if (nextOldPrice && nextOldPrice > nextPrice && nextPrice >= 0) {
+        updates.discount = Math.min(100, Math.max(0, Math.round(((nextOldPrice - nextPrice) / nextOldPrice) * 100)));
+      } else if (updates.discount === undefined) {
+        updates.discount = 0;
+      }
+    }
+  }
+
   const product = await Product.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
   if (!product) return res.status(404).json({ success: false, message: 'المنتج غير موجود' });
+
+  if (product.isReadyBox) {
+    const processed = await processReadyBoxes(product.toObject());
+    await Product.updateOne(
+      { _id: product._id },
+      { $set: { price: processed.price, oldPrice: processed.oldPrice, discount: processed.discount, stock: processed.stock } }
+    );
+    product.price = processed.price;
+    product.oldPrice = processed.oldPrice;
+    product.discount = processed.discount;
+    product.stock = processed.stock;
+  }
   
   bustCatalog('products');
 

@@ -290,6 +290,15 @@ const productSchema = new mongoose.Schema(
   }
 );
 
+productSchema.pre('save', function (next) {
+  if (this.oldPrice && this.oldPrice > this.price && this.price >= 0) {
+    this.discount = Math.min(100, Math.max(0, Math.round(((this.oldPrice - this.price) / this.oldPrice) * 100)));
+  } else if (this.oldPrice !== undefined && (!this.oldPrice || this.oldPrice <= this.price) && !this.isModified('discount')) {
+    this.discount = 0;
+  }
+  next();
+});
+
 // -----------------------------------------------------------------------------
 // Index Topology (Aligned with Query ESR: Equality, Sort, Range)
 // -----------------------------------------------------------------------------
@@ -313,3 +322,4 @@ productSchema.index({ isActive: 1, 'rating.average': -1 });
 productSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Product', productSchema);
+
