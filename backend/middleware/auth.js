@@ -33,17 +33,35 @@ const extractTokenFromCookies = (req) => {
 };
 
 // =====================================================
-// CLIENT IP EXTRACTION & IPV6 /64 AGGREGATION
+// CLIENT IP EXTRACTION & CANONICAL IPV6 /64 AGGREGATION
 // =====================================================
+const expandIpv6To64Subnet = (ipStr) => {
+  const clean = String(ipStr).split('%')[0].toLowerCase().trim();
+  if (clean === '::1' || clean === '0:0:0:0:0:0:0:1' || clean === '0000:0000:0000:0000:0000:0000:0000:0001') {
+    return '::1';
+  }
+  const halves = clean.split('::');
+  if (halves.length > 2) return clean;
+  const left = halves[0] ? halves[0].split(':').filter(Boolean) : [];
+  const right = halves.length === 2 && halves[1] ? halves[1].split(':').filter(Boolean) : [];
+  const missing = Math.max(0, 8 - (left.length + right.length));
+  const full = [
+    ...left,
+    ...(halves.length === 2 ? Array(missing).fill('0000') : []),
+    ...right,
+  ].slice(0, 8);
+  while (full.length < 4) full.push('0000');
+  return full.slice(0, 4).map((h) => h.padStart(4, '0')).join(':') + '::/64';
+};
+
 const clientIp = (req) => {
-  let ip = req.ip || req.connection?.remoteAddress || '127.0.0.1';
+  let ip = req?.ip || req?.connection?.remoteAddress || '127.0.0.1';
   if (ip.startsWith('::ffff:')) {
     ip = ip.substring(7);
   }
-  // Aggregate IPv6 to /64 subnet (first 4 segments) to prevent 2^64 free identities
+  // Aggregate IPv6 to canonical /64 subnet (expanding compressed "::" notation)
   if (ip.includes(':')) {
-    const parts = ip.split(':');
-    ip = parts.slice(0, 4).join(':') + '::/64';
+    ip = expandIpv6To64Subnet(ip);
   }
   return ip;
 };
@@ -162,12 +180,15 @@ const protect = async (req, res, next) => {
         }
       }
 
+      // Freeze plain object snapshot so concurrent requests sharing authzCache cannot mutate each other's req.user
+      const plainUser = Object.freeze(typeof user.toObject === 'function' ? user.toObject() : { ...user });
+
       // Add to authz cache
       if (authzCache.size < MAX_AUTHZ_CACHE_SIZE) {
-        authzCache.set(token, { user, cachedAt: Date.now() });
+        authzCache.set(token, { user: plainUser, cachedAt: Date.now() });
       }
 
-      req.user = user;
+      req.user = plainUser;
       next();
     } catch (error) {
       return res.status(401).json({
@@ -435,14 +456,13 @@ const sanitizeInput = (req, res, next) => {
           str = str.slice(0, MAX_STRING_LEN);
         }
 
-        // Bounded, ReDoS-free linear stripping
+        // Bounded, ReDoS-free linear stripping (preserves plain text like "online = true")
         obj[key] = str
           .replace(/<script[\s\S]*?<\/script>/gi, '')
           .replace(/<style[\s\S]*?<\/style>/gi, '')
           .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
           .replace(/<\/?[a-z][^>]{0,200}>/gi, '')
-          .replace(/javascript\s*:/gi, '')
-          .replace(/\bon\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '');
+          .replace(/javascript\s*:/gi, '');
       } else if (typeof obj[key] === 'object' && obj[key] !== null) {
         sanitize(obj[key], depth + 1);
       }
@@ -498,4 +518,5 @@ module.exports = {
   evictUserFromAuthzCache,
   checkoutLimiter,
   extractTokenFromCookies,
+  createLimiterConfig,
 };

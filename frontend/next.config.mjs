@@ -8,12 +8,12 @@ const isDev = process.env.NODE_ENV === 'development'
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://fastly.jsdelivr.net https://unpkg.com https://apis.google.com" : "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fastly.jsdelivr.net https://unpkg.com https://apis.google.com",
+  isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'" : "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https:",
   "font-src 'self' data:",
   isDev ? "connect-src 'self' https: http://localhost:*" : "connect-src 'self' https:",
-  "frame-src 'self' https://www.google.com https://maps.google.com",
+  "frame-src 'self' https://www.google.com https://maps.google.com https://accept.paymob.com",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "base-uri 'self'",
@@ -68,7 +68,7 @@ const nextConfig = {
           },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'X-XSS-Protection', value: '0' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Server', value: 'Foryo-Web-Server' },
         ],

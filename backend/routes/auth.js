@@ -66,7 +66,7 @@ router.put('/update-profile', protect, [
 // @access  Private
 router.put('/change-password', protect, [
   body('currentPassword').notEmpty().withMessage(MESSAGES.VALIDATION.CURRENT_PASSWORD_REQUIRED),
-  body('newPassword').isLength({ min: 6 }).withMessage(MESSAGES.VALIDATION.NEW_PASSWORD_MIN_LENGTH)
+  body('newPassword').isLength({ min: 8 }).withMessage(MESSAGES.VALIDATION.NEW_PASSWORD_MIN_LENGTH)
 ], authController.changePassword);
 
 // @route   POST /api/auth/request-email-change
@@ -114,7 +114,7 @@ router.post('/verify-reset-code', verifyLimiter, [
 router.post('/reset-password', verifyLimiter, [
   body('email').isEmail().withMessage(MESSAGES.VALIDATION.EMAIL_INVALID),
   body('code').isLength({ min: 6, max: 6 }).withMessage(MESSAGES.VALIDATION.CODE_LENGTH),
-  body('newPassword').isLength({ min: 6 }).withMessage(MESSAGES.VALIDATION.PASSWORD_MIN_LENGTH)
+  body('newPassword').isLength({ min: 8 }).withMessage(MESSAGES.VALIDATION.PASSWORD_MIN_LENGTH)
 ], authController.resetPassword);
 
 module.exports = router;

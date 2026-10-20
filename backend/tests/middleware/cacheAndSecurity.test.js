@@ -84,6 +84,13 @@ describe('Phase 2: Network, Middleware & Security Layer Tests', () => {
       // Same /64 subnet
       const ipv6Host2 = '2001:0db8:85a3:0000:1111:2222:3333:4444';
       expect(clientIp({ ip: ipv6Host2 })).toBe('2001:0db8:85a3:0000::/64');
+
+      // Compressed IPv6 notation in same /64 subnet must produce identical key
+      expect(clientIp({ ip: '2001:db8::5' })).toBe('2001:0db8:0000:0000::/64');
+      expect(clientIp({ ip: '2001:db8::6' })).toBe('2001:0db8:0000:0000::/64');
+
+      // Loopback ::1 preserved
+      expect(clientIp({ ip: '::1' })).toBe('::1');
     });
   });
 });

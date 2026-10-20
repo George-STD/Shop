@@ -143,23 +143,39 @@ router.post(
         return res.status(401).json({ success: false, message: 'Invalid Paymob HMAC signature' });
       }
 
-      // Resolve order by merchant_order_id / special_reference / paymobOrderId
-      const merchantOrderRef =
-        txObj.order?.merchant_order_id ||
-        txObj.special_reference ||
-        txObj.payment_key_claims?.extra?.orderNumber;
+      // Security Fix (Critical #1): Resolve order strictly by HMAC-signed order.id (paymobOrderId).
+      // Never look up by unsigned merchant_order_id / special_reference to prevent cross-order payment spoofing.
       const paymobOrderId = txObj.order?.id ? String(txObj.order.id) : null;
+      if (!paymobOrderId) {
+        return res.status(400).json({ success: false, message: 'Missing signed Paymob order ID' });
+      }
 
-      let order = null;
-      if (merchantOrderRef) {
-        order = await Order.findOne({ orderNumber: String(merchantOrderRef).trim() });
-      }
-      if (!order && paymobOrderId) {
-        order = await Order.findOne({ 'paymentDetails.paymobOrderId': paymobOrderId });
-      }
+      const order = await Order.findOne({ 'paymentDetails.paymobOrderId': paymobOrderId });
 
       if (!order) {
         return res.status(200).json({ received: true, matched: false });
+      }
+
+      // Cross-check merchant_order_id if provided against the resolved order's orderNumber
+      const merchantOrderRef = txObj.order?.merchant_order_id || txObj.special_reference;
+      if (merchantOrderRef && order.orderNumber && String(merchantOrderRef).trim() !== String(order.orderNumber).trim()) {
+        return res.status(400).json({ success: false, message: 'Paymob order reference mismatch' });
+      }
+
+      // Strictly verify signed amount_cents and currency against order.total
+      const expectedAmountCents = Math.round((Number(order.total) || 0) * 100);
+      const actualAmountCents = Number(txObj.amount_cents);
+      const txCurrency = String(txObj.currency || '').trim().toUpperCase();
+
+      if (
+        !Number.isFinite(actualAmountCents) ||
+        actualAmountCents !== expectedAmountCents ||
+        txCurrency !== 'EGP'
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: 'Paymob transaction amount or currency mismatch',
+        });
       }
 
       const transactionId = txObj.id ? String(txObj.id) : undefined;

@@ -1,9 +1,12 @@
 import axios from 'axios';
 import { API_BASE_URL, QUERY_DEFAULTS, ROUTES, STORAGE_KEYS, REQUEST_DEFAULTS } from '../constants';
+import { useAuthStore } from '../store/authStore';
 
 const clearStoredAuthSession = () => {
-  localStorage.removeItem(STORAGE_KEYS.TOKEN);
-  localStorage.removeItem(STORAGE_KEYS.AUTH);
+  try {
+    localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.AUTH);
+  } catch (_) {}
 };
 
 const api = axios.create({
@@ -26,17 +29,17 @@ const isColdStartOrNetworkError = (error) => {
   return false;
 };
 
-// Dual-mode session transport:
-// 1. Browser automatically sends httpOnly SameSite cookie via withCredentials: true.
-// 2. If a Bearer token is present in localStorage (cross-domain fallback / E2E fixtures), attach Authorization header.
+// Session transport:
+// 1. Primary: Browser automatically sends httpOnly SameSite cookie via withCredentials: true.
+// 2. Fallback: Volatile in-memory token from Zustand RAM state (never persisted in localStorage).
 api.interceptors.request.use((config) => {
   if (typeof window === 'undefined') {
     return config;
   }
 
-  const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const memoryToken = useAuthStore.getState()?.token;
+  if (memoryToken) {
+    config.headers.Authorization = `Bearer ${memoryToken}`;
   }
   return config;
 });

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const rateLimit = require('express-rate-limit');
-const { protect, apiLimiter, validateObjectId, checkoutLimiter, clientIp } = require('../middleware/auth');
+const { protect, apiLimiter, validateObjectId, checkoutLimiter, clientIp, createLimiterConfig } = require('../middleware/auth');
 const { noStoreCache } = require('../middleware/cache');
 const { CONFIG, MESSAGES } = require('../constants');
 const orderController = require('../controllers/orderController');
@@ -13,9 +13,9 @@ router.use(noStoreCache);
 // @desc    Create new order
 // @access  Private (requires authentication)
 router.post('/', protect, checkoutLimiter, [
-  body('items').isArray({ min: 1 }).withMessage(MESSAGES.ORDERS.ITEMS_REQUIRED),
+  body('items').isArray({ min: 1, max: 50 }).withMessage(MESSAGES.ORDERS.ITEMS_REQUIRED),
   body('items.*.productId').isMongoId().withMessage(MESSAGES.GENERAL.INVALID_ID),
-  body('items.*.quantity').isInt({ min: 1 }).withMessage(MESSAGES.ORDERS.INVALID_QUANTITY),
+  body('items.*.quantity').isInt({ min: 1, max: 999 }).withMessage(MESSAGES.ORDERS.INVALID_QUANTITY),
   body('shippingAddress.street').trim().notEmpty().withMessage(MESSAGES.ORDERS.ADDRESS_REQUIRED),
   body('shippingAddress.governorate').trim().notEmpty().withMessage(MESSAGES.ORDERS.GOVERNORATE_REQUIRED),
   body('shippingAddress.phone').trim().notEmpty().withMessage(MESSAGES.ORDERS.PHONE_REQUIRED),
@@ -33,17 +33,18 @@ router.get('/', protect, orderController.getOrders);
 // @access  Private
 router.get('/:id', protect, validateObjectId('id'), orderController.getOrderById);
 
-const trackOrderLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
-  keyGenerator: (req) => clientIp(req),
-  message: {
-    success: false,
-    message: 'تم تجاوز الحد الأقصى لمحاولات التتبع. حاول مرة أخرى لاحقاً.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const trackOrderLimiter = rateLimit(
+  createLimiterConfig('track-order', {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10,
+    limit: 10,
+    keyGenerator: (req) => clientIp(req),
+    message: {
+      success: false,
+      message: 'تم تجاوز الحد الأقصى لمحاولات التتبع. حاول مرة أخرى لاحقاً.',
+    },
+  })
+);
 
 router.get('/track/:orderNumber', trackOrderLimiter, orderController.trackOrder);
 

@@ -139,9 +139,23 @@ if (process.env.NODE_ENV !== 'test') {
 // ── Webhooks (must be mounted before express.json() to preserve raw body) ──
 app.use('/api/webhooks', require('./routes/webhooks'));
 
-// ── Body Parsers ──
+// ── Body Parsers (JSON-only API; urlencoded disabled to block cross-site HTML form CSRF) ──
 app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// ── CSRF Origin Defense for State-Changing Requests ──
+app.use('/api', (req, res, next) => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+    return next();
+  }
+  const origin = req.headers.origin;
+  if (origin && !CONFIG.CORS.ALLOWED_ORIGINS.includes(origin)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Origin not allowed',
+    });
+  }
+  next();
+});
 
 // ── Input Sanitization Middleware (ReDoS & NoSQL neutralizer) ──
 const { sanitizeInput, apiLimiter } = require('./middleware/auth');
@@ -180,8 +194,29 @@ app.use('/api/admin', require('./routes/admin'));
 
 // ── Error Handling Middleware ──
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ success: false, message: MESSAGES.GENERAL.SERVER_ERROR });
+  if (res.headersSent) return next(err);
+
+  const statusCode =
+    typeof err.status === 'number' && err.status >= 400 && err.status < 600
+      ? err.status
+      : typeof err.statusCode === 'number' && err.statusCode >= 400 && err.statusCode < 600
+        ? err.statusCode
+        : 500;
+
+  if (statusCode >= 500) {
+    console.error(err.stack || err);
+  }
+
+  const message =
+    err.type === 'entity.parse.failed'
+      ? 'صيغة البيانات المرسلة (JSON) غير صالحة'
+      : err.type === 'entity.too.large'
+        ? 'حجم البيانات المرسلة يتجاوز الحد المسموح به'
+        : statusCode < 500 && err.message
+          ? err.message
+          : MESSAGES.GENERAL.SERVER_ERROR;
+
+  res.status(statusCode).json({ success: false, message });
 });
 
 // ── 404 Handler ──

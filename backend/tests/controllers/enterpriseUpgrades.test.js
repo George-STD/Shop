@@ -235,7 +235,7 @@ describe('Enterprise Architecture Upgrades (Cookies, Redis, Variant Stock, Paymo
       expect(res.body.data.mode).toBe('test');
     });
 
-    it('verifies Paymob HMAC-SHA512 webhook signature and transitions order to paid + confirmed', async () => {
+    it('verifies Paymob HMAC-SHA512 webhook signature, blocks amount/order spoofing, and transitions valid order to paid + confirmed', async () => {
       const order = await Order.create({
         user: user._id,
         items: [],
@@ -245,6 +245,32 @@ describe('Enterprise Architecture Upgrades (Cookies, Redis, Variant Stock, Paymo
         paymentMethod: 'paymob_card',
         paymentStatus: 'pending',
         status: 'pending',
+        paymentDetails: {
+          gateway: 'paymob',
+          paymobOrderId: '11223344',
+        },
+        shippingAddress: {
+          firstName: 'Enterprise',
+          lastName: 'Tester',
+          phone: '01099998888',
+          governorate: 'القاهرة',
+          street: 'Paymob St',
+        },
+      });
+
+      const expensiveOrder = await Order.create({
+        user: user._id,
+        items: [],
+        subtotal: 4905,
+        shippingCost: 95,
+        total: 5000,
+        paymentMethod: 'paymob_card',
+        paymentStatus: 'pending',
+        status: 'pending',
+        paymentDetails: {
+          gateway: 'paymob',
+          paymobOrderId: '99887766',
+        },
         shippingAddress: {
           firstName: 'Enterprise',
           lastName: 'Tester',
@@ -291,7 +317,37 @@ describe('Enterprise Architecture Upgrades (Cookies, Redis, Variant Stock, Paymo
         .send({ obj: txObj });
       expect(badRes.statusCode).toBe(401);
 
-      // 2. Accept valid HMAC and mark order paid + confirmed
+      // 2. Reject cross-order spoofing (tampering unsigned merchant_order_id to point to expensiveOrder)
+      const spoofedTxObj = {
+        ...txObj,
+        order: {
+          id: 11223344,
+          merchant_order_id: expensiveOrder.orderNumber,
+        },
+      };
+      const spoofRes = await request(app)
+        .post(`/api/webhooks/paymob?hmac=${validHmac}`)
+        .send({ obj: spoofedTxObj });
+      expect(spoofRes.statusCode).toBe(400);
+      const checkExpensive = await Order.findById(expensiveOrder._id);
+      expect(checkExpensive.paymentStatus).toBe('pending');
+
+      // 3. Reject underpaid amount_cents even with valid HMAC for expensiveOrder
+      const underpaidTxObj = {
+        ...txObj,
+        amount_cents: 1000, // 10 EGP instead of 5000 EGP
+        order: {
+          id: 99887766,
+          merchant_order_id: expensiveOrder.orderNumber,
+        },
+      };
+      const underpaidHmac = computePaymobHmac(underpaidTxObj, TEST_HMAC_SECRET);
+      const underpaidRes = await request(app)
+        .post(`/api/webhooks/paymob?hmac=${underpaidHmac}`)
+        .send({ obj: underpaidTxObj });
+      expect(underpaidRes.statusCode).toBe(400);
+
+      // 4. Accept valid HMAC with matching paymobOrderId, amount_cents, and currency
       const okRes = await request(app)
         .post(`/api/webhooks/paymob?hmac=${validHmac}`)
         .send({ obj: txObj });

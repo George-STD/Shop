@@ -19,7 +19,7 @@ import LoyaltyPointsCard from '../components/account/LoyaltyPointsCard';
 import { settingsAPI } from '../services/api';
 import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
-import { STRINGS, STORAGE_KEYS } from '../constants';
+import { STRINGS } from '../constants';
 import { useAuthStore, useWishlistStore } from '../store';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
@@ -954,10 +954,10 @@ const SettingsPage = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await authAPI.updateProfile(profileData);
+      await authAPI.updateProfile(profileData);
       // Update local user state
       const updatedUser = { ...user, ...profileData };
-      setAuth(updatedUser, localStorage.getItem(STORAGE_KEYS.TOKEN));
+      setAuth(updatedUser);
       toast.success(STRINGS.ACCOUNT.PROFILE_UPDATED);
     } catch (error) {
       toast.error(error.response?.data?.message || STRINGS.ACCOUNT.PROFILE_UPDATE_ERROR);
@@ -1058,7 +1058,7 @@ const SettingsPage = () => {
       toast.success(STRINGS.ACCOUNT.EMAIL_CHANGED_SUCCESS);
       // Update local user state
       if (res.data?.data?.user) {
-        setAuth(res.data.data.user, localStorage.getItem(STORAGE_KEYS.TOKEN));
+        setAuth(res.data.data.user);
       }
       setEmailChangeMode('idle');
       setNewEmail('');

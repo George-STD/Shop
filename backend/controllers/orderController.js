@@ -229,47 +229,57 @@ const buildOrderData = async ({ userId, guestEmail, orderItems, subtotal, boxGro
   let pointsDiscount = 0;
 
   // Loyalty points redemption logic
-  if (pointsToRedeem && Number(pointsToRedeem) > 0 && userId) {
+  if (pointsToRedeem !== undefined && pointsToRedeem !== null && pointsToRedeem !== '' && Number(pointsToRedeem) !== 0 && userId) {
+    const requestedPoints = Number(pointsToRedeem);
+    if (!Number.isInteger(requestedPoints) || requestedPoints < 0) {
+      throw createClientError('عدد النقاط المستبدلة يجب أن يكون رقماً صحيحاً موجباً');
+    }
+
     const Settings = require('../models/Settings');
     const User = require('../models/User');
     const settings = await Settings.getSettings();
 
     if (settings?.loyalty?.enabled) {
-      const redeemAmount = Number(pointsToRedeem);
-      if (redeemAmount < settings.loyalty.minPointsToRedeem) {
+      if (requestedPoints < settings.loyalty.minPointsToRedeem) {
         throw createClientError(`الحد الأدنى لاستبدال النقاط هو ${settings.loyalty.minPointsToRedeem} نقطة`);
       }
 
-      // ATOMIC check & update on User model to prevent race conditions (double spending)
-      const opts = session ? { session } : {};
-      const userUpdate = await User.updateOne(
-        { _id: userId, loyaltyPoints: { $gte: redeemAmount } },
-        {
-          $inc: { loyaltyPoints: -redeemAmount },
-          $push: {
-            pointsHistory: {
-              $each: [
-                {
-                  points: redeemAmount,
-                  reason: 'استبدال نقاط لخصم في طلب جديد',
-                  type: 'REDEEMED',
-                  createdAt: new Date(),
-                },
-              ],
-              $slice: -50,
+      const egpPerPoint = Number(settings.loyalty.egpPerPointRedeemed) || 0.1;
+      const maxPointsForOrder = egpPerPoint > 0 ? Math.ceil(total / egpPerPoint) : 0;
+      const redeemAmount = Math.min(requestedPoints, maxPointsForOrder);
+
+      if (redeemAmount > 0) {
+        // ATOMIC check & update on User model to prevent race conditions (double spending)
+        const opts = session ? { session } : {};
+        const userUpdate = await User.updateOne(
+          { _id: userId, loyaltyPoints: { $gte: requestedPoints } },
+          {
+            $inc: { loyaltyPoints: -redeemAmount },
+            $push: {
+              pointsHistory: {
+                $each: [
+                  {
+                    points: redeemAmount,
+                    reason: 'استبدال نقاط لخصم في طلب جديد',
+                    type: 'REDEEMED',
+                    createdAt: new Date(),
+                  },
+                ],
+                $slice: -50,
+              },
             },
           },
-        },
-        opts
-      );
+          opts
+        );
 
-      if (userUpdate.modifiedCount !== 1) {
-        throw createClientError('رصيد النقاط غير كافٍ أو تغير أثناء عملية الشراء');
+        if (userUpdate.modifiedCount !== 1) {
+          throw createClientError('رصيد النقاط غير كافٍ أو تغير أثناء عملية الشراء');
+        }
+
+        pointsRedeemed = redeemAmount;
+        pointsDiscount = Math.min(total, mulEgp(redeemAmount, egpPerPoint));
+        total = Math.max(0, subEgp(total, pointsDiscount));
       }
-
-      pointsRedeemed = redeemAmount;
-      pointsDiscount = mulEgp(redeemAmount, settings.loyalty.egpPerPointRedeemed);
-      total = Math.max(0, subEgp(total, pointsDiscount));
     }
   }
 
@@ -921,6 +931,18 @@ const rollbackLoyaltyPoints = async (userId, pointsRedeemed) => {
       await order.save();
     } catch (paymobErr) {
       console.error('Paymob session creation error:', paymobErr.message);
+      // Rollback reserved stock and loyalty points so inventory is never locked on gateway error
+      try {
+        await rollbackStock(order.items);
+        await handleOrderLoyaltyRefundOrDeduction(order);
+        await Order.findByIdAndDelete(order._id);
+      } catch (cleanupErr) {
+        console.error('Failed to rollback order after Paymob session failure:', cleanupErr.message);
+      }
+      return sendError(res, {
+        statusCode: 502,
+        message: 'تعذر الاتصال ببوابة الدفع الإلكتروني حالياً، لم يتم خصم أي مبلغ. يرجى المحاولة مرة أخرى أو اختيار الدفع عند الاستلام.',
+      });
     }
   }
 
@@ -967,12 +989,12 @@ const rollbackLoyaltyPoints = async (userId, pointsRedeemed) => {
     ).catch((err) => console.error('OrderDailyStats update error:', err.message));
   }
 
-  // Send confirmation email (non-blocking)
-  try {
-    const emailTo = req.user?.email || guestEmail;
-    if (emailTo) await sendOrderConfirmationEmail(emailTo, order);
-  } catch (mailErr) {
-    console.error('Order email error:', mailErr);
+  // Send confirmation email (truly non-blocking so SMTP latency never slows checkout)
+  const emailTo = req.user?.email || guestEmail;
+  if (emailTo) {
+    Promise.resolve(sendOrderConfirmationEmail(emailTo, order)).catch((mailErr) => {
+      console.error('Order email error:', mailErr?.message || mailErr);
+    });
   }
 
   return sendCreated(res, { data: order, message: MESSAGES.ORDERS.CREATED });

@@ -8,22 +8,23 @@ const Review = require('../models/Review');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
-const { protect, apiLimiter, validateObjectId, clientIp, extractTokenFromCookies } = require('../middleware/auth');
+const { protect, apiLimiter, validateObjectId, clientIp, extractTokenFromCookies, createLimiterConfig } = require('../middleware/auth');
 const { bustCatalog } = require('../middleware/cache');
 const { MESSAGES, CONFIG } = require('../constants');
 const { sendSuccess, sendError, sendNotFound, sendForbidden, sendBadRequest, sendCreated } = require('../utils/response');
 
-const orderInfoLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 30,
-  keyGenerator: (req) => clientIp(req),
-  message: {
-    success: false,
-    message: 'تم تجاوز الحد المسموح به لطلبات الاستعلام عن الطلب'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const orderInfoLimiter = rateLimit(
+  createLimiterConfig('order-info', {
+    windowMs: 15 * 60 * 1000,
+    max: 30,
+    limit: 30,
+    keyGenerator: (req) => clientIp(req),
+    message: {
+      success: false,
+      message: 'تم تجاوز الحد المسموح به لطلبات الاستعلام عن الطلب',
+    },
+  })
+);
 
 // Optional auth helper — verifies token, tokenVersion and active status
 const getOptionalUserId = async (req) => {

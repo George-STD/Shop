@@ -7,7 +7,7 @@ const { escapeRegex, parsePagination, buildPaginationMeta } = require('../../uti
 const { evictUserFromAuthzCache } = require('../../middleware/auth');
 
 const ADMIN_USER_EXCLUDED_FIELDS =
-  '-password -resetPasswordToken -resetPasswordExpires ' +
+  '-password -pendingPassword -otpAttempts -resetPasswordToken -resetPasswordExpires ' +
   '-emailVerificationCode -emailVerificationExpires ' +
   '-emailChangeCode -emailChangeExpires -pendingEmail';
 
@@ -63,10 +63,16 @@ exports.updateUser = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
 
-  if (req.params.id === req.user._id.toString() && req.body.role === 'user') {
+  const normalizedRole = req.body.role !== undefined ? String(req.body.role).trim().toLowerCase() : undefined;
+  const normalizedIsActive =
+    req.body.isActive !== undefined
+      ? req.body.isActive === true || req.body.isActive === 'true'
+      : undefined;
+
+  if (req.params.id === req.user._id.toString() && normalizedRole === 'user') {
     return res.status(400).json({ success: false, message: 'لا يمكنك إزالة صلاحيات المسؤول عن نفسك' });
   }
-  if (req.params.id === req.user._id.toString() && req.body.isActive === false) {
+  if (req.params.id === req.user._id.toString() && normalizedIsActive === false) {
     return res.status(400).json({ success: false, message: 'لا يمكنك تعطيل حسابك' });
   }
 
@@ -79,9 +85,10 @@ exports.updateUser = asyncHandler(async (req, res) => {
 
   allowedUpdates.forEach(field => {
     if (req.body[field] !== undefined) {
-      updates[field] = req.body[field];
-      if (req.body[field] !== existingUser[field]) {
-        changes[field] = { old: existingUser[field], new: req.body[field] };
+      const value = field === 'isActive' ? normalizedIsActive : field === 'role' ? normalizedRole : req.body[field];
+      updates[field] = value;
+      if (value !== existingUser[field]) {
+        changes[field] = { old: existingUser[field], new: value };
       }
     }
   });

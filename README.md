@@ -7,7 +7,7 @@
 ![MongoDB Atlas](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb)
 ![Google Gemini](https://img.shields.io/badge/Google%20Gemini-AI-4285F4?style=for-the-badge&logo=google)
 ![Security Score](https://img.shields.io/badge/Security-A%2B%20(96%25)-success?style=for-the-badge)
-![Tests](https://img.shields.io/badge/Tests-204%2F204%20Passed-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-220%2F220%20Passed-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
 
 **منصة تجارة إلكترونية متكاملة وشاملة للهدايا وتخصيص البوكسات، مصممة بهندسة برمجية عالية الكفاءة (High Concurrency & Atomic Architecture) ومدعومة بالذكاء الاصطناعي التوليدي من Google Gemini، مع أعلى معايير الحماية والأمان السيبراني.**
@@ -134,7 +134,7 @@
 ```
 Gift-Shop/
 ├── .github/
-│   ├── workflows/deploy.yml          # CI/CD Pipeline (Lint, 204 Tests, Docker Build & Push)
+│   ├── workflows/deploy.yml          # CI/CD Pipeline (Lint, 220 Tests, Docker Build & Push)
 │   ├── ISSUE_TEMPLATE/               # قوالب البلاغات والميزات الجديدة
 │   └── PULL_REQUEST_TEMPLATE.md      # معايير مراجعة الأكواد والـ PRs
 ├── backend/
@@ -149,7 +149,7 @@ Gift-Shop/
 │   ├── models/                       # نماذج قاعدة البيانات (Mongoose Schemas)
 │   ├── routes/                       # مسارات الـ API
 │   ├── services/                     # الخدمات الخلفية (تنظيف الحسابات المهملة)
-│   ├── tests/                        # 42 جناح اختبار مع اختبارات الوحدة والتكامل
+│   ├── tests/                        # 43 جناح اختبار مع اختبارات الوحدة والتكامل
 │   ├── utils/                        # الأدوات المساعدة، الذكاء الاصطناعي، والبريد
 │   ├── Dockerfile                    # إعداد صورة الباك إند
 │   └── server.js                     # نقطة انطلاق السيرفر وإدارة الإشارات
@@ -242,7 +242,7 @@ npm run check
 ```bash
 npm test --prefix backend
 ```
-يشغل **42 جناح اختبار بإجمالي 204 اختبارات** تغطي كافة مسارات المصادقة، المعاملات، الحماية، الصلاحيات، وحالات الحافة (Edge Cases).
+يشغل **43 جناح اختبار بإجمالي 220 اختباراً** تغطي كافة مسارات المصادقة، المعاملات، الحماية، الصلاحيات، وحالات الحافة (Edge Cases).
 
 ### 3. اختبار الأداء وسرعة الاستجابة الأساسي (k6 Baseline Benchmark)
 ```bash

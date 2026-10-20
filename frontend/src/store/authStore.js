@@ -24,20 +24,18 @@ export const useAuthStore = create(
       setAuth: (user, token) => {
         if (typeof window !== 'undefined') {
           try {
-            if (token) {
-              localStorage.setItem(STORAGE_KEYS.TOKEN, token);
-            } else if (!user) {
-              localStorage.removeItem(STORAGE_KEYS.TOKEN);
-            }
+            // Security Fix (High #5): Never persist raw JWT in localStorage (XSS protection).
+            // Authentication relies on the httpOnly cookie + volatile in-memory state.
+            localStorage.removeItem(STORAGE_KEYS.TOKEN);
           } catch (_) {}
         }
-        set({ user, token: token || null, isAuthenticated: Boolean(user) });
+        const resolvedToken = user ? (token !== undefined ? token : get().token) : null;
+        set({ user, token: resolvedToken || null, isAuthenticated: Boolean(user) });
       },
 
       logout: async () => {
         try {
-          const token = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.TOKEN) : null;
-          if (token || get().isAuthenticated) {
+          if (get().token || get().isAuthenticated) {
             const { authAPI } = await import('../services/api');
             await authAPI.logout().catch(() => {});
           }
@@ -68,14 +66,13 @@ export const useAuthStore = create(
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
-        let token = null;
         if (typeof window !== 'undefined') {
           try {
-            token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.TOKEN);
           } catch (_) {}
         }
         if (state?.isAuthenticated && state?.user) {
-          state.setAuth(state.user, token);
+          state.setAuth(state.user, null);
         } else if (state?.isAuthenticated) {
           state.setAuth(null, null);
         }

@@ -59,7 +59,7 @@ const MESSAGES = {
     PROFILE_UPDATED: 'تم تحديث البيانات بنجاح',
     
     // Email Change
-    EMAIL_CHANGE_CODE_SENT: 'تم إرسال كود التأكيد إلى بريدك الإلكتروني الحالي',
+    EMAIL_CHANGE_CODE_SENT: 'تم إرسال كود التأكيد إلى بريدك الإلكتروني الجديد',
     EMAIL_CHANGE_SUCCESS: 'تم تغيير البريد الإلكتروني بنجاح',
     EMAIL_CHANGE_SAME: 'البريد الجديد مطابق للبريد الحالي',
     EMAIL_CHANGE_EXISTS: 'البريد الإلكتروني الجديد مستخدم بالفعل',

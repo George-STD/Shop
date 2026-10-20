@@ -125,12 +125,14 @@ const createPaymobCheckoutSession = async (order, user = {}) => {
           amount: amountCents,
           currency: 'EGP',
           payment_methods: integrationIds,
-          items: (order.items || []).map((item) => ({
-            name: String(item.name || 'Gift Item').slice(0, 50),
-            amount: Math.round((Number(item.price) || 0) * 100),
-            description: String(item.name || 'Gift Item').slice(0, 100),
-            quantity: Number(item.quantity) || 1,
-          })),
+          items: [
+            {
+              name: `Order #${specialReference}`.slice(0, 50),
+              amount: amountCents,
+              description: `For You Gift Shop Order #${specialReference} (${(order.items || []).length} items)`.slice(0, 100),
+              quantity: 1,
+            },
+          ],
           billing_data: billingData,
           special_reference: specialReference,
           redirection_url: redirectionUrl,

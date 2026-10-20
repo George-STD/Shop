@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const User = require('../../models/User');
-const { cleanupUnverifiedUsers, startPeriodicCleanup, stopPeriodicCleanup } = require('../../services/cleanupService');
+const Order = require('../../models/Order');
+const Product = require('../../models/Product');
+const { cleanupUnverifiedUsers, cleanupExpiredPaymobOrders, startPeriodicCleanup, stopPeriodicCleanup } = require('../../services/cleanupService');
 
 describe('CleanupService - Unverified Users Auto-Purge', () => {
   beforeEach(async () => {
@@ -105,5 +107,56 @@ describe('CleanupService - Unverified Users Auto-Purge', () => {
       startPeriodicCleanup(10000);
       stopPeriodicCleanup();
     }).not.toThrow();
+  });
+
+  it('should cancel expired unpaid Paymob orders and restore reserved product stock', async () => {
+    await Order.deleteMany({});
+    await Product.deleteMany({});
+
+    const product = await Product.create({
+      name: 'Reserved Paymob Gift',
+      slug: 'reserved-paymob-gift',
+      description: 'Test stock restoration on expired Paymob order',
+      price: 200,
+      stock: 3, // after 2 reserved
+      salesCount: 2,
+      isActive: true,
+    });
+
+    const expiredOrder = await Order.create({
+      items: [
+        {
+          product: product._id,
+          name: product.name,
+          slug: product.slug,
+          price: 200,
+          quantity: 2,
+          subtotal: 400,
+        },
+      ],
+      subtotal: 400,
+      shippingCost: 95,
+      total: 495,
+      paymentMethod: 'paymob_card',
+      paymentStatus: 'pending',
+      status: 'pending',
+    });
+
+    // Backdate createdAt to 2 hours ago
+    await Order.collection.updateOne(
+      { _id: expiredOrder._id },
+      { $set: { createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) } }
+    );
+
+    const res = await cleanupExpiredPaymobOrders({ expiryMs: 60 * 60 * 1000 });
+    expect(res.cancelledCount).toBe(1);
+
+    const updatedOrder = await Order.findById(expiredOrder._id);
+    expect(updatedOrder.status).toBe('cancelled');
+    expect(updatedOrder.paymentStatus).toBe('failed');
+
+    const restoredProduct = await Product.findById(product._id);
+    expect(restoredProduct.stock).toBe(5);
+    expect(restoredProduct.salesCount).toBe(0);
   });
 });

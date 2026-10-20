@@ -110,7 +110,6 @@ const orderSchema = new mongoose.Schema(
     orderNumber: {
       type: String,
       unique: true,
-      index: true,
     },
     idempotencyKey: {
       type: String,
@@ -120,35 +119,35 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
-    guestEmail: String,
-    guestPhone: String,
+    guestEmail: { type: String, maxlength: 100, trim: true },
+    guestPhone: { type: String, maxlength: 30, trim: true },
     items: [orderItemSchema],
 
     // Shipping Address
     shippingAddress: {
-      firstName: String,
-      lastName: String,
-      phone: String,
-      governorate: String,
-      city: String,
-      area: String,
-      street: String,
-      building: String,
-      floor: String,
-      apartment: String,
-      landmark: String,
+      firstName: { type: String, maxlength: 50, trim: true },
+      lastName: { type: String, maxlength: 50, trim: true },
+      phone: { type: String, maxlength: 30, trim: true },
+      governorate: { type: String, maxlength: 100, trim: true },
+      city: { type: String, maxlength: 100, trim: true },
+      area: { type: String, maxlength: 100, trim: true },
+      street: { type: String, maxlength: 300, trim: true },
+      building: { type: String, maxlength: 50, trim: true },
+      floor: { type: String, maxlength: 50, trim: true },
+      apartment: { type: String, maxlength: 50, trim: true },
+      landmark: { type: String, maxlength: 300, trim: true },
     },
 
     // Billing
     billingAddress: {
       sameAsShipping: { type: Boolean, default: true },
-      firstName: String,
-      lastName: String,
-      phone: String,
-      governorate: String,
-      city: String,
-      area: String,
-      street: String,
+      firstName: { type: String, maxlength: 50, trim: true },
+      lastName: { type: String, maxlength: 50, trim: true },
+      phone: { type: String, maxlength: 30, trim: true },
+      governorate: { type: String, maxlength: 100, trim: true },
+      city: { type: String, maxlength: 100, trim: true },
+      area: { type: String, maxlength: 100, trim: true },
+      street: { type: String, maxlength: 300, trim: true },
     },
 
     // Pricing
@@ -275,10 +274,10 @@ const orderSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    giftMessage: String,
+    giftMessage: { type: String, maxlength: 1000, trim: true },
     giftRecipient: {
-      name: String,
-      phone: String,
+      name: { type: String, maxlength: 100, trim: true },
+      phone: { type: String, maxlength: 30, trim: true },
     },
     hidePrice: {
       type: Boolean,
@@ -286,13 +285,13 @@ const orderSchema = new mongoose.Schema(
     },
 
     // Notes
-    customerNote: String,
-    adminNote: String,
+    customerNote: { type: String, maxlength: 1000, trim: true },
+    adminNote: { type: String, maxlength: 2000, trim: true },
 
     // Cancellation/Return
-    cancellationReason: String,
+    cancellationReason: { type: String, maxlength: 500, trim: true },
     cancelledAt: Date,
-    returnReason: String,
+    returnReason: { type: String, maxlength: 500, trim: true },
     returnedAt: Date,
 
     // Procurement & Cost Accounting
