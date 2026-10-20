@@ -378,7 +378,7 @@ const PaymentMethodStep = memo(function PaymentMethodStep({
         </div>
       )}
 
-      {formData.paymentMethod.startsWith('paymob') && (
+      {Boolean(formData.paymentMethod?.startsWith?.('paymob')) && (
         <div className="mt-6 p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex flex-col gap-2 animate-fadeIn">
           <div className="flex items-center gap-2">
             <span className="text-xl" aria-hidden="true">🔒</span>
@@ -488,7 +488,7 @@ const OrderReviewStep = memo(function OrderReviewStep({
               </span>
             </div>
           )}
-          {formData.paymentMethod.startsWith('paymob') && (
+          {Boolean(formData.paymentMethod?.startsWith?.('paymob')) && (
             <span className="text-emerald-700 font-bold flex items-center gap-1.5">
               💳 الدفع الإلكتروني الفوري عبر Paymob
             </span>

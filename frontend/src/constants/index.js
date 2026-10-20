@@ -15,6 +15,7 @@ import SITE_CONFIG, {
   SEO_KEYWORDS,
   SOCIAL_LINKS,
   API_URL,
+  API_ORIGIN,
 } from './config';
 import STRINGS from './strings';
 import ENDPOINTS, { API_BASE_URL, HTTP_STATUS, REQUEST_DEFAULTS, QUERY_DEFAULTS } from './api';
@@ -28,6 +29,7 @@ export {
   SEO_KEYWORDS,
   SOCIAL_LINKS,
   API_URL,
+  API_ORIGIN,
   STRINGS,
   ENDPOINTS,
   API_BASE_URL,

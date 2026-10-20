@@ -3,7 +3,7 @@
  * Centralized configuration for easy maintenance
  */
 
-export const DEFAULT_API_URL = 'https://shop-gx97.onrender.com/api';
+export const DEFAULT_API_URL = 'https://shop-mjh6.onrender.com/api';
 
 // Environment-based API URL
 const getApiUrl = () => {
@@ -16,6 +16,14 @@ const getApiUrl = () => {
 };
 
 export const API_URL = getApiUrl();
+
+export const API_ORIGIN = (() => {
+  try {
+    return new URL(API_URL).origin;
+  } catch {
+    return 'https://shop-mjh6.onrender.com';
+  }
+})();
 
 // Site Information
 export const SITE_CONFIG = {

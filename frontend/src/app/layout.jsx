@@ -3,7 +3,7 @@ import { Tajawal, Aref_Ruqaa } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import Providers from './providers';
 import JsonLd from './JsonLd';
-import { SITE_CONFIG, SEO_KEYWORDS } from '../constants';
+import { SITE_CONFIG, SEO_KEYWORDS, API_ORIGIN } from '../constants';
 
 const tajawal = Tajawal({
   subsets: ['arabic'],
@@ -106,8 +106,8 @@ export default function RootLayout({ children }) {
     <html lang="ar" dir="rtl" className={`${tajawal.variable} ${arefRuqaa.variable}`} suppressHydrationWarning>
       <head>
         {/* Preconnect to backend API with CORS crossOrigin matching Axios/fetch */}
-        <link rel="preconnect" href="https://shop-gx97.onrender.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://shop-gx97.onrender.com" />
+        <link rel="preconnect" href={API_ORIGIN} crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href={API_ORIGIN} />
         <JsonLd />
       </head>
       <body className={`${tajawal.className} font-sans`} suppressHydrationWarning>
