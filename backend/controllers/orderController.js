@@ -252,7 +252,7 @@ const buildOrderData = async ({ userId, guestEmail, orderItems, subtotal, boxGro
         // ATOMIC check & update on User model to prevent race conditions (double spending)
         const opts = session ? { session } : {};
         const userUpdate = await User.updateOne(
-          { _id: userId, loyaltyPoints: { $gte: requestedPoints } },
+          { _id: userId, loyaltyPoints: { $gte: redeemAmount } },
           {
             $inc: { loyaltyPoints: -redeemAmount },
             $push: {
@@ -936,6 +936,8 @@ const rollbackLoyaltyPoints = async (userId, pointsRedeemed) => {
         await rollbackStock(order.items);
         await handleOrderLoyaltyRefundOrDeduction(order);
         await Order.findByIdAndDelete(order._id);
+        bustCatalog('products');
+        bustCatalog('admin-stats');
       } catch (cleanupErr) {
         console.error('Failed to rollback order after Paymob session failure:', cleanupErr.message);
       }

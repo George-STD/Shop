@@ -6,8 +6,10 @@
 const parseCorsOrigins = () => {
   const raw = process.env.CORS_ORIGINS;
   const origins = raw 
-    ? raw.split(',').map(s => s.trim()).filter(Boolean) 
-    : ['https://www.foryo.me', 'https://foryo.me'];
+    ? raw.split(',').map(s => s.trim().replace(/\/+$/, '')).filter(Boolean) 
+    : (process.env.NODE_ENV === 'production'
+        ? ['https://www.foryo.me', 'https://foryo.me']
+        : ['https://www.foryo.me', 'https://foryo.me', 'http://localhost:3000', 'http://127.0.0.1:3000']);
 
   if (origins.includes('*')) {
     throw new Error('SECURITY ERROR: Wildcard origin (*) is strictly forbidden in CORS when credentials are enabled.');
