@@ -29,14 +29,16 @@ const AdminLayout = ({ children }) => {
         if (!isMounted) return;
 
         if (currentUser?.role !== 'admin') {
-          logout();
+          useAuthStore.getState().setAuth(null, null);
           return;
         }
 
         updateUser(currentUser);
       } catch (error) {
-        if (isMounted) {
-          logout();
+        if (!isMounted) return;
+        const status = error?.response?.status;
+        if (status === 401 || status === 403) {
+          useAuthStore.getState().setAuth(null, null);
         }
       }
     };

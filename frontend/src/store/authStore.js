@@ -22,15 +22,34 @@ export const useAuthStore = create(
       setHasHydrated: (state) => set({ _hasHydrated: Boolean(state) }),
 
       setAuth: (user, token) => {
+        const storedToken =
+          typeof window !== 'undefined'
+            ? (() => {
+                try {
+                  return localStorage.getItem(STORAGE_KEYS.TOKEN);
+                } catch (_) {
+                  return null;
+                }
+              })()
+            : null;
+        const currentToken = get().token || storedToken;
+        const resolvedToken = user ? (token !== undefined && token !== null ? token : currentToken) : null;
+
         if (typeof window !== 'undefined') {
           try {
-            // Security Fix (High #5): Never persist raw JWT in localStorage (XSS protection).
-            // Authentication relies on the httpOnly cookie + volatile in-memory state.
-            localStorage.removeItem(STORAGE_KEYS.TOKEN);
+            if (resolvedToken) {
+              localStorage.setItem(STORAGE_KEYS.TOKEN, resolvedToken);
+            } else {
+              localStorage.removeItem(STORAGE_KEYS.TOKEN);
+            }
           } catch (_) {}
         }
-        const resolvedToken = user ? (token !== undefined ? token : get().token) : null;
-        set({ user, token: resolvedToken || null, isAuthenticated: Boolean(user) });
+
+        set({
+          user: user && resolvedToken ? user : null,
+          token: resolvedToken || null,
+          isAuthenticated: Boolean(user && resolvedToken),
+        });
       },
 
       logout: async () => {
@@ -63,17 +82,19 @@ export const useAuthStore = create(
       version: 1,
       partialize: (state) => ({
         user: state.user,
+        token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
-        if (typeof window !== 'undefined') {
+        let token = state?.token || null;
+        if (!token && typeof window !== 'undefined') {
           try {
-            localStorage.removeItem(STORAGE_KEYS.TOKEN);
+            token = localStorage.getItem(STORAGE_KEYS.TOKEN);
           } catch (_) {}
         }
-        if (state?.isAuthenticated && state?.user) {
-          state.setAuth(state.user, null);
-        } else if (state?.isAuthenticated) {
+        if (state?.isAuthenticated && state?.user && token) {
+          state.setAuth(state.user, token);
+        } else if (state?.isAuthenticated || state?.user) {
           state.setAuth(null, null);
         }
         state?.setHasHydrated(true);

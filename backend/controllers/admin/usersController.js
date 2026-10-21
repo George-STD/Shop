@@ -7,7 +7,8 @@ const { escapeRegex, parsePagination, buildPaginationMeta } = require('../../uti
 const { evictUserFromAuthzCache } = require('../../middleware/auth');
 
 const ADMIN_USER_EXCLUDED_FIELDS =
-  '-password -pendingPassword -otpAttempts -resetPasswordToken -resetPasswordExpires ' +
+  '-password -pendingPassword -otpAttempts -resetOtpAttempts -emailChangeAttempts ' +
+  '-resetPasswordToken -resetPasswordExpires ' +
   '-emailVerificationCode -emailVerificationExpires ' +
   '-emailChangeCode -emailChangeExpires -pendingEmail';
 

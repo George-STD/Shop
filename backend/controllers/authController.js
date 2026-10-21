@@ -39,19 +39,25 @@ const verifyCodeMatch = (storedCode, incomingCode) => {
 const generateToken = (id, tokenVersion = 0) => {
   return jwt.sign({ id, v: tokenVersion }, process.env.JWT_SECRET, {
     algorithm: 'HS256',
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+    expiresIn: process.env.JWT_EXPIRES_IN || '30d'
   });
 };
 
 // Set httpOnly Secure Cookie for XSS-resilient session management
 const getAuthCookieOptions = () => {
   const isProd = process.env.NODE_ENV === 'production';
+  const rawSameSite = (process.env.COOKIE_SAMESITE || '').toLowerCase().trim();
+  // In production without a shared COOKIE_DOMAIN, frontend (foryo.me) and backend (onrender.com)
+  // are cross-site, so SameSite must be 'none' (with Secure: true) for cross-origin XHR cookies.
+  const sameSite = isProd
+    ? (rawSameSite === 'none' || process.env.COOKIE_DOMAIN ? (rawSameSite || 'lax') : 'none')
+    : (rawSameSite || 'lax');
   const options = {
     httpOnly: true,
-    secure: isProd,
-    sameSite: process.env.COOKIE_SAMESITE || (isProd ? 'none' : 'lax'),
+    secure: isProd || sameSite === 'none',
+    sameSite,
     path: '/',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   };
   if (process.env.COOKIE_DOMAIN) {
     options.domain = process.env.COOKIE_DOMAIN;

@@ -64,7 +64,7 @@ const CONFIG = {
   // AUTHENTICATION
   // =====================================================
   AUTH: {
-    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
+    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '30d',
     BCRYPT_SALT_ROUNDS: 12,
     VERIFICATION_CODE_LENGTH: 6,
     VERIFICATION_CODE_EXPIRY_MS: 10 * 60 * 1000, // 10 minutes

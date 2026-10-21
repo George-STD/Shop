@@ -29,17 +29,31 @@ const isColdStartOrNetworkError = (error) => {
   return false;
 };
 
-// Session transport:
-// 1. Primary: Browser automatically sends httpOnly SameSite cookie via withCredentials: true.
-// 2. Fallback: Volatile in-memory token from Zustand RAM state (never persisted in localStorage).
+// Dual-mode session transport:
+// 1. Cross-domain Bearer token from Zustand state / localStorage (ensures session persistence across foryo.me <-> onrender.com even when browsers block third-party cookies).
+// 2. httpOnly SameSite cookie via withCredentials: true.
 api.interceptors.request.use((config) => {
   if (typeof window === 'undefined') {
     return config;
   }
 
-  const memoryToken = useAuthStore.getState()?.token;
-  if (memoryToken) {
-    config.headers.Authorization = `Bearer ${memoryToken}`;
+  let token = useAuthStore.getState()?.token;
+  if (!token) {
+    try {
+      token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    } catch (_) {}
+  }
+  if (!token) {
+    try {
+      const rawAuth = localStorage.getItem(STORAGE_KEYS.AUTH);
+      if (rawAuth) {
+        const parsed = JSON.parse(rawAuth);
+        token = parsed?.state?.token || null;
+      }
+    } catch (_) {}
+  }
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -77,14 +91,13 @@ api.interceptors.response.use(
         url.includes('/auth/resend-code') ||
         url.includes('/auth/forgot-password') ||
         url.includes('/auth/verify-reset-code') ||
-        url.includes('/auth/reset-password');
+        url.includes('/auth/reset-password') ||
+        url.includes('/auth/logout');
 
       if (!isAuthAttempt) {
         clearStoredAuthSession();
         try {
-          import('../store').then(({ useAuthStore }) => {
-            useAuthStore.getState().setAuth(null, null);
-          }).catch(() => {});
+          useAuthStore.getState().setAuth(null, null);
         } catch (_) {}
 
         const pathname = window.location.pathname || '';

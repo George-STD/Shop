@@ -1155,6 +1155,16 @@ exports.cancelOrder = asyncHandler(async (req, res) => {
 
         // Restore stock for cancelled order items using rollbackStock
         await rollbackStock(order.items);
+        const cancelDateKey = new Date(order.createdAt || Date.now()).toISOString().slice(0, 10);
+        OrderDailyStats.updateOne(
+          { date: cancelDateKey },
+          {
+            $inc: {
+              totalRevenue: -(Number(order.total) || 0),
+              'ordersByStatus.cancelled': 1,
+            },
+          }
+        ).catch(() => {});
         bustCatalog('products');
         bustCatalog('admin-stats');
         return sendSuccess(res, { data: order, message: MESSAGES.ORDERS.CANCELLED });
