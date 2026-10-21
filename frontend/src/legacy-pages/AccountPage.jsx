@@ -545,7 +545,7 @@ const AuthForm = () => {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
-                      minLength={6}
+                      minLength={8}
                       className="input-field pl-10"
                     />
                     <button
@@ -572,7 +572,7 @@ const AuthForm = () => {
                       value={confirmNewPassword}
                       onChange={(e) => setConfirmNewPassword(e.target.value)}
                       required
-                      minLength={6}
+                      minLength={8}
                       className="input-field pl-10"
                     />
                     <button
@@ -915,7 +915,7 @@ const AddressesPage = () => (
 );
 
 const SettingsPage = () => {
-  const { user, setAuth } = useAuthStore();
+  const { user, setAuth, updateUser } = useAuthStore();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
 
@@ -955,9 +955,9 @@ const SettingsPage = () => {
     setLoading(true);
     try {
       await authAPI.updateProfile(profileData);
-      // Update local user state
+      // Update local user state without clearing volatile in-memory token
       const updatedUser = { ...user, ...profileData };
-      setAuth(updatedUser);
+      updateUser(updatedUser);
       toast.success(STRINGS.ACCOUNT.PROFILE_UPDATED);
     } catch (error) {
       toast.error(error.response?.data?.message || STRINGS.ACCOUNT.PROFILE_UPDATE_ERROR);
@@ -1056,9 +1056,9 @@ const SettingsPage = () => {
     try {
       const res = await authAPI.verifyEmailChange({ code });
       toast.success(STRINGS.ACCOUNT.EMAIL_CHANGED_SUCCESS);
-      // Update local user state
+      // Update local user state without clearing volatile in-memory token
       if (res.data?.data?.user) {
-        setAuth(res.data.data.user);
+        updateUser(res.data.data.user);
       }
       setEmailChangeMode('idle');
       setNewEmail('');
@@ -1220,7 +1220,7 @@ const SettingsPage = () => {
                     </button>
                   </div>
                   <p className="text-xs text-gray-500">
-                    {STRINGS.ACCOUNT.CONFIRMATION_CODE_WILL_BE_SENT} ({user?.email})
+                    {STRINGS.ACCOUNT.CONFIRMATION_CODE_WILL_BE_SENT} ({newEmail || user?.email})
                   </p>
                 </div>
               )}
@@ -1229,7 +1229,7 @@ const SettingsPage = () => {
                 <div className="space-y-4">
                   <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                     <p className="text-sm text-purple-700">
-                      {STRINGS.ACCOUNT.CONFIRMATION_CODE_SENT_TO} <strong>{user?.email}</strong>
+                      {STRINGS.ACCOUNT.CONFIRMATION_CODE_SENT_TO} <strong>{newEmail}</strong>
                     </p>
                     <p className="text-xs text-purple-600 mt-1">{STRINGS.ACCOUNT.NEW_EMAIL_LABEL} {newEmail}</p>
                   </div>
@@ -1392,7 +1392,7 @@ const SettingsPage = () => {
                     }
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                     required
-                    minLength={6}
+                    minLength={8}
                   />
                 </div>
                 <div>
@@ -1407,7 +1407,7 @@ const SettingsPage = () => {
                     }
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                     required
-                    minLength={6}
+                    minLength={8}
                   />
                 </div>
               </div>

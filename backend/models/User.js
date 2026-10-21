@@ -190,6 +190,16 @@ const userSchema = new mongoose.Schema(
       default: 0,
       select: false,
     },
+    resetOtpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    emailChangeAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
     tokenVersion: {
       type: Number,
       default: 0,

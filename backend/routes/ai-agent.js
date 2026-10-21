@@ -3,7 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const { GoogleGenAI } = require('@google/genai');
 
-const { protect, admin, adminLimiter, aiLimiter } = require('../middleware/auth');
+const { protect, admin, adminLimiter, aiLimiter, validateObjectId } = require('../middleware/auth');
 const { bustCatalog } = require('../middleware/cache');
 const asyncHandler = require('../utils/asyncHandler');
 
@@ -50,7 +50,11 @@ const FORBIDDEN_FIELDS = [
   'emailChangeCode',
   'emailChangeExpires',
   'pendingPassword',
+  'otpAttempts',
+  'resetOtpAttempts',
+  'emailChangeAttempts',
   'loyaltyPoints',
+  'pointsHistory',
   'wallet',
   'walletBalance',
   'isVerified',
@@ -58,7 +62,18 @@ const FORBIDDEN_FIELDS = [
   'isActive',
   'tokenVersion',
   'addresses',
-  'permissions'
+  'permissions',
+  'paymentStatus',
+  'paymentDetails',
+  'total',
+  'subtotal',
+  'shippingCost',
+  'pointsRedeemed',
+  'pointsDiscount',
+  'pointsEarned',
+  'idempotencyKey',
+  'orderNumber',
+  'user'
 ];
 
 const containsForbiddenField = (obj) => {
@@ -230,7 +245,7 @@ router.get('/sessions', asyncHandler(async (req, res) => {
 // @route   GET /api/admin/ai-agent/sessions/:id
 // @desc    Get a specific chat session
 // ============================================================================
-router.get('/sessions/:id', asyncHandler(async (req, res) => {
+router.get('/sessions/:id', validateObjectId('id'), asyncHandler(async (req, res) => {
   const session = await AiChatSession.findOne({ _id: req.params.id, adminId: req.user._id });
   if (!session) return res.status(404).json({ success: false, message: 'المحادثة غير موجودة' });
   res.json({ success: true, data: session });
@@ -253,7 +268,7 @@ router.post('/sessions', asyncHandler(async (req, res) => {
 // @route   DELETE /api/admin/ai-agent/sessions/:id
 // @desc    Delete a specific chat session
 // ============================================================================
-router.delete('/sessions/:id', asyncHandler(async (req, res) => {
+router.delete('/sessions/:id', validateObjectId('id'), asyncHandler(async (req, res) => {
   const session = await AiChatSession.findOneAndDelete({ _id: req.params.id, adminId: req.user._id });
   if (!session) return res.status(404).json({ success: false, message: 'المحادثة غير موجودة' });
   res.json({ success: true, message: 'تم حذف المحادثة بنجاح' });
@@ -263,7 +278,7 @@ router.delete('/sessions/:id', asyncHandler(async (req, res) => {
 // @route   POST /api/admin/ai-agent/sessions/:id/chat
 // @desc    Send a message to AI Agent
 // ============================================================================
-router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
+router.post('/sessions/:id/chat', validateObjectId('id'), asyncHandler(async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ success: false, message: 'الرسالة مطلوبة' });
 
@@ -403,7 +418,7 @@ router.post('/sessions/:id/chat', asyncHandler(async (req, res) => {
           } else if (name === 'proposeDatabaseUpdate') {
             const updates = safeParse(args.updateJson);
 
-            if (containsForbiddenField(updates)) {
+            if (!updates || typeof updates !== 'object' || Array.isArray(updates) || containsForbiddenField(updates)) {
               toolResult = { error: 'PROHIBITED_FIELD: Cannot update sensitive account credentials or user roles via AI Agent.' };
               iteration++;
             } else {
@@ -545,9 +560,13 @@ router.post('/execute', asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'جدول غير مدعوم' });
   }
 
+  if (!updates || typeof updates !== 'object' || Array.isArray(updates)) {
+    return res.status(400).json({ success: false, message: 'صيغة التحديثات غير صالحة' });
+  }
+
   // Ensure prohibited fields cannot be updated via AI Agent execute route
   if (containsForbiddenField(updates)) {
-    return res.status(400).json({ success: false, message: 'لا يمكن تعديل الحقول الحساسة (كلمة المرور، الدور، التوكنات) عبر AI Agent.' });
+    return res.status(400).json({ success: false, message: 'لا يمكن تعديل الحقول الحساسة (كلمة المرور، الدور، التوكنات، المدفوعات) عبر AI Agent.' });
   }
 
   // Ensure updates is using MongoDB operators safely.

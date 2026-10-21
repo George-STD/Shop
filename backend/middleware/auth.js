@@ -431,8 +431,44 @@ const sanitizeInput = (req, res, next) => {
   const MAX_DEPTH = 8;
   const MAX_STRING_LEN = 20_000;
 
+  const cleanString = (str) => {
+    let s = str.length > MAX_STRING_LEN ? str.slice(0, MAX_STRING_LEN) : str;
+    return s
+      .replace(/\0/g, '')
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+      .replace(/<\/?[a-z][^>]{0,200}>/gi, '')
+      .replace(/javascript\s*:/gi, '');
+  };
+
   const sanitize = (obj, depth = 0) => {
-    if (!obj || typeof obj !== 'object' || depth > MAX_DEPTH) return;
+    if (!obj || typeof obj !== 'object') return;
+
+    if (Array.isArray(obj)) {
+      if (depth > MAX_DEPTH) {
+        obj.length = 0;
+        return;
+      }
+      for (let i = obj.length - 1; i >= 0; i--) {
+        keysInspected += 1;
+        if (keysInspected > MAX_KEYS) {
+          obj.splice(i, 1);
+          continue;
+        }
+        const item = obj[i];
+        if (typeof item === 'string') {
+          obj[i] = cleanString(item);
+        } else if (typeof item === 'object' && item !== null) {
+          if (depth + 1 > MAX_DEPTH) {
+            obj.splice(i, 1);
+          } else {
+            sanitize(item, depth + 1);
+          }
+        }
+      }
+      return;
+    }
 
     for (const key of Object.keys(obj)) {
       keysInspected += 1;
@@ -441,8 +477,8 @@ const sanitizeInput = (req, res, next) => {
         continue;
       }
 
-      // Drop NoSQL injection operators ($), dot-notation injection (.), or prototype pollutions
-      if (key.startsWith('$') || key.includes('.') || DANGEROUS_KEYS.has(key)) {
+      // Drop NoSQL injection operators ($), dot-notation injection (.), null bytes, or prototype pollutions
+      if (key.startsWith('$') || key.includes('.') || key.includes('\0') || DANGEROUS_KEYS.has(key)) {
         delete obj[key];
         continue;
       }
@@ -451,20 +487,13 @@ const sanitizeInput = (req, res, next) => {
       if (CREDENTIAL_FIELDS.has(key)) continue;
 
       if (typeof obj[key] === 'string') {
-        let str = obj[key];
-        if (str.length > MAX_STRING_LEN) {
-          str = str.slice(0, MAX_STRING_LEN);
-        }
-
-        // Bounded, ReDoS-free linear stripping (preserves plain text like "online = true")
-        obj[key] = str
-          .replace(/<script[\s\S]*?<\/script>/gi, '')
-          .replace(/<style[\s\S]*?<\/style>/gi, '')
-          .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
-          .replace(/<\/?[a-z][^>]{0,200}>/gi, '')
-          .replace(/javascript\s*:/gi, '');
+        obj[key] = cleanString(obj[key]);
       } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-        sanitize(obj[key], depth + 1);
+        if (depth + 1 > MAX_DEPTH) {
+          delete obj[key];
+        } else {
+          sanitize(obj[key], depth + 1);
+        }
       }
     }
   };

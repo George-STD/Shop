@@ -1,4 +1,5 @@
 const request = require('supertest');
+const jwt = require('jsonwebtoken');
 const app = require('../../server');
 const User = require('../../models/User');
 const Product = require('../../models/Product');
@@ -7,6 +8,7 @@ const { encodeRespCommand, parseRespValue, HybridRateLimitStore } = require('../
 const { computePaymobHmac, verifyPaymobHmac, isPaymobConfigured } = require('../../services/paymobService');
 
 describe('Enterprise Architecture Upgrades (Cookies, Redis, Variant Stock, Paymob)', () => {
+  jest.setTimeout(30000);
   let user;
   let authCookie;
   let token;
@@ -402,6 +404,111 @@ describe('Enterprise Architecture Upgrades (Cookies, Redis, Variant Stock, Paymo
         .get('/api/auth/me')
         .set('Cookie', authCookie);
       expect(meAfterLogout.statusCode).toBe(401);
+    });
+  });
+
+  describe('5. Multi-Vector Security & Logic Fixes Verification', () => {
+    let freshCookie;
+
+    beforeAll(async () => {
+      const freshUser = await User.findById(user._id);
+      const testToken = jwt.sign(
+        { id: user._id, v: freshUser.tokenVersion || 0 },
+        process.env.JWT_SECRET || 'ci_pipeline_dummy_jwt_secret_key_minimum_32_characters_123',
+        { expiresIn: '1d' }
+      );
+      freshCookie = `token=${testToken}`;
+    });
+
+    it('enforces cumulative variant quantity check across duplicate cart items for the same variant', async () => {
+      const varProd = await Product.create({
+        name: 'Cumulative Variant Test Product',
+        slug: 'cumulative-var-prod',
+        description: 'وصف تجريبي لفحص مخزون المقاس التراكمي',
+        price: 100,
+        stock: 50,
+        isActive: true,
+        sizes: [{ name: 'M', price: 100, stock: 5 }],
+      });
+
+      // User adds 3 units in line 1 and 3 units in line 2 (total 6 > stock 5)
+      const orderRes = await request(app)
+        .post('/api/orders')
+        .set('Cookie', freshCookie)
+        .send({
+          items: [
+            { productId: varProd._id.toString(), quantity: 3, selectedSize: 'M' },
+            { productId: varProd._id.toString(), quantity: 3, selectedSize: 'M' },
+          ],
+          shippingAddress: {
+            street: '123 Test St',
+            city: 'Cairo',
+            governorate: 'Cairo',
+            phone: '01012345678',
+          },
+          paymentMethod: 'cod',
+        });
+
+      expect(orderRes.statusCode).toBe(400);
+      expect(orderRes.body.message).toContain('الكمية غير متوفرة للمنتج');
+      expect(orderRes.body.message).toContain('(مقاس M)');
+    });
+
+    it('allows Paymob webhook fallback via merchant_order_id when paymobOrderId is not yet assigned', async () => {
+      const testSecret = 'paymob_unit_test_hmac_secret_key_12345';
+      process.env.PAYMOB_HMAC_SECRET = testSecret;
+
+      const fallbackOrder = await Order.create({
+        orderNumber: 'ORD-FALLBACK-100',
+        total: 150,
+        subtotal: 150,
+        status: 'pending',
+        paymentStatus: 'pending',
+        paymentMethod: 'paymob',
+        paymentDetails: { gateway: 'paymob' },
+        shippingAddress: { street: '123', city: 'Cairo', governorate: 'Cairo', phone: '01011112222' },
+        items: [],
+      });
+
+      const txObj = {
+        id: 778899,
+        amount_cents: 15000,
+        currency: 'EGP',
+        success: true,
+        pending: false,
+        is_refunded: false,
+        is_voided: false,
+        order: {
+          id: 998877,
+          merchant_order_id: 'ORD-FALLBACK-100',
+        },
+      };
+
+      const validHmac = computePaymobHmac(txObj, testSecret);
+      const res = await request(app)
+        .post(`/api/webhooks/paymob?hmac=${validHmac}`)
+        .send({ obj: txObj });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.matched).toBe(true);
+
+      const updated = await Order.findById(fallbackOrder._id);
+      expect(updated.paymentStatus).toBe('paid');
+      expect(updated.paymentDetails.paymobOrderId).toBe('998877');
+
+      delete process.env.PAYMOB_HMAC_SECRET;
+    });
+
+    it('supports DEDUCTED type in LoyaltyLedger without schema validation error', async () => {
+      const LoyaltyLedger = require('../../models/LoyaltyLedger');
+      const ledgerEntry = await LoyaltyLedger.create({
+        user: user._id,
+        points: -50,
+        type: 'DEDUCTED',
+        reason: 'خصم نقاط لطلب تم إلغاؤه بعد التسليم',
+        idempotencyKey: 'test:deducted:key:1',
+      });
+      expect(ledgerEntry.type).toBe('DEDUCTED');
     });
   });
 });

@@ -133,23 +133,29 @@ router.post('/', apiLimiter, [
     .withMessage(MESSAGES.REVIEWS.COMMENT_TOO_LONG),
   body('guestName').optional({ checkFalsy: true }).trim().notEmpty().withMessage(MESSAGES.REVIEWS.GUEST_NAME_REQUIRED),
   body('guestEmail').optional({ checkFalsy: true }).isEmail().withMessage(MESSAGES.REVIEWS.GUEST_EMAIL_INVALID),
-  body('images').optional().isArray().withMessage('يجب أن تكون الصور في صيغة قائمة'),
+  body('images').optional().isArray({ max: 5 }).withMessage('يجب أن تكون الصور في صيغة قائمة (بحد أقصى 5 صور)'),
   body('images.*')
     .optional()
-    .isURL({ protocols: ['https'], require_protocol: true })
-    .withMessage('رابط الصورة غير صالح')
-    .custom((url) => {
-      try {
-        const parsed = new URL(url);
-        const allowedHosts = ['res.cloudinary.com', 'cloudinary.com', 'foryo.me', 'www.foryo.me'];
-        const isAllowed = allowedHosts.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
-        if (!isAllowed) {
-          throw new Error('يجب أن تكون الصور مرفوعة عبر خوادم الموقع الرسمية (Cloudinary)');
-        }
-        return true;
-      } catch (err) {
-        throw new Error(err.message || 'رابط الصورة غير مسموح به');
+    .custom((item) => {
+      const rawUrl = typeof item === 'string' ? item : item?.url;
+      if (!rawUrl || typeof rawUrl !== 'string') {
+        throw new Error('رابط الصورة غير صالح');
       }
+      let parsed;
+      try {
+        parsed = new URL(rawUrl);
+      } catch (_) {
+        throw new Error('رابط الصورة غير صالح');
+      }
+      if (parsed.protocol !== 'https:') {
+        throw new Error('يجب أن يبدأ رابط الصورة بـ https://');
+      }
+      const allowedHosts = ['res.cloudinary.com', 'cloudinary.com', 'foryo.me', 'www.foryo.me'];
+      const isAllowed = allowedHosts.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
+      if (!isAllowed) {
+        throw new Error('يجب أن تكون الصور مرفوعة عبر خوادم الموقع الرسمية (Cloudinary)');
+      }
+      return true;
     }),
 ], async (req, res) => {
   try {
@@ -206,7 +212,9 @@ router.post('/', apiLimiter, [
       comment,
       pros,
       cons,
-      images,
+      images: Array.isArray(images)
+        ? images.map((img) => (typeof img === 'string' ? { url: img } : { url: img.url, alt: img.alt || '' }))
+        : undefined,
       isVerifiedPurchase,
       isApproved: isVerifiedPurchase
     });
@@ -258,35 +266,59 @@ router.post('/', apiLimiter, [
 // @route   PUT /api/reviews/:id
 // @desc    Update a review
 // @access  Private
-router.put('/:id', protect, validateObjectId('id'), async (req, res) => {
-  try {
-    const review = await Review.findById(req.params.id);
+router.put(
+  '/:id',
+  protect,
+  validateObjectId('id'),
+  [
+    body('rating').optional().toInt().isInt({ min: 1, max: 5 }).withMessage(MESSAGES.REVIEWS.RATING_INVALID),
+    body('comment')
+      .optional()
+      .trim()
+      .isLength({ min: 10 })
+      .withMessage(MESSAGES.REVIEWS.COMMENT_TOO_SHORT)
+      .isLength({ max: 1000 })
+      .withMessage(MESSAGES.REVIEWS.COMMENT_TOO_LONG),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return sendBadRequest(res, MESSAGES.GENERAL.VALIDATION_ERROR, errors.array());
+      }
 
-    if (!review) {
-      return sendNotFound(res, MESSAGES.REVIEWS.NOT_FOUND);
+      const review = await Review.findById(req.params.id);
+
+      if (!review) {
+        return sendNotFound(res, MESSAGES.REVIEWS.NOT_FOUND);
+      }
+
+      if (!review.user || review.user.toString() !== req.user._id.toString()) {
+        return sendForbidden(res, MESSAGES.AUTH.FORBIDDEN);
+      }
+
+      const { rating, title, comment, pros, cons } = req.body;
+
+      if (rating !== undefined) review.rating = rating;
+      if (title !== undefined) review.title = title;
+      if (comment !== undefined) review.comment = comment;
+      if (pros !== undefined) review.pros = pros;
+      if (cons !== undefined) review.cons = cons;
+      review.isEdited = true;
+      review.editedAt = new Date();
+      if (!review.isVerifiedPurchase) {
+        review.isApproved = false;
+      }
+
+      await review.save();
+      bustCatalog('products');
+
+      return sendSuccess(res, { data: review, message: MESSAGES.REVIEWS.UPDATED });
+    } catch (error) {
+      return sendError(res, { message: MESSAGES.GENERAL.ERROR });
     }
-
-    if (!review.user || review.user.toString() !== req.user._id.toString()) {
-      return sendForbidden(res, MESSAGES.AUTH.FORBIDDEN);
-    }
-
-    const { rating, title, comment, pros, cons } = req.body;
-
-    review.rating = rating || review.rating;
-    review.title = title !== undefined ? title : review.title;
-    review.comment = comment || review.comment;
-    review.pros = pros !== undefined ? pros : review.pros;
-    review.cons = cons !== undefined ? cons : review.cons;
-    review.isEdited = true;
-
-    await review.save();
-    bustCatalog('products');
-
-    return sendSuccess(res, { data: review, message: MESSAGES.REVIEWS.UPDATED });
-  } catch (error) {
-    return sendError(res, { message: MESSAGES.GENERAL.ERROR });
   }
-});
+);
 
 // @route   POST /api/reviews/:id/helpful
 // @desc    Mark review as helpful (Atomic O(1) voting decoupled via ReviewVote)

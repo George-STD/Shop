@@ -23,7 +23,7 @@ const loyaltyLedgerSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['EARNED', 'REDEEMED', 'EXPIRED', 'REFUNDED', 'ADJUSTED'],
+      enum: ['EARNED', 'REDEEMED', 'DEDUCTED', 'EXPIRED', 'REFUNDED', 'ADJUSTED'],
       required: true,
     },
     reason: {

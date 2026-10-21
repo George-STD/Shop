@@ -114,33 +114,37 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
       await handleOrderLoyaltyRefundOrDeduction(order, opts.session);
       await rollbackStock(order.items, opts.session);
     } else if ((previousStatus === 'cancelled' || previousStatus === 'returned') && status !== 'cancelled' && status !== 'returned') {
-      // Un-cancelling/un-returning: decrement stock with floor at 0 using atomic aggregation
-      for (const item of order.items) {
-        if (!item.product) continue;
-        if (item.isReadyBox && item.includedProducts && item.includedProducts.length > 0) {
-          for (const boxItem of item.includedProducts) {
-            const subQty = (boxItem.quantity || 1) * item.quantity;
-            await Product.updateOne(
-              { _id: boxItem.product?._id || boxItem.product },
-              [{ $set: {
-                  stock: { $max: [0, { $subtract: ['$stock', subQty] }] },
-                  salesCount: { $add: ['$salesCount', subQty] }
-              }}],
-              opts
-            );
-          }
-          await Product.updateOne({ _id: item.product }, { $inc: { salesCount: item.quantity } }, opts);
-        } else {
-          await Product.updateOne(
-            { _id: item.product },
-            [{ $set: {
-                stock: { $max: [0, { $subtract: ['$stock', item.quantity] }] },
-                salesCount: { $add: ['$salesCount', item.quantity] }
-            }}],
-            opts
-          );
+      // Un-cancelling/un-returning: atomically re-deduct stock (including variants) and re-deduct any refunded loyalty points
+      const { deductStock } = require('../orderController');
+      if (order.user && order.pointsRedeemed > 0) {
+        const userDeduction = await User.findOneAndUpdate(
+          { _id: order.user, loyaltyPoints: { $gte: order.pointsRedeemed } },
+          {
+            $inc: { loyaltyPoints: -order.pointsRedeemed },
+            $push: {
+              pointsHistory: {
+                $each: [
+                  {
+                    points: -order.pointsRedeemed,
+                    reason: `إعادة تفعيل الطلب #${order.orderNumber || order._id}`,
+                    type: 'REDEEMED',
+                    createdAt: new Date(),
+                  },
+                ],
+                $slice: -50,
+              },
+            },
+          },
+          { ...opts, new: true }
+        );
+        if (!userDeduction) {
+          const err = new Error('لا يمكن إعادة تفعيل الطلب لأن العميل استهلك نقاط الولاء المستردة');
+          err.isClientError = true;
+          err.statusCode = 400;
+          throw err;
         }
       }
+      await deductStock(order.items, opts.session);
     }
 
     await order.save(opts);

@@ -142,16 +142,35 @@ app.use('/api/webhooks', require('./routes/webhooks'));
 // ── Body Parsers (JSON-only API; urlencoded disabled to block cross-site HTML form CSRF) ──
 app.use(express.json({ limit: '1mb' }));
 
-// ── CSRF Origin Defense for State-Changing Requests ──
+// ── CSRF Origin & Referer Defense for State-Changing Requests ──
 app.use('/api', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
     return next();
   }
   const origin = req.headers.origin;
-  if (origin && !CONFIG.CORS.ALLOWED_ORIGINS.includes(origin)) {
+  const referer = req.headers.referer;
+  const hasCookieAuth = Boolean(req.headers.cookie && req.headers.cookie.includes('token='));
+
+  let requestOrigin = origin;
+  if (!requestOrigin && referer) {
+    try {
+      requestOrigin = new URL(referer).origin;
+    } catch (_) {
+      requestOrigin = 'invalid-origin';
+    }
+  }
+
+  if (requestOrigin && !CONFIG.CORS.ALLOWED_ORIGINS.includes(requestOrigin)) {
     return res.status(403).json({
       success: false,
       message: 'Origin not allowed',
+    });
+  }
+
+  if (process.env.NODE_ENV === 'production' && hasCookieAuth && !req.headers.authorization && !requestOrigin) {
+    return res.status(403).json({
+      success: false,
+      message: 'Missing Origin or Referer header on cookie-authenticated request',
     });
   }
   next();

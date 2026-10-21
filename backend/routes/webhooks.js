@@ -150,20 +150,33 @@ router.post(
         return res.status(400).json({ success: false, message: 'Missing signed Paymob order ID' });
       }
 
-      const order = await Order.findOne({ 'paymentDetails.paymobOrderId': paymobOrderId });
+      const merchantOrderRef = txObj.order?.merchant_order_id || txObj.special_reference;
+      let order = await Order.findOne({ 'paymentDetails.paymobOrderId': paymobOrderId });
+
+      // Safe fallback for Unified Intention API orders where paymobOrderId was not yet assigned prior to webhook
+      if (!order && merchantOrderRef) {
+        order = await Order.findOne({
+          orderNumber: String(merchantOrderRef).trim(),
+          'paymentDetails.gateway': 'paymob',
+          $or: [
+            { 'paymentDetails.paymobOrderId': { $exists: false } },
+            { 'paymentDetails.paymobOrderId': null },
+            { 'paymentDetails.paymobOrderId': '' },
+          ],
+        });
+      }
 
       if (!order) {
         return res.status(200).json({ received: true, matched: false });
       }
 
       // Cross-check merchant_order_id if provided against the resolved order's orderNumber
-      const merchantOrderRef = txObj.order?.merchant_order_id || txObj.special_reference;
       if (merchantOrderRef && order.orderNumber && String(merchantOrderRef).trim() !== String(order.orderNumber).trim()) {
         return res.status(400).json({ success: false, message: 'Paymob order reference mismatch' });
       }
 
-      // Strictly verify signed amount_cents and currency against order.total
-      const expectedAmountCents = Math.round((Number(order.total) || 0) * 100);
+      // Strictly verify signed amount_cents and currency against order.total (matching 100-piaster gateway floor)
+      const expectedAmountCents = Math.max(100, Math.round((Number(order.total) || 0) * 100));
       const actualAmountCents = Number(txObj.amount_cents);
       const txCurrency = String(txObj.currency || '').trim().toUpperCase();
 

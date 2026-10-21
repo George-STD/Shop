@@ -56,6 +56,7 @@ const buildOrderItems = (items, productMap) => {
   const boxGroups = new Set();
   const boxCounts = new Map();
   const cumulativeProductQty = new Map();
+  const cumulativeVariantQty = new Map();
 
   const addRequiredProductQty = (prodObj, addQty, label) => {
     const pid = String(prodObj._id);
@@ -64,6 +65,15 @@ const buildOrderItems = (items, productMap) => {
       throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${label || prodObj.name}`);
     }
     cumulativeProductQty.set(pid, nextTotal);
+  };
+
+  const addRequiredVariantQty = (variantKey, availableStock, addQty, label) => {
+    if (!isFiniteStock(availableStock)) return;
+    const nextTotal = (cumulativeVariantQty.get(variantKey) || 0) + addQty;
+    if (availableStock < nextTotal) {
+      throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${label}`);
+    }
+    cumulativeVariantQty.set(variantKey, nextTotal);
   };
 
   for (const item of items) {
@@ -106,48 +116,70 @@ const buildOrderItems = (items, productMap) => {
     // Price calculation & Variant-Level SKU Stock Validation
     let finalPrice = product.price;
     
-    // 1. Size check (price override + optional size stock)
+    // 1. Size check (price override + cumulative size stock)
     if (item.selectedSize && Array.isArray(product.sizes) && product.sizes.length > 0) {
       const selectedSizeObj = product.sizes.find(s => s.name === item.selectedSize);
       if (!selectedSizeObj) {
         throw createClientError(`المقاس المختار غير صحيح: ${item.selectedSize}`);
       }
-      if (isFiniteStock(selectedSizeObj.stock) && selectedSizeObj.stock < quantity) {
-        throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${product.name} (مقاس ${item.selectedSize})`);
-      }
+      addRequiredVariantQty(
+        `${product._id}:size:${item.selectedSize}`,
+        selectedSizeObj.stock,
+        quantity,
+        `${product.name} (مقاس ${item.selectedSize})`
+      );
       finalPrice = (selectedSizeObj.price !== undefined && selectedSizeObj.price !== null) ? Number(selectedSizeObj.price) : product.price;
     }
 
-    // 2. Color stock check (if color has finite stock)
+    // 2. Color stock check (strict existence + cumulative color stock)
     if (item.selectedColor && Array.isArray(product.colors) && product.colors.length > 0) {
       const selectedColorObj = product.colors.find(c => c.name === item.selectedColor);
-      if (selectedColorObj && isFiniteStock(selectedColorObj.stock) && selectedColorObj.stock < quantity) {
-        throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${product.name} (لون ${item.selectedColor})`);
+      if (!selectedColorObj) {
+        throw createClientError(`اللون المختار غير صحيح: ${item.selectedColor}`);
       }
+      addRequiredVariantQty(
+        `${product._id}:color:${item.selectedColor}`,
+        selectedColorObj.stock,
+        quantity,
+        `${product.name} (لون ${item.selectedColor})`
+      );
     }
 
-    // 3. Shape stock check (if shape has finite stock)
+    // 3. Shape stock check (strict existence + cumulative shape stock)
     if (item.selectedShape && Array.isArray(product.shapes) && product.shapes.length > 0) {
       const selectedShapeObj = product.shapes.find(sh => sh.name === item.selectedShape);
-      if (selectedShapeObj && isFiniteStock(selectedShapeObj.stock) && selectedShapeObj.stock < quantity) {
-        throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${product.name} (شكل ${item.selectedShape})`);
+      if (!selectedShapeObj) {
+        throw createClientError(`الشكل المختار غير صحيح: ${item.selectedShape}`);
       }
+      addRequiredVariantQty(
+        `${product._id}:shape:${item.selectedShape}`,
+        selectedShapeObj.stock,
+        quantity,
+        `${product.name} (شكل ${item.selectedShape})`
+      );
     }
 
     // 4. VariantGroups option stock & priceDelta check
-    if (item.selectedVariants && typeof item.selectedVariants === 'object' && Array.isArray(product.variantGroups)) {
+    if (item.selectedVariants && typeof item.selectedVariants === 'object' && Array.isArray(product.variantGroups) && product.variantGroups.length > 0) {
       const entries = item.selectedVariants instanceof Map
         ? Array.from(item.selectedVariants.entries())
         : Object.entries(item.selectedVariants);
 
       for (const [groupName, optName] of entries) {
         const group = product.variantGroups.find(g => g.name === groupName);
-        if (!group || !Array.isArray(group.options)) continue;
-        const opt = group.options.find(o => o.name === optName);
-        if (!opt) continue;
-        if (isFiniteStock(opt.stock) && opt.stock < quantity) {
-          throw createClientError(`${MESSAGES.ORDERS.INSUFFICIENT_STOCK_TEMPLATE}: ${product.name} (${groupName}: ${optName})`);
+        if (!group || !Array.isArray(group.options)) {
+          throw createClientError(`مجموعة الخيارات غير صحيحة: ${groupName}`);
         }
+        const opt = group.options.find(o => o.name === optName);
+        if (!opt) {
+          throw createClientError(`الخيار المختار (${optName}) غير متاح في (${groupName})`);
+        }
+        addRequiredVariantQty(
+          `${product._id}:vg:${groupName}:${optName}`,
+          opt.stock,
+          quantity,
+          `${product.name} (${groupName}: ${optName})`
+        );
         if (typeof opt.priceDelta === 'number' && opt.priceDelta !== 0) {
           finalPrice = addEgp(finalPrice, opt.priceDelta);
         }
@@ -1054,6 +1086,7 @@ exports.cancelOrder = asyncHandler(async (req, res) => {
     if (order.user.toString() !== req.user._id.toString()) throw createClientError(MESSAGES.ORDERS.UNAUTHORIZED, 403);
     if (!CONFIG.CANCELLABLE_STATUSES.includes(order.status)) throw createClientError(MESSAGES.ORDERS.CANNOT_CANCEL, 400);
 
+    const previousStatus = order.status;
     order.status = CONFIG.ORDER_STATUS.CANCELLED;
     order.cancellationReason = req.body.reason;
     order.cancelledAt = new Date();
@@ -1065,6 +1098,17 @@ exports.cancelOrder = asyncHandler(async (req, res) => {
     await rollbackStock(order.items, session);
 
     await session.commitTransaction();
+    const cancelDateKey = new Date(order.createdAt || Date.now()).toISOString().slice(0, 10);
+    OrderDailyStats.updateOne(
+      { date: cancelDateKey },
+      {
+        $inc: {
+          totalRevenue: -(Number(order.total) || 0),
+          [`ordersByStatus.${previousStatus}`]: -1,
+          'ordersByStatus.cancelled': 1,
+        },
+      }
+    ).catch(() => {});
     bustCatalog('products');
     bustCatalog('admin-stats');
     return sendSuccess(res, { data: order, message: MESSAGES.ORDERS.CANCELLED });

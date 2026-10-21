@@ -163,15 +163,16 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   }
 
   if (!user.emailVerificationCode || !verifyCodeMatch(user.emailVerificationCode, code)) {
-    const nextAttempts = (user.otpAttempts || 0) + 1;
-    const updateOp =
-      nextAttempts >= MAX_OTP_ATTEMPTS
-        ? {
-            $set: { otpAttempts: nextAttempts },
-            $unset: { emailVerificationCode: 1, emailVerificationExpires: 1 },
-          }
-        : { $set: { otpAttempts: nextAttempts } };
-    await User.findByIdAndUpdate(user._id, updateOp);
+    const updated = await User.findByIdAndUpdate(
+      user._id,
+      { $inc: { otpAttempts: 1 } },
+      { new: true }
+    ).select('+otpAttempts');
+    if ((updated?.otpAttempts || 0) >= MAX_OTP_ATTEMPTS) {
+      await User.findByIdAndUpdate(user._id, {
+        $unset: { emailVerificationCode: 1, emailVerificationExpires: 1 },
+      });
+    }
     return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
   }
 
@@ -378,7 +379,7 @@ exports.requestEmailChange = asyncHandler(async (req, res) => {
       pendingEmail: normalizedNewEmail,
       emailChangeCode: hashCode(code),
       emailChangeExpires: expiry,
-      otpAttempts: 0,
+      emailChangeAttempts: 0,
     },
   });
 
@@ -397,13 +398,13 @@ exports.verifyEmailChange = asyncHandler(async (req, res) => {
   if (!errors.isEmpty()) return sendError(res, { statusCode: 400, message: MESSAGES.GENERAL.VALIDATION_ERROR, errors: errors.array() });
 
   const { code } = req.body;
-  const user = await User.findById(req.user._id).select('+pendingEmail +emailChangeCode +emailChangeExpires +otpAttempts');
+  const user = await User.findById(req.user._id).select('+pendingEmail +emailChangeCode +emailChangeExpires +emailChangeAttempts');
 
   if (!user.pendingEmail || !user.emailChangeCode) {
     return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.EMAIL_CHANGE_NO_PENDING });
   }
 
-  if ((user.otpAttempts || 0) >= MAX_OTP_ATTEMPTS) {
+  if ((user.emailChangeAttempts || 0) >= MAX_OTP_ATTEMPTS) {
     await User.findByIdAndUpdate(user._id, { $unset: { pendingEmail: 1, emailChangeCode: 1, emailChangeExpires: 1 } });
     return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_EXPIRED });
   }
@@ -414,15 +415,16 @@ exports.verifyEmailChange = asyncHandler(async (req, res) => {
   }
 
   if (!user.emailChangeCode || !verifyCodeMatch(user.emailChangeCode, code)) {
-    const nextAttempts = (user.otpAttempts || 0) + 1;
-    const updateOp =
-      nextAttempts >= MAX_OTP_ATTEMPTS
-        ? {
-            $set: { otpAttempts: nextAttempts },
-            $unset: { pendingEmail: 1, emailChangeCode: 1, emailChangeExpires: 1 },
-          }
-        : { $set: { otpAttempts: nextAttempts } };
-    await User.findByIdAndUpdate(user._id, updateOp);
+    const updated = await User.findByIdAndUpdate(
+      user._id,
+      { $inc: { emailChangeAttempts: 1 } },
+      { new: true }
+    ).select('+emailChangeAttempts');
+    if ((updated?.emailChangeAttempts || 0) >= MAX_OTP_ATTEMPTS) {
+      await User.findByIdAndUpdate(user._id, {
+        $unset: { pendingEmail: 1, emailChangeCode: 1, emailChangeExpires: 1 },
+      });
+    }
     return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.EMAIL_CHANGE_CODE_INVALID });
   }
 
@@ -434,7 +436,7 @@ exports.verifyEmailChange = asyncHandler(async (req, res) => {
   }
 
   await User.findByIdAndUpdate(user._id, {
-    $set: { email: newEmail, otpAttempts: 0 },
+    $set: { email: newEmail, emailChangeAttempts: 0 },
     $unset: { pendingEmail: 1, emailChangeCode: 1, emailChangeExpires: 1 }
   });
 
@@ -477,7 +479,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
       $set: {
         resetPasswordToken: hashCode(code),
         resetPasswordExpires: new Date(Date.now() + 10 * 60 * 1000),
-        otpAttempts: 0,
+        resetOtpAttempts: 0,
       }
     });
 
@@ -501,14 +503,14 @@ exports.verifyResetCode = asyncHandler(async (req, res) => {
 
   const normalizedEmail = String(req.body.email).toLowerCase().trim();
   const { code } = req.body;
-  const user = await User.findOne({ email: normalizedEmail }).select('+resetPasswordToken +resetPasswordExpires +otpAttempts');
+  const user = await User.findOne({ email: normalizedEmail }).select('+resetPasswordToken +resetPasswordExpires +resetOtpAttempts');
 
   if (!user) {
     verifyCodeMatch(DUMMY_OTP_HASH, code);
     return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
   }
 
-  if ((user.otpAttempts || 0) >= MAX_OTP_ATTEMPTS) {
+  if ((user.resetOtpAttempts || 0) >= MAX_OTP_ATTEMPTS) {
     await User.findByIdAndUpdate(user._id, {
       $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 },
     });
@@ -516,15 +518,16 @@ exports.verifyResetCode = asyncHandler(async (req, res) => {
   }
 
   if (!user.resetPasswordToken || !verifyCodeMatch(user.resetPasswordToken, code)) {
-    const nextAttempts = (user.otpAttempts || 0) + 1;
-    const updateOp =
-      nextAttempts >= MAX_OTP_ATTEMPTS
-        ? {
-            $set: { otpAttempts: nextAttempts },
-            $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 },
-          }
-        : { $set: { otpAttempts: nextAttempts } };
-    await User.findByIdAndUpdate(user._id, updateOp);
+    const updated = await User.findByIdAndUpdate(
+      user._id,
+      { $inc: { resetOtpAttempts: 1 } },
+      { new: true }
+    ).select('+resetOtpAttempts');
+    if ((updated?.resetOtpAttempts || 0) >= MAX_OTP_ATTEMPTS) {
+      await User.findByIdAndUpdate(user._id, {
+        $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 },
+      });
+    }
     return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
   }
 
@@ -539,14 +542,14 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 
   const normalizedEmail = String(req.body.email).toLowerCase().trim();
   const { code, newPassword } = req.body;
-  const user = await User.findOne({ email: normalizedEmail }).select('+password +resetPasswordToken +resetPasswordExpires +tokenVersion +otpAttempts');
+  const user = await User.findOne({ email: normalizedEmail }).select('+password +resetPasswordToken +resetPasswordExpires +tokenVersion +resetOtpAttempts');
 
   if (!user) {
     verifyCodeMatch(DUMMY_OTP_HASH, code);
     return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
   }
 
-  if ((user.otpAttempts || 0) >= MAX_OTP_ATTEMPTS) {
+  if ((user.resetOtpAttempts || 0) >= MAX_OTP_ATTEMPTS) {
     await User.findByIdAndUpdate(user._id, {
       $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 },
     });
@@ -554,15 +557,16 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   }
 
   if (!user.resetPasswordToken || !verifyCodeMatch(user.resetPasswordToken, code)) {
-    const nextAttempts = (user.otpAttempts || 0) + 1;
-    const updateOp =
-      nextAttempts >= MAX_OTP_ATTEMPTS
-        ? {
-            $set: { otpAttempts: nextAttempts },
-            $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 },
-          }
-        : { $set: { otpAttempts: nextAttempts } };
-    await User.findByIdAndUpdate(user._id, updateOp);
+    const updated = await User.findByIdAndUpdate(
+      user._id,
+      { $inc: { resetOtpAttempts: 1 } },
+      { new: true }
+    ).select('+resetOtpAttempts');
+    if ((updated?.resetOtpAttempts || 0) >= MAX_OTP_ATTEMPTS) {
+      await User.findByIdAndUpdate(user._id, {
+        $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 },
+      });
+    }
     return sendError(res, { statusCode: 400, message: MESSAGES.AUTH.VERIFICATION_CODE_INVALID });
   }
 
@@ -570,7 +574,7 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 
   const hashedPassword = await bcrypt.hash(newPassword, 12);
   await User.findByIdAndUpdate(user._id, {
-    $set: { password: hashedPassword, passwordChangedAt: new Date(), otpAttempts: 0 },
+    $set: { password: hashedPassword, passwordChangedAt: new Date(), resetOtpAttempts: 0 },
     $inc: { tokenVersion: 1 },
     $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 }
   });
