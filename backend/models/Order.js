@@ -209,6 +209,10 @@ const orderSchema = new mongoose.Schema(
       min: 0,
       set: (v) => (v === null || v === undefined ? v : roundTo2Decimals(v)),
     },
+    pointsRefunded: {
+      type: Boolean,
+      default: false,
+    },
 
     // Payment
     paymentMethod: {

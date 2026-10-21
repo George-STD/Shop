@@ -8,6 +8,33 @@ const { escapeRegex, parsePagination, buildPaginationMeta } = require('../../uti
 const { addEgp, subEgp, mulEgp, roundTo2Decimals } = require('../../utils/money');
 const { bustCatalog } = require('../../middleware/cache');
 const LoyaltyLedger = require('../../models/LoyaltyLedger');
+const OrderDailyStats = require('../../models/OrderDailyStats');
+
+const VALID_DAILY_STATS_STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'returned'];
+
+const syncDailyStatsOnStatusChange = (order, previousStatus, newStatus) => {
+  if (!order || previousStatus === newStatus) return;
+  const statsDateKey = new Date(order.createdAt || Date.now()).toISOString().slice(0, 10);
+  const inc = {};
+  if (VALID_DAILY_STATS_STATUSES.includes(previousStatus)) {
+    inc[`ordersByStatus.${previousStatus}`] = -1;
+  }
+  if (VALID_DAILY_STATS_STATUSES.includes(newStatus)) {
+    inc[`ordersByStatus.${newStatus}`] = 1;
+  }
+  const isNowInactive = newStatus === 'cancelled' || newStatus === 'returned';
+  const wasInactive = previousStatus === 'cancelled' || previousStatus === 'returned';
+  if (isNowInactive && !wasInactive) {
+    inc.totalRevenue = -(Number(order.total) || 0);
+  } else if (!isNowInactive && wasInactive) {
+    inc.totalRevenue = Number(order.total) || 0;
+  }
+  if (Object.keys(inc).length > 0) {
+    OrderDailyStats.updateOne({ date: statsDateKey }, { $inc: inc }).catch((err) => {
+      console.error('OrderDailyStats status update error:', err.message);
+    });
+  }
+};
 
 // =====================================================
 // ORDERS MANAGEMENT (Admin)
@@ -116,7 +143,7 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
     } else if ((previousStatus === 'cancelled' || previousStatus === 'returned') && status !== 'cancelled' && status !== 'returned') {
       // Un-cancelling/un-returning: atomically re-deduct stock (including variants) and re-deduct any refunded loyalty points
       const { deductStock } = require('../orderController');
-      if (order.user && order.pointsRedeemed > 0) {
+      if (order.user && order.pointsRedeemed > 0 && order.pointsRefunded) {
         const userDeduction = await User.findOneAndUpdate(
           { _id: order.user, loyaltyPoints: { $gte: order.pointsRedeemed } },
           {
@@ -143,6 +170,7 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
           err.statusCode = 400;
           throw err;
         }
+        order.pointsRefunded = false;
       }
       await deductStock(order.items, opts.session);
     }
@@ -163,6 +191,7 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
     bustCatalog('admin-stats');
 
     const { order, previousStatus } = result;
+    syncDailyStatsOnStatusChange(order, previousStatus, status);
     if (status === 'delivered' && previousStatus !== 'delivered' && order.pointsEarned > 0 && order.user) {
       LoyaltyLedger.updateOne(
         { idempotencyKey: `order:${order._id}:earn` },
@@ -221,6 +250,7 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
     bustCatalog('admin-stats');
 
     const { order, previousStatus } = result;
+    syncDailyStatsOnStatusChange(order, previousStatus, status);
     if (status === 'shipped' && (trackingNumber || order.trackingNumber)) {
       try {
         let emailTo = order.guestEmail || order.shippingAddress?.email;

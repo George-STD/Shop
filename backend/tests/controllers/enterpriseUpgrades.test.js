@@ -510,5 +510,138 @@ describe('Enterprise Architecture Upgrades (Cookies, Redis, Variant Stock, Paymo
       });
       expect(ledgerEntry.type).toBe('DEDUCTED');
     });
+
+    it('gracefully ignores null/empty option strings in selectedVariants without throwing validation error', async () => {
+      const vgProduct = await Product.create({
+        name: 'Empty Option Test Product',
+        slug: 'empty-opt-prod',
+        description: 'وصف لفحص تجاهل الخيارات الفارغة',
+        price: 80,
+        stock: 30,
+        isActive: true,
+        variantGroups: [
+          {
+            name: 'Material',
+            options: [{ name: 'Cotton', stock: 15, priceDelta: 0 }],
+          },
+        ],
+      });
+
+      const orderRes = await request(app)
+        .post('/api/orders')
+        .set('Cookie', freshCookie)
+        .send({
+          items: [
+            {
+              productId: vgProduct._id.toString(),
+              quantity: 1,
+              selectedVariants: {
+                Material: 'Cotton',
+                OptionalAddon: '', // Empty option string that should be ignored
+              },
+            },
+          ],
+          shippingAddress: {
+            street: '123 Test St',
+            city: 'Cairo',
+            governorate: 'Cairo',
+            phone: '01012345678',
+          },
+          paymentMethod: 'cod',
+        });
+
+      expect(orderRes.statusCode).toBe(201);
+      expect(orderRes.body.success).toBe(true);
+    });
+
+    it('tracks pointsRefunded flag, preserves pointsRedeemed on cancellation, and re-deducts points on admin reactivation', async () => {
+      const admin = await User.create({
+        firstName: 'LoyaltyAdmin',
+        lastName: 'Tester',
+        email: 'loyaltyadmin@example.com',
+        phone: '01044443333',
+        password: 'Password123!',
+        role: 'admin',
+        isVerified: true,
+        isActive: true,
+      });
+
+      const adminToken = jwt.sign(
+        { id: admin._id, v: admin.tokenVersion || 0 },
+        process.env.JWT_SECRET || 'ci_pipeline_dummy_jwt_secret_key_minimum_32_characters_123',
+        { expiresIn: '1d' }
+      );
+
+      await User.updateOne({ _id: user._id }, { $set: { loyaltyPoints: 200 } });
+
+      const loyaltyOrder = await Order.create({
+        orderNumber: 'ORD-LOYALTY-REFUND-1',
+        user: user._id,
+        items: [],
+        total: 100,
+        subtotal: 150,
+        pointsRedeemed: 50,
+        pointsDiscount: 50,
+        pointsRefunded: false,
+        status: 'pending',
+        paymentMethod: 'cod',
+        shippingAddress: {
+          street: '123 Loyalty Way',
+          city: 'Cairo',
+          governorate: 'Cairo',
+          phone: '01011112222',
+        },
+      });
+
+      // 1. Cancel the order as user
+      const cancelRes = await request(app)
+        .put(`/api/orders/${loyaltyOrder._id}/cancel`)
+        .set('Cookie', freshCookie)
+        .send({ reason: 'Changed my mind' });
+
+      expect(cancelRes.statusCode).toBe(200);
+
+      const cancelledOrder = await Order.findById(loyaltyOrder._id);
+      expect(cancelledOrder.status).toBe('cancelled');
+      expect(cancelledOrder.pointsRefunded).toBe(true);
+      expect(cancelledOrder.pointsRedeemed).toBe(50); // Preserved!
+
+      const userAfterCancel = await User.findById(user._id);
+      expect(userAfterCancel.loyaltyPoints).toBe(250); // 200 + 50 restored
+
+      // 2. Admin un-cancels (reactivates) order
+      const reactivateRes = await request(app)
+        .put(`/api/admin/orders/${loyaltyOrder._id}/status`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ status: 'processing' });
+
+      expect(reactivateRes.statusCode).toBe(200);
+
+      const reactivatedOrder = await Order.findById(loyaltyOrder._id);
+      expect(reactivatedOrder.status).toBe('processing');
+      expect(reactivatedOrder.pointsRefunded).toBe(false);
+
+      const userAfterReactivate = await User.findById(user._id);
+      expect(userAfterReactivate.loyaltyPoints).toBe(200); // 50 re-deducted!
+
+      // 3. Cancel again via admin, spend the points, and verify admin reactivation fails
+      const adminCancelRes = await request(app)
+        .put(`/api/admin/orders/${loyaltyOrder._id}/status`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ status: 'cancelled' });
+
+      expect(adminCancelRes.statusCode).toBe(200);
+
+      // Customer spends refunded points
+      await User.updateOne({ _id: user._id }, { $set: { loyaltyPoints: 10 } });
+
+      const blockedRes = await request(app)
+        .put(`/api/admin/orders/${loyaltyOrder._id}/status`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ status: 'processing' });
+
+      expect(blockedRes.statusCode).toBe(400);
+      expect(blockedRes.body.message).toContain('لا يمكن إعادة تفعيل الطلب لأن العميل استهلك نقاط الولاء المستردة');
+    });
   });
 });

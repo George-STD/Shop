@@ -166,6 +166,7 @@ const buildOrderItems = (items, productMap) => {
         : Object.entries(item.selectedVariants);
 
       for (const [groupName, optName] of entries) {
+        if (!optName) continue;
         const group = product.variantGroups.find(g => g.name === groupName);
         if (!group || !Array.isArray(group.options)) {
           throw createClientError(`مجموعة الخيارات غير صحيحة: ${groupName}`);
@@ -655,13 +656,11 @@ const handleOrderLoyaltyRefundOrDeduction = async (order, session) => {
   const opts = session ? { session } : {};
   const orderUpdates = {};
 
-  // 1. Restore redeemed points if any
-  if (order.pointsRedeemed > 0) {
+  // 1. Restore redeemed points if any (only once, tracked via pointsRefunded)
+  if (order.pointsRedeemed > 0 && !order.pointsRefunded) {
     const redeemedToRefund = order.pointsRedeemed;
-    order.pointsRedeemed = 0;
-    order.pointsDiscount = 0;
-    orderUpdates.pointsRedeemed = 0;
-    orderUpdates.pointsDiscount = 0;
+    order.pointsRefunded = true;
+    orderUpdates.pointsRefunded = true;
 
     await User.updateOne(
       { _id: order.user },
