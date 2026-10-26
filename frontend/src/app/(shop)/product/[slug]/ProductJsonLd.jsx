@@ -43,6 +43,16 @@ export default async function ProductJsonLd({ product: initialProduct, slug }) {
       product.stock === '' ||
       Number(product.stock) > 0;
 
+    const validFromDate = (() => {
+      if (product.createdAt) {
+        const parsed = new Date(product.createdAt);
+        if (!Number.isNaN(parsed.getTime())) {
+          return parsed.toISOString().split('T')[0];
+        }
+      }
+      return new Date().toISOString().split('T')[0];
+    })();
+
     const schema = {
       '@context': 'https://schema.org',
       '@type': 'Product',
@@ -67,6 +77,7 @@ export default async function ProductJsonLd({ product: initialProduct, slug }) {
         url: `${SITE_URL}/product/${canonicalSlug}`,
         priceCurrency: 'EGP',
         price: product.salePrice || product.price,
+        validFrom: validFromDate,
         priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         itemCondition: 'https://schema.org/NewCondition',
         availability: isAvailable ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
@@ -140,6 +151,11 @@ export default async function ProductJsonLd({ product: initialProduct, slug }) {
           merchantReturnDays: 14,
           returnMethod: 'https://schema.org/ReturnByMail',
           returnFees: 'https://schema.org/ReturnShippingFees',
+          returnShippingFeesAmount: {
+            '@type': 'MonetaryAmount',
+            value: 95,
+            currency: 'EGP',
+          },
         },
       },
     };

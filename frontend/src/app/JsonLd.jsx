@@ -80,6 +80,11 @@ export default function JsonLd() {
       merchantReturnDays: 14,
       returnMethod: 'https://schema.org/ReturnByMail',
       returnFees: 'https://schema.org/ReturnShippingFees',
+      returnShippingFeesAmount: {
+        '@type': 'MonetaryAmount',
+        value: 95,
+        currency: 'EGP',
+      },
     },
     hasOfferCatalog: {
       '@type': 'OfferCatalog',
